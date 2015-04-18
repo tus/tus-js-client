@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>tus-js-client demo</title>
+    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css" rel="stylesheet" />
+    <link href="/demo/demo.css" rel="stylesheet" media="screen" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>tus-js-client demo</h1>
+
+      <p>
+        For a prettier demo please go to the
+        <a href="http://tus.io/demo.html">tus.io</a> website.
+        This demo is just here to aid developers.
+      </p>
+
+      <div class="alert alert-warining hidden" id="support-alert">
+        <b>Warning!</b> Your browser does not seem to support the features necessary to run tus-js-client. The buttons below may work but probably will fail silently.
+      </div>
+
+      <br />
+
+      <input type="file"><br />
+      <label>
+        <input type="checkbox" id="resume">
+        Perform full upload (even if we could resume)
+      </label>
+
+      <br />
+
+      <div class="row">
+        <div class="span8">
+          <div class="progress progress-striped progress-success">
+            <div class="bar" style="width: 0%;"></div>
+          </div>
+        </div>
+        <div class="span4">
+          <button class="btn btn-danger stop disabled" id="stop-btn"><i class="icon-white icon-stop"></i> abort upload</button>
+        </div>
+      </div>
+
+      <hr />
+      <h3>Uploads</h3>
+      <p>
+        Succesful uploads will be listed here. Try one!
+      </p>
+
+    </div>
+  </body>
+
+  <script src="../dist/tus.js"></script>
+  <script src="./demo.js"></script>
+</html>
