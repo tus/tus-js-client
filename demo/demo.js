@@ -27,7 +27,6 @@ input.addEventListener("change", function(e) {
     var options = {
         endpoint: "http://localhost:1080/files/",
         resume: !resumeCheckbox.checked,
-        withCredentials: true,
         onError: function(error) {
             reset()
             alert("Failed because: " + error)
