@@ -83,8 +83,6 @@ var Upload = (function () {
                 return;
             }
 
-            this._fingerprint = this.options.fingerprint(file);
-
             // A URL has manually been specified, so we try to resume
             if (this.url != null) {
                 this._resumeUpload();
@@ -93,6 +91,8 @@ var Upload = (function () {
 
             // Try to find the endpoint for the file in the localStorage
             if (this.options.resume) {
+                this._fingerprint = this.options.fingerprint(file);
+
                 var resumedUrl = localStorage.getItem(this._fingerprint);
                 if (resumedUrl != null) {
                     this.url = resumedUrl;
@@ -117,6 +117,8 @@ var Upload = (function () {
         value: function _emitError(err) {
             if (typeof this.options.onError == "function") {
                 this.options.onError(err);
+            } else {
+                throw err;
             }
         }
     }, {
@@ -208,9 +210,11 @@ var Upload = (function () {
 
             xhr.onload = function () {
                 if (!(xhr.status >= 200 && xhr.status < 300)) {
-                    // Remove stored fingerprint and corresponding endpoint, since
-                    // the file can not be found
-                    localStorage.removeItem(_this2._fingerprint);
+                    if (_this2.options.resume) {
+                        // Remove stored fingerprint and corresponding endpoint,
+                        // since the file can not be found
+                        localStorage.removeItem(_this2._fingerprint);
+                    }
 
                     // Try to create a new upload
                     _this2.url = null;
@@ -295,6 +299,9 @@ var Upload = (function () {
 
             var start = this._offset;
             var end = this._offset + this.options.chunkSize;
+            if (end === Infinity) {
+                end = this.file.size;
+            }
             xhr.send(this.file.slice(start, end));
         }
     }]);
