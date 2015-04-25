@@ -1,4 +1,4 @@
-# tus-js-client
+# tus-js-client [![Build Status](https://travis-ci.org/tus/tus-js-client.svg?branch=master)](https://travis-ci.org/tus/tus-js-client)
 A pure JavaScript client for the [tus resumable upload protocol](http://tus.io).
 
 ## Example
