@@ -124,5 +124,38 @@ describe("tus", function() {
 
             expect(options.onProgress).toHaveBeenCalledWith(11, 11)
         })
+
+        it("should create an upload if resuming fails", function() {
+            localStorage.setItem("fingerprinted", "/uploads/resuming")
+
+            var file = new Blob("hello world".split(""))
+            var options = {
+                endpoint: "/uploads",
+                fingerprint: function() {}
+            }
+            spyOn(options, "fingerprint").and.returnValue("fingerprinted")
+
+            var upload = new tus.Upload(file, options)
+            upload.start()
+
+            expect(options.fingerprint).toHaveBeenCalledWith(file)
+
+            var req = jasmine.Ajax.requests.mostRecent()
+            expect(req.url).toBe("/uploads/resuming")
+            expect(req.method).toBe("HEAD")
+            expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0")
+
+            req.respondWith({
+                status: 404
+            })
+
+            expect(upload.url).toBe(null)
+
+            req = jasmine.Ajax.requests.mostRecent()
+            expect(req.url).toBe("/uploads")
+            expect(req.method).toBe("POST")
+            expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0")
+            expect(req.requestHeaders["Upload-Length"]).toBe(11)
+        })
     })
 })
