@@ -11,9 +11,15 @@
   <script src="lib/jasmine-2.2.0/jasmine-html.js"></script>
   <script src="lib/jasmine-2.2.0/boot.js"></script>
   <script src="lib/mock-ajax.js"></script>
+  <script src="lib/jasmine-jsreporter.js"></script>
 
   <!-- include source files here... -->
   <script src="../dist/tus.js"></script>
+
+  <script>
+    // Add JSReporter to Jasmine
+    jasmine.getEnv().addReporter(new jasmine.JSReporter2())
+  </script>
 
   <!-- include spec files here... -->
   <script src="spec/fakeBlob.js"></script>

@@ -24,6 +24,10 @@
   "devDependencies": {
     "babelify": "^6.0.2",
     "browserify": "^9.0.8",
+    "grunt": "^0.4.5",
+    "grunt-cli": "^0.1.13",
+    "grunt-contrib-connect": "^0.10.1",
+    "grunt-saucelabs": "^8.6.0",
     "watchify": "^3.1.1"
   },
   "dependencies": {
@@ -31,6 +35,7 @@
   },
   "scripts": {
     "build": "browserify lib/index.js -t babelify -o dist/tus.js -s tus",
-    "watch": "watchify lib/index.js -t babelify -o dist/tus.js -s tus -v"
+    "watch": "watchify lib/index.js -t babelify -o dist/tus.js -s tus -v",
+    "test": "grunt test"
   }
 }
