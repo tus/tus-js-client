@@ -24,9 +24,11 @@ describe("tus", function() {
                 },
                 withCredentials: true,
                 onSuccess: done,
+                onProgress: function() {},
                 fingerprint: function() {}
             }
             spyOn(options, "fingerprint").and.returnValue("fingerprinted")
+            spyOn(options, "onProgress")
 
             var upload = new tus.Upload(file, options)
             upload.start()
@@ -68,6 +70,8 @@ describe("tus", function() {
                     "Upload-Offset": file.size
                 }
             })
+
+            expect(options.onProgress).toHaveBeenCalledWith(11, 11)
         })
     })
 })
