@@ -41,9 +41,7 @@ var defaultOptions = {
     onProgress: null,
     onSuccess: null,
     onError: null,
-    headers: {
-        "Tus-Resumable": "1.0.0"
-    },
+    headers: {},
     chunkSize: Infinity,
     withCredentials: false
 };
@@ -145,6 +143,7 @@ var Upload = (function () {
          * @param {XMLHttpRequest} xhr
          */
         value: function _setupXHR(xhr) {
+            xhr.setRequestHeader("Tus-Resumable", "1.0.0");
             var headers = this.options.headers;
             for (var name in headers) {
                 xhr.setRequestHeader(name, headers[name]);
