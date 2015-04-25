@@ -16,7 +16,7 @@ describe("tus", function() {
         })
 
         it("should upload a file", function(done) {
-            var file = new Blob("hello world".split(""))
+            var file = new FakeBlob("hello world".split(""))
             var options = {
                 endpoint: "/uploads",
                 headers: {
@@ -77,7 +77,7 @@ describe("tus", function() {
         it("should resume an upload", function(done) {
             localStorage.setItem("fingerprinted", "/uploads/resuming")
 
-            var file = new Blob("hello world".split(""))
+            var file = new FakeBlob("hello world".split(""))
             var options = {
                 endpoint: "/uploads",
                 onSuccess: done,
@@ -128,7 +128,7 @@ describe("tus", function() {
         it("should create an upload if resuming fails", function() {
             localStorage.setItem("fingerprinted", "/uploads/resuming")
 
-            var file = new Blob("hello world".split(""))
+            var file = new FakeBlob("hello world".split(""))
             var options = {
                 endpoint: "/uploads",
                 fingerprint: function() {}
@@ -159,7 +159,7 @@ describe("tus", function() {
         })
 
         it("should upload a file in chunks", function(done) {
-            var file = new Blob("hello world".split(""))
+            var file = new FakeBlob("hello world".split(""))
             var options = {
                 endpoint: "/uploads",
                 chunkSize: 7,
