@@ -157,5 +157,71 @@ describe("tus", function() {
             expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0")
             expect(req.requestHeaders["Upload-Length"]).toBe(11)
         })
+
+        it("should upload a file in chunks", function(done) {
+            var file = new Blob("hello world".split(""))
+            var options = {
+                endpoint: "/uploads",
+                chunkSize: 7,
+                onSuccess: done,
+                onProgress: function() {},
+                fingerprint: function() {}
+            }
+            spyOn(options, "fingerprint").and.returnValue("fingerprinted")
+            spyOn(options, "onProgress")
+
+            var upload = new tus.Upload(file, options)
+            upload.start()
+
+            expect(options.fingerprint).toHaveBeenCalledWith(file)
+
+            var req = jasmine.Ajax.requests.mostRecent()
+            expect(req.url).toBe("/uploads")
+            expect(req.method).toBe("POST")
+            expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0")
+            expect(req.requestHeaders["Upload-Length"]).toBe(file.size)
+
+            req.respondWith({
+                status: 201,
+                responseHeaders: {
+                    Location: "/uploads/blargh"
+                }
+            })
+
+            expect(upload.url).toBe("/uploads/blargh")
+
+            expect(localStorage.getItem("fingerprinted")).toBe("/uploads/blargh")
+
+            req = jasmine.Ajax.requests.mostRecent()
+            expect(req.url).toBe("/uploads/blargh")
+            expect(req.method).toBe("PATCH")
+            expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0")
+            expect(req.requestHeaders["Upload-Offset"]).toBe(0)
+            expect(req.contentType()).toBe("application/offset+octet-stream")
+            expect(req.params.size).toBe(7)
+
+            req.respondWith({
+                status: 204,
+                responseHeaders: {
+                    "Upload-Offset": 7
+                }
+            })
+
+            req = jasmine.Ajax.requests.mostRecent()
+            expect(req.url).toBe("/uploads/blargh")
+            expect(req.method).toBe("PATCH")
+            expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0")
+            expect(req.requestHeaders["Upload-Offset"]).toBe(7)
+            expect(req.contentType()).toBe("application/offset+octet-stream")
+            expect(req.params.size).toBe(4)
+
+            req.respondWith({
+                status: 204,
+                responseHeaders: {
+                    "Upload-Offset": file.size
+                }
+            })
+            expect(options.onProgress).toHaveBeenCalledWith(11, 11)
+        })
     })
 })
