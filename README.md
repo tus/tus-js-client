@@ -142,7 +142,13 @@ npm run watch
 
 ## Testing
 
-To be done…
+Tests are implemented using Jasmine and can be found in the `tests/` directory.
+In order to run the tests, open `tests/SpecRunner.html` in a browser and you
+should see a visual representation of the test results. No web server is
+required, you can open `SpecRunner.html` using the `file:///` protocol.
+
+In addition, if do not want to download the repository, you can run the latest
+tests online by visiting [https://rawgit.com/tus/tus-js-client/master/test/SpecRunner.html](https://rawgit.com/tus/tus-js-client/master/test/SpecRunner.html).
 
 ## License
 
