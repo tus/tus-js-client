@@ -1,5 +1,5 @@
 describe("tus", function() {
-    describe("#upload", function() {
+    describe("#Upload", function() {
 
         beforeEach(function() {
             jasmine.Ajax.install()
