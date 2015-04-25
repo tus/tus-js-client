@@ -286,10 +286,13 @@ var Upload = (function () {
                 _this3._emitError(new Error("tus: failed to upload chunk at offset " + _this3._offset));
             };
 
-            xhr.upload.onprogress = function (e) {
-                if (!e.lengthComputable) return;
-                _this3._emitProgress(start + e.loaded, _this3.file.size);
-            };
+            // Test support for progress events before attaching an event listener
+            if ("upload" in xhr) {
+                xhr.upload.onprogress = function (e) {
+                    if (!e.lengthComputable) return;
+                    _this3._emitProgress(start + e.loaded, _this3.file.size);
+                };
+            }
 
             this._setupXHR(xhr);
 
