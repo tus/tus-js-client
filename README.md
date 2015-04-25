@@ -72,6 +72,7 @@ A object containing the default options used when creating a new upload:
 * `endpoint = ""`: a URL which will be used to create new uploads
 * `fingerprint`: a function used to generate a unique string from a
 corresponding File object. This used to store the URL for an upload to resume.
+This option is only used if the `resume` flag is set to true.
 * `resume = true`: a boolean indicating whether the client should attempt to
 resume the upload if the upload has been started in the past. This includes
 storing the file's fingerprint. Use `false` to force an entire reupload.
