@@ -1,3 +1,7 @@
+if(typeof require == "function") {
+    require("../lib/mock-ajax.js")
+}
+
 describe("tus", function() {
     describe("#Upload", function() {
 
