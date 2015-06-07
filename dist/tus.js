@@ -27,9 +27,9 @@ exports.defaultOptions = Upload.defaultOptions;
 },{"./upload":3}],3:[function(require,module,exports){
 "use strict";
 
-var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
-
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var fingerprint = require("./fingerprint");
 var extend = require("extend");
@@ -111,6 +111,14 @@ var Upload = (function () {
             }
         }
     }, {
+        key: "_emitXhrError",
+        value: function _emitXhrError(xhr, err) {
+            err.status = xhr.status;
+            err.statusText = xhr.statusText;
+            err.responseText = xhr.responseText;
+            this._emitError(err);
+        }
+    }, {
         key: "_emitError",
         value: function _emitError(err) {
             if (typeof this.options.onError == "function") {
@@ -168,7 +176,7 @@ var Upload = (function () {
 
             xhr.onload = function () {
                 if (!(xhr.status >= 200 && xhr.status < 300)) {
-                    _this._emitError(new Error("tus: unexpected response while creating upload"));
+                    _this._emitXhrError(xhr, new Error("tus: unexpected response while creating upload"));
                     return;
                 }
 
@@ -183,7 +191,7 @@ var Upload = (function () {
             };
 
             xhr.onerror = function () {
-                _this._emitError(new Error("tus: failed to create upload"));
+                _this._emitXhrError(xhr, new Error("tus: failed to create upload"));
             };
 
             this._setupXHR(xhr);
@@ -223,7 +231,7 @@ var Upload = (function () {
 
                 var offset = parseInt(xhr.getResponseHeader("Upload-Offset"), 10);
                 if (isNaN(offset)) {
-                    _this2._emitError(new Error("tus: invalid or missing offset value"));
+                    _this2._emitXhrError(xhr, new Error("tus: invalid or missing offset value"));
                     return;
                 }
 
@@ -232,7 +240,7 @@ var Upload = (function () {
             };
 
             xhr.onerror = function () {
-                _this2._emitError(new Error("tus: failed to resume upload"));
+                _this2._emitXhrError(xhr, new Error("tus: failed to resume upload"));
             };
 
             this._setupXHR(xhr);
@@ -256,13 +264,13 @@ var Upload = (function () {
 
             xhr.onload = function () {
                 if (!(xhr.status >= 200 && xhr.status < 300)) {
-                    _this3._emitError(new Error("tus: unexpected response while creating upload"));
+                    _this3._emitXhrError(xhr, new Error("tus: unexpected response while creating upload"));
                     return;
                 }
 
                 var offset = parseInt(xhr.getResponseHeader("Upload-Offset"), 10);
                 if (isNaN(offset)) {
-                    _this3._emitError(new Error("tus: invalid or missing offset value"));
+                    _this3._emitXhrError(xhr, new Error("tus: invalid or missing offset value"));
                     return;
                 }
 
@@ -283,7 +291,7 @@ var Upload = (function () {
                 // Don't emit an error if the upload was aborted manually
                 if (_this3._aborted) return;
 
-                _this3._emitError(new Error("tus: failed to upload chunk at offset " + _this3._offset));
+                _this3._emitXhrError(xhr, new Error("tus: failed to upload chunk at offset " + _this3._offset));
             };
 
             // Test support for progress events before attaching an event listener
@@ -316,12 +324,20 @@ module.exports.defaultOptions = defaultOptions;
 
 },{"./fingerprint":1,"extend":4}],4:[function(require,module,exports){
 var hasOwn = Object.prototype.hasOwnProperty;
-var toString = Object.prototype.toString;
+var toStr = Object.prototype.toString;
 var undefined;
+
+var isArray = function isArray(arr) {
+	if (typeof Array.isArray === 'function') {
+		return Array.isArray(arr);
+	}
+
+	return toStr.call(arr) === '[object Array]';
+};
 
 var isPlainObject = function isPlainObject(obj) {
 	'use strict';
-	if (!obj || toString.call(obj) !== '[object Object]') {
+	if (!obj || toStr.call(obj) !== '[object Object]') {
 		return false;
 	}
 
@@ -373,10 +389,10 @@ module.exports = function extend() {
 				}
 
 				// Recurse if we're merging plain objects or arrays
-				if (deep && copy && (isPlainObject(copy) || (copyIsArray = Array.isArray(copy)))) {
+				if (deep && copy && (isPlainObject(copy) || (copyIsArray = isArray(copy)))) {
 					if (copyIsArray) {
 						copyIsArray = false;
-						clone = src && Array.isArray(src) ? src : [];
+						clone = src && isArray(src) ? src : [];
 					} else {
 						clone = src && isPlainObject(src) ? src : {};
 					}
