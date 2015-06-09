@@ -227,5 +227,36 @@ describe("tus", function() {
             })
             expect(options.onProgress).toHaveBeenCalledWith(11, 11)
         })
+
+        it("should add the original request to errors", function() {
+            var file = new FakeBlob("hello world".split(""))
+            var err
+            var options = {
+                endpoint: "/uploads",
+                onError: function(e) {
+                    err = e
+                },
+            }
+
+            var upload = new tus.Upload(file, options)
+            upload.start()
+
+            var req = jasmine.Ajax.requests.mostRecent()
+            expect(req.url).toBe("/uploads")
+            expect(req.method).toBe("POST")
+
+            req.respondWith({
+                status: 500,
+                responseHeaders: {
+                  Custom: "blargh"
+                }
+            })
+
+            expect(upload.url).toBe(null)
+
+            expect(err.message).toBe("tus: unexpected response while creating upload")
+            expect(err.originalRequest).toBe(req)
+            expect(err.originalRequest.getResponseHeader("Custom")).toBe("blargh")
+        })
     })
 })

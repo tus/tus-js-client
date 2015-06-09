@@ -27,9 +27,9 @@ exports.defaultOptions = Upload.defaultOptions;
 },{"./upload":3}],3:[function(require,module,exports){
 "use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var fingerprint = require("./fingerprint");
 var extend = require("extend");
@@ -322,20 +322,12 @@ module.exports.defaultOptions = defaultOptions;
 
 },{"./fingerprint":1,"extend":4}],4:[function(require,module,exports){
 var hasOwn = Object.prototype.hasOwnProperty;
-var toStr = Object.prototype.toString;
+var toString = Object.prototype.toString;
 var undefined;
-
-var isArray = function isArray(arr) {
-	if (typeof Array.isArray === 'function') {
-		return Array.isArray(arr);
-	}
-
-	return toStr.call(arr) === '[object Array]';
-};
 
 var isPlainObject = function isPlainObject(obj) {
 	'use strict';
-	if (!obj || toStr.call(obj) !== '[object Object]') {
+	if (!obj || toString.call(obj) !== '[object Object]') {
 		return false;
 	}
 
@@ -387,10 +379,10 @@ module.exports = function extend() {
 				}
 
 				// Recurse if we're merging plain objects or arrays
-				if (deep && copy && (isPlainObject(copy) || (copyIsArray = isArray(copy)))) {
+				if (deep && copy && (isPlainObject(copy) || (copyIsArray = Array.isArray(copy)))) {
 					if (copyIsArray) {
 						copyIsArray = false;
-						clone = src && isArray(src) ? src : [];
+						clone = src && Array.isArray(src) ? src : [];
 					} else {
 						clone = src && isPlainObject(src) ? src : {};
 					}
