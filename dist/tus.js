@@ -113,9 +113,7 @@ var Upload = (function () {
     }, {
         key: "_emitXhrError",
         value: function _emitXhrError(xhr, err) {
-            err.status = xhr.status;
-            err.statusText = xhr.statusText;
-            err.responseText = xhr.responseText;
+            err.originalRequest = xhr;
             this._emitError(err);
         }
     }, {
