@@ -22,14 +22,14 @@
   },
   "homepage": "https://github.com/tus/tus-js-client",
   "devDependencies": {
-    "babelify": "^6.0.2",
-    "browserify": "^9.0.8",
-    "jscs": "^1.13.1",
-    "watchify": "^3.1.1",
-    "zuul": "^2.1.1"
+    "babelify": "6.3.0",
+    "browserify": "9.0.8",
+    "jscs": "1.13.1",
+    "watchify": "3.4.0",
+    "zuul": "2.1.1"
   },
   "dependencies": {
-    "extend": "^2.0.0"
+    "extend": "2.0.1"
   },
   "scripts": {
     "build": "browserify lib/index.js -t babelify -o dist/tus.js -s tus",
