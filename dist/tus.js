@@ -8,7 +8,7 @@
 "use strict";
 
 function fingerprint(file) {
-    return ["tus", file.name, file.type, file.size, file.lastModified].join("-");
+  return ["tus", file.name, file.type, file.size, file.lastModified].join("-");
 }
 
 module.exports = fingerprint;
@@ -27,9 +27,9 @@ exports.defaultOptions = Upload.defaultOptions;
 },{"./upload":3}],3:[function(require,module,exports){
 "use strict";
 
-var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
-
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var fingerprint = require("./fingerprint");
 var extend = require("extend");
@@ -139,8 +139,6 @@ var Upload = (function () {
                 this.options.onProgress(bytesSent, bytesTotal);
             }
         }
-    }, {
-        key: "_setupXHR",
 
         /*
          * Set the headers used in the request and the withCredentials property
@@ -148,6 +146,8 @@ var Upload = (function () {
          *
          * @param {XMLHttpRequest} xhr
          */
+    }, {
+        key: "_setupXHR",
         value: function _setupXHR(xhr) {
             xhr.setRequestHeader("Tus-Resumable", "1.0.0");
             var headers = this.options.headers;
@@ -156,8 +156,6 @@ var Upload = (function () {
             }
             xhr.withCredentials = this.options.withCredentials;
         }
-    }, {
-        key: "_createUpload",
 
         /*
          * Create a new upload using the creation extension by sending a POST
@@ -166,6 +164,8 @@ var Upload = (function () {
          *
          * @api private
          */
+    }, {
+        key: "_createUpload",
         value: function _createUpload() {
             var _this = this;
 
@@ -197,8 +197,6 @@ var Upload = (function () {
 
             xhr.send(null);
         }
-    }, {
-        key: "_resumeUpload",
 
         /*
          * Try to resume an existing upload. First a HEAD request will be sent
@@ -207,6 +205,8 @@ var Upload = (function () {
          *
          * @api private
          */
+    }, {
+        key: "_resumeUpload",
         value: function _resumeUpload() {
             var _this2 = this;
 
@@ -244,8 +244,6 @@ var Upload = (function () {
             this._setupXHR(xhr);
             xhr.send(null);
         }
-    }, {
-        key: "_startUpload",
 
         /*
          * Start uploading the file using PATCH requests. The file while be divided
@@ -254,6 +252,8 @@ var Upload = (function () {
          *
          * @api private
          */
+    }, {
+        key: "_startUpload",
         value: function _startUpload() {
             var _this3 = this;
 
@@ -322,12 +322,20 @@ module.exports.defaultOptions = defaultOptions;
 
 },{"./fingerprint":1,"extend":4}],4:[function(require,module,exports){
 var hasOwn = Object.prototype.hasOwnProperty;
-var toString = Object.prototype.toString;
+var toStr = Object.prototype.toString;
 var undefined;
+
+var isArray = function isArray(arr) {
+	if (typeof Array.isArray === 'function') {
+		return Array.isArray(arr);
+	}
+
+	return toStr.call(arr) === '[object Array]';
+};
 
 var isPlainObject = function isPlainObject(obj) {
 	'use strict';
-	if (!obj || toString.call(obj) !== '[object Object]') {
+	if (!obj || toStr.call(obj) !== '[object Object]') {
 		return false;
 	}
 
@@ -379,10 +387,10 @@ module.exports = function extend() {
 				}
 
 				// Recurse if we're merging plain objects or arrays
-				if (deep && copy && (isPlainObject(copy) || (copyIsArray = Array.isArray(copy)))) {
+				if (deep && copy && (isPlainObject(copy) || (copyIsArray = isArray(copy)))) {
 					if (copyIsArray) {
 						copyIsArray = false;
-						clone = src && Array.isArray(src) ? src : [];
+						clone = src && isArray(src) ? src : [];
 					} else {
 						clone = src && isPlainObject(src) ? src : {};
 					}

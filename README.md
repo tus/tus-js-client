@@ -138,6 +138,9 @@ npm install
 # Build dist/tus.js a single time
 npm run build
 
+# Build all dist files (including minification)
+npm run dist
+
 # Watch source and rebuild
 npm run watch
 ```
