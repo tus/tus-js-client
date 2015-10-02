@@ -23,7 +23,7 @@
   "homepage": "https://github.com/tus/tus-js-client",
   "devDependencies": {
     "babelify": "^6.0.2",
-    "browserify": "^9.0.8",
+    "browserify": "11.2.0",
     "jscs": "^1.13.1",
     "uglify-js": "^2.4.24",
     "watchify": "^3.1.1",
