@@ -27,7 +27,7 @@
     "jscs": "^1.13.1",
     "uglify-js": "^2.4.24",
     "watchify": "^3.1.1",
-    "zuul": "^2.1.1"
+    "zuul": "^3.6.0"
   },
   "dependencies": {
     "extend": "^2.0.0"
