@@ -83,12 +83,15 @@ is available. The arguments will be `bytesUploaded` and `bytesTotal`.
 * `onSuccess = null`: a function called when the upload finished successfully.
 * `onError = null`: a function called once an error appears. The arguments will
 be an Error instance.
-* `headers = {}`: a object with custom header values used in all requests.
+* `headers = {}`: an object with custom header values used in all requests.
 * `withCredentials = false`: a boolean which is be used as the value for
 `withCredentials` in all XMLHttpRequests to use Cookies in requests. The
 remote server must accept CORS and credentials.
 * `chunkSize = Infinity`: a number indicating the maximum size of a chunk
 uploaded in a single request
+* `metadata = {}`: an object with string values used as additional meta data
+which will be passed along to the server when (and only when) creating a new
+upload. Can be used for filenames, file types etc.
 
 ### new tus.Upload(file, options)
 

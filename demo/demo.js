@@ -25,8 +25,11 @@ input.addEventListener("change", function(e) {
   stopBtn.classList.remove("disabled")
 
   var options = {
-    endpoint: "http://localhost:1080/files/",
+    endpoint: "http://master.tus.io:8080/files/",
     resume: !resumeCheckbox.checked,
+    metadata: {
+        filename: file.name
+    },
     onError: function(error) {
       reset()
       alert("Failed because: " + error)
