@@ -5,66 +5,66 @@
  * @param {File} file
  * @return {String}
  */
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports['default'] = fingerprint;
+exports["default"] = fingerprint;
 
 function fingerprint(file) {
-  return ['tus', file.name, file.type, file.size, file.lastModified].join('-');
+  return ["tus", file.name, file.type, file.size, file.lastModified].join("-");
 }
 
-module.exports = exports['default'];
+module.exports = exports["default"];
 
 },{}],2:[function(require,module,exports){
 /* global window */
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-var _upload = require('./upload');
+var _upload = require("./upload");
 
 var _upload2 = _interopRequireDefault(_upload);
 
-var defaultOptions = _upload2['default'].defaultOptions;
+var defaultOptions = _upload2["default"].defaultOptions;
 var XMLHttpRequest = window.XMLHttpRequest;
 var localStorage = window.localStorage;
 var Blob = window.Blob;
 
-var isSupported = XMLHttpRequest && localStorage && Blob && typeof Blob.prototype.slice === 'function';
+var isSupported = XMLHttpRequest && localStorage && Blob && typeof Blob.prototype.slice === "function";
 
-exports['default'] = {
-  Upload: _upload2['default'],
+exports["default"] = {
+  Upload: _upload2["default"],
   isSupported: isSupported,
   defaultOptions: defaultOptions
 };
-module.exports = exports['default'];
+module.exports = exports["default"];
 
 },{"./upload":3}],3:[function(require,module,exports){
 /* global window */
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var _fingerprint = require('./fingerprint');
+var _fingerprint = require("./fingerprint");
 
 var _fingerprint2 = _interopRequireDefault(_fingerprint);
 
-var _extend = require('extend');
+var _extend = require("extend");
 
 var _extend2 = _interopRequireDefault(_extend);
 
@@ -72,8 +72,8 @@ var localStorage = window.localStorage;
 var XMLHttpRequest = window.XMLHttpRequest;
 
 var defaultOptions = {
-  endpoint: '',
-  fingerprint: _fingerprint2['default'],
+  endpoint: "",
+  fingerprint: _fingerprint2["default"],
   resume: true,
   onProgress: null,
   onSuccess: null,
@@ -87,7 +87,7 @@ var Upload = (function () {
   function Upload(file, options) {
     _classCallCheck(this, Upload);
 
-    this.options = (0, _extend2['default'])(true, {}, defaultOptions, options);
+    this.options = (0, _extend2["default"])(true, {}, defaultOptions, options);
 
     // The underlying File/Blob object
     this.file = file;
@@ -109,17 +109,17 @@ var Upload = (function () {
   }
 
   _createClass(Upload, [{
-    key: 'start',
+    key: "start",
     value: function start() {
       var file = this.file;
 
       if (!file) {
-        this._emitError(new Error('tus: no file to upload provided'));
+        this._emitError(new Error("tus: no file to upload provided"));
         return;
       }
 
       if (!this.options.endpoint) {
-        this._emitError(new Error('tus: no endpoint provided'));
+        this._emitError(new Error("tus: no endpoint provided"));
         return;
       }
 
@@ -145,7 +145,7 @@ var Upload = (function () {
       this._createUpload();
     }
   }, {
-    key: 'abort',
+    key: "abort",
     value: function abort() {
       if (this._xhr !== null) {
         this._xhr.abort();
@@ -153,31 +153,31 @@ var Upload = (function () {
       }
     }
   }, {
-    key: '_emitXhrError',
+    key: "_emitXhrError",
     value: function _emitXhrError(xhr, err) {
       err.originalRequest = xhr;
       this._emitError(err);
     }
   }, {
-    key: '_emitError',
+    key: "_emitError",
     value: function _emitError(err) {
-      if (typeof this.options.onError === 'function') {
+      if (typeof this.options.onError === "function") {
         this.options.onError(err);
       } else {
         throw err;
       }
     }
   }, {
-    key: '_emitSuccess',
+    key: "_emitSuccess",
     value: function _emitSuccess() {
-      if (typeof this.options.onSuccess === 'function') {
+      if (typeof this.options.onSuccess === "function") {
         this.options.onSuccess();
       }
     }
   }, {
-    key: '_emitProgress',
+    key: "_emitProgress",
     value: function _emitProgress(bytesSent, bytesTotal) {
-      if (typeof this.options.onProgress === 'function') {
+      if (typeof this.options.onProgress === "function") {
         this.options.onProgress(bytesSent, bytesTotal);
       }
     }
@@ -189,9 +189,9 @@ var Upload = (function () {
      * @param {XMLHttpRequest} xhr
      */
   }, {
-    key: '_setupXHR',
+    key: "_setupXHR",
     value: function _setupXHR(xhr) {
-      xhr.setRequestHeader('Tus-Resumable', '1.0.0');
+      xhr.setRequestHeader("Tus-Resumable", "1.0.0");
       var headers = this.options.headers;
 
       for (var _name in headers) {
@@ -209,20 +209,20 @@ var Upload = (function () {
      * @api private
      */
   }, {
-    key: '_createUpload',
+    key: "_createUpload",
     value: function _createUpload() {
       var _this = this;
 
       var xhr = new XMLHttpRequest();
-      xhr.open('POST', this.options.endpoint, true);
+      xhr.open("POST", this.options.endpoint, true);
 
       xhr.onload = function () {
         if (!(xhr.status >= 200 && xhr.status < 300)) {
-          _this._emitXhrError(xhr, new Error('tus: unexpected response while creating upload'));
+          _this._emitXhrError(xhr, new Error("tus: unexpected response while creating upload"));
           return;
         }
 
-        _this.url = xhr.getResponseHeader('Location');
+        _this.url = xhr.getResponseHeader("Location");
 
         if (_this.options.resume) {
           localStorage.setItem(_this._fingerprint, _this.url);
@@ -233,11 +233,11 @@ var Upload = (function () {
       };
 
       xhr.onerror = function () {
-        _this._emitXhrError(xhr, new Error('tus: failed to create upload'));
+        _this._emitXhrError(xhr, new Error("tus: failed to create upload"));
       };
 
       this._setupXHR(xhr);
-      xhr.setRequestHeader('Upload-Length', this.file.size);
+      xhr.setRequestHeader("Upload-Length", this.file.size);
 
       xhr.send(null);
     }
@@ -250,12 +250,12 @@ var Upload = (function () {
      * @api private
      */
   }, {
-    key: '_resumeUpload',
+    key: "_resumeUpload",
     value: function _resumeUpload() {
       var _this2 = this;
 
       var xhr = new XMLHttpRequest();
-      xhr.open('HEAD', this.url, true);
+      xhr.open("HEAD", this.url, true);
 
       xhr.onload = function () {
         if (!(xhr.status >= 200 && xhr.status < 300)) {
@@ -271,9 +271,9 @@ var Upload = (function () {
           return;
         }
 
-        var offset = parseInt(xhr.getResponseHeader('Upload-Offset'), 10);
+        var offset = parseInt(xhr.getResponseHeader("Upload-Offset"), 10);
         if (isNaN(offset)) {
-          _this2._emitXhrError(xhr, new Error('tus: invalid or missing offset value'));
+          _this2._emitXhrError(xhr, new Error("tus: invalid or missing offset value"));
           return;
         }
 
@@ -282,7 +282,7 @@ var Upload = (function () {
       };
 
       xhr.onerror = function () {
-        _this2._emitXhrError(xhr, new Error('tus: failed to resume upload'));
+        _this2._emitXhrError(xhr, new Error("tus: failed to resume upload"));
       };
 
       this._setupXHR(xhr);
@@ -297,22 +297,22 @@ var Upload = (function () {
      * @api private
      */
   }, {
-    key: '_startUpload',
+    key: "_startUpload",
     value: function _startUpload() {
       var _this3 = this;
 
       var xhr = this._xhr = new XMLHttpRequest();
-      xhr.open('PATCH', this.url, true);
+      xhr.open("PATCH", this.url, true);
 
       xhr.onload = function () {
         if (!(xhr.status >= 200 && xhr.status < 300)) {
-          _this3._emitXhrError(xhr, new Error('tus: unexpected response while creating upload'));
+          _this3._emitXhrError(xhr, new Error("tus: unexpected response while creating upload"));
           return;
         }
 
-        var offset = parseInt(xhr.getResponseHeader('Upload-Offset'), 10);
+        var offset = parseInt(xhr.getResponseHeader("Upload-Offset"), 10);
         if (isNaN(offset)) {
-          _this3._emitXhrError(xhr, new Error('tus: invalid or missing offset value'));
+          _this3._emitXhrError(xhr, new Error("tus: invalid or missing offset value"));
           return;
         }
 
@@ -335,11 +335,11 @@ var Upload = (function () {
           return;
         }
 
-        _this3._emitXhrError(xhr, new Error('tus: failed to upload chunk at offset ' + _this3._offset));
+        _this3._emitXhrError(xhr, new Error("tus: failed to upload chunk at offset " + _this3._offset));
       };
 
       // Test support for progress events before attaching an event listener
-      if ('upload' in xhr) {
+      if ("upload" in xhr) {
         xhr.upload.onprogress = function (e) {
           if (!e.lengthComputable) {
             return;
@@ -351,8 +351,8 @@ var Upload = (function () {
 
       this._setupXHR(xhr);
 
-      xhr.setRequestHeader('Upload-Offset', this._offset);
-      xhr.setRequestHeader('Content-Type', 'application/offset+octet-stream');
+      xhr.setRequestHeader("Upload-Offset", this._offset);
+      xhr.setRequestHeader("Content-Type", "application/offset+octet-stream");
 
       var start = this._offset;
       var end = this._offset + this.options.chunkSize;
@@ -370,8 +370,8 @@ var Upload = (function () {
 
 Upload.defaultOptions = defaultOptions;
 
-exports['default'] = Upload;
-module.exports = exports['default'];
+exports["default"] = Upload;
+module.exports = exports["default"];
 
 },{"./fingerprint":1,"extend":4}],4:[function(require,module,exports){
 var hasOwn = Object.prototype.hasOwnProperty;
