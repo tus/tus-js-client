@@ -161,7 +161,7 @@ var Upload = (function () {
   }, {
     key: '_emitError',
     value: function _emitError(err) {
-      if (typeof this.options.onError == "function") {
+      if (typeof this.options.onError === 'function') {
         this.options.onError(err);
       } else {
         throw err;
@@ -170,14 +170,14 @@ var Upload = (function () {
   }, {
     key: '_emitSuccess',
     value: function _emitSuccess() {
-      if (typeof this.options.onSuccess == "function") {
+      if (typeof this.options.onSuccess === 'function') {
         this.options.onSuccess();
       }
     }
   }, {
     key: '_emitProgress',
     value: function _emitProgress(bytesSent, bytesTotal) {
-      if (typeof this.options.onProgress == "function") {
+      if (typeof this.options.onProgress === 'function') {
         this.options.onProgress(bytesSent, bytesTotal);
       }
     }
@@ -191,7 +191,7 @@ var Upload = (function () {
   }, {
     key: '_setupXHR',
     value: function _setupXHR(xhr) {
-      xhr.setRequestHeader("Tus-Resumable", "1.0.0");
+      xhr.setRequestHeader('Tus-Resumable', '1.0.0');
       var headers = this.options.headers;
 
       for (var _name in headers) {
@@ -214,15 +214,15 @@ var Upload = (function () {
       var _this = this;
 
       var xhr = new XMLHttpRequest();
-      xhr.open("POST", this.options.endpoint, true);
+      xhr.open('POST', this.options.endpoint, true);
 
       xhr.onload = function () {
         if (!(xhr.status >= 200 && xhr.status < 300)) {
-          _this._emitXhrError(xhr, new Error("tus: unexpected response while creating upload"));
+          _this._emitXhrError(xhr, new Error('tus: unexpected response while creating upload'));
           return;
         }
 
-        _this.url = xhr.getResponseHeader("Location");
+        _this.url = xhr.getResponseHeader('Location');
 
         if (_this.options.resume) {
           localStorage.setItem(_this._fingerprint, _this.url);
@@ -233,11 +233,11 @@ var Upload = (function () {
       };
 
       xhr.onerror = function () {
-        _this._emitXhrError(xhr, new Error("tus: failed to create upload"));
+        _this._emitXhrError(xhr, new Error('tus: failed to create upload'));
       };
 
       this._setupXHR(xhr);
-      xhr.setRequestHeader("Upload-Length", this.file.size);
+      xhr.setRequestHeader('Upload-Length', this.file.size);
 
       xhr.send(null);
     }
@@ -255,7 +255,7 @@ var Upload = (function () {
       var _this2 = this;
 
       var xhr = new XMLHttpRequest();
-      xhr.open("HEAD", this.url, true);
+      xhr.open('HEAD', this.url, true);
 
       xhr.onload = function () {
         if (!(xhr.status >= 200 && xhr.status < 300)) {
@@ -271,9 +271,9 @@ var Upload = (function () {
           return;
         }
 
-        var offset = parseInt(xhr.getResponseHeader("Upload-Offset"), 10);
+        var offset = parseInt(xhr.getResponseHeader('Upload-Offset'), 10);
         if (isNaN(offset)) {
-          _this2._emitXhrError(xhr, new Error("tus: invalid or missing offset value"));
+          _this2._emitXhrError(xhr, new Error('tus: invalid or missing offset value'));
           return;
         }
 
@@ -282,7 +282,7 @@ var Upload = (function () {
       };
 
       xhr.onerror = function () {
-        _this2._emitXhrError(xhr, new Error("tus: failed to resume upload"));
+        _this2._emitXhrError(xhr, new Error('tus: failed to resume upload'));
       };
 
       this._setupXHR(xhr);
@@ -302,17 +302,17 @@ var Upload = (function () {
       var _this3 = this;
 
       var xhr = this._xhr = new XMLHttpRequest();
-      xhr.open("PATCH", this.url, true);
+      xhr.open('PATCH', this.url, true);
 
       xhr.onload = function () {
         if (!(xhr.status >= 200 && xhr.status < 300)) {
-          _this3._emitXhrError(xhr, new Error("tus: unexpected response while creating upload"));
+          _this3._emitXhrError(xhr, new Error('tus: unexpected response while creating upload'));
           return;
         }
 
-        var offset = parseInt(xhr.getResponseHeader("Upload-Offset"), 10);
+        var offset = parseInt(xhr.getResponseHeader('Upload-Offset'), 10);
         if (isNaN(offset)) {
-          _this3._emitXhrError(xhr, new Error("tus: invalid or missing offset value"));
+          _this3._emitXhrError(xhr, new Error('tus: invalid or missing offset value'));
           return;
         }
 
@@ -335,11 +335,11 @@ var Upload = (function () {
           return;
         }
 
-        _this3._emitXhrError(xhr, new Error("tus: failed to upload chunk at offset " + _this3._offset));
+        _this3._emitXhrError(xhr, new Error('tus: failed to upload chunk at offset ' + _this3._offset));
       };
 
       // Test support for progress events before attaching an event listener
-      if ("upload" in xhr) {
+      if ('upload' in xhr) {
         xhr.upload.onprogress = function (e) {
           if (!e.lengthComputable) {
             return;
@@ -351,8 +351,8 @@ var Upload = (function () {
 
       this._setupXHR(xhr);
 
-      xhr.setRequestHeader("Upload-Offset", this._offset);
-      xhr.setRequestHeader("Content-Type", "application/offset+octet-stream");
+      xhr.setRequestHeader('Upload-Offset', this._offset);
+      xhr.setRequestHeader('Content-Type', 'application/offset+octet-stream');
 
       var start = this._offset;
       var end = this._offset + this.options.chunkSize;
