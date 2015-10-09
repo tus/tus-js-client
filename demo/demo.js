@@ -5,6 +5,8 @@ var input = document.querySelector("input[type=file]")
 var progress = document.querySelector(".progress")
 var progressBar = progress.querySelector(".bar")
 var alertBox = document.querySelector("#support-alert")
+var chunkInput = document.querySelector("#chunksize")
+var endpointInput = document.querySelector("#endpoint")
 
 if (!tus.isSupported) {
   alertBox.className = alertBox.className.replace("hidden", "")
@@ -23,10 +25,16 @@ input.addEventListener("change", function(e) {
   console.log("selected file", file)
 
   stopBtn.classList.remove("disabled")
+  var endpoint = endpointInput.value
+  var chunkSize = chunkInput.value
+  if (chunkSize == null || chunkSize == "") {
+    chunkSize = Infinity
+  }
 
   var options = {
-    endpoint: "http://master.tus.io:8080/files/",
+    endpoint: endpoint,
     resume: !resumeCheckbox.checked,
+    chunkSize: chunkSize,
     metadata: {
         filename: file.name
     },
