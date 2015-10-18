@@ -78,8 +78,11 @@ This option is only used if the `resume` flag is set to true.
 * `resume = true`: a boolean indicating whether the client should attempt to
 resume the upload if the upload has been started in the past. This includes
 storing the file's fingerprint. Use `false` to force an entire reupload.
-* `onProgress = null`: a function will be be called each time progress information
-is available. The arguments will be `bytesUploaded` and `bytesTotal`.
+* `onProgress = null`: a function that will be called each time progress
+information is available. The arguments will be `bytesUploaded` and `bytesTotal`.
+* `onChunkComplete = null`: a function that will be called each time a chunk
+has been successfully uploaded. The arguments will be `chunkSize`,
+`bytesAccepted`, `bytesTotal`.
 * `onSuccess = null`: a function called when the upload finished successfully.
 * `onError = null`: a function called once an error appears. The arguments will
 be an Error instance.
