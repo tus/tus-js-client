@@ -150,8 +150,8 @@ npm run watch
 
 ## Testing
 
-Tests are implemented using Jasmine and can be found in the `tests/` directory.
-In order to run the tests, open `tests/SpecRunner.html` in a browser and you
+Tests are implemented using Jasmine and can be found in the `test/` directory.
+In order to run the tests, open `test/SpecRunner.html` in a browser and you
 should see a visual representation of the test results. No web server is
 required, you can open `SpecRunner.html` using the `file:///` protocol.
 
