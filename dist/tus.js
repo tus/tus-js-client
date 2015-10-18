@@ -1,15 +1,15 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.tus = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
 /**
  * Generate a fingerprint for a file which will be used the store the endpoint
  *
  * @param {File} file
  * @return {String}
  */
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 exports["default"] = fingerprint;
 
 function fingerprint(file) {
@@ -19,20 +19,20 @@ function fingerprint(file) {
 module.exports = exports["default"];
 
 },{}],2:[function(require,module,exports){
+/* global window */
 "use strict";
-
-var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-/* global window */
 
-var _Upload = require("./upload");
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-var _Upload2 = _interopRequireWildcard(_Upload);
+var _upload = require("./upload");
 
-var defaultOptions = _Upload2["default"].defaultOptions;
+var _upload2 = _interopRequireDefault(_upload);
+
+var defaultOptions = _upload2["default"].defaultOptions;
 var XMLHttpRequest = window.XMLHttpRequest;
 var localStorage = window.localStorage;
 var Blob = window.Blob;
@@ -40,33 +40,33 @@ var Blob = window.Blob;
 var isSupported = XMLHttpRequest && localStorage && Blob && typeof Blob.prototype.slice === "function";
 
 exports["default"] = {
-  Upload: _Upload2["default"],
+  Upload: _upload2["default"],
   isSupported: isSupported,
   defaultOptions: defaultOptions
 };
 module.exports = exports["default"];
 
 },{"./upload":3}],3:[function(require,module,exports){
+/* global window, XMLHttpRequest */
 "use strict";
-
-var _interopRequireWildcard = function (obj) { return obj && obj.__esModule ? obj : { "default": obj }; };
-
-var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-/* global window, XMLHttpRequest */
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var _fingerprint = require("./fingerprint");
 
-var _fingerprint2 = _interopRequireWildcard(_fingerprint);
+var _fingerprint2 = _interopRequireDefault(_fingerprint);
 
 var _extend = require("extend");
 
-var _extend2 = _interopRequireWildcard(_extend);
+var _extend2 = _interopRequireDefault(_extend);
 
 var localStorage = window.localStorage;
 var btoa = window.btoa;
@@ -76,6 +76,7 @@ var defaultOptions = {
   fingerprint: _fingerprint2["default"],
   resume: true,
   onProgress: null,
+  onChunkComplete: null,
   onSuccess: null,
   onError: null,
   headers: {},
@@ -87,7 +88,7 @@ var Upload = (function () {
   function Upload(file, options) {
     _classCallCheck(this, Upload);
 
-    this.options = _extend2["default"](true, {}, defaultOptions, options);
+    this.options = (0, _extend2["default"])(true, {}, defaultOptions, options);
 
     // The underlying File/Blob object
     this.file = file;
@@ -174,6 +175,13 @@ var Upload = (function () {
         this.options.onSuccess();
       }
     }
+
+    /**
+     * Publishes notification when data has been sent to the server. This
+     * data may not have been accepted by the server yet.
+     * @param  {number} bytesSent  Number of bytes sent to the server.
+     * @param  {number} bytesTotal Total number of bytes to be sent to the server.
+     */
   }, {
     key: "_emitProgress",
     value: function _emitProgress(bytesSent, bytesTotal) {
@@ -181,8 +189,23 @@ var Upload = (function () {
         this.options.onProgress(bytesSent, bytesTotal);
       }
     }
+
+    /**
+     * Publishes notification when a chunk of data has been sent to the server
+     * and accepted by the server.
+     * @param  {number} chunkSize  Size of the chunk that was accepted by the
+     *                             server.
+     * @param  {number} bytesAccepted Total number of bytes that have been
+     *                                accepted by the server.
+     * @param  {number} bytesTotal Total number of bytes to be sent to the server.
+     */
   }, {
-    key: "_setupXHR",
+    key: "_emitChunkComplete",
+    value: function _emitChunkComplete(chunkSize, bytesAccepted, bytesTotal) {
+      if (typeof this.options.onChunkComplete === "function") {
+        this.options.onChunkComplete(chunkSize, bytesAccepted, bytesTotal);
+      }
+    }
 
     /**
      * Set the headers used in the request and the withCredentials property
@@ -190,6 +213,8 @@ var Upload = (function () {
      *
      * @param {XMLHttpRequest} xhr
      */
+  }, {
+    key: "_setupXHR",
     value: function _setupXHR(xhr) {
       xhr.setRequestHeader("Tus-Resumable", "1.0.0");
       var headers = this.options.headers;
@@ -200,8 +225,6 @@ var Upload = (function () {
 
       xhr.withCredentials = this.options.withCredentials;
     }
-  }, {
-    key: "_createUpload",
 
     /**
      * Create a new upload using the creation extension by sending a POST
@@ -210,6 +233,8 @@ var Upload = (function () {
      *
      * @api private
      */
+  }, {
+    key: "_createUpload",
     value: function _createUpload() {
       var _this = this;
 
@@ -247,8 +272,6 @@ var Upload = (function () {
 
       xhr.send(null);
     }
-  }, {
-    key: "_resumeUpload",
 
     /*
      * Try to resume an existing upload. First a HEAD request will be sent
@@ -257,6 +280,8 @@ var Upload = (function () {
      *
      * @api private
      */
+  }, {
+    key: "_resumeUpload",
     value: function _resumeUpload() {
       var _this2 = this;
 
@@ -294,8 +319,6 @@ var Upload = (function () {
       this._setupXHR(xhr);
       xhr.send(null);
     }
-  }, {
-    key: "_startUpload",
 
     /**
      * Start uploading the file using PATCH requests. The file while be divided
@@ -304,6 +327,8 @@ var Upload = (function () {
      *
      * @api private
      */
+  }, {
+    key: "_startUpload",
     value: function _startUpload() {
       var _this3 = this;
 
@@ -321,6 +346,8 @@ var Upload = (function () {
           _this3._emitXhrError(xhr, new Error("tus: invalid or missing offset value"));
           return;
         }
+
+        _this3._emitChunkComplete(offset - _this3._offset, offset, _this3.file.size);
 
         _this3._offset = offset;
 
@@ -395,12 +422,20 @@ module.exports = exports["default"];
 
 },{"./fingerprint":1,"extend":4}],4:[function(require,module,exports){
 var hasOwn = Object.prototype.hasOwnProperty;
-var toString = Object.prototype.toString;
+var toStr = Object.prototype.toString;
 var undefined;
+
+var isArray = function isArray(arr) {
+	if (typeof Array.isArray === 'function') {
+		return Array.isArray(arr);
+	}
+
+	return toStr.call(arr) === '[object Array]';
+};
 
 var isPlainObject = function isPlainObject(obj) {
 	'use strict';
-	if (!obj || toString.call(obj) !== '[object Object]') {
+	if (!obj || toStr.call(obj) !== '[object Object]') {
 		return false;
 	}
 
@@ -452,10 +487,10 @@ module.exports = function extend() {
 				}
 
 				// Recurse if we're merging plain objects or arrays
-				if (deep && copy && (isPlainObject(copy) || (copyIsArray = Array.isArray(copy)))) {
+				if (deep && copy && (isPlainObject(copy) || (copyIsArray = isArray(copy)))) {
 					if (copyIsArray) {
 						copyIsArray = false;
-						clone = src && Array.isArray(src) ? src : [];
+						clone = src && isArray(src) ? src : [];
 					} else {
 						clone = src && isPlainObject(src) ? src : {};
 					}
