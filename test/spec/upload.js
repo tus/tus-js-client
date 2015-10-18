@@ -31,7 +31,6 @@ describe("tus", function() {
           bar: "world"
         },
         withCredentials: true,
-        onSuccess: done,
         onProgress: function() {},
         fingerprint: function() {}
       }
@@ -83,6 +82,7 @@ describe("tus", function() {
       })
 
       expect(options.onProgress).toHaveBeenCalledWith(11, 11)
+      done()
     })
 
     it("should resume an upload", function(done) {
@@ -91,7 +91,6 @@ describe("tus", function() {
       var file = new FakeBlob("hello world".split(""))
       var options = {
         endpoint: "/uploads",
-        onSuccess: done,
         onProgress: function() {},
         fingerprint: function() {}
       }
@@ -134,6 +133,7 @@ describe("tus", function() {
       })
 
       expect(options.onProgress).toHaveBeenCalledWith(11, 11)
+      done()
     })
 
     it("should create an upload if resuming fails", function() {
@@ -174,7 +174,6 @@ describe("tus", function() {
       var options = {
         endpoint: "/uploads",
         chunkSize: 7,
-        onSuccess: done,
         onProgress: function() {},
         fingerprint: function() {}
       }
@@ -233,6 +232,7 @@ describe("tus", function() {
         }
       })
       expect(options.onProgress).toHaveBeenCalledWith(11, 11)
+      done()
     })
 
     it("should add the original request to errors", function() {
