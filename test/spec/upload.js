@@ -175,10 +175,12 @@ describe("tus", function() {
         endpoint: "/uploads",
         chunkSize: 7,
         onProgress: function() {},
+        onChunkComplete: function() {},
         fingerprint: function() {}
       }
       spyOn(options, "fingerprint").and.returnValue("fingerprinted")
       spyOn(options, "onProgress")
+      spyOn(options, "onChunkComplete")
 
       var upload = new tus.Upload(file, options)
       upload.start()
@@ -232,6 +234,8 @@ describe("tus", function() {
         }
       })
       expect(options.onProgress).toHaveBeenCalledWith(11, 11)
+      expect(options.onChunkComplete).toHaveBeenCalledWith(7, 7, 11)
+      expect(options.onChunkComplete).toHaveBeenCalledWith(4, 11, 11)
       done()
     })
 
