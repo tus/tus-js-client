@@ -21,25 +21,47 @@
       </div>
 
       <br />
-      
-      <label>
-          Upload endpoint:
-          <input type="text" id="endpoint" name="endpoint" value="http://master.tus.io:8080/files/">
-      </label>
+
+      <table>
+        <tr>
+          <td>
+            <label for="endpoint">
+              Upload endpoint:
+            </label>
+          </td>
+          <td>
+            <input type="text" id="endpoint" name="endpoint" value="http://master.tus.io:8080/files/">
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label for="chunksize">
+              Chunk size (bytes):
+            </label>
+          </td>
+          <td>
+            <input type="number" id="chunksize" name="chunksize">
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label for="resume">
+              Perform full upload:
+              <br />
+              <small>(even if we could resume)</small>
+            </label>
+          </td>
+          <td>
+            <input type="checkbox" id="resume">
+          </td>
+        </tr>
+      </table>
       
       <br />
-      
-      <label>
-          Chunk size (bytes):
-          <input type="number" id="chunksize" name="chunksize">
-      </label>
-      
-      <input type="file"><br />
-      <label>
-        <input type="checkbox" id="resume">
-        Perform full upload (even if we could resume)
-      </label>
 
+      <input type="file">
+
+      <br />
       <br />
 
       <div class="row">
