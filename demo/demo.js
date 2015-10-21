@@ -26,8 +26,8 @@ input.addEventListener("change", function(e) {
 
   stopBtn.classList.remove("disabled")
   var endpoint = endpointInput.value
-  var chunkSize = chunkInput.value
-  if (chunkSize == null || chunkSize == "") {
+  var chunkSize = parseInt(chunkInput.value, 10)
+  if (isNaN(chunkSize)) {
     chunkSize = Infinity
   }
 
