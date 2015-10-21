@@ -26,7 +26,6 @@
     "babelify": "^6.0.2",
     "browserify": "^9.0.8",
     "eslint": "^1.6.0",
-    "jscs": "^1.13.1",
     "uglify-js": "^2.4.24",
     "watchify": "^3.1.1",
     "zuul": "^3.6.0"
