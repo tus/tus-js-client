@@ -79,7 +79,7 @@ This option is only used if the `resume` flag is set to true.
 resume the upload if the upload has been started in the past. This includes
 storing the file's fingerprint. Use `false` to force an entire reupload.
 * `onProgress = null`: a function that will be called each time progress
-information is available. The arguments will be `bytesUploaded` and `bytesTotal`.
+information is available. The arguments will be `bytesSent` and `bytesTotal`.
 * `onChunkComplete = null`: a function that will be called each time a chunk
 has been successfully uploaded. The arguments will be `chunkSize`,
 `bytesAccepted`, `bytesTotal`.
@@ -134,6 +134,22 @@ If no upload can be resume it will create a new upload using the supplied
 
 Abort the currently running upload request and don't continue. You can resume
 the upload by calling the `start` method again.
+
+### Difference between onProgress and onChunkComplete
+
+When configuring a new uploader, the `onProgress` and `onChunkComplete`
+callbacks are available. While they may seem to be equal based on their
+naming and the arguments, they provide different information in reality.
+Progress events are emitted using the `onProgress` option and provide numbers
+about how must data has been sent to the server. However, this data may not
+have been received or accepted by the endpoint. Imagine a network outage where
+the browser reports to have successfully sent 100 bytes, but none of them ever
+reach the backend. In order to provide reliable information about whether the
+chunks have been accepted by the server, `onChunkComplete` is only invoked if
+we have evidence that the remote endpoint has received and accepted the
+uploaded bytes. When consuming this functionality, the `chunkSize` option is
+from high importance since the callback will and invoked if an entire chunk
+has been uploaded.
 
 ## Building
 
