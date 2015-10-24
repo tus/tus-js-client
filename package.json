@@ -31,7 +31,7 @@
     "zuul": "^3.6.0"
   },
   "dependencies": {
-    "extend": "^2.0.0"
+    "extend": "^3.0.0"
   },
   "scripts": {
     "build": "browserify lib/index.js -t babelify -o dist/tus.js -s tus",
