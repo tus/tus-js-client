@@ -1,5 +1,12 @@
 language: node_js
-
 script:
 - npm run lint
 - npm test
+deploy:
+  provider: npm
+  email: marius@accoplex.com
+  api_key:
+    secure: MZA9k9AhCQTkOOpYeJKzoUSFiRgR4xzEEeQED2ktiulsiw2kh3GnL6Bv9SgZtuPHaiAHb5trEiDREH0+LW0XggWdg76RR9ZFhelNfsqVC/D/eEp+JphBCx5r137gH1iRKyZH3MqofgS/AAoC0PqjYJ6PzMWoQrrdqbVQlofmbOE=
+  on:
+    tags: true
+    repo: tus/tus-js-client
