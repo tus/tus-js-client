@@ -28,7 +28,8 @@ describe("tus", function() {
         },
         metadata: {
           foo: "hello",
-          bar: "world"
+          bar: "world",
+          nonlatin: "słońce"
         },
         withCredentials: true,
         onProgress: function() {},
@@ -50,7 +51,7 @@ describe("tus", function() {
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0")
       expect(req.requestHeaders["Upload-Length"]).toBe(file.size)
       if("btoa" in window) {
-        expect(req.requestHeaders["Upload-Metadata"]).toBe("foo aGVsbG8=,bar d29ybGQ=")
+        expect(req.requestHeaders["Upload-Metadata"]).toBe("foo aGVsbG8=,bar d29ybGQ=,nonlatin c8WCb8WEY2U=")
       }
 
       req.respondWith({
