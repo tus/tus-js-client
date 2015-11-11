@@ -29,7 +29,7 @@
     "phantomjs": "^1.9.18",
     "uglify-js": "^2.4.24",
     "watchify": "^3.5.0",
-    "zuul": "^3.6.0"
+    "zuul": "^3.7.2"
   },
   "dependencies": {
     "extend": "^3.0.0"
