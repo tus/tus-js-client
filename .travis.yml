@@ -7,7 +7,8 @@ deploy:
   provider: npm
   email: marius@accoplex.com
   api_key:
-    secure: MZA9k9AhCQTkOOpYeJKzoUSFiRgR4xzEEeQED2ktiulsiw2kh3GnL6Bv9SgZtuPHaiAHb5trEiDREH0+LW0XggWdg76RR9ZFhelNfsqVC/D/eEp+JphBCx5r137gH1iRKyZH3MqofgS/AAoC0PqjYJ6PzMWoQrrdqbVQlofmbOE=
+    secure: jyOlnZKkGmt1/3YH3Gs00zkOD7R0iXmHhtSsWCXrtlWXr8XqjH5DH6WRNOvr2JnI1NJO2Zz0e1EAjKNbUVfS/SWELlR9GX+yJr9QtgWce92zizL4Finp3VeGtZ8ZBBukbPogQW80Dvc8zb2FhpnxdW83lGlqGqyL7o7BT+0S7tQ=
+  skip_cleanup: true
   on:
     tags: true
     repo: tus/tus-js-client
