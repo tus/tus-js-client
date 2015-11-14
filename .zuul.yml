@@ -18,4 +18,4 @@ browsers:
     - name: android
       version: 4.0..latest
     - name: iphone
-      version: 5.1..latest
+      version: 5.1..8.4
