@@ -21,6 +21,7 @@ function fingerprint(file) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.defaultOptions = exports.isSupported = exports.Upload = undefined;
 
 var _upload = require("./upload");
 
@@ -37,11 +38,9 @@ var Blob = _window.Blob;
 
 var isSupported = XMLHttpRequest && localStorage && Blob && typeof Blob.prototype.slice === "function";
 
-exports.default = {
-  Upload: _upload2.default,
-  isSupported: isSupported,
-  defaultOptions: defaultOptions
-};
+exports.Upload = _upload2.default;
+exports.isSupported = isSupported;
+exports.defaultOptions = defaultOptions;
 
 },{"./upload":3}],3:[function(require,module,exports){
 "use strict";
