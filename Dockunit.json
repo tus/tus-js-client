@@ -1,0 +1,44 @@
+{
+  "containers": [
+    {
+      "prettyName": "nodejs latest",
+      "image": "node:latest",
+      "testCommand": "npm test",
+      "beforeScripts": [
+        "npm install",
+        "npm run lint",
+        "npm run dist"
+      ]
+    },
+    {
+      "prettyName": "nodejs 5.0.0",
+      "image": "node:5.0.0",
+      "testCommand": "npm test",
+      "beforeScripts": [
+        "npm install",
+        "npm run lint",
+        "npm run dist"
+      ]
+    },
+    {
+      "prettyName": "nodejs 4.2.2",
+      "image": "node:4.2.2",
+      "testCommand": "npm test",
+      "beforeScripts": [
+        "npm install",
+        "npm run lint",
+        "npm run dist"
+      ]
+    },
+    {
+      "prettyName": "nodejs 0.12.7",
+      "image": "node:0.12.7",
+      "testCommand": "npm test",
+      "beforeScripts": [
+        "npm install",
+        "npm run lint",
+        "npm run dist"
+      ]
+    }
+  ]
+}
