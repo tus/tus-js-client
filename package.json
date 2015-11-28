@@ -1,8 +1,9 @@
 {
   "name": "tus-js-client",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A pure JavaScript client for the tus resumable upload protocol",
-  "browser": "lib/index.js",
+  "browser": "dist/tus.js",
+  "main": "dist/tus.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/tus/tus-js-client.git"
