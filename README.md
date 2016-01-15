@@ -60,6 +60,29 @@ retrieving the upload URL using the fingerprint. The client is even able to
 resume after you close your browser or shut down your device. Now the client can
 continue to send `PATCH` requests to the server until the upload is finished.
 
+## Extension support
+
+The tus specification defines multiple [extensions](http://tus.io/protocols/resumable-upload.html#protocol-extensions) which can be optionally
+implemented beside the core protocol enabling specific functionality. Not all
+of these extensions are interesting or even useful for a client-side library
+and therefore support for all of them in tus-js-client is not guranteed.
+
+* The **Creation** extension is mostly implemented and is used for creating the
+upload. Deferring the upload's length is not possible at the moment.
+
+* The Checksum extension requires that the checksum is calculated inside the
+browser. While this is totally doable today, it's particularly expensive and
+time intensive for bigger files and on mobile devices. One solution is to
+utilise the new Web Crypto API, which probably offers better performance and
+security, but you could argue whether it has reached critical mass yet.
+
+* The Concatenation extension is mostly meant for parallel uploads where you
+need to utilise multiple HTTP connections. In most cases, this does not apply
+to the environment of the browser but it can also be used for different things.
+
+At the moment, coverage for these extensions is not great but we promise to
+improve this situation in the near future.
+
 ## Documentation
 
 ### tus.isSupported
