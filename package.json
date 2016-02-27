@@ -2,8 +2,9 @@
   "name": "tus-js-client",
   "version": "1.1.3",
   "description": "A pure JavaScript client for the tus resumable upload protocol",
-  "browser": "dist/tus.js",
-  "main": "dist/tus.js",
+  "browser": "lib.es5/index.js",
+  "main": "lib.es5/index.js",
+  "jsnext:main": "lib/index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/tus/tus-js-client.git"
@@ -45,6 +46,12 @@
     "zuul-test": "zuul test/spec/upload.js",
     "minify": "uglifyjs ./dist/tus.js -o ./dist/tus.min.js",
     "dist": "npm run build && npm run minify",
-    "lint": "eslint *.js lib"
-  }
+    "lint": "eslint *.js lib",
+    "prepublish": "babel -d lib.es5/ lib/"
+  },
+  "pre-commit": [
+    "lint",
+    "dist",
+    "prepublish"
+  ]
 }
