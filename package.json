@@ -49,7 +49,7 @@
     "minify": "uglifyjs ./dist/tus.js -o ./dist/tus.min.js",
     "dist": "npm run build && npm run minify",
     "lint": "eslint *.js lib",
-    "transpile": "babel -d lib.es5/ lib/"
+    "transpile": "babel -d lib.es5/ --preset es2015 lib/"
   },
   "pre-commit": [
     "lint",
