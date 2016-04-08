@@ -4,10 +4,6 @@
  * @param {File} file
  * @return {String}
  */
-"use strict";
-
-module.exports = fingerprint;
-
-function fingerprint(file) {
+export default function fingerprint(file) {
   return ["tus", file.name, file.type, file.size, file.lastModified].join("-");
 }

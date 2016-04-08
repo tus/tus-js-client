@@ -309,6 +309,20 @@ var Upload = (function () {
           return;
         }
 
+        var length = parseInt(xhr.getResponseHeader("Upload-Length"), 10);
+        if (isNaN(length)) {
+          _this2._emitXhrError(xhr, new Error("tus: invalid or missing length value"));
+          return;
+        }
+
+        // Upload has already been completed and we do not need to send additional
+        // data to the server
+        if (offset === length) {
+          _this2._emitProgress(length, length);
+          _this2._emitSuccess();
+          return;
+        }
+
         _this2._offset = offset;
         _this2._startUpload();
       };
