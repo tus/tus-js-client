@@ -1,16 +1,26 @@
-/* global window */
-import Upload from "./upload";
+"use strict";
 
-const { defaultOptions } = Upload;
-const { XMLHttpRequest, localStorage, Blob } = window;
+var _upload = require("./upload");
 
-const isSupported = XMLHttpRequest && localStorage && Blob && typeof Blob.prototype.slice === "function";
+var _upload2 = _interopRequireDefault(_upload);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var defaultOptions = _upload2.default.defaultOptions; /* global window */
+
+var _window = window;
+var XMLHttpRequest = _window.XMLHttpRequest;
+var localStorage = _window.localStorage;
+var Blob = _window.Blob;
+
+
+var isSupported = XMLHttpRequest && localStorage && Blob && typeof Blob.prototype.slice === "function";
 
 // The usage of the commonjs exporting syntax instead of the new ECMAScript
 // one is actually inteded and prevents weird behaviour if we are trying to
 // import this module in another module using Babel.
 module.exports = {
-  Upload,
-  isSupported,
-  defaultOptions
+  Upload: _upload2.default,
+  isSupported: isSupported,
+  defaultOptions: defaultOptions
 };
