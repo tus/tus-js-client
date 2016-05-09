@@ -3,6 +3,8 @@ script:
 - npm run lint
 - npm run dist
 - npm test
+env:
+  secure: KatepAacTQlhrJMYrYuQXwXh1SZUWTbYaJFyhwduuJn0z09Z7a6z2p+5qUkQBLQfubj+OmMyofZvQqlskpuxDG2l+FjU9m7p/cG11o6oHrZp+og4SDQI0JyCCazJl69Mun4Q8oOOwcOCRS7KAeyzH50t+cAZ5xhyXMwocKog62E=
 deploy:
   provider: npm
   email: marius@accoplex.com
