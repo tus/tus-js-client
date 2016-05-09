@@ -5,6 +5,8 @@ scripts:
 browsers:
     - name: internet explorer
       version: 9..latest
+    - name: microsoftedge
+      version: 13..latest
     - name: firefox
       platform: linux
       version: 31..latest
@@ -18,7 +20,7 @@ browsers:
     - name: android
       version: 4.0..latest
     - name: iphone
-      version: 5.1..8.4
+      version: 5.1..latest
 tunnel:
   type: ngrok
   proto: tcp
