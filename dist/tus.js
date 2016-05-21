@@ -31,6 +31,7 @@ var XMLHttpRequest = _window.XMLHttpRequest;
 var localStorage = _window.localStorage;
 var Blob = _window.Blob;
 
+
 var isSupported = XMLHttpRequest && localStorage && Blob && typeof Blob.prototype.slice === "function";
 
 // The usage of the commonjs exporting syntax instead of the new ECMAScript
@@ -45,11 +46,12 @@ module.exports = {
 },{"./upload":3}],3:[function(_dereq_,module,exports){
 "use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })(); /* global window, XMLHttpRequest */
-
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /* global window, XMLHttpRequest */
+
 
 var _fingerprint = _dereq_("./fingerprint");
 
@@ -67,6 +69,7 @@ var _window = window;
 var localStorage = _window.localStorage;
 var btoa = _window.btoa;
 
+
 var defaultOptions = {
   endpoint: "",
   fingerprint: _fingerprint2.default,
@@ -80,7 +83,7 @@ var defaultOptions = {
   withCredentials: false
 };
 
-var Upload = (function () {
+var Upload = function () {
   function Upload(file, options) {
     _classCallCheck(this, Upload);
 
@@ -270,7 +273,9 @@ var Upload = (function () {
         xhr.setRequestHeader("Upload-Metadata", metadata);
       }
 
-      xhr.send(null);
+      var params = JSON.stringify(this.options.params) || null;
+
+      xhr.send(params);
     }
 
     /*
@@ -415,7 +420,7 @@ var Upload = (function () {
   }]);
 
   return Upload;
-})();
+}();
 
 function encodeMetadata(metadata) {
   if (!("btoa" in window)) {

@@ -31,6 +31,12 @@ describe("tus", function() {
           bar: "world",
           nonlatin: "słońce"
         },
+        params: {
+          foo: "hello",
+          bar: {
+            biz: "baz"
+          }
+        },
         withCredentials: true,
         onProgress: function() {},
         fingerprint: function() {}
@@ -53,6 +59,7 @@ describe("tus", function() {
       if("btoa" in window) {
         expect(req.requestHeaders["Upload-Metadata"]).toBe("foo aGVsbG8=,bar d29ybGQ=,nonlatin c8WCb8WEY2U=")
       }
+      expect(req.params).toBe(JSON.stringify(options.params));
 
       req.respondWith({
         status: 201,
