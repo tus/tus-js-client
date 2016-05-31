@@ -21,8 +21,6 @@ var _extend2 = _interopRequireDefault(_extend);
 
 var _request = require("./node/request");
 
-var _request2 = _interopRequireDefault(_request);
-
 var _base = require("./node/base64");
 
 var Base64 = _interopRequireWildcard(_base);
@@ -208,7 +206,7 @@ var Upload = function () {
     value: function _createUpload() {
       var _this = this;
 
-      var xhr = new _request2.default();
+      var xhr = (0, _request.newRequest)();
       xhr.open("POST", this.options.endpoint, true);
 
       xhr.onload = function () {
@@ -256,7 +254,7 @@ var Upload = function () {
     value: function _resumeUpload() {
       var _this2 = this;
 
-      var xhr = new _request2.default();
+      var xhr = (0, _request.newRequest)();
       xhr.open("HEAD", this.url, true);
 
       xhr.onload = function () {
@@ -318,7 +316,7 @@ var Upload = function () {
     value: function _startUpload() {
       var _this3 = this;
 
-      var xhr = this._xhr = new _request2.default();
+      var xhr = this._xhr = (0, _request.newRequest)();
       xhr.open("PATCH", this.url, true);
 
       xhr.onload = function () {

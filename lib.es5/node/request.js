@@ -5,6 +5,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.newRequest = newRequest;
 
 var _http = require("http");
 
@@ -32,7 +33,6 @@ var Request = function () {
 
     this.onerror = noop;
     this.onload = noop;
-    this.onprogress = noop;
 
     // Ignored field
     this.withCredentials = false;
@@ -87,4 +87,6 @@ var Request = function () {
   return Request;
 }();
 
-exports.default = Request;
+function newRequest() {
+  return new Request();
+};

@@ -4,6 +4,61 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.encode = encode;
+/* global: window */
+
+var _window = window;
+var btoa = _window.btoa;
+function encode(data) {
+  return btoa(unescape(encodeURIComponent(data)));
+}
+
+var isSupported = exports.isSupported = "btoa" in window;
+
+},{}],2:[function(_dereq_,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.newRequest = newRequest;
+/* global window */
+
+function newRequest() {
+  return new window.XMLHttpRequest();
+};
+
+},{}],3:[function(_dereq_,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.setItem = setItem;
+exports.getItem = getItem;
+exports.removeItem = removeItem;
+/* global window */
+
+var _window = window;
+var localStorage = _window.localStorage;
+function setItem(key, value) {
+  return localStorage.setItem(key, value);
+}
+
+function getItem(key) {
+  return localStorage.getItem(key);
+}
+
+function removeItem(key) {
+  return localStorage.removeItem(key);
+}
+
+},{}],4:[function(_dereq_,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 exports.default = fingerprint;
 /**
  * Generate a fingerprint for a file which will be used the store the endpoint
@@ -15,7 +70,7 @@ function fingerprint(file) {
   return ["tus", file.name, file.type, file.size, file.lastModified].join("-");
 }
 
-},{}],2:[function(_dereq_,module,exports){
+},{}],5:[function(_dereq_,module,exports){
 "use strict";
 
 var _upload = _dereq_("./upload");
@@ -26,12 +81,18 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var defaultOptions = _upload2.default.defaultOptions; /* global window */
 
-var _window = window;
-var XMLHttpRequest = _window.XMLHttpRequest;
-var localStorage = _window.localStorage;
-var Blob = _window.Blob;
+if (typeof window !== "undefined") {
+  // Browser environment using XMLHttpRequest
+  var _window = window;
+  var XMLHttpRequest = _window.XMLHttpRequest;
+  var localStorage = _window.localStorage;
+  var Blob = _window.Blob;
 
-var isSupported = XMLHttpRequest && localStorage && Blob && typeof Blob.prototype.slice === "function";
+  var isSupported = XMLHttpRequest && localStorage && Blob && typeof Blob.prototype.slice === "function";
+} else {
+  // Node.js environment using http module
+  var isSupported = true;
+}
 
 // The usage of the commonjs exporting syntax instead of the new ECMAScript
 // one is actually inteded and prevents weird behaviour if we are trying to
@@ -42,10 +103,13 @@ module.exports = {
   defaultOptions: defaultOptions
 };
 
-},{"./upload":3}],3:[function(_dereq_,module,exports){
+},{"./upload":6}],6:[function(_dereq_,module,exports){
 "use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })(); /* global window, XMLHttpRequest */
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })(); /* global window */
+
+// We import the files used inside the Node environment which are rewritten
+// for browsers using the rules defined in the package.json
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -59,13 +123,21 @@ var _extend = _dereq_("extend");
 
 var _extend2 = _interopRequireDefault(_extend);
 
+var _request = _dereq_("./node/request");
+
+var _base = _dereq_("./node/base64");
+
+var Base64 = _interopRequireWildcard(_base);
+
+var _storage = _dereq_("./node/storage");
+
+var Storage = _interopRequireWildcard(_storage);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var _window = window;
-var localStorage = _window.localStorage;
-var btoa = _window.btoa;
 
 var defaultOptions = {
   endpoint: "",
@@ -111,7 +183,7 @@ var Upload = (function () {
       var file = this.file;
 
       if (!file) {
-        this._emitError(new Error("tus: no file to upload provided"));
+        this._emitError(new Error("tus: no file or stream to upload provided"));
         return;
       }
 
@@ -126,10 +198,10 @@ var Upload = (function () {
         return;
       }
 
-      // Try to find the endpoint for the file in the localStorage
+      // Try to find the endpoint for the file in the storage
       if (this.options.resume) {
         this._fingerprint = this.options.fingerprint(file);
-        var resumedUrl = localStorage.getItem(this._fingerprint);
+        var resumedUrl = Storage.getItem(this._fingerprint);
 
         if (resumedUrl != null) {
           this.url = resumedUrl;
@@ -238,7 +310,7 @@ var Upload = (function () {
     value: function _createUpload() {
       var _this = this;
 
-      var xhr = new XMLHttpRequest();
+      var xhr = (0, _request.newRequest)();
       xhr.open("POST", this.options.endpoint, true);
 
       xhr.onload = function () {
@@ -250,7 +322,7 @@ var Upload = (function () {
         _this.url = xhr.getResponseHeader("Location");
 
         if (_this.options.resume) {
-          localStorage.setItem(_this._fingerprint, _this.url);
+          Storage.setItem(_this._fingerprint, _this.url);
         }
 
         _this._offset = 0;
@@ -286,7 +358,7 @@ var Upload = (function () {
     value: function _resumeUpload() {
       var _this2 = this;
 
-      var xhr = new XMLHttpRequest();
+      var xhr = (0, _request.newRequest)();
       xhr.open("HEAD", this.url, true);
 
       xhr.onload = function () {
@@ -294,7 +366,7 @@ var Upload = (function () {
           if (_this2.options.resume) {
             // Remove stored fingerprint and corresponding endpoint,
             // since the file can not be found
-            localStorage.removeItem(_this2._fingerprint);
+            Storage.removeItem(_this2._fingerprint);
           }
 
           // Try to create a new upload
@@ -348,7 +420,7 @@ var Upload = (function () {
     value: function _startUpload() {
       var _this3 = this;
 
-      var xhr = this._xhr = new XMLHttpRequest();
+      var xhr = this._xhr = (0, _request.newRequest)();
       xhr.open("PATCH", this.url, true);
 
       xhr.onload = function () {
@@ -418,14 +490,14 @@ var Upload = (function () {
 })();
 
 function encodeMetadata(metadata) {
-  if (!("btoa" in window)) {
+  if (!Base64.isSupported) {
     return "";
   }
 
   var encoded = [];
 
   for (var key in metadata) {
-    encoded.push(key + " " + btoa(unescape(encodeURIComponent(metadata[key]))));
+    encoded.push(key + " " + Base64.encode(metadata[key]));
   }
 
   return encoded.join(",");
@@ -435,7 +507,7 @@ Upload.defaultOptions = defaultOptions;
 
 exports.default = Upload;
 
-},{"./fingerprint":1,"extend":4}],4:[function(_dereq_,module,exports){
+},{"./fingerprint":4,"./node/base64":1,"./node/request":2,"./node/storage":3,"extend":7}],7:[function(_dereq_,module,exports){
 'use strict';
 
 var hasOwn = Object.prototype.hasOwnProperty;
@@ -523,5 +595,5 @@ module.exports = function extend() {
 };
 
 
-},{}]},{},[2])(2)
+},{}]},{},[5])(5)
 });

@@ -5,9 +5,9 @@
   "main": "lib.es5/index.js",
   "jsnext:main": "lib/index.js",
   "browser": {
-    "./lib.es5/node/request.js": "./lib.es5/browser/request.js",
-    "./lib.es5/node/base64.js": "./lib.es5/browser/base64.js",
-    "./lib.es5/node/storage.js": "./lib.es5/browser/storage.js"
+    "./lib/node/request.js": "./lib/browser/request.js",
+    "./lib/node/base64.js": "./lib/browser/base64.js",
+    "./lib/node/storage.js": "./lib/browser/storage.js"
   },
   "repository": {
     "type": "git",
@@ -46,8 +46,8 @@
     "extend": "^3.0.0"
   },
   "scripts": {
-    "build": "browserify lib/index/browser.js -t [ babelify --presets [ es2015 ] ] -s tus | derequire > dist/tus.js",
-    "watch": "watchify lib/index/browser.js -t babelify -o dist/tus.js -s tus -v",
+    "build": "browserify lib/index.js -t [ babelify --presets [ es2015 ] ] -s tus | derequire > dist/tus.js",
+    "watch": "watchify lib/index.js -t babelify -o dist/tus.js -s tus -v",
     "test": "./bin/test",
     "phantom-test": "zuul test/spec/upload.js --phantom",
     "zuul-test": "zuul test/spec/upload.js",

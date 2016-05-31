@@ -3,6 +3,9 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.newRequest = newRequest;
 /* global window */
 
-exports.default = window.XMLHttpRequest;
+function newRequest() {
+  return new window.XMLHttpRequest();
+};
