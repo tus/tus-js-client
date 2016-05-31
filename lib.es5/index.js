@@ -8,13 +8,19 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var defaultOptions = _upload2.default.defaultOptions; /* global window */
 
-var _window = window;
-var XMLHttpRequest = _window.XMLHttpRequest;
-var localStorage = _window.localStorage;
-var Blob = _window.Blob;
+if (typeof window !== "undefined") {
+  // Browser environment using XMLHttpRequest
+  var _window = window;
+  var XMLHttpRequest = _window.XMLHttpRequest;
+  var localStorage = _window.localStorage;
+  var Blob = _window.Blob;
 
 
-var isSupported = XMLHttpRequest && localStorage && Blob && typeof Blob.prototype.slice === "function";
+  var isSupported = XMLHttpRequest && localStorage && Blob && typeof Blob.prototype.slice === "function";
+} else {
+  // Node.js environment using http module
+  var isSupported = true;
+}
 
 // The usage of the commonjs exporting syntax instead of the new ECMAScript
 // one is actually inteded and prevents weird behaviour if we are trying to

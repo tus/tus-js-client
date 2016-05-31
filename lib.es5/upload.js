@@ -1,6 +1,10 @@
 "use strict";
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /* global window, XMLHttpRequest */
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /* global window */
+
+
+// We import the files used inside the Node environment which are rewritten
+// for browsers using the rules defined in the package.json
 
 
 Object.defineProperty(exports, "__esModule", {
@@ -15,14 +19,23 @@ var _extend = require("extend");
 
 var _extend2 = _interopRequireDefault(_extend);
 
+var _request = require("./node/request");
+
+var _request2 = _interopRequireDefault(_request);
+
+var _base = require("./node/base64");
+
+var Base64 = _interopRequireWildcard(_base);
+
+var _storage = require("./node/storage");
+
+var Storage = _interopRequireWildcard(_storage);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var _window = window;
-var localStorage = _window.localStorage;
-var btoa = _window.btoa;
-
 
 var defaultOptions = {
   endpoint: "",
@@ -68,7 +81,7 @@ var Upload = function () {
       var file = this.file;
 
       if (!file) {
-        this._emitError(new Error("tus: no file to upload provided"));
+        this._emitError(new Error("tus: no file or stream to upload provided"));
         return;
       }
 
@@ -83,10 +96,10 @@ var Upload = function () {
         return;
       }
 
-      // Try to find the endpoint for the file in the localStorage
+      // Try to find the endpoint for the file in the storage
       if (this.options.resume) {
         this._fingerprint = this.options.fingerprint(file);
-        var resumedUrl = localStorage.getItem(this._fingerprint);
+        var resumedUrl = Storage.getItem(this._fingerprint);
 
         if (resumedUrl != null) {
           this.url = resumedUrl;
@@ -195,7 +208,7 @@ var Upload = function () {
     value: function _createUpload() {
       var _this = this;
 
-      var xhr = new XMLHttpRequest();
+      var xhr = new _request2.default();
       xhr.open("POST", this.options.endpoint, true);
 
       xhr.onload = function () {
@@ -207,7 +220,7 @@ var Upload = function () {
         _this.url = xhr.getResponseHeader("Location");
 
         if (_this.options.resume) {
-          localStorage.setItem(_this._fingerprint, _this.url);
+          Storage.setItem(_this._fingerprint, _this.url);
         }
 
         _this._offset = 0;
@@ -243,7 +256,7 @@ var Upload = function () {
     value: function _resumeUpload() {
       var _this2 = this;
 
-      var xhr = new XMLHttpRequest();
+      var xhr = new _request2.default();
       xhr.open("HEAD", this.url, true);
 
       xhr.onload = function () {
@@ -251,7 +264,7 @@ var Upload = function () {
           if (_this2.options.resume) {
             // Remove stored fingerprint and corresponding endpoint,
             // since the file can not be found
-            localStorage.removeItem(_this2._fingerprint);
+            Storage.removeItem(_this2._fingerprint);
           }
 
           // Try to create a new upload
@@ -305,7 +318,7 @@ var Upload = function () {
     value: function _startUpload() {
       var _this3 = this;
 
-      var xhr = this._xhr = new XMLHttpRequest();
+      var xhr = this._xhr = new _request2.default();
       xhr.open("PATCH", this.url, true);
 
       xhr.onload = function () {
@@ -375,14 +388,14 @@ var Upload = function () {
 }();
 
 function encodeMetadata(metadata) {
-  if (!("btoa" in window)) {
+  if (!Base64.isSupported) {
     return "";
   }
 
   var encoded = [];
 
   for (var key in metadata) {
-    encoded.push(key + " " + btoa(unescape(encodeURIComponent(metadata[key]))));
+    encoded.push(key + " " + Base64.encode(metadata[key]));
   }
 
   return encoded.join(",");
