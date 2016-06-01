@@ -597,3 +597,4 @@ module.exports = function extend() {
 
 },{}]},{},[5])(5)
 });
+//# sourceMappingURL=tus.js.map
