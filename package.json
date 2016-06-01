@@ -56,10 +56,5 @@
     "dist": "npm run build && npm run minify",
     "lint": "eslint *.js lib",
     "transpile": "babel -d lib.es5/ --presets es2015 lib/"
-  },
-  "pre-commit": [
-    "lint",
-    "dist",
-    "transpile"
-  ]
+  }
 }
