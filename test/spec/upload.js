@@ -307,5 +307,54 @@ describe("tus", function() {
       expect(options.onSuccess).toHaveBeenCalled()
       done()
     })
+
+    it("should resume an upload from a specified url", function(done) {
+      var file = new FakeBlob("hello world".split(""))
+      var options = {
+        endpoint: "/uploads",
+        uploadUrl: "/files/upload",
+        onProgress: function() {},
+        fingerprint: function() {}
+      }
+      spyOn(options, "fingerprint").and.returnValue("fingerprinted")
+      spyOn(options, "onProgress")
+
+      var upload = new tus.Upload(file, options)
+      upload.start()
+
+      expect(options.fingerprint.calls.count()).toEqual(0)
+      expect(upload.url).toBe("/files/upload")
+
+      var req = jasmine.Ajax.requests.mostRecent()
+      expect(req.url).toBe("/files/upload")
+      expect(req.method).toBe("HEAD")
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0")
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Length": 11,
+          "Upload-Offset": 3
+        }
+      })
+
+      req = jasmine.Ajax.requests.mostRecent()
+      expect(req.url).toBe("/files/upload")
+      expect(req.method).toBe("PATCH")
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0")
+      expect(req.requestHeaders["Upload-Offset"]).toBe(3)
+      expect(req.contentType()).toBe("application/offset+octet-stream")
+      expect(req.params.size).toBe(file.size - 3)
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": file.size
+        }
+      })
+
+      expect(options.onProgress).toHaveBeenCalledWith(11, 11)
+      done()
+    })
   })
 })

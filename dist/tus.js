@@ -149,7 +149,8 @@ var defaultOptions = {
   onError: null,
   headers: {},
   chunkSize: Infinity,
-  withCredentials: false
+  withCredentials: false,
+  uploadUrl: null
 };
 
 var Upload = (function () {
@@ -193,7 +194,8 @@ var Upload = (function () {
       }
 
       // A URL has manually been specified, so we try to resume
-      if (this.url !== null) {
+      if (this.options.uploadUrl != null) {
+        this.url = this.options.uploadUrl;
         this._resumeUpload();
         return;
       }

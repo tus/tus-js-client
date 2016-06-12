@@ -118,6 +118,10 @@ uploaded in a single request
 * `metadata = {}`: an object with string values used as additional meta data
 which will be passed along to the server when (and only when) creating a new
 upload. Can be used for filenames, file types etc.
+* `uploadUrl = null`: a URL which will be used to directly attempt a resume
+without generating the fingerprint and looking it up before. If this attempt
+fails it will fall back to creating a new upload using the URL specified in
+`endpoint`.
 
 ### new tus.Upload(file, options)
 
