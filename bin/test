@@ -1,20 +1,18 @@
 #!/bin/bash
+# Exit immediately if an error occurs without continuing
+set -e
 
 # Move into a known directory
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR/..
 
-npm run phantom-test -s
-result=$?
-if [ "$result" = 0 ];
-then
-  if [ "${CI}" = "true" ] && [ "${TRAVIS_PULL_REQUEST}" = "false" ];
-  then
-    npm run zuul-test -s
-    result=$?
-  else
-    echo "Skipping zuul-test as this is not a master CI branch test run"
-  fi
-fi
+# Run tests in Phantom browser and Node first
+npm run phantom-test
+npm run node-test
 
-exit $result
+if [ "${CI}" = "true" ] && [ "${TRAVIS_PULL_REQUEST}" = "false" ];
+then
+  npm run zuul-test
+else
+  echo "Skipping zuul-test as this is not a master CI branch test run"
+fi

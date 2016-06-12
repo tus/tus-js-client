@@ -45,7 +45,8 @@ var defaultOptions = {
   onError: null,
   headers: {},
   chunkSize: Infinity,
-  withCredentials: false
+  withCredentials: false,
+  uploadUrl: null
 };
 
 var Upload = function () {
@@ -71,6 +72,9 @@ var Upload = function () {
 
     // True if the current PATCH request has been aborted
     this._aborted = false;
+
+    // The file's size in bytes
+    this._size = null;
   }
 
   _createClass(Upload, [{
@@ -88,8 +92,16 @@ var Upload = function () {
         return;
       }
 
+      // Allow File#size (browsers) and Buffer#length (Node) as sizes
+      this._size = file.size || file.length || null;
+      if (this._size == null) {
+        this._emitError(new Error("tus: file's size not provided"));
+        return;
+      }
+
       // A URL has manually been specified, so we try to resume
-      if (this.url !== null) {
+      if (this.options.uploadUrl != null) {
+        this.url = this.options.uploadUrl;
         this._resumeUpload();
         return;
       }
@@ -230,7 +242,7 @@ var Upload = function () {
       };
 
       this._setupXHR(xhr);
-      xhr.setRequestHeader("Upload-Length", this.file.size);
+      xhr.setRequestHeader("Upload-Length", this._size);
 
       // Add metadata if values have been added
       var metadata = encodeMetadata(this.options.metadata);
@@ -331,11 +343,11 @@ var Upload = function () {
           return;
         }
 
-        _this3._emitChunkComplete(offset - _this3._offset, offset, _this3.file.size);
+        _this3._emitChunkComplete(offset - _this3._offset, offset, _this3._size);
 
         _this3._offset = offset;
 
-        if (offset == _this3.file.size) {
+        if (offset == _this3._size) {
           // Yay, finally done :)
           // Emit a last progress event
           _this3._emitProgress(offset, offset);
@@ -362,7 +374,7 @@ var Upload = function () {
             return;
           }
 
-          _this3._emitProgress(start + e.loaded, _this3.file.size);
+          _this3._emitProgress(start + e.loaded, _this3._size);
         };
       }
 
@@ -375,7 +387,7 @@ var Upload = function () {
       var end = this._offset + this.options.chunkSize;
 
       if (end === Infinity) {
-        end = this.file.size;
+        end = this._size;
       }
 
       xhr.send(this.file.slice(start, end));

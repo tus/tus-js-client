@@ -40,7 +40,7 @@ var Request = function () {
 
   _createClass(Request, [{
     key: "open",
-    value: function open(method, url, _async) {
+    value: function open(method, url) {
       this._method = method;
       this._url = url;
     }
@@ -57,6 +57,7 @@ var Request = function () {
       var options = (0, _url.parse)(this._url);
       options.method = this._method;
       options.headers = this._headers;
+      if (body) options.headers["Content-Length"] = body.size;
 
       var req = this._request = http.request(options);
       req.on("response", function (res) {
@@ -89,4 +90,4 @@ var Request = function () {
 
 function newRequest() {
   return new Request();
-};
+}

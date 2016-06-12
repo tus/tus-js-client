@@ -8,4 +8,4 @@ exports.newRequest = newRequest;
 
 function newRequest() {
   return new window.XMLHttpRequest();
-};
+}

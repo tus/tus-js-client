@@ -1,7 +1,7 @@
 ui: jasmine2
 scripts:
     - "dist/tus.js"
-    - "test/spec/fakeBlob.js"
+    - "test/spec/helpers/browser/fakeBlob.js"
 browsers:
     - name: internet explorer
       version: 9..latest

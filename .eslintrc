@@ -2,7 +2,9 @@
   "parser": "babel-eslint",
   "plugins": [],
   "env": {
-    "node": true
+    "node": true,
+    "browser": true,
+    "jasmine": true
   },
   "ecmaFeatures": {},
   "rules": {
