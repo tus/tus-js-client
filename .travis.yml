@@ -1,4 +1,15 @@
 language: node_js
+matrix:
+  include:
+  - env: TEST_TARGET=browser
+  - env: TEST_TARGET=node
+    node_js: 4
+  - env: TEST_TARGET=node
+    node_js: 5
+  - env: TEST_TARGET=node
+    node_js: 6
+  - env: TEST_TARGET=node
+    node_js: 7
 script:
 - npm run lint
 - npm run dist

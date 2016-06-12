@@ -6,13 +6,21 @@ set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR/..
 
-# Run tests in Phantom browser and Node first
-npm run phantom-test
-npm run node-test
+# Run tests in both environments by default
+TEST_TARGET=${TEST_TARGET:-"node browser"}
 
-if [ "${CI}" = "true" ] && [ "${TRAVIS_PULL_REQUEST}" = "false" ];
-then
-  npm run zuul-test
-else
-  echo "Skipping zuul-test as this is not a master CI branch test run"
+# Node.js tests
+if [[ $TEST_TARGET == *"node"* ]]; then
+  npm run node-test
+fi
+
+# Browser tests using Phantom and zuul on SauceLabs
+if [[ $TEST_TARGET == *"browser"* ]]; then
+  npm run phantom-test
+
+  if [ "${CI}" = "true" ] && [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
+    npm run zuul-test
+  else
+    echo "Skipping zuul-test as this is not a master CI branch test run"
+  fi
 fi
