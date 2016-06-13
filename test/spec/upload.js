@@ -1,7 +1,7 @@
 /* global FakeBlob tus */
 
-var isBrowser = typeof window !== "undefined";
-var isNode = typeof process !== "undefined";
+var isBrowser  = typeof window !== "undefined";
+var isNode     = !isBrowser;
 var hasRequire = typeof require == "function";
 
 if (isBrowser && hasRequire) {
