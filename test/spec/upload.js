@@ -3,6 +3,7 @@
 var isBrowser  = typeof window !== "undefined";
 var isNode     = !isBrowser;
 var hasRequire = typeof require == "function";
+var hasStorage = tus.canStoreURLs;
 
 if (isBrowser && hasRequire) {
   // Require Jasmine's Ajax library. This is only used by zuul as this script
@@ -11,7 +12,7 @@ if (isBrowser && hasRequire) {
 }
 
 function expectLocalStorage(key, expectedValue) {
-  if (isNode) {
+  if (!hasStorage) {
     // Do not evaluate expectations on localStorage in node processes
     return;
   }
@@ -19,12 +20,30 @@ function expectLocalStorage(key, expectedValue) {
   expect(localStorage.getItem(key), expectedValue);
 }
 
+function setLocalStorage(key, value) {
+  if (!hasStorage) {
+    // Do not evaluate expectations on localStorage in node processes
+    return;
+  }
+
+  localStorage.setItem(key, value);
+}
+
+function clearLocalStorage() {
+  if (!hasStorage) {
+    // Do not evaluate expectations on localStorage in node processes
+    return;
+  }
+
+  localStorage.clear();
+}
+
 describe("tus", function () {
   describe("#Upload", function () {
 
     beforeEach(function () {
       jasmine.Ajax.install();
-      localStorage.clear();
+      clearLocalStorage();
     });
 
     afterEach(function () {
@@ -106,9 +125,9 @@ describe("tus", function () {
     it("should resume an upload", function (done) {
       // Only execute this test if we are in an browser environment as it relys
       // on localStorage
-      if (!isBrowser) return done();
+      if (!hasStorage) pending("test requires storage");
 
-      localStorage.setItem("fingerprinted", "/uploads/resuming");
+      setLocalStorage("fingerprinted", "/uploads/resuming");
 
       var file = new FakeBlob("hello world".split(""));
       var options = {
@@ -161,9 +180,9 @@ describe("tus", function () {
     it("should create an upload if resuming fails", function (done) {
       // Only execute this test if we are in an browser environment as it relys
       // on localStorage
-      if (!isBrowser) return done();
+      if (!hasStorage) pending("test requires storage");
 
-      localStorage.setItem("fingerprinted", "/uploads/resuming");
+      setLocalStorage("fingerprinted", "/uploads/resuming");
 
       var file = new FakeBlob("hello world".split(""));
       var options = {
@@ -300,9 +319,9 @@ describe("tus", function () {
     it("should not resume a finished upload", function (done) {
       // Only execute this test if we are in an browser environment as it relys
       // on localStorage
-      if (!isBrowser) return done();
+      if (!hasStorage) pending("test requires storage");
 
-      localStorage.setItem("fingerprinted", "/uploads/resuming");
+      setLocalStorage("fingerprinted", "/uploads/resuming");
 
       var file = new FakeBlob("hello world".split(""));
       var options = {

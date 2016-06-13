@@ -37,19 +37,37 @@ Object.defineProperty(exports, "__esModule", {
 exports.setItem = setItem;
 exports.getItem = getItem;
 exports.removeItem = removeItem;
-/* global window */
+/* global window, localStorage */
 
-var _window = window;
-var localStorage = _window.localStorage;
+var hasStorage = false;
+try {
+  hasStorage = "localStorage" in window;
+  // Attempt to access localStorage
+  localStorage.length;
+} catch (e) {
+  // If we try to access localStorage inside a sandboxed iframe, a SecurityError
+  // is thrown whenever we are trying to access the localStorage object.
+  if (e.code === e.SECURITY_ERR) {
+    hasStorage = false;
+  } else {
+    throw e;
+  }
+}
+
+var canStoreURLs = exports.canStoreURLs = hasStorage;
+
 function setItem(key, value) {
+  if (!hasStorage) return;
   return localStorage.setItem(key, value);
 }
 
 function getItem(key) {
+  if (!hasStorage) return;
   return localStorage.getItem(key);
 }
 
 function removeItem(key) {
+  if (!hasStorage) return;
   return localStorage.removeItem(key);
 }
 
@@ -77,18 +95,20 @@ var _upload = _dereq_("./upload");
 
 var _upload2 = _interopRequireDefault(_upload);
 
+var _storage = _dereq_("./node/storage");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var defaultOptions = _upload2.default.defaultOptions; /* global window */
+/* global window */
+var defaultOptions = _upload2.default.defaultOptions;
 
 if (typeof window !== "undefined") {
   // Browser environment using XMLHttpRequest
   var _window = window;
   var XMLHttpRequest = _window.XMLHttpRequest;
-  var localStorage = _window.localStorage;
   var Blob = _window.Blob;
 
-  var isSupported = XMLHttpRequest && localStorage && Blob && typeof Blob.prototype.slice === "function";
+  var isSupported = XMLHttpRequest && Blob && typeof Blob.prototype.slice === "function";
 } else {
   // Node.js environment using http module
   var isSupported = true;
@@ -100,10 +120,11 @@ if (typeof window !== "undefined") {
 module.exports = {
   Upload: _upload2.default,
   isSupported: isSupported,
+  canStoreURLs: _storage.canStoreURLs,
   defaultOptions: defaultOptions
 };
 
-},{"./upload":6}],6:[function(_dereq_,module,exports){
+},{"./node/storage":3,"./upload":6}],6:[function(_dereq_,module,exports){
 "use strict";
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })(); /* global window */

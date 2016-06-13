@@ -8,6 +8,8 @@ exports.getItem = getItem;
 exports.removeItem = removeItem;
 /* eslint no-unused-vars: 0 */
 
+var canStoreURLs = exports.canStoreURLs = false;
+
 function setItem(key, value) {}
 
 function getItem(key) {}
