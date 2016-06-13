@@ -125,7 +125,7 @@ describe("tus", function () {
     it("should resume an upload", function (done) {
       // Only execute this test if we are in an browser environment as it relys
       // on localStorage
-      if (!hasStorage) pending("test requires storage");
+      if (!hasStorage) pending("test requires storage and localStorage is unavailable");
 
       setLocalStorage("fingerprinted", "/uploads/resuming");
 
@@ -180,7 +180,7 @@ describe("tus", function () {
     it("should create an upload if resuming fails", function (done) {
       // Only execute this test if we are in an browser environment as it relys
       // on localStorage
-      if (!hasStorage) pending("test requires storage");
+      if (!hasStorage) pending("test requires storage and localStorage is unavailable");
 
       setLocalStorage("fingerprinted", "/uploads/resuming");
 
@@ -319,7 +319,7 @@ describe("tus", function () {
     it("should not resume a finished upload", function (done) {
       // Only execute this test if we are in an browser environment as it relys
       // on localStorage
-      if (!hasStorage) pending("test requires storage");
+      if (!hasStorage) pending("test requires storage and localStorage is unavailable");
 
       setLocalStorage("fingerprinted", "/uploads/resuming");
 
