@@ -65,16 +65,15 @@ function request(options, callback) {
   req.end();
 }
 
-var browserFilter = [/*
+var browserFilter = [
   "internet explorer/9..latest",
   "microsoftedge/13..latest",
   "firefox/31..latest/linux",
   "chrome/31..latest/linux",
   "safari/5..latest",
   "opera/11..latest",
-  //"android/4.0..latest"
-  "iphone/5.1..latest"*/
   "android/4.0..latest"
+  "iphone/5.1..latest"
 ];
 
 getBrowsers(browserFilter, function (err, result) {
