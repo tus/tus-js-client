@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <script>window.jasmine={getJSReport:function(){return null}}</script>
   <meta charset="utf-8">
   <title>Jasmine Spec Runner</title>
 
@@ -10,8 +11,15 @@
   <script src="../node_modules/jasmine-core/lib/jasmine-core/jasmine.js"></script>
   <script src="../node_modules/jasmine-core/lib/jasmine-core/jasmine-html.js"></script>
   <script src="../node_modules/jasmine-core/lib/jasmine-core/boot.js"></script>
+  <script>window.jasmine.getJSReport=function(){return null}</script>
   <script src="../node_modules/jasmine-core/lib/console/console.js"></script>
   <script src="../node_modules/jasmine-ajax/lib/mock-ajax.js"></script>
+
+  <!-- The JSReporter will allow SauceLabs to automatically extract the tests'
+  result, evaluate them and present them in their dashboard, see
+  https://wiki.saucelabs.com/display/DOCS/Reporting+JavaScript+Unit+Test+Results+to+Sauce+Labs+Using+Jasmine -->
+  <script src="http://rawgit.com/detro/jasmine-jsreporter/master/jasmine-jsreporter.js"></script>
+  <script>jasmine.getEnv().addReporter(new jasmine.JSReporter2())</script>
 
   <!-- include source files here... -->
   <script src="../dist/tus.js"></script>

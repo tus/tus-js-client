@@ -9,6 +9,8 @@ matrix:
   - env: TEST_TARGET=node
     node_js: 6
 script:
+- npm install -g node-static
+- static -p 8081 &
 - npm run lint
 - npm run dist
 - npm test
@@ -21,3 +23,6 @@ deploy:
   on:
     tags: true
     repo: tus/tus-js-client
+addons:
+  sauce_connect:
+    tunnel_domains: localhost

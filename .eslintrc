@@ -4,7 +4,8 @@
   "env": {
     "node": true,
     "browser": true,
-    "jasmine": true
+    "jasmine": true,
+    "phantomjs": true
   },
   "ecmaFeatures": {},
   "rules": {

@@ -19,8 +19,8 @@ if [[ $TEST_TARGET == *"browser"* ]]; then
   npm run phantom-test
 
   if [ "${CI}" = "true" ] && [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
-    npm run zuul-test
+    npm run sauce-test
   else
-    echo "Skipping zuul-test as this is not a master CI branch test run"
+    echo "Skipping sauce-test as this is not a master CI branch test run"
   fi
 fi

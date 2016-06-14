@@ -5,12 +5,6 @@ var isNode     = !isBrowser;
 var hasRequire = typeof require == "function";
 var hasStorage = tus.canStoreURLs;
 
-if (isBrowser && hasRequire) {
-  // Require Jasmine's Ajax library. This is only used by zuul as this script
-  // gets processed by browserify.
-  require("jasmine-ajax");
-}
-
 function expectLocalStorage(key, expectedValue) {
   if (!hasStorage) {
     // Do not evaluate expectations on localStorage in node processes
