@@ -2,7 +2,6 @@
 
 var isBrowser  = typeof window !== "undefined";
 var isNode     = !isBrowser;
-var hasRequire = typeof require == "function";
 var hasStorage = tus.canStoreURLs;
 
 function expectLocalStorage(key, expectedValue) {

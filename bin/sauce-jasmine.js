@@ -72,7 +72,7 @@ var browserFilter = [
   "chrome/31..latest/linux",
   "safari/5..latest",
   "opera/11..latest",
-  "android/4.0..latest"
+  "android/4.0..latest",
   "iphone/5.1..latest"
 ];
 
