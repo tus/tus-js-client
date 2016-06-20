@@ -7,7 +7,8 @@
   "browser": {
     "./lib/node/request.js": "./lib/browser/request.js",
     "./lib/node/base64.js": "./lib/browser/base64.js",
-    "./lib/node/storage.js": "./lib/browser/storage.js"
+    "./lib/node/storage.js": "./lib/browser/storage.js",
+    "./lib/node/source.js": "./lib/browser/source.js"
   },
   "repository": {
     "type": "git",

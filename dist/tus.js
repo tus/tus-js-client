@@ -31,6 +31,51 @@ function newRequest() {
 },{}],3:[function(_dereq_,module,exports){
 "use strict";
 
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getSource = getSource;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var FileSource = (function () {
+  function FileSource(file) {
+    _classCallCheck(this, FileSource);
+
+    this._file = file;
+    this.size = file.size;
+  }
+
+  _createClass(FileSource, [{
+    key: "slice",
+    value: function slice(start, end) {
+      return this._file.slice(start, end);
+    }
+  }, {
+    key: "close",
+    value: function close() {}
+  }]);
+
+  return FileSource;
+})();
+
+function getSource(input) {
+  // Since we emulate the Blob type in our tests (not all target browsers
+  // support it), we cannot use `instanceof` for testing whether the input value
+  // can be handled. Instead, we simply check is the slice() function and the
+  // size property are available.
+  if (typeof input.slice === "function" && typeof input.size !== "undefined") {
+    return new FileSource(input);
+  }
+
+  throw new Error("source object may only be an instance of File or Blob in this environment");
+}
+
+},{}],4:[function(_dereq_,module,exports){
+"use strict";
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -71,7 +116,7 @@ function removeItem(key) {
   return localStorage.removeItem(key);
 }
 
-},{}],4:[function(_dereq_,module,exports){
+},{}],5:[function(_dereq_,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -88,7 +133,7 @@ function fingerprint(file) {
   return ["tus", file.name, file.type, file.size, file.lastModified].join("-");
 }
 
-},{}],5:[function(_dereq_,module,exports){
+},{}],6:[function(_dereq_,module,exports){
 "use strict";
 
 var _upload = _dereq_("./upload");
@@ -124,7 +169,7 @@ module.exports = {
   defaultOptions: defaultOptions
 };
 
-},{"./node/storage":3,"./upload":6}],6:[function(_dereq_,module,exports){
+},{"./node/storage":4,"./upload":7}],7:[function(_dereq_,module,exports){
 "use strict";
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })(); /* global window */
@@ -145,6 +190,8 @@ var _extend = _dereq_("extend");
 var _extend2 = _interopRequireDefault(_extend);
 
 var _request = _dereq_("./node/request");
+
+var _source = _dereq_("./node/source");
 
 var _base = _dereq_("./node/base64");
 
@@ -171,7 +218,8 @@ var defaultOptions = {
   headers: {},
   chunkSize: Infinity,
   withCredentials: false,
-  uploadUrl: null
+  uploadUrl: null,
+  uploadSize: null
 };
 
 var Upload = (function () {
@@ -200,6 +248,8 @@ var Upload = (function () {
 
     // The file's size in bytes
     this._size = null;
+
+    this._source = null;
   }
 
   _createClass(Upload, [{
@@ -217,12 +267,30 @@ var Upload = (function () {
         return;
       }
 
-      // Allow File#size (browsers) and Buffer#length (Node) as sizes
+      var source = this._source = (0, _source.getSource)(file);
+
+      if (this.options.uploadSize != null) {
+        var size = +this.options.uploadSize;
+        if (isNaN(size)) {
+          throw new Error("tus: cannot convert `uploadSize` option into a number");
+        }
+
+        this._size = size;
+      } else {
+        var size = source.size;
+        if (size == null) {
+          throw new Error("tus: cannot automatically derive upload's size from input and must be specified manually using the `uploadSize` option");
+        }
+
+        this._size = size;
+      }
+      /*
+       // Allow File#size (browsers) and Buffer#length (Node) as sizes
       this._size = file.size || file.length || null;
       if (this._size == null) {
         this._emitError(new Error("tus: file's size not provided"));
         return;
-      }
+      }*/
 
       // A URL has manually been specified, so we try to resume
       if (this.options.uploadUrl != null) {
@@ -251,6 +319,7 @@ var Upload = (function () {
     value: function abort() {
       if (this._xhr !== null) {
         this._xhr.abort();
+        this._source.close();
         this._aborted = true;
       }
     }
@@ -468,15 +537,15 @@ var Upload = (function () {
           return;
         }
 
+        _this3._emitProgress(offset, _this3._size);
         _this3._emitChunkComplete(offset - _this3._offset, offset, _this3._size);
 
         _this3._offset = offset;
 
         if (offset == _this3._size) {
           // Yay, finally done :)
-          // Emit a last progress event
-          _this3._emitProgress(offset, offset);
           _this3._emitSuccess();
+          _this3._source.close();
           return;
         }
 
@@ -511,11 +580,14 @@ var Upload = (function () {
       var start = this._offset;
       var end = this._offset + this.options.chunkSize;
 
-      if (end === Infinity) {
+      // The specified chunkSize may be Infinity or the calcluated end position
+      // may exceed the file's size. In both cases, we limit the end position to
+      // the input's total size for simpler calculations and correctness.
+      if (end === Infinity || end > this._size) {
         end = this._size;
       }
 
-      xhr.send(this.file.slice(start, end));
+      xhr.send(this._source.slice(start, end));
     }
   }]);
 
@@ -540,7 +612,7 @@ Upload.defaultOptions = defaultOptions;
 
 exports.default = Upload;
 
-},{"./fingerprint":4,"./node/base64":1,"./node/request":2,"./node/storage":3,"extend":7}],7:[function(_dereq_,module,exports){
+},{"./fingerprint":5,"./node/base64":1,"./node/request":2,"./node/source":3,"./node/storage":4,"extend":8}],8:[function(_dereq_,module,exports){
 'use strict';
 
 var hasOwn = Object.prototype.hasOwnProperty;
@@ -628,6 +700,6 @@ module.exports = function extend() {
 };
 
 
-},{}]},{},[5])(5)
+},{}]},{},[6])(6)
 });
 //# sourceMappingURL=tus.js.map
