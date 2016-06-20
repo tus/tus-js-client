@@ -2,32 +2,18 @@
 
 var isBrowser  = typeof window !== "undefined";
 var isNode     = !isBrowser;
-var hasStorage = tus.canStoreURLs;
-
-function expectLocalStorage(key, expectedValue) {
-  if (!hasStorage) {
-    // Do not evaluate expectations on localStorage in node processes
-    return;
-  }
-
-  expect(localStorage.getItem(key), expectedValue);
-}
-
-function clearLocalStorage() {
-  if (!hasStorage) {
-    // Do not evaluate expectations on localStorage in node processes
-    return;
-  }
-
-  localStorage.clear();
-}
 
 describe("tus", function () {
   describe("#Upload", function () {
 
     beforeEach(function () {
       jasmine.Ajax.install();
-      clearLocalStorage();
+
+      // Clear localStorage before every test to prevent stored URLs to
+      // interfere with our setup.
+      if (isBrowser) {
+        localStorage.clear();
+      }
     });
 
     afterEach(function () {
@@ -82,8 +68,6 @@ describe("tus", function () {
       });
 
       expect(upload.url).toBe("/uploads/blargh");
-
-      expectLocalStorage("fingerprinted", "/uploads/blargh");
 
       req = jasmine.Ajax.requests.mostRecent();
       expect(req.url).toBe("/uploads/blargh");
@@ -167,8 +151,6 @@ describe("tus", function () {
       });
 
       expect(upload.url).toBe("/uploads/blargh");
-
-      expectLocalStorage("fingerprinted", "/uploads/blargh");
 
       req = jasmine.Ajax.requests.mostRecent();
       expect(req.url).toBe("/uploads/blargh");
