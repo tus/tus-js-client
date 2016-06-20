@@ -77,7 +77,7 @@ describe("tus", function () {
       expect(req.method).toBe("POST");
       expect(req.requestHeaders.Custom).toBe("blargh");
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
-      expect(req.requestHeaders["Upload-Length"]).toBe(file.size);
+      expect(req.requestHeaders["Upload-Length"]).toBe(11);
       if (isBrowser) expect(req.withCredentials).toBe(true);
       if (isNode || (isBrowser && "btoa" in window)) {
         expect(req.requestHeaders["Upload-Metadata"]).toBe("foo aGVsbG8=,bar d29ybGQ=,nonlatin c8WCb8WEY2U=");
@@ -101,13 +101,13 @@ describe("tus", function () {
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
       expect(req.requestHeaders["Upload-Offset"]).toBe(0);
       expect(req.contentType()).toBe("application/offset+octet-stream");
-      expect(req.params.size).toBe(file.size);
+      expect(req.params.size).toBe(11);
       if (isBrowser) expect(req.withCredentials).toBe(true);
 
       req.respondWith({
         status: 204,
         responseHeaders: {
-          "Upload-Offset": file.size
+          "Upload-Offset": 11
         }
       });
 
@@ -157,12 +157,12 @@ describe("tus", function () {
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
       expect(req.requestHeaders["Upload-Offset"]).toBe(3);
       expect(req.contentType()).toBe("application/offset+octet-stream");
-      expect(req.params.size).toBe(file.size - 3);
+      expect(req.params.size).toBe(11 - 3);
 
       req.respondWith({
         status: 204,
         responseHeaders: {
-          "Upload-Offset": file.size
+          "Upload-Offset": 11
         }
       });
 
@@ -230,7 +230,7 @@ describe("tus", function () {
       expect(req.url).toBe("/uploads");
       expect(req.method).toBe("POST");
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
-      expect(req.requestHeaders["Upload-Length"]).toBe(file.size);
+      expect(req.requestHeaders["Upload-Length"]).toBe(11);
 
       req.respondWith({
         status: 201,
@@ -269,7 +269,7 @@ describe("tus", function () {
       req.respondWith({
         status: 204,
         responseHeaders: {
-          "Upload-Offset": file.size
+          "Upload-Offset": 11
         }
       });
       expect(options.onProgress).toHaveBeenCalledWith(11, 11);
@@ -386,12 +386,12 @@ describe("tus", function () {
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
       expect(req.requestHeaders["Upload-Offset"]).toBe(3);
       expect(req.contentType()).toBe("application/offset+octet-stream");
-      expect(req.params.size).toBe(file.size - 3);
+      expect(req.params.size).toBe(11 - 3);
 
       req.respondWith({
         status: 204,
         responseHeaders: {
-          "Upload-Offset": file.size
+          "Upload-Offset": 11
         }
       });
 

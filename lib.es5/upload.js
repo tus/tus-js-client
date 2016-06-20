@@ -21,6 +21,8 @@ var _extend2 = _interopRequireDefault(_extend);
 
 var _request = require("./node/request");
 
+var _source = require("./node/source");
+
 var _base = require("./node/base64");
 
 var Base64 = _interopRequireWildcard(_base);
@@ -46,7 +48,8 @@ var defaultOptions = {
   headers: {},
   chunkSize: Infinity,
   withCredentials: false,
-  uploadUrl: null
+  uploadUrl: null,
+  uploadSize: null
 };
 
 var Upload = function () {
@@ -75,6 +78,8 @@ var Upload = function () {
 
     // The file's size in bytes
     this._size = null;
+
+    this._source = null;
   }
 
   _createClass(Upload, [{
@@ -92,12 +97,30 @@ var Upload = function () {
         return;
       }
 
-      // Allow File#size (browsers) and Buffer#length (Node) as sizes
+      var source = this._source = (0, _source.getSource)(file);
+
+      if (this.options.uploadSize != null) {
+        var size = +this.options.uploadSize;
+        if (isNaN(size)) {
+          throw new Error("tus: cannot convert `uploadSize` option into a number");
+        }
+
+        this._size = size;
+      } else {
+        var size = source.size;
+        if (size == null) {
+          throw new Error("tus: cannot automatically derive upload's size from input and must be specified manually using the `uploadSize` option");
+        }
+
+        this._size = size;
+      }
+      /*
+       // Allow File#size (browsers) and Buffer#length (Node) as sizes
       this._size = file.size || file.length || null;
       if (this._size == null) {
         this._emitError(new Error("tus: file's size not provided"));
         return;
-      }
+      }*/
 
       // A URL has manually been specified, so we try to resume
       if (this.options.uploadUrl != null) {
@@ -126,6 +149,7 @@ var Upload = function () {
     value: function abort() {
       if (this._xhr !== null) {
         this._xhr.abort();
+        this._source.close();
         this._aborted = true;
       }
     }
@@ -343,15 +367,15 @@ var Upload = function () {
           return;
         }
 
+        _this3._emitProgress(offset, _this3._size);
         _this3._emitChunkComplete(offset - _this3._offset, offset, _this3._size);
 
         _this3._offset = offset;
 
         if (offset == _this3._size) {
           // Yay, finally done :)
-          // Emit a last progress event
-          _this3._emitProgress(offset, offset);
           _this3._emitSuccess();
+          _this3._source.close();
           return;
         }
 
@@ -386,11 +410,11 @@ var Upload = function () {
       var start = this._offset;
       var end = this._offset + this.options.chunkSize;
 
-      if (end === Infinity) {
+      if (end === Infinity || end > this._size) {
         end = this._size;
       }
 
-      xhr.send(this.file.slice(start, end));
+      xhr.send(this._source.slice(start, end));
     }
   }]);
 

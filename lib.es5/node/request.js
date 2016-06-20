@@ -13,6 +13,8 @@ var http = _interopRequireWildcard(_http);
 
 var _url = require("url");
 
+var _stream = require("stream");
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -57,7 +59,7 @@ var Request = function () {
       var options = (0, _url.parse)(this._url);
       options.method = this._method;
       options.headers = this._headers;
-      if (body) options.headers["Content-Length"] = body.size;
+      if (body && body.size) options.headers["Content-Length"] = body.size;
 
       var req = this._request = http.request(options);
       req.on("response", function (res) {
@@ -71,7 +73,11 @@ var Request = function () {
         _this.onerror();
       });
 
-      req.end(body);
+      if (body instanceof _stream.Readable) {
+        body.pipe(req);
+      } else {
+        req.end(body);
+      }
     }
   }, {
     key: "getResponseHeader",

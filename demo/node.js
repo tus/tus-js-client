@@ -3,8 +3,9 @@
 var fs = require("fs");
 var tus = require("../");
 
-var file = fs.readFileSync("./dist/tus.js");
-file.size = file.length;
+var path = "./dist/tus.js";
+var file = fs.createReadStream("./dist/tus.js");
+var size = fs.statSync(path).size;
 
 var options = {
   endpoint: "http://master.tus.io/files/",
@@ -12,6 +13,7 @@ var options = {
   metadata: {
       filename: "tus.js"
   },
+  uploadSize: size,
   onError: function (error) {
     throw error;
   },
