@@ -171,23 +171,14 @@ describe("tus", function () {
     });
 
     it("should create an upload if resuming fails", function (done) {
-      // Only execute this test if we are in an browser environment as it relys
-      // on localStorage
-      if (!hasStorage) pending("test requires storage and localStorage is unavailable");
-
-      setLocalStorage("fingerprinted", "/uploads/resuming");
-
       var file = new FakeBlob("hello world".split(""));
       var options = {
         endpoint: "/uploads",
-        fingerprint: function () {}
+        uploadUrl: "/uploads/resuming"
       };
-      spyOn(options, "fingerprint").and.returnValue("fingerprinted");
 
       var upload = new tus.Upload(file, options);
       upload.start();
-
-      expect(options.fingerprint).toHaveBeenCalledWith(file);
 
       var req = jasmine.Ajax.requests.mostRecent();
       expect(req.url).toBe("/uploads/resuming");
@@ -310,27 +301,18 @@ describe("tus", function () {
     });
 
     it("should not resume a finished upload", function (done) {
-      // Only execute this test if we are in an browser environment as it relys
-      // on localStorage
-      if (!hasStorage) pending("test requires storage and localStorage is unavailable");
-
-      setLocalStorage("fingerprinted", "/uploads/resuming");
-
       var file = new FakeBlob("hello world".split(""));
       var options = {
         endpoint: "/uploads",
         onProgress: function () {},
         onSuccess: function () {},
-        fingerprint: function () {}
+        uploadUrl: "/uploads/resuming"
       };
-      spyOn(options, "fingerprint").and.returnValue("fingerprinted");
       spyOn(options, "onProgress");
       spyOn(options, "onSuccess");
 
       var upload = new tus.Upload(file, options);
       upload.start();
-
-      expect(options.fingerprint).toHaveBeenCalledWith(file);
 
       var req = jasmine.Ajax.requests.mostRecent();
       expect(req.url).toBe("/uploads/resuming");
