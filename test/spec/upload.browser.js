@@ -1,40 +1,11 @@
 /* global FakeBlob tus */
 
-var hasStorage = tus.canStoreURLs;
-
-function expectLocalStorage(key, expectedValue) {
-  if (!hasStorage) {
-    // Do not evaluate expectations on localStorage in node processes
-    return;
-  }
-
-  expect(localStorage.getItem(key), expectedValue);
-}
-
-function setLocalStorage(key, value) {
-  if (!hasStorage) {
-    // Do not evaluate expectations on localStorage in node processes
-    return;
-  }
-
-  localStorage.setItem(key, value);
-}
-
-function clearLocalStorage() {
-  if (!hasStorage) {
-    // Do not evaluate expectations on localStorage in node processes
-    return;
-  }
-
-  localStorage.clear();
-}
-
 describe("tus", function () {
   describe("#Upload", function () {
 
     beforeEach(function () {
       jasmine.Ajax.install();
-      clearLocalStorage();
+      localStorage.clear();
     });
 
     afterEach(function () {
@@ -42,7 +13,7 @@ describe("tus", function () {
     });
 
     it("should resume an upload from a stored url", function (done) {
-      setLocalStorage("fingerprinted", "/uploads/resuming");
+      localStorage.setItem("fingerprinted", "/uploads/resuming");
 
       var file = new FakeBlob("hello world".split(""));
       var options = {
@@ -117,7 +88,7 @@ describe("tus", function () {
       });
 
       expect(upload.url).toBe("/uploads/blargh");
-      expectLocalStorage("fingerprinted", "/uploads/blargh");
+      expect(localStorage.getItem("fingerprinted")).toBe("/uploads/blargh");
       done();
     });
   });
