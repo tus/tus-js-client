@@ -1,6 +1,6 @@
 /* global FakeBlob tus */
 
-var hasStorage = tus.canStoreURLs;
+var hasStorage = tus.canStoreURLs || true;
 
 function expectLocalStorage(key, expectedValue) {
   if (!hasStorage) {
