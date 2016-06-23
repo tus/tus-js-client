@@ -25,27 +25,38 @@ describe("tus", function () {
       jasmine.Ajax.uninstall();
     });
 
-    it("should accept Buffers", function () {
+    it("should accept Buffers", function (done) {
       var buffer = new Buffer("hello world");
       var options = {
         endpoint: "/uploads",
         chunkSize: 7
       };
 
-      expectHelloWorldUpload(buffer, options);
+      expectHelloWorldUpload(buffer, options, done);
     });
 
     it("should reject streams without specifing the size", function () {
       var input = new stream.PassThrough();
       var options = {
-        endpoint: "/uploads"
+        endpoint: "/uploads",
+        chunkSize: 100
       };
 
       var upload = new tus.Upload(input, options);
       expect(upload.start.bind(upload)).toThrow(new Error("tus: cannot automatically derive upload's size from input and must be specified manually using the `uploadSize` option"));
     });
 
-    it("should accept Readable streams", function () {
+    it("should reject streams without specifing the chunkSize", function () {
+      var input = new stream.PassThrough();
+      var options = {
+        endpoint: "/uploads"
+      };
+
+      var upload = new tus.Upload(input, options);
+      expect(upload.start.bind(upload)).toThrow(new Error("cannot create source for stream without a finite value for the `chunkSize` option"));
+    });
+
+    it("should accept Readable streams", function (done) {
       var input = new stream.PassThrough();
       var options = {
         endpoint: "/uploads",
@@ -53,11 +64,11 @@ describe("tus", function () {
         uploadSize: 11
       };
 
-      input.write("hello world");
-      expectHelloWorldUpload(input, options);
+      input.write("hello WORLD");
+      expectHelloWorldUpload(input, options, done);
     });
 
-    it("should accept ReadStreams streams", function () {
+    it("should accept ReadStreams streams", function (done) {
       // Create a temporary file
       var path = temp.path();
       fs.writeFileSync(path, "hello world");
@@ -69,12 +80,12 @@ describe("tus", function () {
         uploadSize: 11
       };
 
-      expectHelloWorldUpload(file, options);
+      expectHelloWorldUpload(file, options, done);
     });
   });
 });
 
-function expectHelloWorldUpload(input, options) {
+function expectHelloWorldUpload(input, options, done) {
   var upload = new tus.Upload(input, options);
   upload.start();
 
@@ -96,23 +107,31 @@ function expectHelloWorldUpload(input, options) {
   expect(req.requestHeaders["Upload-Offset"]).toBe(0);
   expect(req.params.size).toBe(7);
 
-  req.respondWith({
-    status: 204,
-    responseHeaders: {
-      "Upload-Offset": 7
-    }
-  });
+  // Simulate asyncronous responses for requests with bodies which is required
+  // if we are dealing with streams.
+  process.nextTick(function () {
+    req.respondWith({
+      status: 204,
+      responseHeaders: {
+        "Upload-Offset": 7
+      }
+    });
 
-  req = jasmine.Ajax.requests.mostRecent();
-  expect(req.url).toBe("/uploads/blargh");
-  expect(req.method).toBe("PATCH");
-  expect(req.requestHeaders["Upload-Offset"]).toBe(7);
-  expect(req.params.size).toBe(4);
+    req = jasmine.Ajax.requests.mostRecent();
+    expect(req.url).toBe("/uploads/blargh");
+    expect(req.method).toBe("PATCH");
+    expect(req.requestHeaders["Upload-Offset"]).toBe(7);
+    expect(req.params.size).toBe(4);
 
-  req.respondWith({
-    status: 204,
-    responseHeaders: {
-      "Upload-Offset": 11
-    }
+    process.nextTick(function () {
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 11
+        }
+      });
+
+      done();
+    });
   });
 }
