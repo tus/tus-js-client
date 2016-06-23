@@ -31,7 +31,7 @@ function newRequest() {
 },{}],3:[function(_dereq_,module,exports){
 "use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -40,7 +40,7 @@ exports.getSource = getSource;
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var FileSource = (function () {
+var FileSource = function () {
   function FileSource(file) {
     _classCallCheck(this, FileSource);
 
@@ -59,7 +59,7 @@ var FileSource = (function () {
   }]);
 
   return FileSource;
-})();
+}();
 
 function getSource(input) {
   // Since we emulate the Blob type in our tests (not all target browsers
@@ -147,11 +147,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 /* global window */
 var defaultOptions = _upload2.default.defaultOptions;
 
+
 if (typeof window !== "undefined") {
   // Browser environment using XMLHttpRequest
   var _window = window;
   var XMLHttpRequest = _window.XMLHttpRequest;
   var Blob = _window.Blob;
+
 
   var isSupported = XMLHttpRequest && Blob && typeof Blob.prototype.slice === "function";
 } else {
@@ -172,10 +174,12 @@ module.exports = {
 },{"./node/storage":4,"./upload":7}],7:[function(_dereq_,module,exports){
 "use strict";
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })(); /* global window */
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /* global window */
+
 
 // We import the files used inside the Node environment which are rewritten
 // for browsers using the rules defined in the package.json
+
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -222,7 +226,7 @@ var defaultOptions = {
   uploadSize: null
 };
 
-var Upload = (function () {
+var Upload = function () {
   function Upload(file, options) {
     _classCallCheck(this, Upload);
 
@@ -592,7 +596,7 @@ var Upload = (function () {
   }]);
 
   return Upload;
-})();
+}();
 
 function encodeMetadata(metadata) {
   if (!Base64.isSupported) {

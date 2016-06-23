@@ -101,7 +101,9 @@ var StreamSource = function () {
       if (start >= this._bufPos && start < this._bufPos + this._bufLen) {
         var bufStart = start - this._bufPos;
         var bufEnd = Math.min(this._bufLen, end - this._bufPos);
-        return this._buf.slice(bufStart, bufEnd);
+        var buf = this._buf.slice(bufStart, bufEnd);
+        buf.size = buf.length;
+        return buf;
       }
 
       // Fail fast if the caller requests a proportion of the data which is not
@@ -117,6 +119,7 @@ var StreamSource = function () {
       var bytesToRead = end - start;
       var slicingStream = new SlicingStream(bytesToSkip, bytesToRead, this);
       this._stream.pipe(slicingStream);
+      slicingStream.size = bytesToRead;
       return slicingStream;
     }
   }, {
