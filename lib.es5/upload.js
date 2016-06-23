@@ -97,7 +97,7 @@ var Upload = function () {
         return;
       }
 
-      var source = this._source = (0, _source.getSource)(file);
+      var source = this._source = (0, _source.getSource)(file, this.options.chunkSize);
 
       if (this.options.uploadSize != null) {
         var size = +this.options.uploadSize;
@@ -357,7 +357,7 @@ var Upload = function () {
 
       xhr.onload = function () {
         if (!(xhr.status >= 200 && xhr.status < 300)) {
-          _this3._emitXhrError(xhr, new Error("tus: unexpected response while creating upload"));
+          _this3._emitXhrError(xhr, new Error("tus: unexpected response while uploading chunk"));
           return;
         }
 
@@ -410,6 +410,9 @@ var Upload = function () {
       var start = this._offset;
       var end = this._offset + this.options.chunkSize;
 
+      // The specified chunkSize may be Infinity or the calcluated end position
+      // may exceed the file's size. In both cases, we limit the end position to
+      // the input's total size for simpler calculations and correctness.
       if (end === Infinity || end > this._size) {
         end = this._size;
       }
