@@ -1,5 +1,6 @@
 # tus-js-client [![Build Status](https://travis-ci.org/tus/tus-js-client.svg?branch=master)](https://travis-ci.org/tus/tus-js-client)
-A pure JavaScript client for the [tus resumable upload protocol](http://tus.io).
+A pure JavaScript client for the [tus resumable upload protocol](http://tus.io)
+which works in browser environments and Node.js.
 
 ## Example
 
@@ -35,7 +36,7 @@ The sources are compiled into a [UMD](https://github.com/umdjs/umd)
 
 * **Embed using a script tag:** `<script src="dist/tus.js"></script>` and access
 the tus methods using the `tus` property in `window`
-* **Install from NPM:** `npm install tus-js-client` and load using browserify:
+* **Install from NPM:** `npm install tus-js-client`:
 `var tus = require("tus-js-client")`
 * **Define using AMD:** `define("alpha", ["dist/tus.js"], function(tus) {})`
 
@@ -46,6 +47,40 @@ the tus methods using the `tus` property in `window`
 We use localStorage, XMLHttpRequest2, the File API and Blob API. About 85% of
 today's users should be able to use this software, calculated using
 [iwanttouse.com](http://www.iwanttouse.com/#namevalue-storage,xhr2,fileapi,blobbuilder).
+
+## Node compatibility
+
+Since Node's environment is quite different than a browser's runtime and
+provides other capabilities but also restrictions, tus-js-client will have a
+slightly changed behavior when used in the context of a Node.js application:
+
+* The `onProgress` event handler will not be invoked during a request's body
+is transmitted but only once a `PATCH` request is finished. Therefore, it may
+only be emitted once, depending on the value of the `chunkSize` value. Basically,
+it behaves very similar to the `onChunkComplete` event.
+
+* As the Web Storage API is only available in browser environments,
+tus-js-client will not be able store the URLs of created uploads allowing
+automatic resuming. Please consult the documentation for the `tus.canStoreURLs`
+for more information on this specific topic.
+
+* The `tus.Upload` constructor will only accept instances of `buffer.Buffer`
+and `stream.Readable` as file inputs. If you are passing a readable stream as
+this argument, you must set the `chunkSize` option to a finite integer value
+because the chunk, which is currently being uploaded, will be held in memory
+allowing automatic retries, e.g. after connection interruptions. Therefore
+additional care should be taken when choosing the appropriate value for your
+specific application to control memory consumption.
+
+* If you call the `tus.Upload` constructor with an instance of the
+`fs.ReadStream`, the above point does not apply, meaning *no* chunk will be held
+in memory. Instead, tus-js-client will create it's own stream starting at the
+needed position using `fs.createReadStream`. If you want to disable this
+functionality, you may want to wrap the `fs.ReadStream` into a
+`stream.PassThrough`.
+
+Finally, you may be interested in the `demo/node.js` example which demonstrates
+a simple example on how to easily use tus-js-client using Node.js.
 
 ## Internals
 
@@ -65,7 +100,7 @@ continue to send `PATCH` requests to the server until the upload is finished.
 The tus specification defines multiple [extensions](http://tus.io/protocols/resumable-upload.html#protocol-extensions) which can be optionally
 implemented beside the core protocol enabling specific functionality. Not all
 of these extensions are interesting or even useful for a client-side library
-and therefore support for all of them in tus-js-client is not guranteed.
+and therefore support for all of them in tus-js-client is not guaranteed.
 
 * The **Creation** extension is mostly implemented and is used for creating the
 upload. Deferring the upload's length is not possible at the moment.
@@ -73,11 +108,11 @@ upload. Deferring the upload's length is not possible at the moment.
 * The Checksum extension requires that the checksum is calculated inside the
 browser. While this is totally doable today, it's particularly expensive and
 time intensive for bigger files and on mobile devices. One solution is to
-utilise the new Web Crypto API, which probably offers better performance and
+utilize the new Web Crypto API, which probably offers better performance and
 security, but you could argue whether it has reached critical mass yet.
 
 * The Concatenation extension is mostly meant for parallel uploads where you
-need to utilise multiple HTTP connections. In most cases, this does not apply
+need to utilize multiple HTTP connections. In most cases, this does not apply
 to the environment of the browser but it can also be used for different things.
 
 At the moment, coverage for these extensions is not great but we promise to
@@ -89,6 +124,18 @@ improve this situation in the near future.
 
 A boolean indicating whether the current browser has the features necessary to
 use tus-js-client. This can be used to test support and warn the user.
+
+### tus.canStoreURLs
+
+A boolean indicating whether the current environment allows storing URLs
+enabling the corresponding upload to be resumed if the same file (identified
+using fingerprinting) is passed to the constructor again. Since this storage
+mechanism is currently bound to the Web Storage API, this value will only yield
+to `true` if we are in a browser environment which provides access to the
+`localStorage` object. Please be aware that in some cases, e.g. a sandboxed
+iframe, the Web Storage API is provided but cannot be used without causing
+security errors. In these special situations or if no Web Storage API is
+available, `canStoreURLs` is set to `false`.
 
 ### tus.defaultOptions
 
@@ -121,15 +168,23 @@ upload. Can be used for filenames, file types etc.
 * `uploadUrl = null`: a URL which will be used to directly attempt a resume
 without generating the fingerprint and looking it up before. If this attempt
 fails it will fall back to creating a new upload using the URL specified in
-`endpoint`.
+`endpoint`. This will also force an attempt even if resuming has been disabled
+by setting `resume` to `false`.
+* `uploadSize = null`: an integer representing the size of the file in bytes.
+This will only be used if the size cannot be automatically calculated. This
+is currently only used and required if you supply a `Readable` stream as the
+file to upload. You may also use this to limit the position until which a file
+will be uploaded.
 
 ### new tus.Upload(file, options)
 
 Create a new tus.Upload object. The upload will not be started automatically,
 use `start` to do so.
 
-The `file` argument should be an instance of `File` or `Blob`. The `options`
-argument will be merged deeply with `tus.defaultOptions`.
+The `file` argument must be an instance of `File` or `Blob` if you are in a
+browser environment. If it is executed using Node.js, the allowed types are
+`Buffer` and a `Readable` stream.
+The `options` argument will be merged deeply with `tus.defaultOptions`.
 
 ### tus.Upload#options
 
