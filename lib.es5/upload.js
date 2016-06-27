@@ -114,13 +114,6 @@ var Upload = function () {
 
         this._size = size;
       }
-      /*
-       // Allow File#size (browsers) and Buffer#length (Node) as sizes
-      this._size = file.size || file.length || null;
-      if (this._size == null) {
-        this._emitError(new Error("tus: file's size not provided"));
-        return;
-      }*/
 
       // A URL has manually been specified, so we try to resume
       if (this.options.uploadUrl != null) {
