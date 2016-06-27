@@ -79,6 +79,9 @@ var Upload = function () {
     // The file's size in bytes
     this._size = null;
 
+    // The Source object which will wrap around the given file and provides us
+    // with a unified interface for getting its size and slice chunks from its
+    // content allowing us to easily handle Files, Blobs, Buffers and Streams.
     this._source = null;
   }
 
@@ -99,6 +102,8 @@ var Upload = function () {
 
       var source = this._source = (0, _source.getSource)(file, this.options.chunkSize);
 
+      // Firstly, check if the caller has supplied a manual upload size or else
+      // we will use the calculated size by the source object.
       if (this.options.uploadSize != null) {
         var size = +this.options.uploadSize;
         if (isNaN(size)) {
@@ -108,6 +113,9 @@ var Upload = function () {
         this._size = size;
       } else {
         var size = source.size;
+
+        // The size property will be null if we cannot calculate the file's size,
+        // for example if you handle a stream.
         if (size == null) {
           throw new Error("tus: cannot automatically derive upload's size from input and must be specified manually using the `uploadSize` option");
         }
