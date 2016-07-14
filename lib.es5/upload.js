@@ -51,7 +51,7 @@ var defaultOptions = {
   withCredentials: false,
   uploadUrl: null,
   uploadSize: null,
-  retryDelays: null
+  overridePatchMethod: false
 };
 
 var Upload = function () {
@@ -100,15 +100,6 @@ var Upload = function () {
       if (!this.options.endpoint) {
         this._emitError(new Error("tus: no endpoint provided"));
         return;
-      }
-
-      if (this.options.retryDelays != null) {
-        var delays = this.options.retryDelays;
-        if (delays.toString() !== "[object Array]") {
-          throw new Error("tus: the `retryDelays` option's value must be an array");
-        }
-
-        var errorHandler = this.options.onError;
       }
 
       var source = this._source = (0, _source.getSource)(file, this.options.chunkSize);
@@ -365,7 +356,16 @@ var Upload = function () {
       var _this3 = this;
 
       var xhr = this._xhr = (0, _request.newRequest)();
-      xhr.open("PATCH", this.url, true);
+
+      // Some browser and servers may not support the PATCH method. For those
+      // cases, you can tell tus-js-client to use a POST request with the
+      // X-HTTP-Method-Override header for simulating a PATCH request.
+      if (this.options.overridePatchMethod) {
+        xhr.open("POST", this.url, true);
+        xhr.setRequestHeader("X-HTTP-Method-Override", "PATCH");
+      } else {
+        xhr.open("PATCH", this.url, true);
+      }
 
       xhr.onload = function () {
         if (!(xhr.status >= 200 && xhr.status < 300)) {

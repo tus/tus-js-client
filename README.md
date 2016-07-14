@@ -175,6 +175,12 @@ This will only be used if the size cannot be automatically calculated. This
 is currently only used and required if you supply a `Readable` stream as the
 file to upload. You may also use this to limit the position until which a file
 will be uploaded.
+* `overridePatchMethod = false`: a boolean indicating whether the `POST` method
+should be used instead of `PATCH` for transfering the chunks. This may be
+necessary if a browser or the server does not support latter one. In this case,
+a `POST` request will be made with the `X-HTTP-Method-Override: PATCH` header.
+The server must be able to detect it, and then handle the request as if `PATCH`
+would have been the method.
 
 ### new tus.Upload(file, options)
 

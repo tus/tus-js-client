@@ -298,5 +298,46 @@ describe("tus", function () {
       expect(options.onProgress).toHaveBeenCalledWith(11, 11);
       done();
     });
+
+    it("should override the PATCH method", function (done) {
+      var file = new FakeBlob("hello world".split(""));
+      var options = {
+        endpoint: "/uploads",
+        uploadUrl: "/files/upload",
+        overridePatchMethod: true
+      };
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      var req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("/files/upload");
+      expect(req.method).toBe("HEAD");
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Length": 11,
+          "Upload-Offset": 3
+        }
+      });
+
+      req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("/files/upload");
+      expect(req.method).toBe("POST");
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+      expect(req.requestHeaders["Upload-Offset"]).toBe(3);
+      expect(req.requestHeaders["X-HTTP-Method-Override"]).toBe("PATCH");
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 11
+        }
+      });
+
+      done();
+    });
   });
 });
