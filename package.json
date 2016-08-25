@@ -8,7 +8,11 @@
     "./lib/node/request.js": "./lib/browser/request.js",
     "./lib/node/base64.js": "./lib/browser/base64.js",
     "./lib/node/storage.js": "./lib/browser/storage.js",
-    "./lib/node/source.js": "./lib/browser/source.js"
+    "./lib/node/source.js": "./lib/browser/source.js",
+    "./lib.es5/node/request.js": "./lib.es5/browser/request.js",
+    "./lib.es5/node/base64.js": "./lib.es5/browser/base64.js",
+    "./lib.es5/node/storage.js": "./lib.es5/browser/storage.js",
+    "./lib.es5/node/source.js": "./lib.es5/browser/source.js"
   },
   "repository": {
     "type": "git",
