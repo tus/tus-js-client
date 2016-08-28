@@ -54,11 +54,6 @@ Since Node's environment is quite different than a browser's runtime and
 provides other capabilities but also restrictions, tus-js-client will have a
 slightly changed behavior when used in the context of a Node.js application:
 
-* The `onProgress` event handler will not be invoked during a request's body
-is transmitted but only once a `PATCH` request is finished. Therefore, it may
-only be emitted once, depending on the value of the `chunkSize` value. Basically,
-it behaves very similar to the `onChunkComplete` event.
-
 * As the Web Storage API is only available in browser environments,
 tus-js-client will not be able store the URLs of created uploads allowing
 automatic resuming. Please consult the documentation for the `tus.canStoreURLs`
