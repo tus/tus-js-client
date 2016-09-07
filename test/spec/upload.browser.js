@@ -91,5 +91,31 @@ describe("tus", function () {
       expect(localStorage.getItem("fingerprinted")).toBe("/uploads/blargh");
       done();
     });
+
+    it("should add the request's body to errors", function () {
+      var file = new FakeBlob("hello world".split(""));
+      var err;
+      var options = {
+        endpoint: "/uploads",
+        onError: function (e) {
+          err = e;
+        }
+      };
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      var req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("/uploads");
+      expect(req.method).toBe("POST");
+
+      req.respondWith({
+        status: 500,
+        responseText: "server_error"
+      });
+
+      expect(err.message).toBe("tus: unexpected response while creating upload, originated from request (response code: 500, response text: server_error)");
+      expect(err.originalRequest).toBeDefined();
+    });
   });
 });

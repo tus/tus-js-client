@@ -122,6 +122,49 @@ function removeItem(key) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var DetailedError = function (_Error) {
+  _inherits(DetailedError, _Error);
+
+  function DetailedError(error) {
+    var causingErr = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+    var xhr = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+
+    _classCallCheck(this, DetailedError);
+
+    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(DetailedError).call(this, error.message));
+
+    _this.originalRequest = xhr;
+    _this.causingError = causingErr;
+
+    var message = error.message;
+    if (causingErr != null) {
+      message += ", caused by " + causingErr.toString();
+    }
+    if (xhr != null) {
+      message += ", originated from request (response code: " + xhr.status + ", response text: " + xhr.responseText + ")";
+    }
+    _this.message = message;
+    return _this;
+  }
+
+  return DetailedError;
+}(Error);
+
+exports.default = DetailedError;
+
+},{}],6:[function(_dereq_,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 exports.default = fingerprint;
 /**
  * Generate a fingerprint for a file which will be used the store the endpoint
@@ -133,7 +176,7 @@ function fingerprint(file) {
   return ["tus", file.name, file.type, file.size, file.lastModified].join("-");
 }
 
-},{}],6:[function(_dereq_,module,exports){
+},{}],7:[function(_dereq_,module,exports){
 "use strict";
 
 var _upload = _dereq_("./upload");
@@ -171,7 +214,7 @@ module.exports = {
   defaultOptions: defaultOptions
 };
 
-},{"./node/storage":4,"./upload":7}],7:[function(_dereq_,module,exports){
+},{"./node/storage":4,"./upload":8}],8:[function(_dereq_,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /* global window */
@@ -188,6 +231,10 @@ Object.defineProperty(exports, "__esModule", {
 var _fingerprint = _dereq_("./fingerprint");
 
 var _fingerprint2 = _interopRequireDefault(_fingerprint);
+
+var _error = _dereq_("./error");
+
+var _error2 = _interopRequireDefault(_error);
 
 var _extend = _dereq_("extend");
 
@@ -331,9 +378,8 @@ var Upload = function () {
     }
   }, {
     key: "_emitXhrError",
-    value: function _emitXhrError(xhr, err) {
-      err.originalRequest = xhr;
-      this._emitError(err);
+    value: function _emitXhrError(xhr, err, causingErr) {
+      this._emitError(new _error2.default(err, causingErr, xhr));
     }
   }, {
     key: "_emitError",
@@ -437,8 +483,8 @@ var Upload = function () {
         _this._startUpload();
       };
 
-      xhr.onerror = function () {
-        _this._emitXhrError(xhr, new Error("tus: failed to create upload"));
+      xhr.onerror = function (err) {
+        _this._emitXhrError(xhr, new Error("tus: failed to create upload"), err);
       };
 
       this._setupXHR(xhr);
@@ -507,8 +553,8 @@ var Upload = function () {
         _this2._startUpload();
       };
 
-      xhr.onerror = function () {
-        _this2._emitXhrError(xhr, new Error("tus: failed to resume upload"));
+      xhr.onerror = function (err) {
+        _this2._emitXhrError(xhr, new Error("tus: failed to resume upload"), err);
       };
 
       this._setupXHR(xhr);
@@ -567,13 +613,13 @@ var Upload = function () {
         _this3._startUpload();
       };
 
-      xhr.onerror = function () {
+      xhr.onerror = function (err) {
         // Don't emit an error if the upload was aborted manually
         if (_this3._aborted) {
           return;
         }
 
-        _this3._emitXhrError(xhr, new Error("tus: failed to upload chunk at offset " + _this3._offset));
+        _this3._emitXhrError(xhr, new Error("tus: failed to upload chunk at offset " + _this3._offset), err);
       };
 
       // Test support for progress events before attaching an event listener
@@ -627,7 +673,7 @@ Upload.defaultOptions = defaultOptions;
 
 exports.default = Upload;
 
-},{"./fingerprint":5,"./node/base64":1,"./node/request":2,"./node/source":3,"./node/storage":4,"extend":8}],8:[function(_dereq_,module,exports){
+},{"./error":5,"./fingerprint":6,"./node/base64":1,"./node/request":2,"./node/source":3,"./node/storage":4,"extend":9}],9:[function(_dereq_,module,exports){
 'use strict';
 
 var hasOwn = Object.prototype.hasOwnProperty;
@@ -715,6 +761,6 @@ module.exports = function extend() {
 };
 
 
-},{}]},{},[6])(6)
+},{}]},{},[7])(7)
 });
 //# sourceMappingURL=tus.js.map

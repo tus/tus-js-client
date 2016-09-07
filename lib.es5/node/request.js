@@ -50,6 +50,7 @@ var Request = function () {
 
     // Ignored field
     this.withCredentials = false;
+    this.responseText = "";
   }
 
   _createClass(Request, [{

@@ -213,7 +213,7 @@ describe("tus", function () {
 
       expect(upload.url).toBe(null);
 
-      expect(err.message).toBe("tus: unexpected response while creating upload");
+      expect(err.message).toBe("tus: unexpected response while creating upload, originated from request (response code: 500, response text: )");
       expect(err.originalRequest).toBeDefined();
       expect(err.originalRequest.getResponseHeader("Custom")).toBe("blargh");
     });

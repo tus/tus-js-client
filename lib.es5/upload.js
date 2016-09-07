@@ -16,6 +16,10 @@ var _fingerprint = require("./fingerprint");
 
 var _fingerprint2 = _interopRequireDefault(_fingerprint);
 
+var _error = require("./error");
+
+var _error2 = _interopRequireDefault(_error);
+
 var _extend = require("extend");
 
 var _extend2 = _interopRequireDefault(_extend);
@@ -158,9 +162,8 @@ var Upload = function () {
     }
   }, {
     key: "_emitXhrError",
-    value: function _emitXhrError(xhr, err) {
-      err.originalRequest = xhr;
-      this._emitError(err);
+    value: function _emitXhrError(xhr, err, causingErr) {
+      this._emitError(new _error2.default(err, causingErr, xhr));
     }
   }, {
     key: "_emitError",
@@ -264,8 +267,8 @@ var Upload = function () {
         _this._startUpload();
       };
 
-      xhr.onerror = function () {
-        _this._emitXhrError(xhr, new Error("tus: failed to create upload"));
+      xhr.onerror = function (err) {
+        _this._emitXhrError(xhr, new Error("tus: failed to create upload"), err);
       };
 
       this._setupXHR(xhr);
@@ -334,8 +337,8 @@ var Upload = function () {
         _this2._startUpload();
       };
 
-      xhr.onerror = function () {
-        _this2._emitXhrError(xhr, new Error("tus: failed to resume upload"));
+      xhr.onerror = function (err) {
+        _this2._emitXhrError(xhr, new Error("tus: failed to resume upload"), err);
       };
 
       this._setupXHR(xhr);
@@ -394,13 +397,13 @@ var Upload = function () {
         _this3._startUpload();
       };
 
-      xhr.onerror = function () {
+      xhr.onerror = function (err) {
         // Don't emit an error if the upload was aborted manually
         if (_this3._aborted) {
           return;
         }
 
-        _this3._emitXhrError(xhr, new Error("tus: failed to upload chunk at offset " + _this3._offset));
+        _this3._emitXhrError(xhr, new Error("tus: failed to upload chunk at offset " + _this3._offset), err);
       };
 
       // Test support for progress events before attaching an event listener
