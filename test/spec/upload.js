@@ -22,7 +22,7 @@ describe("tus", function () {
 
     it("should throw if no error handler is available", function () {
       var upload = new tus.Upload(null);
-      expect(upload.start).toThrow();
+      expect(upload.start.bind(upload)).toThrowError("tus: no file or stream to upload provided");
     });
 
     it("should upload a file", function (done) {
@@ -338,6 +338,160 @@ describe("tus", function () {
       });
 
       done();
+    });
+
+    it("should throw if retryDelays is not an array", function () {
+      var file = new FakeBlob("hello world".split(""));
+      var upload = new tus.Upload(file, {
+        endpoint: "http://endpoint/",
+        retryDelays: 44
+      });
+      expect(upload.start.bind(upload)).toThrowError("tus: the `retryDelays` option must either be an array or null");
+    });
+
+    it("should retry the upload", function (done) {
+      var file = new FakeBlob("hello world".split(""));
+      var options = {
+        endpoint: "/files/",
+        retryDelays: [10, 10, 10],
+        onSuccess: function () {}
+      };
+
+      spyOn(options, "onSuccess");
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      var req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("/files/");
+      expect(req.method).toBe("POST");
+
+      req.respondWith({
+        status: 500
+      });
+
+      setTimeout(function () {
+        req = jasmine.Ajax.requests.mostRecent();
+        expect(req.url).toBe("/files/");
+        expect(req.method).toBe("POST");
+
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: "/files/foo"
+          }
+        });
+
+        req = jasmine.Ajax.requests.mostRecent();
+        expect(req.url).toBe("/files/foo");
+        expect(req.method).toBe("PATCH");
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            "Upload-Offset": 11
+          }
+        });
+
+        expect(options.onSuccess).toHaveBeenCalled();
+        done();
+      }, 20);
+    });
+
+    it("should not retry if the error has not been caused by a request", function () {
+      var file = new FakeBlob("hello world".split(""));
+      var options = {
+        endpoint: "/files/",
+        retryDelays: [10, 10, 10],
+        onSuccess: function () {},
+        onError: function () {}
+      };
+
+      spyOn(options, "onSuccess");
+      spyOn(options, "onError");
+
+      var upload = new tus.Upload(file, options);
+      spyOn(upload, "_createUpload");
+      upload.start();
+
+
+      var error = new Error("custom error");
+      upload._emitError(error);
+
+      expect(upload._createUpload).toHaveBeenCalledTimes(1);
+      expect(options.onError).toHaveBeenCalledWith(error);
+      expect(options.onSuccess).not.toHaveBeenCalled();
+    });
+
+    it("should stop retrying after all delays have been used", function (done) {
+      var file = new FakeBlob("hello world".split(""));
+      var options = {
+        endpoint: "/files/",
+        retryDelays: [10],
+        onSuccess: function () {},
+        onError: function () {}
+      };
+
+      spyOn(options, "onSuccess");
+      spyOn(options, "onError");
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      var req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("/files/");
+      expect(req.method).toBe("POST");
+
+      req.respondWith({
+        status: 500
+      });
+
+      setTimeout(function () {
+        expect(options.onError).not.toHaveBeenCalled();
+
+        var req = jasmine.Ajax.requests.mostRecent();
+        expect(req.url).toBe("/files/");
+        expect(req.method).toBe("POST");
+
+        req.respondWith({
+          status: 500
+        });
+
+        expect(options.onSuccess).not.toHaveBeenCalled();
+        expect(options.onError).toHaveBeenCalledTimes(1);
+        done();
+      }, 200);
+    });
+
+    it("should stop retrying when the abort function is called", function (done) {
+      var file = new FakeBlob("hello world".split(""));
+      var options = {
+        endpoint: "/files/",
+        retryDelays: [100],
+        onError: function () {}
+      };
+
+      spyOn(options, "onError");
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      var req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("/files/");
+      expect(req.method).toBe("POST");
+
+      spyOn(upload, "start");
+
+      req.respondWith({
+        status: 500
+      });
+
+      upload.abort();
+
+      setTimeout(function () {
+        expect(upload.start).not.toHaveBeenCalled();
+        done();
+      }, 200);
     });
   });
 });

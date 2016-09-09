@@ -55,7 +55,8 @@ var defaultOptions = {
   withCredentials: false,
   uploadUrl: null,
   uploadSize: null,
-  overridePatchMethod: false
+  overridePatchMethod: false,
+  retryDelays: null
 };
 
 var Upload = function () {
@@ -89,11 +90,22 @@ var Upload = function () {
     // with a unified interface for getting its size and slice chunks from its
     // content allowing us to easily handle Files, Blobs, Buffers and Streams.
     this._source = null;
+
+    // The current count of attempts which have been made. Null indicates none.
+    this._retryAttempt = 0;
+
+    // The timeout's ID which is used to delay the next retry
+    this._retryTimeout = null;
+
+    // The offset of the remote upload before the latest attempt was started.
+    this._offsetBeforeRetry = 0;
   }
 
   _createClass(Upload, [{
     key: "start",
     value: function start() {
+      var _this = this;
+
       var file = this.file;
 
       if (!file) {
@@ -129,6 +141,55 @@ var Upload = function () {
         this._size = size;
       }
 
+      var retryDelays = this.options.retryDelays;
+      if (retryDelays != null) {
+        if (Object.prototype.toString.call(retryDelays) !== "[object Array]") {
+          throw new Error("tus: the `retryDelays` option must either be an array or null");
+        } else {
+          (function () {
+            var errorCallback = _this.options.onError;
+            _this.options.onError = function (err) {
+              // Restore the original error callback which may have been set.
+              _this.options.onError = errorCallback;
+
+              var isOnline = true;
+              if (typeof window !== "undefined" && "navigator" in window && window.navigator.onLine === false) {
+                isOnline = false;
+              }
+
+              // We only attempt a retry if
+              // - we didn't exceed the maxium number of retries, yet, and
+              // - this error was caused by a request or it's response and
+              // - the browser does not indicate that we are offline
+              var shouldRetry = _this._retryAttempt < retryDelays.length && err.originalRequest != null && isOnline;
+
+              if (!shouldRetry) {
+                _this._emitError(err);
+                return;
+              }
+
+              // We will not apply the delay if
+              // - we were already able to connect to the server (offset != null) and
+              // - we were able to upload a small chunk of data to the server
+              var shouldNotWait = _this._offset != null && !(_this._offset > _this._offsetBeforeRetry);
+              var delay = 0;
+              if (shouldNotWait) {
+                _this._retryAttempt = 0;
+              } else {
+                delay = retryDelays[_this._retryAttempt++];
+              }
+
+              _this._offsetBeforeRetry = _this._offset;
+              _this.options.uploadUrl = _this.url;
+
+              _this._retryTimeout = setTimeout(function () {
+                _this.start();
+              }, delay);
+            };
+          })();
+        }
+      }
+
       // A URL has manually been specified, so we try to resume
       if (this.options.uploadUrl != null) {
         this.url = this.options.uploadUrl;
@@ -158,6 +219,11 @@ var Upload = function () {
         this._xhr.abort();
         this._source.close();
         this._aborted = true;
+      }
+
+      if (this._retryTimeout != null) {
+        clearTimeout(this._retryTimeout);
+        this._retryTimeout = null;
       }
     }
   }, {
@@ -246,29 +312,29 @@ var Upload = function () {
   }, {
     key: "_createUpload",
     value: function _createUpload() {
-      var _this = this;
+      var _this2 = this;
 
       var xhr = (0, _request.newRequest)();
       xhr.open("POST", this.options.endpoint, true);
 
       xhr.onload = function () {
         if (!(xhr.status >= 200 && xhr.status < 300)) {
-          _this._emitXhrError(xhr, new Error("tus: unexpected response while creating upload"));
+          _this2._emitXhrError(xhr, new Error("tus: unexpected response while creating upload"));
           return;
         }
 
-        _this.url = xhr.getResponseHeader("Location");
+        _this2.url = xhr.getResponseHeader("Location");
 
-        if (_this.options.resume) {
-          Storage.setItem(_this._fingerprint, _this.url);
+        if (_this2.options.resume) {
+          Storage.setItem(_this2._fingerprint, _this2.url);
         }
 
-        _this._offset = 0;
-        _this._startUpload();
+        _this2._offset = 0;
+        _this2._startUpload();
       };
 
       xhr.onerror = function (err) {
-        _this._emitXhrError(xhr, new Error("tus: failed to create upload"), err);
+        _this2._emitXhrError(xhr, new Error("tus: failed to create upload"), err);
       };
 
       this._setupXHR(xhr);
@@ -294,51 +360,51 @@ var Upload = function () {
   }, {
     key: "_resumeUpload",
     value: function _resumeUpload() {
-      var _this2 = this;
+      var _this3 = this;
 
       var xhr = (0, _request.newRequest)();
       xhr.open("HEAD", this.url, true);
 
       xhr.onload = function () {
         if (!(xhr.status >= 200 && xhr.status < 300)) {
-          if (_this2.options.resume) {
+          if (_this3.options.resume) {
             // Remove stored fingerprint and corresponding endpoint,
             // since the file can not be found
-            Storage.removeItem(_this2._fingerprint);
+            Storage.removeItem(_this3._fingerprint);
           }
 
           // Try to create a new upload
-          _this2.url = null;
-          _this2._createUpload();
+          _this3.url = null;
+          _this3._createUpload();
           return;
         }
 
         var offset = parseInt(xhr.getResponseHeader("Upload-Offset"), 10);
         if (isNaN(offset)) {
-          _this2._emitXhrError(xhr, new Error("tus: invalid or missing offset value"));
+          _this3._emitXhrError(xhr, new Error("tus: invalid or missing offset value"));
           return;
         }
 
         var length = parseInt(xhr.getResponseHeader("Upload-Length"), 10);
         if (isNaN(length)) {
-          _this2._emitXhrError(xhr, new Error("tus: invalid or missing length value"));
+          _this3._emitXhrError(xhr, new Error("tus: invalid or missing length value"));
           return;
         }
 
         // Upload has already been completed and we do not need to send additional
         // data to the server
         if (offset === length) {
-          _this2._emitProgress(length, length);
-          _this2._emitSuccess();
+          _this3._emitProgress(length, length);
+          _this3._emitSuccess();
           return;
         }
 
-        _this2._offset = offset;
-        _this2._startUpload();
+        _this3._offset = offset;
+        _this3._startUpload();
       };
 
       xhr.onerror = function (err) {
-        _this2._emitXhrError(xhr, new Error("tus: failed to resume upload"), err);
+        _this3._emitXhrError(xhr, new Error("tus: failed to resume upload"), err);
       };
 
       this._setupXHR(xhr);
@@ -356,7 +422,7 @@ var Upload = function () {
   }, {
     key: "_startUpload",
     value: function _startUpload() {
-      var _this3 = this;
+      var _this4 = this;
 
       var xhr = this._xhr = (0, _request.newRequest)();
 
@@ -372,38 +438,38 @@ var Upload = function () {
 
       xhr.onload = function () {
         if (!(xhr.status >= 200 && xhr.status < 300)) {
-          _this3._emitXhrError(xhr, new Error("tus: unexpected response while uploading chunk"));
+          _this4._emitXhrError(xhr, new Error("tus: unexpected response while uploading chunk"));
           return;
         }
 
         var offset = parseInt(xhr.getResponseHeader("Upload-Offset"), 10);
         if (isNaN(offset)) {
-          _this3._emitXhrError(xhr, new Error("tus: invalid or missing offset value"));
+          _this4._emitXhrError(xhr, new Error("tus: invalid or missing offset value"));
           return;
         }
 
-        _this3._emitProgress(offset, _this3._size);
-        _this3._emitChunkComplete(offset - _this3._offset, offset, _this3._size);
+        _this4._emitProgress(offset, _this4._size);
+        _this4._emitChunkComplete(offset - _this4._offset, offset, _this4._size);
 
-        _this3._offset = offset;
+        _this4._offset = offset;
 
-        if (offset == _this3._size) {
+        if (offset == _this4._size) {
           // Yay, finally done :)
-          _this3._emitSuccess();
-          _this3._source.close();
+          _this4._emitSuccess();
+          _this4._source.close();
           return;
         }
 
-        _this3._startUpload();
+        _this4._startUpload();
       };
 
       xhr.onerror = function (err) {
         // Don't emit an error if the upload was aborted manually
-        if (_this3._aborted) {
+        if (_this4._aborted) {
           return;
         }
 
-        _this3._emitXhrError(xhr, new Error("tus: failed to upload chunk at offset " + _this3._offset), err);
+        _this4._emitXhrError(xhr, new Error("tus: failed to upload chunk at offset " + _this4._offset), err);
       };
 
       // Test support for progress events before attaching an event listener
@@ -413,7 +479,7 @@ var Upload = function () {
             return;
           }
 
-          _this3._emitProgress(start + e.loaded, _this3._size);
+          _this4._emitProgress(start + e.loaded, _this4._size);
         };
       }
 
