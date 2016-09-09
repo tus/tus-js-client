@@ -45,6 +45,7 @@ input.addEventListener("change", function (e) {
     endpoint: endpoint,
     resume: !resumeCheckbox.checked,
     chunkSize: chunkSize,
+    retryDelays: [0, 1000, 2000],
     metadata: {
         filename: file.name
     },
