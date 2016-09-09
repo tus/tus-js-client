@@ -59,12 +59,17 @@ function injectReporter() {
       console.log(msg);
     }
 
+    function onComplete(passed) {
+      window.callPhantom(passed);
+    }
+
     eval(script);
 
     jasmine.getEnv().addReporter(new ConsoleReporter({
       print: print,
       printDeprecation: print,
-      showColors: true
+      showColors: true,
+      onComplete: onComplete
     }));
   }, reporterScript);
 }
@@ -83,14 +88,12 @@ page.onResourceError = function (resourceError) {
 // Test after every resource whether the global jasmine object is available.
 page.onResourceReceived = checkJasmineStatus;
 
-page.open("./test/SpecRunner.html", function (status) {
-    if (status !== "success") {
-        console.log("Network error.");
-    }
+page.onCallback = function (passed) {
+  phantom.exit(passed ? 0 : 1);
+};
 
-    // Get the tests' result to determine the process' exit code.
-    var passed = page.evaluate(function () {
-      return jasmine.getJSReport().passed;
-    });
-    phantom.exit(passed ? 0 : 1);
+page.open("./test/SpecRunner.html", function (status) {
+  if (status !== "success") {
+      console.log("Network error.");
+  }
 });
