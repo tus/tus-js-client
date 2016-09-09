@@ -47,7 +47,7 @@
     "jasmine": "^2.4.1",
     "jasmine-ajax": "^3.2.0",
     "jasmine-core": "^2.4.1",
-    "phantomjs": "^1.9.18",
+    "phantomjs": "^2.1.7",
     "temp": "^0.8.3",
     "uglify-js": "^2.6.0",
     "watchify": "^3.5.0"

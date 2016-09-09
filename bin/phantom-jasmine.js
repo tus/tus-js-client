@@ -20,7 +20,7 @@ var sys = require("system");
 
 // Calculate the absolute path to the current script, regardless of the working
 // directory, e.g. /home/user/tus-js-client/bin/
-var __dirname = phantom.libraryPath + fs.separator + phantom.scriptName.split(fs.separator).slice(0, -1).join(fs.separator);
+var __dirname = phantom.libraryPath + fs.separator;
 
 // Embed the ConsoleReporter in a simple function to emulate the CommonJS
 // module environment.
