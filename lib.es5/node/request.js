@@ -7,6 +7,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.newRequest = newRequest;
+exports.resolveUrl = resolveUrl;
 
 var _http = require("http");
 
@@ -142,4 +143,8 @@ var ProgressEmitter = function (_Transform) {
 
 function newRequest() {
   return new Request();
+}
+
+function resolveUrl(origin, link) {
+  return (0, _url.resolve)(origin, link);
 }

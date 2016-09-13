@@ -53,7 +53,8 @@
     "watchify": "^3.5.0"
   },
   "dependencies": {
-    "extend": "^3.0.0"
+    "extend": "^3.0.0",
+    "resolve-url": "^0.2.1"
   },
   "scripts": {
     "build": "browserify lib/index.js -t [ babelify --presets [ es2015 ] ] -s tus -d | exorcist ./dist/tus.js.map | derequire > dist/tus.js",

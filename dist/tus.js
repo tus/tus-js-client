@@ -22,13 +22,24 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.newRequest = newRequest;
-/* global window */
+exports.resolveUrl = resolveUrl;
+
+var _resolveUrl = _dereq_("resolve-url");
+
+var _resolveUrl2 = _interopRequireDefault(_resolveUrl);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function newRequest() {
   return new window.XMLHttpRequest();
+} /* global window */
+
+
+function resolveUrl(origin, link) {
+  return (0, _resolveUrl2.default)(origin, link);
 }
 
-},{}],3:[function(_dereq_,module,exports){
+},{"resolve-url":10}],3:[function(_dereq_,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -539,7 +550,7 @@ var Upload = function () {
           return;
         }
 
-        _this2.url = xhr.getResponseHeader("Location");
+        _this2.url = (0, _request.resolveUrl)(_this2.options.endpoint, xhr.getResponseHeader("Location"));
 
         if (_this2.options.resume) {
           Storage.setItem(_this2._fingerprint, _this2.url);
@@ -826,6 +837,55 @@ module.exports = function extend() {
 	return target;
 };
 
+
+},{}],10:[function(_dereq_,module,exports){
+// Copyright 2014 Simon Lydell
+// X11 (“MIT”) Licensed. (See LICENSE.)
+
+void (function(root, factory) {
+  if (typeof define === "function" && define.amd) {
+    define(factory)
+  } else if (typeof exports === "object") {
+    module.exports = factory()
+  } else {
+    root.resolveUrl = factory()
+  }
+}(this, function() {
+
+  function resolveUrl(/* ...urls */) {
+    var numUrls = arguments.length
+
+    if (numUrls === 0) {
+      throw new Error("resolveUrl requires at least one argument; got none.")
+    }
+
+    var base = document.createElement("base")
+    base.href = arguments[0]
+
+    if (numUrls === 1) {
+      return base.href
+    }
+
+    var head = document.getElementsByTagName("head")[0]
+    head.insertBefore(base, head.firstChild)
+
+    var a = document.createElement("a")
+    var resolved
+
+    for (var index = 1; index < numUrls; index++) {
+      a.href = arguments[index]
+      resolved = a.href
+      base.href = resolved
+    }
+
+    head.removeChild(base)
+
+    return resolved
+  }
+
+  return resolveUrl
+
+}));
 
 },{}]},{},[7])(7)
 });

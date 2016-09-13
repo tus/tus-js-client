@@ -323,7 +323,7 @@ var Upload = function () {
           return;
         }
 
-        _this2.url = xhr.getResponseHeader("Location");
+        _this2.url = (0, _request.resolveUrl)(_this2.options.endpoint, xhr.getResponseHeader("Location"));
 
         if (_this2.options.resume) {
           Storage.setItem(_this2._fingerprint, _this2.url);

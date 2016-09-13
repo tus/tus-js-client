@@ -22,7 +22,11 @@ class MockRequest {
   constructor(req, opt) {
     this._req = req;
 
+    // Unset the host property to force url.format to use the hostname and port
+    // properties.
     opt.host = null;
+    // Hide the port in the formatted URL if it is HTTP's default one.
+    if (opt.port == 80) opt.port = null;
 
     this.url = url.format(opt);
     this.method = req.method;
