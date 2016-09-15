@@ -83,8 +83,8 @@ var Request = function () {
         _this.onload();
       });
 
-      req.on("error", function () {
-        _this.onerror();
+      req.on("error", function (err) {
+        _this.onerror(err);
       });
 
       if (body instanceof _stream.Readable) {

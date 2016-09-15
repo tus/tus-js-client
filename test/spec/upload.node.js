@@ -82,6 +82,30 @@ describe("tus", function () {
 
       expectHelloWorldUpload(file, options, done);
     });
+
+    it("should pass through errors from the request", function () {
+      var resErr = new Error("something bad, really!");
+      var buffer = new Buffer("hello world");
+      var option = {
+        endpoint: "/uploads",
+        onError: function (err) {
+          expect(err.causingError).toBe(resErr);
+        }
+      };
+
+      spyOn(option, "onError").and.callThrough();
+
+      var upload = new tus.Upload(buffer, option);
+      upload.start();
+
+      var req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("/uploads");
+      expect(req.method).toBe("POST");
+
+      req.responseError(resErr);
+
+      expect(option.onError).toHaveBeenCalled();
+    });
   });
 });
 

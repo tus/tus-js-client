@@ -48,6 +48,10 @@ class MockRequest {
     this._req.emit("response", res);
   }
 
+  responseError(err) {
+    this._req.emit("error", err);
+  }
+
   contentType() {
     return this.requestHeaders["Content-Type"] || "";
   }
