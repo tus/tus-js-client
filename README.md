@@ -12,6 +12,7 @@ input.addEventListener("change", function(e) {
     // Create a new tus upload
     var upload = new tus.Upload(file, {
         endpoint: "http://localhost:1080/files/",
+        retryDelays: [0, 1000, 3000, 5000],
         onError: function(error) {
             console.log("Failed because: " + error)
         },
@@ -176,6 +177,11 @@ necessary if a browser or the server does not support latter one. In this case,
 a `POST` request will be made with the `X-HTTP-Method-Override: PATCH` header.
 The server must be able to detect it, and then handle the request as if `PATCH`
 would have been the method.
+* `retryDelays = null`: an array or null, indicating how many milliseconds should
+pass before the next attempt to uploading will be started after the transfer has
+been interrupted. The array's length indicates the maximum number of attempts.
+For more details about the system of retries and delays, read the
+[Automated Retries](#automated-retries) section.
 
 ### new tus.Upload(file, options)
 
@@ -233,6 +239,17 @@ we have evidence that the remote endpoint has received and accepted the
 uploaded bytes. When consuming this functionality, the `chunkSize` option is
 from high importance since the callback will and invoked if an entire chunk
 has been uploaded.
+
+### Automated Retries
+
+Due to tus' support for resumability, tus-js-client has been engineered to work even under bad networking conditions and provides options for controlling how it should act in different circumstances.
+One of these settings is `retryDelays` which defines whether and how often tus-js-client will attempt a retry after the upload has been unintentionally interrupted. The value may either be `null`, to fully disable the described functionality, or an array of numbers. It's length will define how often retries will be attempted before giving up and the array's values indicate the delay between the upload interruption and the start of the next attempt in milliseconds. For example, a configuration of `[0, 1000, 3000, 5000]` will result in, at most, five attempts to resume the upload, including the initial one from calling `tus.Upload#start`. The first retry will occur instantly after the interruption, while the second attempt is going to be started after waiting for one second, the third after three seconds, and so on. If the fifth and final attempt also fails, the latest error will not be caught, but passed to the provided `onError` callback.
+The underlying implementation is rather straightforward: Any error which would usually trigger the `onError` callback will be caught if following criteria are matched:
+- the error has been caused by networking issues, e.g. connection interruption or an unexpected/invalid response from the server, and
+- the environment does not explicitly report that the client is disconnected from any network, e.g. `navigator.onLine` in modern browsers, and
+- the maximum number of retries, defined by the array's length, has not been reached.
+
+If all of these conditions are met, an attempt will be issued after applying the defined delay. Furthermore, once the client was able to successfully transfer chunks of the upload to the server, the counter for attempted retries will be reset to zero. For example, if an upload is interrupted the first delay will be applied. After reconnecting to the remote endpoint, it is able to transfer data to it until the connection is cut again. This time not the second delay will be used but the first one again because we were able to upload chunks. The reason for this behavior is that it will allow uploads to be interrupted more often than the `retryDelays` option defines, as long as we are making progress in uploading.
 
 ## Building
 
