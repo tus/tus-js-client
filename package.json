@@ -44,7 +44,7 @@
     "eslint": "^1.6.0",
     "exorcist": "^0.4.0",
     "get-saucelabs-browsers": "^1.0.1",
-    "jasmine": "^2.4.1",
+    "jasmine": "^2.5.2",
     "jasmine-ajax": "^3.2.0",
     "jasmine-core": "^2.4.1",
     "phantomjs": "^2.1.7",

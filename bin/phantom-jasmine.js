@@ -65,12 +65,15 @@ function injectReporter() {
 
     eval(script);
 
-    jasmine.getEnv().addReporter(new ConsoleReporter({
+    var reporter = new ConsoleReporter();
+    reporter.setOptions({
       print: print,
       printDeprecation: print,
       showColors: true,
       onComplete: onComplete
-    }));
+    });
+
+    jasmine.getEnv().addReporter(reporter);
   }, reporterScript);
 }
 
