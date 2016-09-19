@@ -152,6 +152,14 @@ var Upload = function () {
               // Restore the original error callback which may have been set.
               _this.options.onError = errorCallback;
 
+              // We will reset the attempt counter if
+              // - we were already able to connect to the server (offset != null) and
+              // - we were able to upload a small chunk of data to the server
+              var shouldResetDelays = _this._offset != null && _this._offset > _this._offsetBeforeRetry;
+              if (shouldResetDelays) {
+                _this._retryAttempt = 0;
+              }
+
               var isOnline = true;
               if (typeof window !== "undefined" && "navigator" in window && window.navigator.onLine === false) {
                 isOnline = false;
@@ -168,16 +176,7 @@ var Upload = function () {
                 return;
               }
 
-              // We will not apply the delay if
-              // - we were already able to connect to the server (offset != null) and
-              // - we were able to upload a small chunk of data to the server
-              var shouldNotWait = _this._offset != null && !(_this._offset > _this._offsetBeforeRetry);
-              var delay = 0;
-              if (shouldNotWait) {
-                _this._retryAttempt = 0;
-              } else {
-                delay = retryDelays[_this._retryAttempt++];
-              }
+              var delay = retryDelays[_this._retryAttempt++];
 
               _this._offsetBeforeRetry = _this._offset;
               _this.options.uploadUrl = _this.url;
