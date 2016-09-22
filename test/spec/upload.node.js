@@ -38,22 +38,11 @@ describe("tus", function () {
     it("should reject streams without specifing the size", function () {
       var input = new stream.PassThrough();
       var options = {
-        endpoint: "/uploads",
-        chunkSize: 100
-      };
-
-      var upload = new tus.Upload(input, options);
-      expect(upload.start.bind(upload)).toThrow(new Error("tus: cannot automatically derive upload's size from input and must be specified manually using the `uploadSize` option"));
-    });
-
-    it("should reject streams without specifing the chunkSize", function () {
-      var input = new stream.PassThrough();
-      var options = {
         endpoint: "/uploads"
       };
 
       var upload = new tus.Upload(input, options);
-      expect(upload.start.bind(upload)).toThrow(new Error("cannot create source for stream without a finite value for the `chunkSize` option"));
+      expect(upload.start.bind(upload)).toThrow(new Error("tus: cannot automatically derive upload's size from input and must be specified manually using the `uploadSize` option"));
     });
 
     it("should accept Readable streams", function (done) {
