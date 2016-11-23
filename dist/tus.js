@@ -103,8 +103,7 @@ try {
   // Attempt to store and read entries from the local storage to detect Private
   // Mode on Safari on iOS (see #49)
   var test = 'tusSupport';
-  localStorage.setItem(test, test);
-  localStorage.removeItem(test);
+  localStorage.setItem(test, localStorage.getItem(test));
 } catch (e) {
   // If we try to access localStorage inside a sandboxed iframe, a SecurityError
   // is thrown. When in private mode on iOS Safari, a QuotaExceededError is
