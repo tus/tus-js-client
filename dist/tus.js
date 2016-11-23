@@ -7,8 +7,8 @@ Object.defineProperty(exports, "__esModule", {
 exports.encode = encode;
 /* global: window */
 
-var _window = window;
-var btoa = _window.btoa;
+var _window = window,
+    btoa = _window.btoa;
 function encode(data) {
   return btoa(unescape(encodeURIComponent(data)));
 }
@@ -33,8 +33,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function newRequest() {
   return new window.XMLHttpRequest();
 } /* global window */
-
-
 function resolveUrl(origin, link) {
   return (0, _resolveUrl2.default)(origin, link);
 }
@@ -42,11 +40,12 @@ function resolveUrl(origin, link) {
 },{"resolve-url":10}],3:[function(_dereq_,module,exports){
 "use strict";
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 exports.getSource = getSource;
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -98,12 +97,16 @@ exports.removeItem = removeItem;
 var hasStorage = false;
 try {
   hasStorage = "localStorage" in window;
-  // Attempt to access localStorage
-  localStorage.length;
+
+  // Attempt to store and read entries from the local storage to detect Private
+  // Mode on Safari on iOS (see #49)
+  var test = 'tusSupport';
+  localStorage.setItem(test, localStorage.getItem(test));
 } catch (e) {
   // If we try to access localStorage inside a sandboxed iframe, a SecurityError
-  // is thrown.
-  if (e.code === e.SECURITY_ERR) {
+  // is thrown. When in private mode on iOS Safari, a QuotaExceededError is
+  // thrown (see #49)
+  if (e.code === e.SECURITY_ERR || e.code === e.QUOTA_EXCEEDED_ERR) {
     hasStorage = false;
   } else {
     throw e;
@@ -144,12 +147,12 @@ var DetailedError = function (_Error) {
   _inherits(DetailedError, _Error);
 
   function DetailedError(error) {
-    var causingErr = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
-    var xhr = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+    var causingErr = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+    var xhr = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
     _classCallCheck(this, DetailedError);
 
-    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(DetailedError).call(this, error.message));
+    var _this = _possibleConstructorReturn(this, (DetailedError.__proto__ || Object.getPrototypeOf(DetailedError)).call(this, error.message));
 
     _this.originalRequest = xhr;
     _this.causingError = causingErr;
@@ -204,9 +207,9 @@ var defaultOptions = _upload2.default.defaultOptions;
 
 if (typeof window !== "undefined") {
   // Browser environment using XMLHttpRequest
-  var _window = window;
-  var XMLHttpRequest = _window.XMLHttpRequest;
-  var Blob = _window.Blob;
+  var _window = window,
+      XMLHttpRequest = _window.XMLHttpRequest,
+      Blob = _window.Blob;
 
 
   var isSupported = XMLHttpRequest && Blob && typeof Blob.prototype.slice === "function";
@@ -228,16 +231,16 @@ module.exports = {
 },{"./node/storage":4,"./upload":8}],8:[function(_dereq_,module,exports){
 "use strict";
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /* global window */
 
 
 // We import the files used inside the Node environment which are rewritten
 // for browsers using the rules defined in the package.json
 
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
 
 var _fingerprint = _dereq_("./fingerprint");
 
@@ -357,15 +360,15 @@ var Upload = function () {
 
         this._size = size;
       } else {
-        var size = source.size;
+        var _size = source.size;
 
         // The size property will be null if we cannot calculate the file's size,
         // for example if you handle a stream.
-        if (size == null) {
+        if (_size == null) {
           throw new Error("tus: cannot automatically derive upload's size from input and must be specified manually using the `uploadSize` option");
         }
 
-        this._size = size;
+        this._size = _size;
       }
 
       var retryDelays = this.options.retryDelays;
