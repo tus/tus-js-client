@@ -97,8 +97,6 @@ exports.removeItem = removeItem;
 var hasStorage = false;
 try {
   hasStorage = "localStorage" in window;
-  // Attempt to access localStorage
-  localStorage.length;
 
   // Attempt to store and read entries from the local storage to detect Private
   // Mode on Safari on iOS (see #49)
