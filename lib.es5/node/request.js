@@ -101,7 +101,7 @@ var Request = function () {
   }, {
     key: "abort",
     value: function abort() {
-      if (this._req !== null) this._req.abort();
+      if (this._request !== null) this._request.abort();
     }
   }]);
 

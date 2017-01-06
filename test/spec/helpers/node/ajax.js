@@ -14,7 +14,7 @@ class MockAgent extends http.Agent {
   }
 
   getLastRequest() {
-    return this._caughtRequests.shift();
+    return this._caughtRequests[this._caughtRequests.length - 1];
   }
 }
 

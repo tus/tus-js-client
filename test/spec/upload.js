@@ -528,6 +528,51 @@ describe("tus", function () {
       }, 200);
     });
 
+    it("should stop upload when the abort function is called during a callback", function (done) {
+      var upload;
+      var file = new FakeBlob("hello world".split(""));
+      var options = {
+        endpoint: "http://tus.io/files/",
+        chunkSize: 5,
+        onChunkComplete: function() {
+          upload.abort();
+        }
+      };
+
+      spyOn(options, "onChunkComplete").and.callThrough();
+
+      upload = new tus.Upload(file, options);
+      upload.start();
+
+      var req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("http://tus.io/files/");
+      expect(req.method).toBe("POST");
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: "/files/foo"
+        }
+      });
+
+      req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 5
+        }
+      });
+
+      setTimeout(function () {
+        expect(options.onChunkComplete).toHaveBeenCalled();
+        expect(jasmine.Ajax.requests.mostRecent()).toBe(req);
+        done();
+      }, 200);
+    });
+
     it("should reset the attempt counter if an upload proceeds", function (done) {
       var file = new FakeBlob("hello world".split(""));
       var options = {

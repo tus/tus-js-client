@@ -420,6 +420,11 @@ var Upload = function () {
         }
       }
 
+      // Reset the aborted flag when the upload is started or else the
+      // _startUpload will stop before sending a request if the upload has been
+      // aborted previously.
+      this._aborted = false;
+
       // A URL has manually been specified, so we try to resume
       if (this.options.uploadUrl != null) {
         this.url = this.options.uploadUrl;
@@ -653,6 +658,13 @@ var Upload = function () {
     key: "_startUpload",
     value: function _startUpload() {
       var _this4 = this;
+
+      // If the upload has been aborted, we will not send the next PATCH request.
+      // This is important if the abort method was called during a callback, such
+      // as onChunkComplete or onProgress.
+      if (this._aborted) {
+        return;
+      }
 
       var xhr = this._xhr = (0, _request.newRequest)();
 
