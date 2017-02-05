@@ -139,7 +139,7 @@ function pollTestStatus(testIds) {
     var remainingTestIds = [];
 
     test.forEach(function (test) {
-      if (!("result" in test)) {
+      if (!("result" in test) || test.result == null) {
         // No results are available yet, so we still need to wait for it.
         remainingTestIds.push(test.id);
         return;
