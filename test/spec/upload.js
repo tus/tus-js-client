@@ -374,6 +374,31 @@ describe("tus", function () {
       done();
     });
 
+    it("should emit an error if an upload is locked", function (done) {
+      var file = new FakeBlob("hello world".split(""));
+      var options = {
+        endpoint: "http://tus.io/uploads",
+        uploadUrl: "http://tus.io/files/upload",
+        onError: function() {}
+      };
+
+      spyOn(options, "onError");
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      var req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("http://tus.io/files/upload");
+      expect(req.method).toBe("HEAD");
+
+      req.respondWith({
+        status: 423, // Locked
+      });
+
+      expect(options.onError).toHaveBeenCalledWith(new Error("tus: upload is currently locked; retry later, originated from request (response code: 423, response text: )"));
+      done();
+    });
+
     it("should throw if retryDelays is not an array", function () {
       var file = new FakeBlob("hello world".split(""));
       var upload = new tus.Upload(file, {

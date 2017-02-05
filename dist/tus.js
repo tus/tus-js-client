@@ -608,6 +608,16 @@ var Upload = function () {
             Storage.removeItem(_this3._fingerprint);
           }
 
+          // If the upload is locked (indicated by the 423 Locked status code), we
+          // emit an error instead of directly starting a new upload. This way the
+          // retry logic can catch the error and will retry the upload. An upload
+          // is usually locked for a short period of time and will be available
+          // afterwards.
+          if (xhr.status === 423) {
+            _this3._emitXhrError(xhr, new Error("tus: upload is currently locked; retry later"));
+            return;
+          }
+
           // Try to create a new upload
           _this3.url = null;
           _this3._createUpload();
