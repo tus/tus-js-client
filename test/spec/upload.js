@@ -379,7 +379,7 @@ describe("tus", function () {
       var options = {
         endpoint: "http://tus.io/uploads",
         uploadUrl: "http://tus.io/files/upload",
-        onError: function() {}
+        onError: function () {}
       };
 
       spyOn(options, "onError");
@@ -392,7 +392,7 @@ describe("tus", function () {
       expect(req.method).toBe("HEAD");
 
       req.respondWith({
-        status: 423, // Locked
+        status: 423 // Locked
       });
 
       expect(options.onError).toHaveBeenCalledWith(new Error("tus: upload is currently locked; retry later, originated from request (response code: 423, response text: )"));
@@ -559,7 +559,7 @@ describe("tus", function () {
       var options = {
         endpoint: "http://tus.io/files/",
         chunkSize: 5,
-        onChunkComplete: function() {
+        onChunkComplete: function () {
           upload.abort();
         }
       };
