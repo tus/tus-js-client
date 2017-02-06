@@ -135,13 +135,25 @@ function pollTestStatus(testIds) {
   options.auth = username + ":" + accessKey;
   options.body = JSON.stringify(body);
   request(options, function (res) {
-    var test = res["js tests"];
+    var tests = res["js tests"];
     var remainingTestIds = [];
 
-    test.forEach(function (test) {
-      if (!("result" in test) || test.result == null) {
+    tests.forEach(function (test) {
+      if (test.status === "test error") {
+        console.log("Browser %s errored!".red, test.platform.join(" "));
+        failedTests++;
+        return;
+      }
+
+      if (!("result" in test)) {
         // No results are available yet, so we still need to wait for it.
         remainingTestIds.push(test.id);
+        return;
+      }
+
+      if (test.result == null) {
+        console.log("Browser %s completed without success!".red, test.platform.join(" "));
+        failedTests++;
         return;
       }
 
