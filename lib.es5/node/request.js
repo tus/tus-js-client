@@ -21,6 +21,12 @@ var _url = require("url");
 
 var _stream = require("stream");
 
+var _lodash = require("lodash.throttle");
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -119,9 +125,18 @@ var ProgressEmitter = function (_Transform) {
   function ProgressEmitter(onprogress) {
     _classCallCheck(this, ProgressEmitter);
 
+    // The _onprogress property will be invoked, whenever a chunk is piped
+    // through this transformer. Since chunks are usually quite small (64kb),
+    // these calls can occur frequently, especially when you have a good
+    // connection to the remote server. Therefore, we are throtteling them to
+    // prevent accessive function calls.
+
     var _this2 = _possibleConstructorReturn(this, Object.getPrototypeOf(ProgressEmitter).call(this));
 
-    _this2._onprogress = onprogress;
+    _this2._onprogress = (0, _lodash2.default)(onprogress, 100, {
+      leading: true,
+      trailing: false
+    });
     _this2._position = 0;
     return _this2;
   }
