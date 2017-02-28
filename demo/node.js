@@ -4,11 +4,11 @@ var fs = require("fs");
 var tus = require("../");
 
 var path = "./dist/tus.js";
-var file = fs.createReadStream("./dist/tus.js");
+var file = fs.createReadStream(path);
 var size = fs.statSync(path).size;
 
 var options = {
-  endpoint: "http://master.tus.io/files/",
+  endpoint: "https://master.tus.io/files/",
   resume: true,
   metadata: {
       filename: "tus.js"
