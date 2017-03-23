@@ -230,7 +230,7 @@ When configuring a new uploader, the `onProgress` and `onChunkComplete`
 callbacks are available. While they may seem to be equal based on their
 naming and the arguments, they provide different information in reality.
 Progress events are emitted using the `onProgress` option and provide numbers
-about how must data has been sent to the server. However, this data may not
+about how much data has been sent to the server. However, this data may not
 have been received or accepted by the endpoint. Imagine a network outage where
 the browser reports to have successfully sent 100 bytes, but none of them ever
 reach the backend. In order to provide reliable information about whether the
