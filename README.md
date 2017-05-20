@@ -274,9 +274,6 @@ In order to run the tests, open `test/SpecRunner.html` in a browser and you
 should see a visual representation of the test results. No web server is
 required, you can open `SpecRunner.html` using the `file:///` protocol.
 
-In addition, if do not want to download the repository, you can run the latest
-tests online by visiting [https://rawgit.com/tus/tus-js-client/master/test/SpecRunner.html](https://rawgit.com/tus/tus-js-client/master/test/SpecRunner.html).
-
 Tests can also be run on SauceLabs' cloud infrastructure using `npm test`.
 Before using this command, you have to set up your SauceLabs account by filling
 the `SAUCE_USERNAME` and `SAUCE_ACCESS_KEY` variables else the command will fail.
