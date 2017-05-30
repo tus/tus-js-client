@@ -4,11 +4,17 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.isSupported = undefined;
 exports.encode = encode;
-/* global: Buffer */
+
+var _bufferFrom = require("buffer-from");
+
+var _bufferFrom2 = _interopRequireDefault(_bufferFrom);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function encode(data) {
-  return new Buffer(data).toString("base64");
+  return (0, _bufferFrom2.default)(String(data)).toString("base64");
 }
 
 var isSupported = exports.isSupported = true;

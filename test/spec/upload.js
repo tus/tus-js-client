@@ -35,7 +35,8 @@ describe("tus", function () {
         metadata: {
           foo: "hello",
           bar: "world",
-          nonlatin: "słońce"
+          nonlatin: "słońce",
+          number: 100
         },
         withCredentials: true,
         onProgress: function () {},
@@ -57,7 +58,7 @@ describe("tus", function () {
       expect(req.requestHeaders["Upload-Length"]).toBe(11);
       if (isBrowser) expect(req.withCredentials).toBe(true);
       if (isNode || (isBrowser && "btoa" in window)) {
-        expect(req.requestHeaders["Upload-Metadata"]).toBe("foo aGVsbG8=,bar d29ybGQ=,nonlatin c8WCb8WEY2U=");
+        expect(req.requestHeaders["Upload-Metadata"]).toBe("foo aGVsbG8=,bar d29ybGQ=,nonlatin c8WCb8WEY2U=,number MTAw");
       }
 
       req.respondWith({
