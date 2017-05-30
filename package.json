@@ -54,6 +54,7 @@
     "watchify": "^3.5.0"
   },
   "dependencies": {
+    "buffer-from": "^0.1.1",
     "extend": "^3.0.0",
     "lodash.throttle": "^4.1.1",
     "resolve-url": "^0.2.1"
