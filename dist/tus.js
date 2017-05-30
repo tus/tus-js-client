@@ -401,7 +401,7 @@ var Upload = function () {
               // - this error was caused by a request or it's response and
               // - the error is not a client error (status 4xx) and
               // - the browser does not indicate that we are offline
-              var shouldRetry = _this._retryAttempt < retryDelays.length && err.originalRequest != null && !(err.originalRequest.status >= 400 && err.originalRequest.status < 500) && isOnline;
+              var shouldRetry = _this._retryAttempt < retryDelays.length && err.originalRequest != null && !inStatusCategory(err.originalRequest.status, 400) && isOnline;
 
               if (!shouldRetry) {
                 _this._emitError(err);
@@ -554,7 +554,7 @@ var Upload = function () {
       xhr.open("POST", this.options.endpoint, true);
 
       xhr.onload = function () {
-        if (!(xhr.status >= 200 && xhr.status < 300)) {
+        if (!inStatusCategory(xhr.status, 200)) {
           _this2._emitXhrError(xhr, new Error("tus: unexpected response while creating upload"));
           return;
         }
@@ -602,10 +602,10 @@ var Upload = function () {
       xhr.open("HEAD", this.url, true);
 
       xhr.onload = function () {
-        if (!(xhr.status >= 200 && xhr.status < 300)) {
-          if (_this3.options.resume) {
+        if (!inStatusCategory(xhr.status, 200)) {
+          if (_this3.options.resume && !inStatusCategory(xhr.status, 500)) {
             // Remove stored fingerprint and corresponding endpoint,
-            // since the file can not be found
+            // on client errors since the file can not be found
             Storage.removeItem(_this3._fingerprint);
           }
 
@@ -690,7 +690,7 @@ var Upload = function () {
       }
 
       xhr.onload = function () {
-        if (!(xhr.status >= 200 && xhr.status < 300)) {
+        if (!inStatusCategory(xhr.status, 200)) {
           _this4._emitXhrError(xhr, new Error("tus: unexpected response while uploading chunk"));
           return;
         }
@@ -770,6 +770,16 @@ function encodeMetadata(metadata) {
   }
 
   return encoded.join(",");
+}
+
+/**
+ * Checks whether a given status is in the range of the expected category.
+ * For example, only a status between 200 and 299 will satisfy the category 200.
+ *
+ * @api private
+ */
+function inStatusCategory(status, category) {
+  return status >= category && status < category + 100;
 }
 
 Upload.defaultOptions = defaultOptions;
