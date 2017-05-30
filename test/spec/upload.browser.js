@@ -92,6 +92,31 @@ describe("tus", function () {
       done();
     });
 
+    it("should delete upload urls on a 4XX", function (done) {
+      localStorage.setItem("fingerprinted", "http://tus.io/uploads/resuming");
+
+      var file = new FakeBlob("hello world".split(""));
+      var options = {
+        endpoint: "http://tus.io/uploads",
+        fingerprint: function () {}
+      };
+      spyOn(options, "fingerprint").and.returnValue("fingerprinted");
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      var req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("http://tus.io/uploads/resuming");
+      expect(req.method).toBe("HEAD");
+
+      req.respondWith({
+        status: 400
+      });
+
+      expect(localStorage.getItem("fingerprinted")).toBe(null);
+      done();
+    });
+
     it("should add the request's body to errors", function () {
       var file = new FakeBlob("hello world".split(""));
       var err;

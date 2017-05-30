@@ -372,7 +372,7 @@ var Upload = function () {
 
       xhr.onload = function () {
         if (!inStatusCategory(xhr.status, 200)) {
-          if (_this3.options.resume && !inStatusCategory(xhr.status, 500)) {
+          if (_this3.options.resume && inStatusCategory(xhr.status, 400)) {
             // Remove stored fingerprint and corresponding endpoint,
             // on client errors since the file can not be found
             Storage.removeItem(_this3._fingerprint);
