@@ -168,8 +168,9 @@ var Upload = function () {
               // We only attempt a retry if
               // - we didn't exceed the maxium number of retries, yet, and
               // - this error was caused by a request or it's response and
+              // - the error is not a client error (status 4xx) and
               // - the browser does not indicate that we are offline
-              var shouldRetry = _this._retryAttempt < retryDelays.length && err.originalRequest != null && isOnline;
+              var shouldRetry = _this._retryAttempt < retryDelays.length && err.originalRequest != null && !(err.originalRequest.status >= 400 && err.originalRequest.status < 500) && isOnline;
 
               if (!shouldRetry) {
                 _this._emitError(err);
