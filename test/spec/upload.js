@@ -40,9 +40,11 @@ describe("tus", function () {
         },
         withCredentials: true,
         onProgress: function () {},
+        onLoadStart: function () {},
         fingerprint: function () {}
       };
       spyOn(options, "fingerprint").and.returnValue("fingerprinted");
+      spyOn(options, "onLoadStart");
       spyOn(options, "onProgress");
 
       var upload = new tus.Upload(file, options);
@@ -87,6 +89,7 @@ describe("tus", function () {
         }
       });
 
+      if (isBrowser) { expect(options.onLoadStart).toHaveBeenCalled(); }
       expect(options.onProgress).toHaveBeenCalledWith(11, 11);
       done();
     });
@@ -159,11 +162,13 @@ describe("tus", function () {
       var options = {
         endpoint: "http://tus.io/uploads",
         chunkSize: 7,
+        onLoadStart: function () {},
         onProgress: function () {},
         onChunkComplete: function () {},
         fingerprint: function () {}
       };
       spyOn(options, "fingerprint").and.returnValue("fingerprinted");
+      spyOn(options, "onLoadStart");
       spyOn(options, "onProgress");
       spyOn(options, "onChunkComplete");
 
@@ -216,6 +221,7 @@ describe("tus", function () {
           "Upload-Offset": 11
         }
       });
+      if (isBrowser) { expect(options.onLoadStart).toHaveBeenCalled(); }
       expect(options.onProgress).toHaveBeenCalledWith(11, 11);
       expect(options.onChunkComplete).toHaveBeenCalledWith(7, 7, 11);
       expect(options.onChunkComplete).toHaveBeenCalledWith(4, 11, 11);
@@ -290,9 +296,11 @@ describe("tus", function () {
       var options = {
         endpoint: "http://tus.io/uploads",
         uploadUrl: "http://tus.io/files/upload",
+        onLoadStart: function () {},
         onProgress: function () {},
         fingerprint: function () {}
       };
+      spyOn(options, "onLoadStart");
       spyOn(options, "fingerprint").and.returnValue("fingerprinted");
       spyOn(options, "onProgress");
 
@@ -330,6 +338,7 @@ describe("tus", function () {
         }
       });
 
+      if (isBrowser) { expect(options.onLoadStart).toHaveBeenCalled(); }
       expect(options.onProgress).toHaveBeenCalledWith(11, 11);
       done();
     });
@@ -414,9 +423,11 @@ describe("tus", function () {
       var options = {
         endpoint: "http://tus.io/files/",
         retryDelays: [10, 10, 10],
+        onLoadStart: function () {},
         onSuccess: function () {}
       };
 
+      spyOn(options, "onLoadStart");
       spyOn(options, "onSuccess");
 
       var upload = new tus.Upload(file, options);
@@ -453,6 +464,7 @@ describe("tus", function () {
           }
         });
 
+        if (isBrowser) { expect(options.onLoadStart).toHaveBeenCalled(); }
         expect(options.onSuccess).toHaveBeenCalled();
         done();
       }, 20);
