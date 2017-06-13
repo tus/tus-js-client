@@ -599,6 +599,38 @@ describe("tus", function () {
       }, 200);
     });
 
+    it("should stop upload when the abort function is called during the POST request", function (done) {
+      var file = new FakeBlob("hello world".split(""));
+      var options = {
+        endpoint: "http://tus.io/files/",
+        onError: function () {}
+      };
+
+      spyOn(options, "onError");
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      upload.abort();
+
+      var req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("http://tus.io/files/");
+      expect(req.method).toBe("POST");
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: "/files/foo"
+        }
+      });
+
+      setTimeout(function () {
+        expect(options.onError).not.toHaveBeenCalled();
+        expect(jasmine.Ajax.requests.mostRecent()).toBe(req);
+        done();
+      }, 200);
+    });
+
     it("should reset the attempt counter if an upload proceeds", function (done) {
       var file = new FakeBlob("hello world".split(""));
       var options = {

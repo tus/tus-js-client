@@ -1,6 +1,7 @@
 "use strict";
 var http = require("http");
 var url = require("url");
+var util = require("util");
 var stream = require("stream");
 var httpAgent = require("_http_agent");
 
@@ -36,6 +37,8 @@ class MockRequest {
   }
 
   respondWith(options) {
+    if (this._req.aborted) return;
+
     let res = new MockResponse();
     res.statusCode = options.status;
     res.headers = {};
@@ -54,6 +57,10 @@ class MockRequest {
 
   contentType() {
     return this.requestHeaders["Content-Type"] || "";
+  }
+
+  toString() {
+    return util.format("[MockRequest %s %s]", this.method, this.url);
   }
 }
 

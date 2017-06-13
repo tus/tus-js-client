@@ -296,6 +296,8 @@ var Upload = function () {
   }, {
     key: "_setupXHR",
     value: function _setupXHR(xhr) {
+      this._xhr = xhr;
+
       xhr.setRequestHeader("Tus-Resumable", "1.0.0");
       var headers = this.options.headers;
 
@@ -446,7 +448,7 @@ var Upload = function () {
         return;
       }
 
-      var xhr = this._xhr = (0, _request.newRequest)();
+      var xhr = (0, _request.newRequest)();
 
       // Some browser and servers may not support the PATCH method. For those
       // cases, you can tell tus-js-client to use a POST request with the
