@@ -7,8 +7,8 @@ Object.defineProperty(exports, "__esModule", {
 exports.encode = encode;
 /* global: window */
 
-var _window = window;
-var btoa = _window.btoa;
+var _window = window,
+    btoa = _window.btoa;
 function encode(data) {
   return btoa(unescape(encodeURIComponent(data)));
 }

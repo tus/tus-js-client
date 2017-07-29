@@ -16,8 +16,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function newRequest() {
   return new window.XMLHttpRequest();
 } /* global window */
-
-
 function resolveUrl(origin, link) {
   return (0, _resolveUrl2.default)(origin, link);
 }
