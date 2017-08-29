@@ -334,6 +334,71 @@ describe("tus", function () {
       done();
     });
 
+    it("should resume a previously started upload", function (done) {
+      var file = new FakeBlob("hello world".split(""));
+      var options = {
+        resume: false,
+        endpoint: "http://tus.io/uploads",
+        onSuccess: function () {}
+      };
+      spyOn(options, "onSuccess");
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      var req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("http://tus.io/uploads");
+      expect(req.method).toBe("POST");
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: "http://tus.io/uploads/blargh"
+        }
+      });
+
+      req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("http://tus.io/uploads/blargh");
+      expect(req.method).toBe("PATCH");
+
+      upload.abort();
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 5
+        }
+      });
+
+      upload.start();
+
+      req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("http://tus.io/uploads/blargh");
+      expect(req.method).toBe("HEAD");
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 5,
+          "Upload-Length": 11
+        }
+      });
+
+      req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("http://tus.io/uploads/blargh");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 11
+        }
+      });
+
+      expect(options.onSuccess).toHaveBeenCalled();
+      done();
+    });
+
     it("should override the PATCH method", function (done) {
       var file = new FakeBlob("hello world".split(""));
       var options = {

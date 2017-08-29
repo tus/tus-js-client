@@ -195,6 +195,12 @@ var Upload = function () {
       // aborted previously.
       this._aborted = false;
 
+      // The upload had been started previously and we should reuse this URL.
+      if (this.url != null) {
+        this._resumeUpload();
+        return;
+      }
+
       // A URL has manually been specified, so we try to resume
       if (this.options.uploadUrl != null) {
         this.url = this.options.uploadUrl;
