@@ -41,6 +41,16 @@ the tus methods using the `tus` property in `window`
 `var tus = require("tus-js-client")`
 * **Define using AMD:** `define("alpha", ["dist/tus.js"], function(tus) {})`
 
+
+## Basic Usage
+
+1. **Create** a new `tus.Upload` instance by passing the file to be uploaded alongside additional options to its constructor.
+2. **Start** the upload using the `Upload#start` function. This will create the upload resource if necessary and then transfer the file to the remote endpoint.
+3. Optionally **pause** the upload if the user/application wishes to do so using `Upload#abort`. This will cause any currently running transfers to be immediately stopped.
+4. Optionally **resume** the previously paused upload by called `Upload#start` again. This will resume the upload at the point at which it had stopped before. You can also use this approach to continue the upload after an error has occurred.
+
+Please consult the documentation below for more details.
+
 ## Browser support
 
 [![Sauce Test Status](https://saucelabs.com/browser-matrix/marius_transloadit.svg)](https://saucelabs.com/u/marius_transloadit)
