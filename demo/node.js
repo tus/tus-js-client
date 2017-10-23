@@ -8,7 +8,7 @@ var file = fs.createReadStream(path);
 var size = fs.statSync(path).size;
 
 var options = {
-  endpoint: "https://master.tus.io/files/",
+  endpoint: "http://localhost:1080/files/",
   resume: true,
   metadata: {
       filename: "tus.js"

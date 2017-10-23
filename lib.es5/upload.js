@@ -535,6 +535,9 @@ var Upload = function () {
       }
 
       xhr.send(this._source.slice(start, end));
+
+      // Emit an progress event when a new chunk begins being uploaded.
+      this._emitProgress(this._offset, this._size);
     }
   }]);
 
