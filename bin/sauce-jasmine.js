@@ -70,8 +70,7 @@ var browserFilter = [
   "microsoftedge/13..latest",
   "firefox/31..latest/linux",
   "chrome/31..latest/linux",
-  "safari/5..latest",
-  "opera/11..latest",
+  "safari/7..latest",
   "android/4.4..latest",
   "iphone/5.1..latest"
 ];
