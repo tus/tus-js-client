@@ -465,6 +465,31 @@ describe("tus", function () {
       done();
     });
 
+    it("should emit an error if no Location header is presented", function (done) {
+      var file = new FakeBlob("hello world".split(""));
+      var options = {
+        endpoint: "http://tus.io/uploads",
+        onError: function () {}
+      };
+
+      spyOn(options, "onError");
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      var req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("http://tus.io/uploads");
+      expect(req.method).toBe("POST");
+      // The Location header is omitted on purpose here
+
+      req.respondWith({
+        status: 201
+      });
+
+      expect(options.onError).toHaveBeenCalledWith(new Error("tus: invalid or missing Location header, originated from request (response code: 201, response text: )"));
+      done();
+    });
+
     it("should throw if retryDelays is not an array", function () {
       var file = new FakeBlob("hello world".split(""));
       var upload = new tus.Upload(file, {

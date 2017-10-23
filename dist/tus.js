@@ -567,7 +567,13 @@ var Upload = function () {
           return;
         }
 
-        _this2.url = (0, _request.resolveUrl)(_this2.options.endpoint, xhr.getResponseHeader("Location"));
+        var location = xhr.getResponseHeader("Location");
+        if (location == null) {
+          _this2._emitXhrError(xhr, new Error("tus: invalid or missing Location header"));
+          return;
+        }
+
+        _this2.url = (0, _request.resolveUrl)(_this2.options.endpoint, location);
 
         if (_this2.options.resume) {
           Storage.setItem(_this2._fingerprint, _this2.url);
