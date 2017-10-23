@@ -2,7 +2,7 @@
   "name": "tus-js-client",
   "version": "1.4.4",
   "description": "A pure JavaScript client for the tus resumable upload protocol",
-  "main": "lib.es5/index.js",
+  "main": "./index.js",
   "jsnext:main": "lib/index.js",
   "browser": {
     "./lib/node/request.js": "./lib/browser/request.js",
@@ -59,8 +59,8 @@
     "resolve-url": "^0.2.1"
   },
   "scripts": {
-    "build": "browserify lib/index.js -t [ babelify ] -s tus -d | exorcist ./dist/tus.js.map | derequire > dist/tus.js",
-    "watch": "watchify lib/index.js -t babelify -o dist/tus.js -s tus -v -d",
+    "build": "browserify index.js -t [ babelify ] -s tus -d | exorcist ./dist/tus.js.map | derequire > dist/tus.js",
+    "watch": "watchify index.js -t babelify -o dist/tus.js -s tus -v -d",
     "test": "./bin/test",
     "phantom-test": "phantomjs --ssl-protocol=any bin/phantom-jasmine.js",
     "sauce-test": "node bin/sauce-jasmine.js http://localhost:8081/test/SpecRunner.html",
