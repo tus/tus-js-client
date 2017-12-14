@@ -517,6 +517,11 @@ var Upload = function () {
 
           _this4._emitProgress(start + e.loaded, _this4._size);
         };
+
+        xhr.upload.onloadstart = function (e) {
+          // Emit an progress event when a new chunk begins being uploaded.
+          _this4._emitProgress(start, _this4._size);
+        };
       }
 
       this._setupXHR(xhr);
@@ -534,10 +539,17 @@ var Upload = function () {
         end = this._size;
       }
 
-      xhr.send(this._source.slice(start, end));
+      var chunk = this._source.slice(start, end);
 
-      // Emit an progress event when a new chunk begins being uploaded.
-      this._emitProgress(this._offset, this._size);
+      if (chunk instanceof Promise) {
+        chunk.then(function (data) {
+          return xhr.send(data);
+        }).catch(function (err) {
+          return _this4._emitError(new _error2.default("tus: could not slice file or stream at start[" + start + "] end[" + end + "] size[" + _this4._size + "]", err));
+        });
+      } else {
+        xhr.send(chunk);
+      }
     }
   }]);
 

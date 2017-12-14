@@ -31,7 +31,47 @@ var FileSource = function () {
   return FileSource;
 }();
 
+var CordovaFileSource = function () {
+  function CordovaFileSource(file) {
+    _classCallCheck(this, CordovaFileSource);
+
+    this._file = file;
+    this.size = file.size;
+  }
+
+  _createClass(CordovaFileSource, [{
+    key: "slice",
+    value: function slice(start, end) {
+      var _this = this;
+
+      return new Promise(function (_resolve, _error) {
+        var reader = new FileReader();
+        reader.onload = function () {
+          _resolve(reader.result);
+          reader = null;
+        };
+        reader.onerror = function (event) {
+          _error(event);
+          reader = null;
+        };
+        reader.readAsArrayBuffer(_this._file.slice(start, end));
+      });
+    }
+  }, {
+    key: "close",
+    value: function close() {}
+  }]);
+
+  return CordovaFileSource;
+}();
+
 function getSource(input) {
+
+  // Are we using cordova and this is a cordova file?
+  if (input && input.localURL && input.localURL.indexOf('cdvfile') === 0) {
+    return new CordovaFileSource(input);
+  }
+
   // Since we emulate the Blob type in our tests (not all target browsers
   // support it), we cannot use `instanceof` for testing whether the input value
   // can be handled. Instead, we simply check is the slice() function and the
