@@ -72,7 +72,47 @@ var FileSource = function () {
   return FileSource;
 }();
 
+var CordovaFileSource = function () {
+  function CordovaFileSource(file) {
+    _classCallCheck(this, CordovaFileSource);
+
+    this._file = file;
+    this.size = file.size;
+  }
+
+  _createClass(CordovaFileSource, [{
+    key: "slice",
+    value: function slice(start, end) {
+      var _this = this;
+
+      return new Promise(function (_resolve, _error) {
+        var reader = new FileReader();
+        reader.onload = function () {
+          _resolve(reader.result);
+          reader = null;
+        };
+        reader.onerror = function (event) {
+          _error(event);
+          reader = null;
+        };
+        reader.readAsArrayBuffer(_this._file.slice(start, end));
+      });
+    }
+  }, {
+    key: "close",
+    value: function close() {}
+  }]);
+
+  return CordovaFileSource;
+}();
+
 function getSource(input) {
+
+  // Are we using cordova and this is a cordova file?
+  if (input && input.localURL && input.localURL.indexOf('cdvfile') === 0) {
+    return new CordovaFileSource(input);
+  }
+
   // Since we emulate the Blob type in our tests (not all target browsers
   // support it), we cannot use `instanceof` for testing whether the input value
   // can be handled. Instead, we simply check is the slice() function and the
@@ -748,6 +788,11 @@ var Upload = function () {
 
           _this4._emitProgress(start + e.loaded, _this4._size);
         };
+
+        xhr.upload.onloadstart = function (e) {
+          // Emit an progress event when a new chunk begins being uploaded.
+          _this4._emitProgress(start, _this4._size);
+        };
       }
 
       this._setupXHR(xhr);
@@ -765,10 +810,17 @@ var Upload = function () {
         end = this._size;
       }
 
-      xhr.send(this._source.slice(start, end));
+      var chunk = this._source.slice(start, end);
 
-      // Emit an progress event when a new chunk begins being uploaded.
-      this._emitProgress(this._offset, this._size);
+      if (chunk instanceof Promise) {
+        chunk.then(function (data) {
+          return xhr.send(data);
+        }).catch(function (err) {
+          return _this4._emitError(new _error2.default("tus: could not slice file or stream at start[" + start + "] end[" + end + "] size[" + _this4._size + "]", err));
+        });
+      } else {
+        xhr.send(chunk);
+      }
     }
   }]);
 
