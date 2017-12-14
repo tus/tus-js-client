@@ -47,7 +47,7 @@ var CordovaFileSource = function () {
       return new Promise(function (_resolve, _error) {
         var reader = new FileReader();
         reader.onload = function () {
-          _resolve(reader.result);
+          _resolve(new Uint8Array(reader.result));
           reader = null;
         };
         reader.onerror = function (event) {
