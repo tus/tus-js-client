@@ -210,7 +210,7 @@ var Upload = function () {
 
       // Try to find the endpoint for the file in the storage
       if (this.options.resume) {
-        this._fingerprint = this.options.fingerprint(file);
+        this._fingerprint = this.options.fingerprint(file, this.options);
         var resumedUrl = Storage.getItem(this._fingerprint);
 
         if (resumedUrl != null) {

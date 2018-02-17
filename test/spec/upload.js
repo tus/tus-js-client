@@ -48,7 +48,7 @@ describe("tus", function () {
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      expect(options.fingerprint).toHaveBeenCalledWith(file);
+      expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options);
 
       var req = jasmine.Ajax.requests.mostRecent();
       expect(req.url).toBe("http://tus.io/uploads");
@@ -170,7 +170,7 @@ describe("tus", function () {
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      expect(options.fingerprint).toHaveBeenCalledWith(file);
+      expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options);
 
       var req = jasmine.Ajax.requests.mostRecent();
       expect(req.url).toBe("http://tus.io/uploads");

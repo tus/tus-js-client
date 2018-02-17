@@ -11,6 +11,6 @@ exports.default = fingerprint;
  * @param {File} file
  * @return {String}
  */
-function fingerprint(file) {
-  return ["tus", file.name, file.type, file.size, file.lastModified].join("-");
+function fingerprint(file, options) {
+  return ["tus", file.name, file.type, file.size, file.lastModified, options.endpoint].join("-");
 }

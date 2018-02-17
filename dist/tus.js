@@ -187,8 +187,8 @@ exports.default = fingerprint;
  * @param {File} file
  * @return {String}
  */
-function fingerprint(file) {
-  return ["tus", file.name, file.type, file.size, file.lastModified].join("-");
+function fingerprint(file, options) {
+  return ["tus", file.name, file.type, file.size, file.lastModified, options.endpoint].join("-");
 }
 
 },{}],7:[function(_dereq_,module,exports){
@@ -441,7 +441,7 @@ var Upload = function () {
 
       // Try to find the endpoint for the file in the storage
       if (this.options.resume) {
-        this._fingerprint = this.options.fingerprint(file);
+        this._fingerprint = this.options.fingerprint(file, this.options);
         var resumedUrl = Storage.getItem(this._fingerprint);
 
         if (resumedUrl != null) {
