@@ -147,7 +147,7 @@ available, `canStoreURLs` is set to `false`.
 
 A object containing the default options used when creating a new upload:
 
-* `endpoint = ""`: a URL which will be used to create new uploads
+* `endpoint = null`: a URL which will be used to create new uploads
 * `fingerprint`: a function used to generate a unique string from a
 corresponding File object. This used to store the URL for an upload to resume.
 This option is only used if the `resume` flag is set to true.
@@ -225,7 +225,7 @@ resume using this URL.
 
 Start or resume the upload using the specified file. If no `file` property is
 available the error handler will be called. If you supplied your own URL using
-the `url` property the client will try to resume using this URL.
+the `uploadUrl` option the client will try to resume using this URL.
 If not, the client will look up if the file has been (fully or partially)
 uploaded and tries to resume.
 If no upload can be resume it will create a new upload using the supplied

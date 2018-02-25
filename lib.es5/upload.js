@@ -43,7 +43,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var defaultOptions = {
-  endpoint: "",
+  endpoint: null,
   fingerprint: _fingerprint2.default,
   resume: true,
   onProgress: null,
@@ -113,8 +113,8 @@ var Upload = function () {
         return;
       }
 
-      if (!this.options.endpoint) {
-        this._emitError(new Error("tus: no endpoint provided"));
+      if (!this.options.endpoint && !this.options.uploadUrl) {
+        this._emitError(new Error("tus: neither an endpoint or an upload URL is provided"));
         return;
       }
 
@@ -327,6 +327,11 @@ var Upload = function () {
     value: function _createUpload() {
       var _this2 = this;
 
+      if (!this.options.endpoint) {
+        this._emitError(new Error("tus: unable to create upload because no endpoint is provided"));
+        return;
+      }
+
       var xhr = (0, _request.newRequest)();
       xhr.open("POST", this.options.endpoint, true);
 
@@ -399,6 +404,12 @@ var Upload = function () {
           // afterwards.
           if (xhr.status === 423) {
             _this3._emitXhrError(xhr, new Error("tus: upload is currently locked; retry later"));
+            return;
+          }
+
+          if (!_this3.options.endpoint) {
+            // Don't attempt to create a new upload if no endpoint is provided.
+            _this3._emitXhrError(xhr, new Error("tus: unable to resume upload (new upload cannot be created without an endpoint)"));
             return;
           }
 

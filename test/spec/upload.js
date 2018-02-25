@@ -25,6 +25,12 @@ describe("tus", function () {
       expect(upload.start.bind(upload)).toThrowError("tus: no file or stream to upload provided");
     });
 
+    it("should throw if no endpoint and upload URL is provided", function () {
+      var file = new FakeBlob("hello world".split(""));
+      var upload = new tus.Upload(file);
+      expect(upload.start.bind(upload)).toThrowError("tus: neither an endpoint or an upload URL is provided");
+    });
+
     it("should upload a file", function (done) {
       var file = new FakeBlob("hello world".split(""));
       var options = {
@@ -117,6 +123,30 @@ describe("tus", function () {
       expect(req.method).toBe("POST");
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
       expect(req.requestHeaders["Upload-Length"]).toBe(11);
+      done();
+    });
+
+    it("should throw an error if resuming fails and no endpoint is provided", function (done) {
+      var file = new FakeBlob("hello world".split(""));
+      var options = {
+        uploadUrl: "http://tus.io/uploads/resuming",
+        onError: function () {}
+      };
+      spyOn(options, "onError");
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      var req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("http://tus.io/uploads/resuming");
+      expect(req.method).toBe("HEAD");
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+
+      req.respondWith({
+        status: 404
+      });
+
+      expect(options.onError).toHaveBeenCalledWith(new Error("tus: unable to resume upload (new upload cannot be created without an endpoint), originated from request (response code: 404, response text: )"));
       done();
     });
 
