@@ -87,7 +87,6 @@ function startBrowsers(browsers) {
   var body = {
     platforms: sauceBrowsers,
     url: testUrl,
-    framework: "jasmine",
     tunnelIdentifier: tunnelId,
     build: build,
     name: "tus-js-client – Jasmine"
@@ -151,12 +150,12 @@ function pollTestStatus(testIds) {
       }
 
       if (test.result == null) {
-        console.log("Browser %s completed without success!".red, test.platform.join(" "));
+        console.log("Browser %s completed without results!".red, test.platform.join(" "));
         failedTests++;
         return;
       }
 
-      if (test.result.passed) {
+      if (test.result.passed === test.result.total) {
         // Test passed succesfully. No need to worry about it any more.
         console.log("Browser %s passed!".green, test.platform.join(" "));
         passedTests++;
@@ -165,7 +164,7 @@ function pollTestStatus(testIds) {
 
       console.log("Browser %s failed!".red, test.platform.join(" "));
       failedTests++;
-      printFailedSuites(test.result.suites, "");
+      printFailedTests(test.result.tests);
     });
 
     if (remainingTestIds.length === 0) {
@@ -183,28 +182,12 @@ function pollTestStatus(testIds) {
   });
 }
 
-function printFailedSuites(suites, prefix) {
-  // We do not always get a proper result back, e.g. when the browser crashes
-  if (!suites) return;
+function printFailedTests(tests) {
+  // The format of the tests array is defined in test/reporter.js
+  tests
+    .forEach(function(test, index) {
+      if(test.result === true) return;
 
-  suites.forEach(function (suite) {
-    var pref = prefix + suite.description;
-
-    suite.specs.forEach(function (spec) {
-      if (spec.passed) return;
-
-      printFailedSpec(spec, pref);
-    });
-
-    printFailedSuites(suite.suites, pref);
-  });
-}
-
-function printFailedSpec(spec, prefix) {
-  console.log("  "+"%s %s:".red.underline, prefix, spec.description);
-
-  spec.failures.forEach(function (failure, index) {
-    console.log("  %s) %s", index+1, failure.message.bold);
-    console.log("    %s", failure.trace.stack.gray);
-  });
+      console.log("  %s) %s".red, index+1, test.name);
+    })
 }
