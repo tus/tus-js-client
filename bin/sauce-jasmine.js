@@ -185,9 +185,9 @@ function pollTestStatus(testIds) {
 function printFailedTests(tests) {
   // The format of the tests array is defined in test/reporter.js
   tests
-    .forEach(function(test, index) {
-      if(test.result === true) return;
+    .forEach(function (test, index) {
+      if (test.result === true) return;
 
       console.log("  %s) %s".red, index+1, test.name);
-    })
+    });
 }
