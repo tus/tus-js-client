@@ -69,6 +69,10 @@ function startUpload() {
     resume  : !resumeCheckbox.checked,
     chunkSize: chunkSize,
     retryDelays: [0, 1000, 3000, 5000],
+    metadata: {
+      filename: file.name,
+      filetype: file.type
+    },
     onError : function (error) {
       if (error.originalRequest) {
         if (window.confirm("Failed because: " + error + "\nDo you want to retry?")) {

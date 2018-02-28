@@ -13,6 +13,10 @@ input.addEventListener("change", function(e) {
     var upload = new tus.Upload(file, {
         endpoint: "http://localhost:1080/files/",
         retryDelays: [0, 1000, 3000, 5000],
+        metadata: {
+            filename: file.name,
+            filetype: file.type
+        },
         onError: function(error) {
             console.log("Failed because: " + error)
         },
