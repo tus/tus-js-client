@@ -56,7 +56,8 @@ var defaultOptions = {
   uploadUrl: null,
   uploadSize: null,
   overridePatchMethod: false,
-  retryDelays: null
+  retryDelays: null,
+  removeFingerprintOnSuccess: false
 };
 
 var Upload = function () {
@@ -501,6 +502,12 @@ var Upload = function () {
         _this4._offset = offset;
 
         if (offset == _this4._size) {
+          if (_this4.options.removeFingerprintOnSuccess && _this4.options.resume) {
+            // Remove stored fingerprint and corresponding endpoint. This causes
+            // new upload of the same file must be treated as a different file.
+            Storage.removeItem(_this4._fingerprint);
+          }
+
           // Yay, finally done :)
           _this4._emitSuccess();
           _this4._source.close();

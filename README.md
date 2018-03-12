@@ -198,6 +198,12 @@ pass before the next attempt to uploading will be started after the transfer has
 been interrupted. The array's length indicates the maximum number of attempts.
 For more details about the system of retries and delays, read the
 [Automated Retries](#automated-retries) section.
+* `removeFingerprintOnSuccess = false`: a boolean indicating if the fingerprint
+in the storage will be removed when the upload is successfully completed.
+This value is `false` for not breaking the previous API contract, but we strongly
+suggest to set it to `true` to avoid cluttering the storage space. The effect is
+that if the same file is uploaded again, it will create an entirely new upload.
+Furthermore, this option will only change behaviour if `resume` is set to `true`.
 
 ### new tus.Upload(file, options)
 
