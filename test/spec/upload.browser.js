@@ -63,33 +63,62 @@ describe("tus", function () {
       done();
     });
 
-    it("should store upload urls", function (done) {
-      var file = new FakeBlob("hello world".split(""));
+    describe("storing of upload urls", function () {
       var options = {
         endpoint: "http://tus.io/uploads",
         fingerprint: function () {}
-      };
-      spyOn(options, "fingerprint").and.returnValue("fingerprinted");
+      },
+        start = function() {
+          var file = new FakeBlob("hello world".split(""));
+          spyOn(options, "fingerprint").and.returnValue("fingerprinted");
 
-      var upload = new tus.Upload(file, options);
-      upload.start();
+          var upload = new tus.Upload(file, options);
+          upload.start();
 
-      expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options);
+          expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options);
 
-      var req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/uploads");
-      expect(req.method).toBe("POST");
+          var req = jasmine.Ajax.requests.mostRecent();
+          expect(req.url).toBe("http://tus.io/uploads");
+          expect(req.method).toBe("POST");
 
-      req.respondWith({
-        status: 201,
-        responseHeaders: {
-          Location: "/uploads/blargh"
-        }
+          req.respondWith({
+            status: 201,
+            responseHeaders: {
+              Location: "/uploads/blargh"
+            }
+          });
+
+          expect(upload.url).toBe("http://tus.io/uploads/blargh");
+        },
+        complete = function() {
+          var req = jasmine.Ajax.requests.mostRecent();
+          expect(req.url).toBe("http://tus.io/uploads/blargh");
+          expect(req.method).toBe("PATCH");
+
+          req.respondWith({
+            status: 204,
+            responseHeaders: {
+              "Upload-Offset": 11
+            }
+          });
+        };
+
+      it("should store and retain with default options", function (done) {
+        start();
+        expect(localStorage.getItem("fingerprinted")).toBe("http://tus.io/uploads/blargh");
+        complete();
+        expect(localStorage.getItem("fingerprinted")).toBe("http://tus.io/uploads/blargh");
+        done();
       });
 
-      expect(upload.url).toBe("http://tus.io/uploads/blargh");
-      expect(localStorage.getItem("fingerprinted")).toBe("http://tus.io/uploads/blargh");
-      done();
+      it("should store and remove with option removeFingerprintOnSuccess set", function (done) {
+        options.removeFingerprintOnSuccess = true;
+        start();
+        expect(localStorage.getItem("fingerprinted")).toBe("http://tus.io/uploads/blargh");
+        complete();
+        expect(localStorage.getItem("fingerprinted")).toBe(null);
+        done();
+      });
     });
 
     it("should delete upload urls on a 4XX", function (done) {
