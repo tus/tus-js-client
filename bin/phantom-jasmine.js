@@ -1,5 +1,6 @@
 /* global ConsoleReporter */
 /* eslint no-console: 0 */
+/* eslint-env phantomjs */
 
 /**
  * This script will open the tests' SpecRunner.html to allow the tests to be
