@@ -7,10 +7,14 @@
  * according to the result.
  *
  * In order to run this script, invoke it using following command:
- * phantomjs --ssl-protocol=any bin/phantom-jasmine.js
+ * phantomjs --local-to-remote-url-access=yes bin/phantom-jasmine.js
  *
- * The --ssl-protocol flag is required as else Phantom will complain about
- * failing handshakes when loading resources over HTTPS.
+ * The --local-to-remote-url-access flag is required as else Phantom
+ * will complain about NETWORK_ERR XMLHttpRequest Exception 101.
+ * This is caused by us opening test/SpecRunner.html using the file://
+ * protocol but in test/spec/upload.browser.js we make HTTP requests
+ * to https://master.tus.io/ which is usually not allowed. Therfore,
+ * we must explicitly disable to (elsewhere useful) security rule.
  */
 "use strict";
 
