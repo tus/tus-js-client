@@ -13,6 +13,11 @@
   <script src="../node_modules/jasmine-core/lib/console/console.js"></script>
   <script src="../node_modules/jasmine-ajax/lib/mock-ajax.js"></script>
 
+  <!-- PhantomJS does not provide Promises (and probably never will)
+       so we need to polyfill them for Axios. This will hopefully become
+       unecessary once we move away from PhantomJS, as it is not maintained
+       anymore. -->
+  <script src="https://www.promisejs.org/polyfills/promise-7.0.4.min.js"></script>
   <script src="../node_modules/axios/dist/axios.js"></script>
 
   <script src="./reporter.js"></script>
@@ -21,7 +26,6 @@
   <script src="../dist/tus.js"></script>
 
   <!-- include spec files here... -->
-  <script src="spec/helpers/browser/fakeBlob.js"></script>
   <script src="spec/upload.js"></script>
   <script src="spec/upload.browser.js"></script>
 </head>
