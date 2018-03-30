@@ -57,11 +57,28 @@ Please consult the documentation below for more details.
 
 ## Browser support
 
-[![Sauce Test Status](https://saucelabs.com/browser-matrix/marius_transloadit.svg)](https://saucelabs.com/u/marius_transloadit)
+<a href="https://browserstack.com">
+  <img alt="BrowserStack logo" src="demo/browserstack.png" align="right" />
+</a>
 
-We use localStorage, XMLHttpRequest2, the File API and Blob API. About 85% of
-today's users should be able to use this software, calculated using
-[iwanttouse.com](http://www.iwanttouse.com/#namevalue-storage,xhr2,fileapi,blobbuilder).
+tus-js-client is tested and known to support following browsers:
+
+* Internet Explorer 10+
+* Microsoft Edge 12+
+* Mozilla Firefox 14+
+* Google Chrome 20+
+* Safari 6+
+* Opera 12.1+
+* TODO
+
+Support in other browsers is very likely but has not been confirimed yet.
+Since we only use Web Storage, XMLHttpRequest2, the File API and Blob API,
+more than 95% of today's users should be able to use tus-js-client.
+
+Compatability between browsers is continuously ensured by automated tests
+in the corresponding browsers on [BrowserStack](https://browserstack.com),
+who provide their great service glady for Open Source project for free.
+
 
 ## Node compatibility
 
