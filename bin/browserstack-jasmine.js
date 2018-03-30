@@ -35,6 +35,7 @@ fetch(`https://${BS_USERNAME}:${BS_KEY}@api.browserstack.com/5/browsers?flat=tru
         key: BS_KEY,
         test_path: "test/SpecRunner.html",
         test_framework: "jasmine2",
+        test_server_port: 8081,
         browsers: browsers
       }, function (error, report) {
         if (error) {
