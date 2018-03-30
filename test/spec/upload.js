@@ -3,9 +3,22 @@
 var isBrowser  = typeof window !== "undefined";
 var isNode     = !isBrowser;
 
-describe("tus", function () {
-  describe("#Upload", function () {
+if (isNode) {
+  var axios = require("axios");
+  var tus = require("../../");
+}
 
+// Set Jasmine's timeout for a single test to 10s
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 1000;
+
+describe("tus", function () {
+  describe("#isSupported", function () {
+    it("should be true", function () {
+      expect(tus.isSupported).toBe(true);
+    });
+  });
+
+  describe("#Upload", function () {
     beforeEach(function () {
       jasmine.Ajax.install();
 
@@ -848,4 +861,73 @@ describe("tus", function () {
       }, 20);
     });
   });
+
+  it("should upload to a real tus server", function (done) {
+    var file = isNode
+               ? Buffer.from("hello world")
+               : new Blob("hello world".split(""));
+    var options = {
+      resume: false,
+      endpoint: "https://master.tus.io/files/",
+      metadata: {
+        nonlatin: "słońce",
+        number: 100,
+        filename: "hello.txt",
+        filetype: "text/plain"
+      },
+      onSuccess: function () {
+        expect(upload.url).toMatch(/^https:\/\/master\.tus\.io\/files\//);
+        console.log("Upload URL:", upload.url); // eslint-disable-line no-console
+
+        validateUploadContent(upload, done);
+      },
+      onError: function (err) {
+        done.fail(err);
+      }
+    };
+
+    var upload = new tus.Upload(file, options);
+    upload.start();
+  });
 });
+
+function validateUploadContent(upload, done) {
+  axios.get(upload.url)
+    .then(function (res) {
+      expect(res.status).toBe(200);
+      expect(res.data).toBe("hello world");
+
+      validateUploadMetadata(upload, done);
+    })
+    .catch(done.fail);
+}
+
+function validateUploadMetadata(upload, done) {
+  axios.head(upload.url, {
+    headers: {
+      "Tus-Resumable": "1.0.0"
+    }
+  }).then(function (res) {
+      expect(res.status).toBe(200);
+      expect(res.data).toBe("");
+      expect(res.headers["tus-resumable"]).toBe("1.0.0");
+      expect(res.headers["upload-offset"]).toBe("11");
+      expect(res.headers["upload-length"]).toBe("11");
+
+      // The values in the Upload-Metadata header may not be in^the same
+      // order as we submitted them (the specification does not require
+      // that). Therefore, we split the values and verify that each one
+      // is present.
+      var metadataStr = res.headers["upload-metadata"];
+      expect(metadataStr).toBeTruthy();
+      var metadata = metadataStr.split(",");
+      expect(metadata).toContain("filename aGVsbG8udHh0");
+      expect(metadata).toContain("filetype dGV4dC9wbGFpbg==");
+      expect(metadata).toContain("nonlatin c8WCb8WEY2U=");
+      expect(metadata).toContain("number MTAw");
+      expect(metadata.length).toBe(4);
+
+      done();
+    })
+    .catch(done.fail);
+}
