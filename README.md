@@ -69,9 +69,10 @@ tus-js-client is tested and known to support following browsers:
 * Google Chrome 20+
 * Safari 6+
 * Opera 12.1+
-* TODO
+* iOS 6.0+
+* Android 5.0+
 
-Support in other browsers is very likely but has not been confirimed yet.
+Support in other browsers is *very likely* but has not been confirimed yet.
 Since we only use Web Storage, XMLHttpRequest2, the File API and Blob API,
 more than 95% of today's users should be able to use tus-js-client.
 

@@ -24,6 +24,37 @@ const browsers = [
 
   "opera_previous",
   "opera_current"
+
+  {
+    "os": "ios",
+    "os_version": "11.0",
+    "device": "iPhone X"
+  },
+  {
+    "os": "ios",
+    "os_version": "10",
+    "device": "iPhone 7"
+  },
+  {
+    "os": "ios",
+    "os_version": "9",
+    "device": "iPhone 6S"
+  },
+  {
+    "os": "ios",
+    "os_version": "8",
+    "device": "iPhone 6"
+  },
+  {
+    "os": "ios",
+    "os_version": "7",
+    "device": "iPhone 5S"
+  },
+  {
+    "os": "ios",
+    "os_version": "6.0",
+    "device": "iPhone 5"
+  }
 ];
 
 function runTests(cb) {
