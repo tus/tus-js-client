@@ -4,14 +4,16 @@ matrix:
   - env: TEST_TARGET=browser
     node_js: 6
   - env: TEST_TARGET=node
-    node_js: 4
-  - env: TEST_TARGET=node
     node_js: 5
   - env: TEST_TARGET=node
     node_js: 6
+  - env: TEST_TARGET=node
+    node_js: 7
+  - env: TEST_TARGET=node
+    node_js: 8
+  - env: TEST_TARGET=node
+    node_js: 9
 script:
-- npm install -g node-static
-- static -p 8081 &
 - npm run lint
 - npm run dist
 - npm test
@@ -24,7 +26,3 @@ deploy:
   on:
     tags: true
     repo: tus/tus-js-client
-addons:
-  sauce_connect:
-    tunnel_domains: localhost
-    no_ssl_bump_domains: www.google.com,www.gstatic.com,ssl.gstatic.com

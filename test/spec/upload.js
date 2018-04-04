@@ -1,11 +1,29 @@
-/* global FakeBlob tus */
-
 var isBrowser  = typeof window !== "undefined";
 var isNode     = !isBrowser;
 
-describe("tus", function () {
-  describe("#Upload", function () {
+if (isNode) {
+  // In the browser environment, Axios and tus are provided directly from
+  // SpecRunner.html, but in Node we have to require them.
+  var axios = require("axios");
+  var tus = require("../../");
 
+  // These tests use browser's Blob constructor. To make these tests also
+  // work in Node.js, we make it an alias for Buffer, which have the same
+  // API for our use cases.
+  var Blob = Buffer;
+}
+
+// Set Jasmine's timeout for a single test to 10s
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 1000;
+
+describe("tus", function () {
+  describe("#isSupported", function () {
+    it("should be true", function () {
+      expect(tus.isSupported).toBe(true);
+    });
+  });
+
+  describe("#Upload", function () {
     beforeEach(function () {
       jasmine.Ajax.install();
 
@@ -26,13 +44,13 @@ describe("tus", function () {
     });
 
     it("should throw if no endpoint and upload URL is provided", function () {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var upload = new tus.Upload(file);
       expect(upload.start.bind(upload)).toThrowError("tus: neither an endpoint or an upload URL is provided");
     });
 
     it("should upload a file", function (done) {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/uploads",
         headers: {
@@ -98,7 +116,7 @@ describe("tus", function () {
     });
 
     it("should create an upload if resuming fails", function (done) {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/uploads",
         uploadUrl: "http://tus.io/uploads/resuming"
@@ -127,7 +145,7 @@ describe("tus", function () {
     });
 
     it("should throw an error if resuming fails and no endpoint is provided", function (done) {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         uploadUrl: "http://tus.io/uploads/resuming",
         onError: function () {}
@@ -151,7 +169,7 @@ describe("tus", function () {
     });
 
     it("should resolve relative URLs", function () {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://master.tus.io:1080/files/"
       };
@@ -185,7 +203,7 @@ describe("tus", function () {
     });
 
     it("should upload a file in chunks", function (done) {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/uploads",
         chunkSize: 7,
@@ -253,7 +271,7 @@ describe("tus", function () {
     });
 
     it("should add the original request to errors", function () {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var err;
       var options = {
         endpoint: "http://tus.io/uploads",
@@ -284,7 +302,7 @@ describe("tus", function () {
     });
 
     it("should not resume a finished upload", function (done) {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/uploads",
         onProgress: function () {},
@@ -316,7 +334,7 @@ describe("tus", function () {
     });
 
     it("should resume an upload from a specified url", function (done) {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/uploads",
         uploadUrl: "http://tus.io/files/upload",
@@ -365,7 +383,7 @@ describe("tus", function () {
     });
 
     it("should resume a previously started upload", function (done) {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         resume: false,
         endpoint: "http://tus.io/uploads",
@@ -430,7 +448,7 @@ describe("tus", function () {
     });
 
     it("should override the PATCH method", function (done) {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/uploads",
         uploadUrl: "http://tus.io/files/upload",
@@ -471,7 +489,7 @@ describe("tus", function () {
     });
 
     it("should emit an error if an upload is locked", function (done) {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/uploads",
         uploadUrl: "http://tus.io/files/upload",
@@ -496,7 +514,7 @@ describe("tus", function () {
     });
 
     it("should emit an error if no Location header is presented", function (done) {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/uploads",
         onError: function () {}
@@ -521,7 +539,7 @@ describe("tus", function () {
     });
 
     it("should throw if retryDelays is not an array", function () {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var upload = new tus.Upload(file, {
         endpoint: "http://endpoint/",
         retryDelays: 44
@@ -530,7 +548,7 @@ describe("tus", function () {
     });
 
     it("should retry the upload", function (done) {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/files/",
         retryDelays: [10, 10, 10],
@@ -579,7 +597,7 @@ describe("tus", function () {
     });
 
     it("should not retry if the error has not been caused by a request", function () {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/files/",
         retryDelays: [10, 10, 10],
@@ -604,7 +622,7 @@ describe("tus", function () {
     });
 
     it("should stop retrying after all delays have been used", function (done) {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/files/",
         retryDelays: [10],
@@ -644,7 +662,7 @@ describe("tus", function () {
     });
 
     it("should stop retrying when the abort function is called", function (done) {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/files/",
         retryDelays: [100],
@@ -676,7 +694,7 @@ describe("tus", function () {
 
     it("should stop upload when the abort function is called during a callback", function (done) {
       var upload;
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/files/",
         chunkSize: 5,
@@ -720,7 +738,7 @@ describe("tus", function () {
     });
 
     it("should stop upload when the abort function is called during the POST request", function (done) {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/files/",
         onError: function () {}
@@ -752,7 +770,7 @@ describe("tus", function () {
     });
 
     it("should reset the attempt counter if an upload proceeds", function (done) {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/files/",
         retryDelays: [10],
@@ -848,4 +866,73 @@ describe("tus", function () {
       }, 20);
     });
   });
+
+  it("should upload to a real tus server", function (done) {
+    var file = isNode
+               ? Buffer.from("hello world")
+               : new Blob("hello world".split(""));
+    var options = {
+      resume: false,
+      endpoint: "https://master.tus.io/files/",
+      metadata: {
+        nonlatin: "słońce",
+        number: 100,
+        filename: "hello.txt",
+        filetype: "text/plain"
+      },
+      onSuccess: function () {
+        expect(upload.url).toMatch(/^https:\/\/master\.tus\.io\/files\//);
+        console.log("Upload URL:", upload.url); // eslint-disable-line no-console
+
+        validateUploadContent(upload, done);
+      },
+      onError: function (err) {
+        done.fail(err);
+      }
+    };
+
+    var upload = new tus.Upload(file, options);
+    upload.start();
+  });
 });
+
+function validateUploadContent(upload, done) {
+  axios.get(upload.url)
+    .then(function (res) {
+      expect(res.status).toBe(200);
+      expect(res.data).toBe("hello world");
+
+      validateUploadMetadata(upload, done);
+    })
+    .catch(done.fail);
+}
+
+function validateUploadMetadata(upload, done) {
+  axios.head(upload.url, {
+    headers: {
+      "Tus-Resumable": "1.0.0"
+    }
+  }).then(function (res) {
+      expect(res.status).toBe(200);
+      expect(res.data).toBe("");
+      expect(res.headers["tus-resumable"]).toBe("1.0.0");
+      expect(res.headers["upload-offset"]).toBe("11");
+      expect(res.headers["upload-length"]).toBe("11");
+
+      // The values in the Upload-Metadata header may not be in^the same
+      // order as we submitted them (the specification does not require
+      // that). Therefore, we split the values and verify that each one
+      // is present.
+      var metadataStr = res.headers["upload-metadata"];
+      expect(metadataStr).toBeTruthy();
+      var metadata = metadataStr.split(",");
+      expect(metadata).toContain("filename aGVsbG8udHh0");
+      expect(metadata).toContain("filetype dGV4dC9wbGFpbg==");
+      expect(metadata).toContain("nonlatin c8WCb8WEY2U=");
+      expect(metadata).toContain("number MTAw");
+      expect(metadata.length).toBe(4);
+
+      done();
+    })
+    .catch(done.fail);
+}

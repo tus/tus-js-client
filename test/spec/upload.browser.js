@@ -1,4 +1,4 @@
-/* global FakeBlob tus */
+/* global Blob tus */
 
 describe("tus", function () {
   describe("#Upload", function () {
@@ -15,7 +15,7 @@ describe("tus", function () {
     it("should resume an upload from a stored url", function (done) {
       localStorage.setItem("fingerprinted", "http://tus.io/uploads/resuming");
 
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/uploads",
         onProgress: function () {},
@@ -69,7 +69,7 @@ describe("tus", function () {
         fingerprint: function () {}
       };
       var startUpload = function () {
-        var file = new FakeBlob("hello world".split(""));
+        var file = new Blob("hello world".split(""));
         spyOn(options, "fingerprint").and.returnValue("fingerprinted");
 
         var upload = new tus.Upload(file, options);
@@ -124,7 +124,7 @@ describe("tus", function () {
     it("should delete upload urls on a 4XX", function (done) {
       localStorage.setItem("fingerprinted", "http://tus.io/uploads/resuming");
 
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/uploads",
         fingerprint: function () {}
@@ -147,7 +147,7 @@ describe("tus", function () {
     });
 
     it("should add the request's body to errors", function () {
-      var file = new FakeBlob("hello world".split(""));
+      var file = new Blob("hello world".split(""));
       var err;
       var options = {
         endpoint: "http://tus.io/uploads",

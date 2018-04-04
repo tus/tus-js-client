@@ -1,15 +1,9 @@
-var tus = require("../../");
-var stream = require("stream");
-var temp = require("temp");
-var fs = require("fs");
+const tus = require("../../");
+const stream = require("stream");
+const temp = require("temp");
+const fs = require("fs");
 
 describe("tus", function () {
-  describe("#isSupported", function () {
-    it("should be true", function () {
-      expect(tus.isSupported).toBe(true);
-    });
-  });
-
   describe("#canStoreURLs", function () {
     it("should be false", function () {
       expect(tus.canStoreURLs).toBe(false);
@@ -159,3 +153,4 @@ function expectHelloWorldUpload(input, options, done) {
     });
   });
 }
+
