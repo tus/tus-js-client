@@ -23,7 +23,7 @@ const browsers = [
   "safari_current",
 
   "opera_previous",
-  "opera_current"
+  "opera_current",
 
   {
     "os": "ios",
@@ -56,6 +56,11 @@ const browsers = [
     "device": "iPhone 5"
   }
 ];
+
+if (!BS_USERNAME || BS_USERNAME == "" || !BS_KEY || BS_KEY == "") {
+  console.log("Please provide the BROWSERSTACK_USERNAME and BROWSERSTACK_KEY environment variables.");
+  process.exit(1);
+}
 
 function runTests(cb) {
   browserstack.run({
