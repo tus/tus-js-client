@@ -350,6 +350,13 @@ var Upload = function () {
 
         _this2.url = (0, _request.resolveUrl)(_this2.options.endpoint, location);
 
+        if (_this2._size === 0) {
+          // Nothing to upload and file was successfully created
+          _this2._emitSuccess();
+          _this2._source.close();
+          return;
+        }
+
         if (_this2.options.resume) {
           Storage.setItem(_this2._fingerprint, _this2.url);
         }
