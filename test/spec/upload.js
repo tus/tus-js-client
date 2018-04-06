@@ -305,7 +305,7 @@ describe("tus", function () {
       var file = new Blob([]);
       var options = {
         endpoint: "http://tus.io/uploads",
-        onSuccess: function () {},
+        onSuccess: function () {}
       };
       spyOn(options, "onSuccess");
 
