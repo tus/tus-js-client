@@ -301,6 +301,34 @@ describe("tus", function () {
       expect(err.originalRequest.getResponseHeader("Custom")).toBe("blargh");
     });
 
+    it("should only create an upload for empty files", function (done) {
+      var file = new Blob([]);
+      var options = {
+        endpoint: "http://tus.io/uploads",
+        onSuccess: function () {},
+      };
+      spyOn(options, "onSuccess");
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      var req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("http://tus.io/uploads");
+      expect(req.method).toBe("POST");
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+      expect(req.requestHeaders["Upload-Length"]).toBe(0);
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          "Location": "http://tus.io/uploads/empty"
+        }
+      });
+
+      expect(options.onSuccess).toHaveBeenCalled();
+      done();
+    });
+
     it("should not resume a finished upload", function (done) {
       var file = new Blob("hello world".split(""));
       var options = {
