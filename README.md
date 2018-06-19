@@ -216,6 +216,9 @@ pass before the next attempt to uploading will be started after the transfer has
 been interrupted. The array's length indicates the maximum number of attempts.
 For more details about the system of retries and delays, read the
 [Automated Retries](#automated-retries) section.
+* `retryOnNetworkLoss = false`: a boolean used to force retries on network loss.
+Could be used under bad mobile network conditions to allow retries until retryDelays
+expiration.
 * `removeFingerprintOnSuccess = false`: a boolean indicating if the fingerprint
 in the storage will be removed when the upload is successfully completed.
 This value is `false` for not breaking the previous API contract, but we strongly

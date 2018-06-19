@@ -289,6 +289,7 @@ var defaultOptions = {
   uploadSize: null,
   overridePatchMethod: false,
   retryDelays: null,
+  retryOnNetworkLoss: false,
   removeFingerprintOnSuccess: false
 };
 
@@ -381,6 +382,7 @@ var Upload = function () {
         } else {
           (function () {
             var errorCallback = _this.options.onError;
+            var retryOnNetworkLoss = _this.options.retryOnNetworkLoss;
             _this.options.onError = function (err) {
               // Restore the original error callback which may have been set.
               _this.options.onError = errorCallback;
@@ -402,8 +404,9 @@ var Upload = function () {
               // - we didn't exceed the maxium number of retries, yet, and
               // - this error was caused by a request or it's response and
               // - the error is not a client error (status 4xx) and
-              // - the browser does not indicate that we are offline
-              var shouldRetry = _this._retryAttempt < retryDelays.length && err.originalRequest != null && !inStatusCategory(err.originalRequest.status, 400) && isOnline;
+              // - the browser does not indicate that we are offline except
+              //   if we force retry using retryOnNetworkLoss option
+              var shouldRetry = _this._retryAttempt < retryDelays.length && err.originalRequest != null && !inStatusCategory(err.originalRequest.status, 400) && (isOnline || retryOnNetworkLoss);
 
               if (!shouldRetry) {
                 _this._emitError(err);
