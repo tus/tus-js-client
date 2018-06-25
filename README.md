@@ -189,9 +189,11 @@ be an Error instance.
 `withCredentials` in all XMLHttpRequests to use Cookies in requests. The
 remote server must accept CORS and credentials.
 * `chunkSize = Infinity`: a number indicating the maximum size of a chunk
-uploaded in a single request.  Note that if the server has hard limits (such as
-the minimum 5MB chunk size imposed by S3), specifying a chunk size which falls
-outside those hard limits will cause chunked uploads to fail
+in bytes which will be uploaded in a single request. This can be used when
+a server or proxy has a limit on how big request bodies may be.
+Note that if the server has hard limits (such as the minimum 5MB chunk
+size imposed by S3), specifying a chunk size which falls
+outside those hard limits will cause chunked uploads to fail.
 * `metadata = {}`: an object with string values used as additional meta data
 which will be passed along to the server when (and only when) creating a new
 upload. Can be used for filenames, file types etc.
