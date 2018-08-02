@@ -4,6 +4,14 @@
   "description": "A pure JavaScript client for the tus resumable upload protocol",
   "main": "lib.es5/index.js",
   "jsnext:main": "lib/index.js",
+   "files": [
+    "lib/**/*",
+    "lib.es5/**/*"
+    "dist/**/*",
+    "demo/**/*",
+    "bin/**/*",
+    "test/**/*"
+  ],
   "browser": {
     "./lib/node/request.js": "./lib/browser/request.js",
     "./lib/node/base64.js": "./lib/browser/base64.js",
