@@ -6,7 +6,7 @@
   "jsnext:main": "lib/index.js",
    "files": [
     "lib/**/*",
-    "lib.es5/**/*"
+    "lib.es5/**/*",
     "dist/**/*",
     "demo/**/*",
     "bin/**/*",
