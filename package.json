@@ -4,7 +4,7 @@
   "description": "A pure JavaScript client for the tus resumable upload protocol",
   "main": "lib.es5/index.js",
   "jsnext:main": "lib/index.js",
-   "files": [
+  "files": [
     "lib/**/*",
     "lib.es5/**/*",
     "dist/**/*",
@@ -64,7 +64,7 @@
     "buffer-from": "^0.1.1",
     "extend": "^3.0.0",
     "lodash.throttle": "^4.1.1",
-    "resolve-url": "^0.2.1"
+    "url-parse": "^1.4.3"
   },
   "scripts": {
     "build": "browserify lib/index.js -t [ babelify ] -s tus -d | exorcist ./dist/tus.js.map | derequire > dist/tus.js",

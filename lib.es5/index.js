@@ -12,6 +12,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 /* global window */
 var defaultOptions = _upload2.default.defaultOptions;
 
+var isSupported = void 0;
 
 if (typeof window !== "undefined") {
   // Browser environment using XMLHttpRequest
@@ -20,10 +21,10 @@ if (typeof window !== "undefined") {
   var Blob = _window.Blob;
 
 
-  var isSupported = XMLHttpRequest && Blob && typeof Blob.prototype.slice === "function";
+  isSupported = XMLHttpRequest && Blob && typeof Blob.prototype.slice === "function";
 } else {
   // Node.js environment using http module
-  var isSupported = true;
+  isSupported = true;
 }
 
 // The usage of the commonjs exporting syntax instead of the new ECMAScript
