@@ -46,6 +46,7 @@ var Request = function () {
     this._headers = {};
     this._resHeaders = {};
     this._request = null;
+    this._agent = undefined; // use global Agent instance by default
 
     this.status = 0;
 
@@ -67,6 +68,11 @@ var Request = function () {
       this._url = url;
     }
   }, {
+    key: "setAgent",
+    value: function setAgent(agent) {
+      this._agent = agent;
+    }
+  }, {
     key: "setRequestHeader",
     value: function setRequestHeader(key, value) {
       this._headers[key] = value;
@@ -77,9 +83,17 @@ var Request = function () {
       var _this = this;
 
       var options = (0, _url.parse)(this._url);
+      options.agent = this._agent;
       options.method = this._method;
       options.headers = this._headers;
       if (body && body.size) options.headers["Content-Length"] = body.size;
+
+      // sanity check...
+      if (this._agent instanceof Object && this._agent.protocol != options.protocol) {
+        var err = "Cannot use " + this._agent.protocol + " Agent for " + options.protocol + " request";
+        this.onerror(new Error(err));
+        return;
+      }
 
       var req = this._request = options.protocol !== "https:" ? http.request(options) : https.request(options);
       req.on("response", function (res) {
@@ -87,6 +101,8 @@ var Request = function () {
         _this._resHeaders = res.headers;
 
         _this.onload();
+
+        res.resume(); // this allows Agent to reuse same connection for next HTTP request
       });
 
       req.on("error", function (err) {

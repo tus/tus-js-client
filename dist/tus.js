@@ -287,6 +287,7 @@ var defaultOptions = {
   withCredentials: false,
   uploadUrl: null,
   uploadSize: null,
+  agent: undefined,
   overridePatchMethod: false,
   retryDelays: null,
   removeFingerprintOnSuccess: false
@@ -712,6 +713,8 @@ var Upload = function () {
       }
 
       var xhr = (0, _request.newRequest)();
+
+      if (this.options.agent) xhr.setAgent(this.options.agent);
 
       // Some browser and servers may not support the PATCH method. For those
       // cases, you can tell tus-js-client to use a POST request with the
