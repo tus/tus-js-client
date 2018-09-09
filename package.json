@@ -55,6 +55,7 @@
     "jasmine-ajax": "^3.2.0",
     "jasmine-core": "^2.4.1",
     "phantomjs-prebuilt": "^2.1.16",
+    "synchronous-promise": "^2.0.5",
     "temp": "^0.8.3",
     "uglify-js": "^2.6.0",
     "watchify": "^3.5.0"

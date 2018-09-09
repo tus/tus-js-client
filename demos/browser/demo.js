@@ -6,6 +6,7 @@
 var upload          = null;
 var uploadIsRunning = false;
 var toggleBtn       = document.querySelector("#toggle-btn");
+var recordBtn       = document.querySelector("#record-btn");
 var resumeCheckbox  = document.querySelector("#resume");
 var input           = document.querySelector("input[type=file]");
 var progress        = document.querySelector(".progress");
@@ -45,17 +46,25 @@ toggleBtn.addEventListener("click", function (e) {
   }
 });
 
-input.addEventListener("change", startUpload);
 
-function startUpload() {
-  var file = input.files[0];
-  // Only continue if a file has actually been selected.
-  // IE will trigger a change event even if we reset the input element
-  // using reset() and we do not want to blow up later.
-  if (!file) {
-    return;
+let stopRecording;
+recordBtn.addEventListener("click", function (e) {
+  console.log({stopRecording});
+  e.preventDefault();
+  if (upload) {
+    recordBtn.textContent = "start recording";
+    stopRecording();
+  } else {
+    recordBtn.textContent = "stop recording";
+    startStreamUpload();
   }
+});
 
+input.addEventListener("change", startFileUpload);
+
+
+function startUpload(file, passedOptions) {
+  passedOptions = passedOptions || {};
   var endpoint = endpointInput.value;
   var chunkSize = parseInt(chunkInput.value, 10);
   if (isNaN(chunkSize)) {
@@ -92,19 +101,87 @@ function startUpload() {
       console.log(bytesUploaded, bytesTotal, percentage + "%");
     },
     onSuccess: function () {
-      var anchor = document.createElement("a");
-      anchor.textContent = "Download " + upload.file.name + " (" + upload.file.size + " bytes)";
-      anchor.href = upload.url;
-      anchor.className = "btn btn-success";
-      uploadList.appendChild(anchor);
-
+      var listItem = document.createElement("li");
+      if (upload.file.type.startsWith("video")) {
+        var video = document.createElement("video");
+        video.controls = true;
+        video.height = 100;
+        video.src = upload.url;
+        listItem.appendChild(video);
+      } else {
+        var anchor = document.createElement("a");
+        anchor.textContent = "Download " + upload.file.name + " (" + upload.file.size + " bytes)";
+        anchor.href = upload.url;
+        anchor.className = "btn btn-success";
+        listItem.appendChild(anchor);
+      }
+      uploadList.appendChild(listItem);
       reset();
     }
   };
 
+  Object.assign(options, passedOptions);
+
   upload = new tus.Upload(file, options);
   upload.start();
   uploadIsRunning = true;
+}
+
+function startStreamUpload() {
+  navigator.mediaDevices.getUserMedia({video: true})
+  .then(stream => {
+    const mr = new MediaRecorder(stream);
+
+    const chunks = [];
+    let done = false;
+    mr.onerror = e => { console.log("onerror", e); };
+    mr.onstop = () => { done = true; };
+    mr.ondataavailable = e => {
+      chunks.push(e.data);
+      if (onDataAvailable) {
+        onDataAvailable(readableRecorder.read());
+        onDataAvailable = undefined;
+      }
+    };
+    let onDataAvailable;
+    mr.start(1000);
+
+    const readableRecorder = {
+      read() {
+        if (done && chunks.length === 0) {
+          return Promise.resolve({ done: true });
+        }
+
+        if (chunks.length > 0) {
+          return Promise.resolve({ value: chunks.shift(), done: false });
+        }
+
+        return new Promise((resolve) => { onDataAvailable = resolve; });
+      },
+      name: `foo${Math.random()}.webm`,
+      type: "video/webm"
+    };
+
+    startUpload(readableRecorder, {uploadLengthDeferred: true});
+
+    stopRecording = () => {
+      stream.getTracks().forEach(t => t.stop());
+      mr.stop();
+    };
+  });
+}
+
+
+function startFileUpload() {
+  var file = input.files[0];
+  // Only continue if a file has actually been selected.
+  // IE will trigger a change event even if we reset the input element
+  // using reset() and we do not want to blow up later.
+  if (!file) {
+    return;
+  }
+
+  startUpload(file);
 }
 
 function reset() {

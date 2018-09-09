@@ -40,7 +40,7 @@
             </label>
           </td>
           <td>
-            <input type="number" id="chunksize" name="chunksize">
+            <input type="number" id="chunksize" name="chunksize" value="10000">
           </td>
         </tr>
         <tr>
@@ -76,10 +76,23 @@
       </div>
 
       <hr />
+
+      <h4>Stream Video</h4>
+      <p>
+        As a demo of tus' deferred upload length extension,
+        you can record a video that uploads while it's recording.
+      </p>
+      <button class="btn" id="record-btn">start recording</button>
+
+      <hr />
+
       <h3>Uploads</h3>
-      <p id="upload-list">
+      <p>
         Succesful uploads will be listed here. Try one!
       </p>
+      <ul id="upload-list">
+
+      </ul>
 
     </div>
   </body>
