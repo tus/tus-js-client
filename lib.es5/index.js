@@ -16,9 +16,9 @@ var isSupported = void 0;
 
 if (typeof window !== "undefined") {
   // Browser environment using XMLHttpRequest
-  var _window = window;
-  var XMLHttpRequest = _window.XMLHttpRequest;
-  var Blob = _window.Blob;
+  var _window = window,
+      XMLHttpRequest = _window.XMLHttpRequest,
+      Blob = _window.Blob;
 
 
   isSupported = XMLHttpRequest && Blob && typeof Blob.prototype.slice === "function";
