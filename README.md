@@ -207,10 +207,11 @@ This will only be used if the size cannot be automatically calculated. This
 is currently only used and required if you supply a `Readable` stream as the
 file to upload. You may also use this to limit the position until which a file
 will be uploaded.
-* `agent = undefined`: specifies the [Agent](https://nodejs.org/api/http.html#http_class_http_agent)
-instance to be used to manage HTTP requests. See nodejs documentation for details.
+* `agent = null`: specifies the [Agent](https://nodejs.org/api/http.html#http_class_http_agent) 
+instance to be used to manage HTTP requests. See Node.js documentation for details.
 Custom Agent can be configured to reuse TCP connections across multiple HTTP requests
-to the same server. See [Persistent connections](#persistent-connections) for details.
+to the same server. See [Persistent connections](#persistent-connections) for details.  
+This option is not relevant for browser environments.
 * `overridePatchMethod = false`: a boolean indicating whether the `POST` method
 should be used instead of `PATCH` for transfering the chunks. This may be
 necessary if a browser or the server does not support latter one. In this case,
@@ -303,14 +304,14 @@ According to [RFC2068 Section 8.1](https://tools.ietf.org/html/rfc2068#section-8
 number of advantages over separate TCP connection for each request, such as saving some CPU time, memory and operating
 system resource or pipelining many requests without waiting for each response and reducing network congestion.
 
-In nodejs, all outgoing HTTP(S) requests are being sent through Agent (either global or custom one) which is responsible
+In Node.js, all outgoing HTTP(S) requests are being sent through Agent (either global or custom one) which is responsible
 for managing sockets and connections for HTTP sessions.
 
-Persistent connections are designed to be default behavior for HTTP/1.1 protocol, however nodejs default (global) Agent
+Persistent connections are designed to be default behavior for HTTP/1.1 protocol, however Node.js default (global) Agent
 is configured so that persistence is disabled, so requests are sent as HTTP/1.1 messages with "Connection: close" header,
 forcing socket to be closed after each request/response.
 
-In order to reuse connections in nodejs the request has to be sent through custom Agent with 'keepAlive' option enabled,
+In order to reuse connections in Node.js the request has to be sent through custom Agent with 'keepAlive' option enabled,
 such in the code below:
 
 ```js
@@ -334,7 +335,7 @@ upload.start();
 With this config, when Upload is finished the connection will be put in keepAlive state, and can be immediately reused
 for another Upload (to the same server) without establishing new connections.
 Either side (client/server) can close unused connection at any time if it's configured to do so - it is up to Server or
-nodejs Agent to decide how long the connection will be held for reuse.
+Node.js Agent to decide how long the connection will be held for reuse.
 
 It is worth to notice that in case of several simultaneous uploads there are still independent connections created up to
 the the Agent's `maxSockets` limit, so concurrent transfers are not affected with default setting of 'Infinity'.
