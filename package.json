@@ -3,7 +3,7 @@
   "version": "1.5.1",
   "description": "A pure JavaScript client for the tus resumable upload protocol",
   "main": "lib.es5/index.js",
-  "jsnext:main": "lib/index.js",
+  "module": "lib/index.js",
   "files": [
     "lib/**/*",
     "lib.es5/**/*",
