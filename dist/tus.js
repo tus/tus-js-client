@@ -40,7 +40,7 @@ function resolveUrl(origin, link) {
 }
 
 },{"url-parse":12}],3:[function(_dereq_,module,exports){
-"use strict";
+'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -60,19 +60,53 @@ var FileSource = function () {
   }
 
   _createClass(FileSource, [{
-    key: "slice",
+    key: 'slice',
     value: function slice(start, end) {
       return this._file.slice(start, end);
     }
   }, {
-    key: "close",
+    key: 'close',
     value: function close() {}
   }]);
 
   return FileSource;
 }();
 
+var CordovaFileSource = function () {
+  function CordovaFileSource(file) {
+    _classCallCheck(this, CordovaFileSource);
+
+    this._file = file;
+    this.size = file.size;
+  }
+
+  _createClass(CordovaFileSource, [{
+    key: 'slice',
+    value: function slice(start, end, ready, error) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        ready(new Uint8Array(reader.result));
+      };
+      reader.onerror = function (err) {
+        error(err);
+      };
+      reader.readAsArrayBuffer(this._file.slice(start, end));
+    }
+  }, {
+    key: 'close',
+    value: function close() {}
+  }, {
+    key: 'onSuccess',
+    value: function onSuccess() {}
+  }]);
+
+  return CordovaFileSource;
+}();
+
 function getSource(input) {
+  if (typeof window.PhoneGap != 'undefined' || typeof window.Cordova != 'undefined' || typeof window.cordova != 'undefined') {
+    return new CordovaFileSource(input);
+  }
   // Since we emulate the Blob type in our tests (not all target browsers
   // support it), we cannot use `instanceof` for testing whether the input value
   // can be handled. Instead, we simply check is the slice() function and the
@@ -774,6 +808,11 @@ var Upload = function () {
 
           _this4._emitProgress(start + e.loaded, _this4._size);
         };
+
+        xhr.upload.onloadstart = function (e) {
+          // Emit an progress event when a new chunk begins being uploaded.
+          _this4._emitProgress(start, _this4._size);
+        };
       }
 
       this._setupXHR(xhr);
@@ -791,7 +830,16 @@ var Upload = function () {
         end = this._size;
       }
 
-      xhr.send(this._source.slice(start, end));
+      if (typeof window.PhoneGap != 'undefined' || typeof window.Cordova != 'undefined' || typeof window.cordova != 'undefined') {
+        this._source.slice(start, end, function (data) {
+          return xhr.send(data);
+        }, function (err) {
+          _this4._emitError(new _error2.default("tus: could not slice file or stream at start[" + start + "] end[" + end + "] size[" + _this4._size + "]", err));
+        });
+      } else {
+        var chunk = this._source.slice(start, end);
+        xhr.send(chunk);
+      }
 
       // Emit an progress event when a new chunk begins being uploaded.
       this._emitProgress(this._offset, this._size);
