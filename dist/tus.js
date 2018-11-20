@@ -82,13 +82,13 @@ var CordovaFileSource = function () {
 
   _createClass(CordovaFileSource, [{
     key: 'slice',
-    value: function slice(start, end, ready, error) {
+    value: function slice(start, end, callback) {
       var reader = new FileReader();
       reader.onload = function () {
-        ready(new Uint8Array(reader.result));
+        callback(new Uint8Array(reader.result));
       };
       reader.onerror = function (err) {
-        error(err);
+        callback(null, err);
       };
       reader.readAsArrayBuffer(this._file.slice(start, end));
     }
@@ -808,11 +808,6 @@ var Upload = function () {
 
           _this4._emitProgress(start + e.loaded, _this4._size);
         };
-
-        xhr.upload.onloadstart = function (e) {
-          // Emit an progress event when a new chunk begins being uploaded.
-          _this4._emitProgress(start, _this4._size);
-        };
       }
 
       this._setupXHR(xhr);
@@ -831,10 +826,12 @@ var Upload = function () {
       }
 
       if (typeof window.PhoneGap != 'undefined' || typeof window.Cordova != 'undefined' || typeof window.cordova != 'undefined') {
-        this._source.slice(start, end, function (data) {
-          return xhr.send(data);
-        }, function (err) {
-          _this4._emitError(new _error2.default("tus: could not slice file or stream at start[" + start + "] end[" + end + "] size[" + _this4._size + "]", err));
+        this._source.slice(start, end, function (fileChunk, error) {
+          if (error) {
+            _this4._emitError(new _error2.default("tus: could not slice file or stream at start[" + start + "] end[" + end + "] size[" + _this4._size + "]", error));
+            return;
+          }
+          xhr.send(fileChunk);
         });
       } else {
         var chunk = this._source.slice(start, end);
@@ -843,6 +840,15 @@ var Upload = function () {
 
       // Emit an progress event when a new chunk begins being uploaded.
       this._emitProgress(this._offset, this._size);
+    }
+  }, {
+    key: "callback",
+    value: function callback(error, fileChunk) {
+      if (error) {
+        this._emitError(new _error2.default("tus: could not slice file or stream at start[" + start + "] end[" + end + "] size[" + this._size + "]", error));
+        return;
+      }
+      xhr.send(fileChunk);
     }
   }]);
 
