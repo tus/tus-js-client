@@ -838,15 +838,6 @@ var Upload = function () {
       // Emit an progress event when a new chunk begins being uploaded.
       this._emitProgress(this._offset, this._size);
     }
-  }, {
-    key: "callback",
-    value: function callback(error, fileChunk) {
-      if (error) {
-        this._emitError(new _error2.default("tus: could not slice file or stream at start[" + start + "] end[" + end + "] size[" + this._size + "]", error));
-        return;
-      }
-      xhr.send(fileChunk);
-    }
   }]);
 
   return Upload;
