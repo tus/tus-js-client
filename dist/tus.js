@@ -40,7 +40,7 @@ function resolveUrl(origin, link) {
 }
 
 },{"url-parse":12}],3:[function(_dereq_,module,exports){
-'use strict';
+"use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -60,12 +60,12 @@ var FileSource = function () {
   }
 
   _createClass(FileSource, [{
-    key: 'slice',
+    key: "slice",
     value: function slice(start, end) {
       return this._file.slice(start, end);
     }
   }, {
-    key: 'close',
+    key: "close",
     value: function close() {}
   }]);
 
@@ -81,7 +81,7 @@ var CordovaFileSource = function () {
   }
 
   _createClass(CordovaFileSource, [{
-    key: 'slice',
+    key: "slice",
     value: function slice(start, end, callback) {
       var reader = new FileReader();
       reader.onload = function () {
@@ -93,18 +93,15 @@ var CordovaFileSource = function () {
       reader.readAsArrayBuffer(this._file.slice(start, end));
     }
   }, {
-    key: 'close',
+    key: "close",
     value: function close() {}
-  }, {
-    key: 'onSuccess',
-    value: function onSuccess() {}
   }]);
 
   return CordovaFileSource;
 }();
 
 function getSource(input) {
-  if (typeof window.PhoneGap != 'undefined' || typeof window.Cordova != 'undefined' || typeof window.cordova != 'undefined') {
+  if (typeof window.PhoneGap != "undefined" || typeof window.Cordova != "undefined" || typeof window.cordova != "undefined") {
     return new CordovaFileSource(input);
   }
   // Since we emulate the Blob type in our tests (not all target browsers
@@ -825,7 +822,7 @@ var Upload = function () {
         end = this._size;
       }
 
-      if (typeof window.PhoneGap != 'undefined' || typeof window.Cordova != 'undefined' || typeof window.cordova != 'undefined') {
+      if (typeof window.PhoneGap != "undefined" || typeof window.Cordova != "undefined" || typeof window.cordova != "undefined") {
         this._source.slice(start, end, function (fileChunk, error) {
           if (error) {
             _this4._emitError(new _error2.default("tus: could not slice file or stream at start[" + start + "] end[" + end + "] size[" + _this4._size + "]", error));
