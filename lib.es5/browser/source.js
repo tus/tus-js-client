@@ -49,7 +49,6 @@ function getSource(input, chunkSize, callback) {
   // a local path to the file. We use XMLHttpRequest to fetch
   // the file blob, before uploading with tus.
   if (_isReactNative2.default && (typeof input === "undefined" ? "undefined" : _typeof(input)) === "object" && input.uri !== null) {
-    console.log('YES, REACT NATIVE');
     (0, _uriToBlob2.default)(input.uri, function (err, blob) {
       if (err) {
         return callback(new Error("tus: cannot fetch `file.uri` as Blob, make sure the uri is correct and accessible. " + err));
