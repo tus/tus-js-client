@@ -42,12 +42,24 @@ function resolveUrl(origin, link) {
 },{"url-parse":14}],3:[function(_dereq_,module,exports){
 "use strict";
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.getSource = getSource;
+
+var _isReactNative = _dereq_("./../isReactNative");
+
+var _isReactNative2 = _interopRequireDefault(_isReactNative);
+
+var _uriToBlob = _dereq_("./../uriToBlob");
+
+var _uriToBlob2 = _interopRequireDefault(_uriToBlob);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -72,7 +84,20 @@ var FileSource = function () {
   return FileSource;
 }();
 
-function getSource(input) {
+function getSource(input, chunkSize, callback) {
+  // In React Native, when user selects a file, instead of a File or Blob,
+  // you usually get a file object {} with a uri property that contains
+  // a local path to the file. We use XMLHttpRequest to fetch
+  // the file blob, before uploading with tus.
+  if (_isReactNative2.default && (typeof input === "undefined" ? "undefined" : _typeof(input)) === "object" && input.uri !== null) {
+    (0, _uriToBlob2.default)(input.uri, function (err, blob) {
+      if (err) {
+        return callback(new Error("tus: cannot fetch `file.uri` as Blob, make sure the uri is correct and accessible. " + err));
+      }
+      callback(null, new FileSource(blob));
+    });
+  }
+
   // Since we emulate the Blob type in our tests (not all target browsers
   // support it), we cannot use `instanceof` for testing whether the input value
   // can be handled. Instead, we simply check is the slice() function and the
@@ -84,7 +109,7 @@ function getSource(input) {
   throw new Error("source object may only be an instance of File or Blob in this environment");
 }
 
-},{}],4:[function(_dereq_,module,exports){
+},{"./../isReactNative":8,"./../uriToBlob":10}],4:[function(_dereq_,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -231,19 +256,17 @@ module.exports = {
 };
 
 },{"./node/storage":4,"./upload":9}],8:[function(_dereq_,module,exports){
-'use strict';
+"use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-var isReactNative = typeof navigator !== 'undefined' && typeof navigator.product === 'string' && navigator.product.toLowerCase() === 'reactnative';
+var isReactNative = typeof navigator !== "undefined" && typeof navigator.product === "string" && navigator.product.toLowerCase() === "reactnative";
 
 exports.default = isReactNative;
 
 },{}],9:[function(_dereq_,module,exports){
 "use strict";
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /* global window */
 
@@ -267,14 +290,6 @@ var _error2 = _interopRequireDefault(_error);
 var _extend = _dereq_("extend");
 
 var _extend2 = _interopRequireDefault(_extend);
-
-var _isReactNative = _dereq_("./isReactNative");
-
-var _isReactNative2 = _interopRequireDefault(_isReactNative);
-
-var _uriToBlob = _dereq_("./uriToBlob");
-
-var _uriToBlob2 = _interopRequireDefault(_uriToBlob);
 
 var _request = _dereq_("./node/request");
 
@@ -371,27 +386,20 @@ var Upload = function () {
         return;
       }
 
-      // In React Native, when user selects a file, instead of a File or Blob,
-      // you usually get a file object {} with a uri property that contains
-      // a local path to the file. We use XMLHttpRequest to fetch
-      // the file blob, before uploading with tus.
-      if (_isReactNative2.default && (typeof file === "undefined" ? "undefined" : _typeof(file)) === 'object' && file !== null) {
-        return (0, _uriToBlob2.default)(file.uri).then(function (blob) {
-          return _this._start(blob);
-        }).catch(function (err) {
-          _this._emitError(new Error("tus: cannot fetch `file.uri` as Blob, make sure the uri is correct and accessible"));
-          return;
-        });
-      }
-
-      return this._start(file);
+      (0, _source.getSource)(file, this.options.chunkSize, function (err, source) {
+        if (err) {
+          _this._emitError(err);
+        }
+        _this._source = source;
+        _this._start(source);
+      });
     }
   }, {
     key: "_start",
-    value: function _start(file) {
+    value: function _start(source) {
       var _this2 = this;
 
-      var source = this._source = (0, _source.getSource)(file, this.options.chunkSize);
+      var file = this.file;
 
       // Firstly, check if the caller has supplied a manual upload size or else
       // we will use the calculated size by the source object.
@@ -869,26 +877,24 @@ Upload.defaultOptions = defaultOptions;
 
 exports.default = Upload;
 
-},{"./error":5,"./fingerprint":6,"./isReactNative":8,"./node/base64":1,"./node/request":2,"./node/source":3,"./node/storage":4,"./uriToBlob":10,"extend":11}],10:[function(_dereq_,module,exports){
+},{"./error":5,"./fingerprint":6,"./node/base64":1,"./node/request":2,"./node/source":3,"./node/storage":4,"extend":11}],10:[function(_dereq_,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-function uriToBlob(uri) {
-  return new Promise(function (resolve, reject) {
-    var xhr = new XMLHttpRequest();
-    xhr.responseType = "blob";
-    xhr.onload = function () {
-      var blob = xhr.response;
-      resolve(blob);
-    };
-    xhr.onerror = function (err) {
-      reject(err);
-    };
-    xhr.open("GET", uri);
-    xhr.send();
-  });
+function uriToBlob(uri, done) {
+  var xhr = new XMLHttpRequest();
+  xhr.responseType = "blob";
+  xhr.onload = function () {
+    var blob = xhr.response;
+    done(null, blob);
+  };
+  xhr.onerror = function (err) {
+    done(err);
+  };
+  xhr.open("GET", uri);
+  xhr.send();
 }
 
 exports.default = uriToBlob;
