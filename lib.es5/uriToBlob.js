@@ -4,20 +4,18 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-function uriToBlob(uri) {
-  return new Promise(function (resolve, reject) {
-    var xhr = new XMLHttpRequest();
-    xhr.responseType = "blob";
-    xhr.onload = function () {
-      var blob = xhr.response;
-      resolve(blob);
-    };
-    xhr.onerror = function (err) {
-      reject(err);
-    };
-    xhr.open("GET", uri);
-    xhr.send();
-  });
+function uriToBlob(uri, done) {
+  var xhr = new XMLHttpRequest();
+  xhr.responseType = "blob";
+  xhr.onload = function () {
+    var blob = xhr.response;
+    done(null, blob);
+  };
+  xhr.onerror = function (err) {
+    done(err);
+  };
+  xhr.open("GET", uri);
+  xhr.send();
 }
 
 exports.default = uriToBlob;

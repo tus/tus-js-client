@@ -201,18 +201,18 @@ var SlicingStream = function (_Transform) {
   return SlicingStream;
 }(_stream.Transform);
 
-function getSource(input, chunkSize) {
+function getSource(input, chunkSize, callback) {
   if (Buffer.isBuffer(input)) {
-    return new BufferSource(input);
+    return callback(null, new BufferSource(input));
   }
 
   if (input instanceof _fs.ReadStream && input.path != null) {
-    return new FileSource(input);
+    return new callback(null, FileSource(input));
   }
 
   if (input instanceof _stream.Readable) {
-    return new StreamSource(input, chunkSize);
+    return callback(null, new StreamSource(input, chunkSize));
   }
 
-  throw new Error("source object may only be an instance of Buffer or Readable in this environment");
+  callback(new Error("source object may only be an instance of Buffer or Readable in this environment"));
 }
