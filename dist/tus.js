@@ -21,6 +21,16 @@ var isSupported = exports.isSupported = "btoa" in window;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+var isReactNative = typeof navigator !== "undefined" && typeof navigator.product === "string" && navigator.product.toLowerCase() === "reactnative";
+
+exports.default = isReactNative;
+
+},{}],3:[function(_dereq_,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 exports.newRequest = newRequest;
 exports.resolveUrl = resolveUrl;
 
@@ -39,7 +49,7 @@ function resolveUrl(origin, link) {
   return new _urlParse2.default(link, origin).toString();
 }
 
-},{"url-parse":14}],3:[function(_dereq_,module,exports){
+},{"url-parse":14}],4:[function(_dereq_,module,exports){
 "use strict";
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
@@ -51,11 +61,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.getSource = getSource;
 
-var _isReactNative = _dereq_("./../isReactNative");
+var _isReactNative = _dereq_("./isReactNative");
 
 var _isReactNative2 = _interopRequireDefault(_isReactNative);
 
-var _uriToBlob = _dereq_("./../uriToBlob");
+var _uriToBlob = _dereq_("./uriToBlob");
 
 var _uriToBlob2 = _interopRequireDefault(_uriToBlob);
 
@@ -96,6 +106,7 @@ function getSource(input, chunkSize, callback) {
       }
       callback(null, new FileSource(blob));
     });
+    return;
   }
 
   // Since we emulate the Blob type in our tests (not all target browsers
@@ -103,13 +114,14 @@ function getSource(input, chunkSize, callback) {
   // can be handled. Instead, we simply check is the slice() function and the
   // size property are available.
   if (typeof input.slice === "function" && typeof input.size !== "undefined") {
-    return new FileSource(input);
+    callback(null, new FileSource(input));
+    return;
   }
 
-  throw new Error("source object may only be an instance of File or Blob in this environment");
+  callback(new Error("source object may only be an instance of File or Blob in this environment"));
 }
 
-},{"./../isReactNative":8,"./../uriToBlob":10}],4:[function(_dereq_,module,exports){
+},{"./isReactNative":2,"./uriToBlob":6}],5:[function(_dereq_,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -156,7 +168,29 @@ function removeItem(key) {
   return localStorage.removeItem(key);
 }
 
-},{}],5:[function(_dereq_,module,exports){
+},{}],6:[function(_dereq_,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+function uriToBlob(uri, done) {
+  var xhr = new XMLHttpRequest();
+  xhr.responseType = "blob";
+  xhr.onload = function () {
+    var blob = xhr.response;
+    done(null, blob);
+  };
+  xhr.onerror = function (err) {
+    done(err);
+  };
+  xhr.open("GET", uri);
+  xhr.send();
+}
+
+exports.default = uriToBlob;
+
+},{}],7:[function(_dereq_,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -199,7 +233,7 @@ var DetailedError = function (_Error) {
 
 exports.default = DetailedError;
 
-},{}],6:[function(_dereq_,module,exports){
+},{}],8:[function(_dereq_,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -216,7 +250,7 @@ function fingerprint(file, options) {
   return ["tus", file.name, file.type, file.size, file.lastModified, options.endpoint].join("-");
 }
 
-},{}],7:[function(_dereq_,module,exports){
+},{}],9:[function(_dereq_,module,exports){
 "use strict";
 
 var _upload = _dereq_("./upload");
@@ -255,17 +289,7 @@ module.exports = {
   defaultOptions: defaultOptions
 };
 
-},{"./node/storage":4,"./upload":9}],8:[function(_dereq_,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var isReactNative = typeof navigator !== "undefined" && typeof navigator.product === "string" && navigator.product.toLowerCase() === "reactnative";
-
-exports.default = isReactNative;
-
-},{}],9:[function(_dereq_,module,exports){
+},{"./node/storage":5,"./upload":10}],10:[function(_dereq_,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /* global window */
@@ -389,7 +413,9 @@ var Upload = function () {
       (0, _source.getSource)(file, this.options.chunkSize, function (err, source) {
         if (err) {
           _this._emitError(err);
+          return;
         }
+
         _this._source = source;
         _this._start(source);
       });
@@ -406,7 +432,8 @@ var Upload = function () {
       if (this.options.uploadSize != null) {
         var size = +this.options.uploadSize;
         if (isNaN(size)) {
-          throw new Error("tus: cannot convert `uploadSize` option into a number");
+          this._emitError(new Error("tus: cannot convert `uploadSize` option into a number"));
+          return;
         }
 
         this._size = size;
@@ -416,7 +443,8 @@ var Upload = function () {
         // The size property will be null if we cannot calculate the file's size,
         // for example if you handle a stream.
         if (size == null) {
-          throw new Error("tus: cannot automatically derive upload's size from input and must be specified manually using the `uploadSize` option");
+          this._emitError(new Error("tus: cannot automatically derive upload's size from input and must be specified manually using the `uploadSize` option"));
+          return;
         }
 
         this._size = size;
@@ -425,7 +453,8 @@ var Upload = function () {
       var retryDelays = this.options.retryDelays;
       if (retryDelays != null) {
         if (Object.prototype.toString.call(retryDelays) !== "[object Array]") {
-          throw new Error("tus: the `retryDelays` option must either be an array or null");
+          this._emitError(new Error("tus: the `retryDelays` option must either be an array or null"));
+          return;
         } else {
           (function () {
             var errorCallback = _this2.options.onError;
@@ -877,29 +906,7 @@ Upload.defaultOptions = defaultOptions;
 
 exports.default = Upload;
 
-},{"./error":5,"./fingerprint":6,"./node/base64":1,"./node/request":2,"./node/source":3,"./node/storage":4,"extend":11}],10:[function(_dereq_,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-function uriToBlob(uri, done) {
-  var xhr = new XMLHttpRequest();
-  xhr.responseType = "blob";
-  xhr.onload = function () {
-    var blob = xhr.response;
-    done(null, blob);
-  };
-  xhr.onerror = function (err) {
-    done(err);
-  };
-  xhr.open("GET", uri);
-  xhr.send();
-}
-
-exports.default = uriToBlob;
-
-},{}],11:[function(_dereq_,module,exports){
+},{"./error":7,"./fingerprint":8,"./node/base64":1,"./node/request":3,"./node/source":4,"./node/storage":5,"extend":11}],11:[function(_dereq_,module,exports){
 'use strict';
 
 var hasOwn = Object.prototype.hasOwnProperty;
@@ -1534,6 +1541,6 @@ module.exports = Url;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"querystringify":12,"requires-port":13}]},{},[7])(7)
+},{"querystringify":12,"requires-port":13}]},{},[9])(9)
 });
 //# sourceMappingURL=tus.js.map

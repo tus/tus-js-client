@@ -10,11 +10,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.getSource = getSource;
 
-var _isReactNative = require("./../isReactNative");
+var _isReactNative = require("./isReactNative");
 
 var _isReactNative2 = _interopRequireDefault(_isReactNative);
 
-var _uriToBlob = require("./../uriToBlob");
+var _uriToBlob = require("./uriToBlob");
 
 var _uriToBlob2 = _interopRequireDefault(_uriToBlob);
 
@@ -55,6 +55,7 @@ function getSource(input, chunkSize, callback) {
       }
       callback(null, new FileSource(blob));
     });
+    return;
   }
 
   // Since we emulate the Blob type in our tests (not all target browsers
@@ -62,8 +63,9 @@ function getSource(input, chunkSize, callback) {
   // can be handled. Instead, we simply check is the slice() function and the
   // size property are available.
   if (typeof input.slice === "function" && typeof input.size !== "undefined") {
-    return new FileSource(input);
+    callback(null, new FileSource(input));
+    return;
   }
 
-  throw new Error("source object may only be an instance of File or Blob in this environment");
+  callback(new Error("source object may only be an instance of File or Blob in this environment"));
 }

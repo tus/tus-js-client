@@ -122,7 +122,9 @@ var Upload = function () {
       (0, _source.getSource)(file, this.options.chunkSize, function (err, source) {
         if (err) {
           _this._emitError(err);
+          return;
         }
+
         _this._source = source;
         _this._start(source);
       });
@@ -139,7 +141,8 @@ var Upload = function () {
       if (this.options.uploadSize != null) {
         var size = +this.options.uploadSize;
         if (isNaN(size)) {
-          throw new Error("tus: cannot convert `uploadSize` option into a number");
+          this._emitError(new Error("tus: cannot convert `uploadSize` option into a number"));
+          return;
         }
 
         this._size = size;
@@ -149,7 +152,8 @@ var Upload = function () {
         // The size property will be null if we cannot calculate the file's size,
         // for example if you handle a stream.
         if (size == null) {
-          throw new Error("tus: cannot automatically derive upload's size from input and must be specified manually using the `uploadSize` option");
+          this._emitError(new Error("tus: cannot automatically derive upload's size from input and must be specified manually using the `uploadSize` option"));
+          return;
         }
 
         this._size = size;
@@ -158,7 +162,8 @@ var Upload = function () {
       var retryDelays = this.options.retryDelays;
       if (retryDelays != null) {
         if (Object.prototype.toString.call(retryDelays) !== "[object Array]") {
-          throw new Error("tus: the `retryDelays` option must either be an array or null");
+          this._emitError(new Error("tus: the `retryDelays` option must either be an array or null"));
+          return;
         } else {
           (function () {
             var errorCallback = _this2.options.onError;
