@@ -207,7 +207,7 @@ function getSource(input, chunkSize, callback) {
   }
 
   if (input instanceof _fs.ReadStream && input.path != null) {
-    return new callback(null, new FileSource(input));
+    return callback(null, new FileSource(input));
   }
 
   if (input instanceof _stream.Readable) {

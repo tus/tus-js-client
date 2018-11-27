@@ -171,5 +171,104 @@ describe("tus", function () {
       expect(err.message).toBe("tus: unexpected response while creating upload, originated from request (response code: 500, response text: server_error)");
       expect(err.originalRequest).toBeDefined();
     });
+
+    describe("resolving of URIs", function () {
+      beforeEach(function () {
+        window.__tus__forceReactNative = true;
+      });
+
+      afterEach(function () {
+        window.__tus__forceReactNative = false;
+      });
+
+      it("should upload a file from an URI", function (done) {
+        localStorage.setItem("fingerprinted", "http://tus.io/uploads/resuming");
+
+        var file = {
+          uri: "file:///my/file.dat"
+        };
+        var options = {
+          endpoint: "http://tus.io/uploads",
+          onSuccess: function () {}
+        };
+        spyOn(options, "onSuccess");
+
+        var upload = new tus.Upload(file, options);
+        upload.start();
+
+        var req = jasmine.Ajax.requests.mostRecent();
+        expect(req.url).toBe("file:///my/file.dat");
+        expect(req.method).toBe("GET");
+        expect(req.responseType).toBe("blob");
+
+
+        req.respondWith({
+          status: 200,
+          responseHeaders: {
+            "Upload-Length": 11,
+            "Upload-Offset": 3
+          },
+          response: new Blob("hello world".split(""))
+        });
+
+        req = jasmine.Ajax.requests.mostRecent();
+        expect(req.url).toBe("http://tus.io/uploads");
+        expect(req.method).toBe("POST");
+        expect(req.requestHeaders["Upload-Length"]).toBe(11);
+
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: "/uploads/blargh"
+          }
+        });
+
+        expect(upload.url).toBe("http://tus.io/uploads/blargh");
+
+        req = jasmine.Ajax.requests.mostRecent();
+        expect(req.url).toBe("http://tus.io/uploads/blargh");
+        expect(req.method).toBe("PATCH");
+        expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+        expect(req.requestHeaders["Upload-Offset"]).toBe(0);
+        expect(req.contentType()).toBe("application/offset+octet-stream");
+        expect(req.params.size).toBe(11);
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            "Upload-Offset": 11
+          }
+        });
+
+        expect(options.onSuccess).toHaveBeenCalledWith();
+        done();
+      });
+
+      it("should emit an error if it can't resolve the URI", function (done) {
+        localStorage.setItem("fingerprinted", "http://tus.io/uploads/resuming");
+
+        var file = {
+          uri: "file:///my/file.dat"
+        };
+        var options = {
+          endpoint: "http://tus.io/uploads",
+          onError: function () {}
+        };
+        spyOn(options, "onError");
+
+        var upload = new tus.Upload(file, options);
+        upload.start();
+
+        var req = jasmine.Ajax.requests.mostRecent();
+        expect(req.url).toBe("file:///my/file.dat");
+        expect(req.method).toBe("GET");
+        expect(req.responseType).toBe("blob");
+
+        req.responseError();
+
+        expect(options.onError).toHaveBeenCalledWith(new Error("tus: cannot fetch `file.uri` as Blob, make sure the uri is correct and accessible. [object Object]"));
+        done();
+      });
+    });
   });
 });

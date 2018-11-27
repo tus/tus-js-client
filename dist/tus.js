@@ -99,7 +99,11 @@ function getSource(input, chunkSize, callback) {
   // you usually get a file object {} with a uri property that contains
   // a local path to the file. We use XMLHttpRequest to fetch
   // the file blob, before uploading with tus.
-  if (_isReactNative2.default && (typeof input === "undefined" ? "undefined" : _typeof(input)) === "object" && input.uri !== null) {
+  // TODO: The __tus__forceReactNative property is currently used to force
+  // a React Native environment during testing. This should be removed
+  // once we move away from PhantomJS and can overwrite navigator.product
+  // properly.
+  if ((_isReactNative2.default || window.__tus__forceReactNative) && (typeof input === "undefined" ? "undefined" : _typeof(input)) === "object" && input.uri !== null) {
     (0, _uriToBlob2.default)(input.uri, function (err, blob) {
       if (err) {
         return callback(new Error("tus: cannot fetch `file.uri` as Blob, make sure the uri is correct and accessible. " + err));
@@ -174,6 +178,11 @@ function removeItem(key) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+/**
+ * uriToBlob resolves a URI to a Blob object. This is used for
+ * React Native to retrieve a file (identified by a file://
+ * URI) as a blob.
+ */
 function uriToBlob(uri, done) {
   var xhr = new XMLHttpRequest();
   xhr.responseType = "blob";
@@ -520,6 +529,7 @@ var Upload = function () {
 
       // Try to find the endpoint for the file in the storage
       if (this.options.resume) {
+        // TODO: how does this interact with react?
         this._fingerprint = this.options.fingerprint(file, this.options);
         var resumedUrl = Storage.getItem(this._fingerprint);
 
