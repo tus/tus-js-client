@@ -58,7 +58,7 @@ Please consult the documentation below for more details.
 ## Browser support
 
 <a href="https://browserstack.com">
-  <img alt="BrowserStack logo" src="demo/browserstack.png" align="right" />
+  <img alt="BrowserStack logo" src="demos/browserstack.png" align="right" />
 </a>
 
 tus-js-client is tested and known to support following browsers:
@@ -107,7 +107,7 @@ needed position using `fs.createReadStream`. If you want to disable this
 functionality, you may want to wrap the `fs.ReadStream` into a
 `stream.PassThrough`.
 
-Finally, you may be interested in the `demo/node.js` example which demonstrates
+Finally, you may be interested in the `demos/nodejs/index.js` example which demonstrates
 a simple example on how to easily use tus-js-client using Node.js.
 
 ## Internals

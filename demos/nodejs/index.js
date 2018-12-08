@@ -1,17 +1,18 @@
 /* eslint no-console: 0 */
 
 var fs = require("fs");
-var tus = require("../");
+var tus = require("../../");
 
-var path = "./dist/tus.js";
+var path = __dirname + "/../../README.md";
 var file = fs.createReadStream(path);
 var size = fs.statSync(path).size;
 
 var options = {
-  endpoint: "http://localhost:1080/files/",
+  endpoint: "https://master.tus.io/files/",
   resume: true,
   metadata: {
-      filename: "tus.js"
+      filename: "README.md",
+      filetype: "text/plain"
   },
   uploadSize: size,
   onError: function (error) {
