@@ -50,6 +50,7 @@
     "browserstack-runner": "^0.7.0",
     "derequire": "^2.0.3",
     "eslint": "^4.19.1",
+    "eslint-plugin-react": "^7.11.1",
     "exorcist": "^0.4.0",
     "jasmine": "^2.5.2",
     "jasmine-ajax": "^3.2.0",

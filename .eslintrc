@@ -1,5 +1,7 @@
 {
-  "plugins": [],
+  "plugins": [
+    "react"
+  ],
   "env": {
     "es6": true,
     "node": true,
@@ -8,7 +10,10 @@
   },
   "parserOptions": {
     "ecmaVersion": 6,
-    "sourceType": "module"
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
   },
   "rules": {
     "no-alert": 0,
@@ -193,6 +198,7 @@
     "vars-on-top": 0,
     "wrap-iife": 0,
     "wrap-regex": 0,
-    "yoda": [0, "never"]
+    "yoda": [0, "never"],
+    "react/jsx-uses-vars": 1
   }
 }
