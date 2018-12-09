@@ -53,6 +53,11 @@ export default class App extends React.Component {
     return "";
   }
 
+  getMimeType(extension) {
+    if (extension === "jpg") return "image/jpeg";
+    return `image/${extension}`;
+  }
+
   startUpload() {
     const file = this.state.file;
 
@@ -64,7 +69,7 @@ export default class App extends React.Component {
       retryDelays: [0, 1000, 3000, 5000],
       metadata: {
         filename: `photo.${extension}`,
-        filetype: `image/${extension}`
+        filetype: this.getMimeType(extension)
       },
       onError: (error) => {
         this.setState({

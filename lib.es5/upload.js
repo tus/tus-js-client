@@ -24,13 +24,11 @@ var _extend = require("extend");
 
 var _extend2 = _interopRequireDefault(_extend);
 
+var _jsBase = require("js-base64");
+
 var _request = require("./node/request");
 
 var _source = require("./node/source");
-
-var _base = require("./node/base64");
-
-var Base64 = _interopRequireWildcard(_base);
 
 var _storage = require("./node/storage");
 
@@ -589,14 +587,10 @@ var Upload = function () {
 }();
 
 function encodeMetadata(metadata) {
-  if (!Base64.isSupported) {
-    return "";
-  }
-
   var encoded = [];
 
   for (var key in metadata) {
-    encoded.push(key + " " + Base64.encode(metadata[key]));
+    encoded.push(key + " " + _jsBase.Base64.encode(metadata[key]));
   }
 
   return encoded.join(",");
