@@ -508,7 +508,6 @@ var Upload = function () {
 
       // Try to find the endpoint for the file in the storage
       if (this.options.resume) {
-        // TODO: how does this interact with react?
         this._fingerprint = this.options.fingerprint(file, this.options);
         var resumedUrl = Storage.getItem(this._fingerprint);
 

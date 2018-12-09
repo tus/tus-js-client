@@ -112,7 +112,7 @@ a simple example on how to easily use tus-js-client using Node.js.
 
 ## React Native support
 
-tus-js-client can be used in React Native applications with all of its functionality.
+tus-js-client can be used in React Native applications with nearly all of its functionality.
 Since there is no browser-like File object types in React Native, files are represented
 by objects with an `uri` property (i.e. `{ uri: 'file:///...', ... }`).
 tus-js-client accepts these objects and automatically resolves the file URI and
@@ -120,6 +120,14 @@ uploads the fetched file.
 This allows you to directly pass the results from a file/image picker to
 tus-js-client. A full example of this can be found in our
 [React Native demo](/demos/reactnative/App.js).
+
+The only unavailable feature is upload URL storage (for resuming them in later
+sessions) because React Native does not implement the Web Storage API. You can
+test this programmatically using the `tus.canStoreURLs` property which will
+always be set to `false` in React Native environments. In the end, this means
+that the `fingerprint`, `resume` and `removeFingerprintOnSuccess` options
+to not have any influence on the behavior because their values are ignored
+when using React Native.
 
 ## Internals
 
