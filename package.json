@@ -67,7 +67,7 @@
     "url-parse": "^1.4.3"
   },
   "scripts": {
-    "build": "browserify lib/index.js -t [ babelify ] -s tus -d | exorcist ./dist/tus.js.map | derequire > dist/tus.js",
+    "build": "mkdir -p dist && browserify lib/index.js -t [ babelify ] -s tus -d | exorcist ./dist/tus.js.map | derequire > dist/tus.js",
     "watch": "watchify lib/index.js -t babelify -o dist/tus.js -s tus -v -d",
     "test": "./bin/test",
     "phantom-test": "phantomjs --local-to-remote-url-access=yes bin/phantom-jasmine.js",
