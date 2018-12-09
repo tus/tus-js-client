@@ -16,13 +16,15 @@ matrix:
 script:
 - npm run lint
 - npm run dist
+- npm run transpile
 - npm test
 deploy:
   provider: npm
-  email: marius@accoplex.com
+  email: marius@transloadit.com
   api_key:
-    secure: jyOlnZKkGmt1/3YH3Gs00zkOD7R0iXmHhtSsWCXrtlWXr8XqjH5DH6WRNOvr2JnI1NJO2Zz0e1EAjKNbUVfS/SWELlR9GX+yJr9QtgWce92zizL4Finp3VeGtZ8ZBBukbPogQW80Dvc8zb2FhpnxdW83lGlqGqyL7o7BT+0S7tQ=
+    secure: deLv8rCb1nN4vcFCSlPLVLcZJ20vLWNPaAA4PZAUXcQdUFX8mc++qDusS0o3LqdQVIugeOkSBTuKq8GQxOpMahj3U0WDe7Dy+t5xS/kPejr1H4m/VT1A5uRfBLGHgjuQzZH1L/RzAAca7Przx9fNe/1y1+RblDbbE7oOXQWiIUs=
   skip_cleanup: true
   on:
     tags: true
     repo: tus/tus-js-client
+    node: 9
