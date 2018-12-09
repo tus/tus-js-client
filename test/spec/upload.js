@@ -81,9 +81,7 @@ describe("tus", function () {
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
       expect(req.requestHeaders["Upload-Length"]).toBe(11);
       if (isBrowser) expect(req.withCredentials).toBe(true);
-      if (isNode || (isBrowser && "btoa" in window)) {
-        expect(req.requestHeaders["Upload-Metadata"]).toBe("foo aGVsbG8=,bar d29ybGQ=,nonlatin c8WCb8WEY2U=,number MTAw");
-      }
+      expect(req.requestHeaders["Upload-Metadata"]).toBe("foo aGVsbG8=,bar d29ybGQ=,nonlatin c8WCb8WEY2U=,number MTAw");
 
       req.respondWith({
         status: 201,

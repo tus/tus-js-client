@@ -4,16 +4,9 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.encode = encode;
-/* global: window */
+var isReactNative = typeof navigator !== "undefined" && typeof navigator.product === "string" && navigator.product.toLowerCase() === "reactnative";
 
-var _window = window;
-var btoa = _window.btoa;
-function encode(data) {
-  return btoa(unescape(encodeURIComponent(data)));
-}
-
-var isSupported = exports.isSupported = "btoa" in window;
+exports.default = isReactNative;
 
 },{}],2:[function(_dereq_,module,exports){
 "use strict";
@@ -39,7 +32,7 @@ function resolveUrl(origin, link) {
   return new _urlParse2.default(link, origin).toString();
 }
 
-},{"url-parse":12}],3:[function(_dereq_,module,exports){
+},{"url-parse":14}],3:[function(_dereq_,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -48,6 +41,16 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.getSource = getSource;
+
+var _isReactNative = _dereq_("./isReactNative");
+
+var _isReactNative2 = _interopRequireDefault(_isReactNative);
+
+var _uriToBlob = _dereq_("./uriToBlob");
+
+var _uriToBlob2 = _interopRequireDefault(_uriToBlob);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -72,19 +75,38 @@ var FileSource = function () {
   return FileSource;
 }();
 
-function getSource(input) {
+function getSource(input, chunkSize, callback) {
+  // In React Native, when user selects a file, instead of a File or Blob,
+  // you usually get a file object {} with a uri property that contains
+  // a local path to the file. We use XMLHttpRequest to fetch
+  // the file blob, before uploading with tus.
+  // TODO: The __tus__forceReactNative property is currently used to force
+  // a React Native environment during testing. This should be removed
+  // once we move away from PhantomJS and can overwrite navigator.product
+  // properly.
+  if ((_isReactNative2.default || window.__tus__forceReactNative) && input && typeof input.uri !== "undefined") {
+    (0, _uriToBlob2.default)(input.uri, function (err, blob) {
+      if (err) {
+        return callback(new Error("tus: cannot fetch `file.uri` as Blob, make sure the uri is correct and accessible. " + err));
+      }
+      callback(null, new FileSource(blob));
+    });
+    return;
+  }
+
   // Since we emulate the Blob type in our tests (not all target browsers
   // support it), we cannot use `instanceof` for testing whether the input value
   // can be handled. Instead, we simply check is the slice() function and the
   // size property are available.
   if (typeof input.slice === "function" && typeof input.size !== "undefined") {
-    return new FileSource(input);
+    callback(null, new FileSource(input));
+    return;
   }
 
-  throw new Error("source object may only be an instance of File or Blob in this environment");
+  callback(new Error("source object may only be an instance of File or Blob in this environment"));
 }
 
-},{}],4:[function(_dereq_,module,exports){
+},{"./isReactNative":1,"./uriToBlob":5}],4:[function(_dereq_,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -137,6 +159,33 @@ function removeItem(key) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+/**
+ * uriToBlob resolves a URI to a Blob object. This is used for
+ * React Native to retrieve a file (identified by a file://
+ * URI) as a blob.
+ */
+function uriToBlob(uri, done) {
+  var xhr = new XMLHttpRequest();
+  xhr.responseType = "blob";
+  xhr.onload = function () {
+    var blob = xhr.response;
+    done(null, blob);
+  };
+  xhr.onerror = function (err) {
+    done(err);
+  };
+  xhr.open("GET", uri);
+  xhr.send();
+}
+
+exports.default = uriToBlob;
+
+},{}],6:[function(_dereq_,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -174,7 +223,7 @@ var DetailedError = function (_Error) {
 
 exports.default = DetailedError;
 
-},{}],6:[function(_dereq_,module,exports){
+},{}],7:[function(_dereq_,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -191,7 +240,7 @@ function fingerprint(file, options) {
   return ["tus", file.name, file.type, file.size, file.lastModified, options.endpoint].join("-");
 }
 
-},{}],7:[function(_dereq_,module,exports){
+},{}],8:[function(_dereq_,module,exports){
 "use strict";
 
 var _upload = _dereq_("./upload");
@@ -230,7 +279,7 @@ module.exports = {
   defaultOptions: defaultOptions
 };
 
-},{"./node/storage":4,"./upload":8}],8:[function(_dereq_,module,exports){
+},{"./node/storage":4,"./upload":9}],9:[function(_dereq_,module,exports){
 "use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /* global window */
@@ -256,13 +305,11 @@ var _extend = _dereq_("extend");
 
 var _extend2 = _interopRequireDefault(_extend);
 
+var _jsBase = _dereq_("js-base64");
+
 var _request = _dereq_("./node/request");
 
 var _source = _dereq_("./node/source");
-
-var _base = _dereq_("./node/base64");
-
-var Base64 = _interopRequireWildcard(_base);
 
 var _storage = _dereq_("./node/storage");
 
@@ -351,14 +398,30 @@ var Upload = function () {
         return;
       }
 
-      var source = this._source = (0, _source.getSource)(file, this.options.chunkSize);
+      (0, _source.getSource)(file, this.options.chunkSize, function (err, source) {
+        if (err) {
+          _this._emitError(err);
+          return;
+        }
+
+        _this._source = source;
+        _this._start(source);
+      });
+    }
+  }, {
+    key: "_start",
+    value: function _start(source) {
+      var _this2 = this;
+
+      var file = this.file;
 
       // Firstly, check if the caller has supplied a manual upload size or else
       // we will use the calculated size by the source object.
       if (this.options.uploadSize != null) {
         var size = +this.options.uploadSize;
         if (isNaN(size)) {
-          throw new Error("tus: cannot convert `uploadSize` option into a number");
+          this._emitError(new Error("tus: cannot convert `uploadSize` option into a number"));
+          return;
         }
 
         this._size = size;
@@ -368,7 +431,8 @@ var Upload = function () {
         // The size property will be null if we cannot calculate the file's size,
         // for example if you handle a stream.
         if (size == null) {
-          throw new Error("tus: cannot automatically derive upload's size from input and must be specified manually using the `uploadSize` option");
+          this._emitError(new Error("tus: cannot automatically derive upload's size from input and must be specified manually using the `uploadSize` option"));
+          return;
         }
 
         this._size = size;
@@ -377,20 +441,21 @@ var Upload = function () {
       var retryDelays = this.options.retryDelays;
       if (retryDelays != null) {
         if (Object.prototype.toString.call(retryDelays) !== "[object Array]") {
-          throw new Error("tus: the `retryDelays` option must either be an array or null");
+          this._emitError(new Error("tus: the `retryDelays` option must either be an array or null"));
+          return;
         } else {
           (function () {
-            var errorCallback = _this.options.onError;
-            _this.options.onError = function (err) {
+            var errorCallback = _this2.options.onError;
+            _this2.options.onError = function (err) {
               // Restore the original error callback which may have been set.
-              _this.options.onError = errorCallback;
+              _this2.options.onError = errorCallback;
 
               // We will reset the attempt counter if
               // - we were already able to connect to the server (offset != null) and
               // - we were able to upload a small chunk of data to the server
-              var shouldResetDelays = _this._offset != null && _this._offset > _this._offsetBeforeRetry;
+              var shouldResetDelays = _this2._offset != null && _this2._offset > _this2._offsetBeforeRetry;
               if (shouldResetDelays) {
-                _this._retryAttempt = 0;
+                _this2._retryAttempt = 0;
               }
 
               var isOnline = true;
@@ -403,20 +468,20 @@ var Upload = function () {
               // - this error was caused by a request or it's response and
               // - the error is not a client error (status 4xx) and
               // - the browser does not indicate that we are offline
-              var shouldRetry = _this._retryAttempt < retryDelays.length && err.originalRequest != null && !inStatusCategory(err.originalRequest.status, 400) && isOnline;
+              var shouldRetry = _this2._retryAttempt < retryDelays.length && err.originalRequest != null && !inStatusCategory(err.originalRequest.status, 400) && isOnline;
 
               if (!shouldRetry) {
-                _this._emitError(err);
+                _this2._emitError(err);
                 return;
               }
 
-              var delay = retryDelays[_this._retryAttempt++];
+              var delay = retryDelays[_this2._retryAttempt++];
 
-              _this._offsetBeforeRetry = _this._offset;
-              _this.options.uploadUrl = _this.url;
+              _this2._offsetBeforeRetry = _this2._offset;
+              _this2.options.uploadUrl = _this2.url;
 
-              _this._retryTimeout = setTimeout(function () {
-                _this.start();
+              _this2._retryTimeout = setTimeout(function () {
+                _this2.start();
               }, delay);
             };
           })();
@@ -558,7 +623,7 @@ var Upload = function () {
   }, {
     key: "_createUpload",
     value: function _createUpload() {
-      var _this2 = this;
+      var _this3 = this;
 
       if (!this.options.endpoint) {
         this._emitError(new Error("tus: unable to create upload because no endpoint is provided"));
@@ -570,35 +635,35 @@ var Upload = function () {
 
       xhr.onload = function () {
         if (!inStatusCategory(xhr.status, 200)) {
-          _this2._emitXhrError(xhr, new Error("tus: unexpected response while creating upload"));
+          _this3._emitXhrError(xhr, new Error("tus: unexpected response while creating upload"));
           return;
         }
 
         var location = xhr.getResponseHeader("Location");
         if (location == null) {
-          _this2._emitXhrError(xhr, new Error("tus: invalid or missing Location header"));
+          _this3._emitXhrError(xhr, new Error("tus: invalid or missing Location header"));
           return;
         }
 
-        _this2.url = (0, _request.resolveUrl)(_this2.options.endpoint, location);
+        _this3.url = (0, _request.resolveUrl)(_this3.options.endpoint, location);
 
-        if (_this2._size === 0) {
+        if (_this3._size === 0) {
           // Nothing to upload and file was successfully created
-          _this2._emitSuccess();
-          _this2._source.close();
+          _this3._emitSuccess();
+          _this3._source.close();
           return;
         }
 
-        if (_this2.options.resume) {
-          Storage.setItem(_this2._fingerprint, _this2.url);
+        if (_this3.options.resume) {
+          Storage.setItem(_this3._fingerprint, _this3.url);
         }
 
-        _this2._offset = 0;
-        _this2._startUpload();
+        _this3._offset = 0;
+        _this3._startUpload();
       };
 
       xhr.onerror = function (err) {
-        _this2._emitXhrError(xhr, new Error("tus: failed to create upload"), err);
+        _this3._emitXhrError(xhr, new Error("tus: failed to create upload"), err);
       };
 
       this._setupXHR(xhr);
@@ -624,17 +689,17 @@ var Upload = function () {
   }, {
     key: "_resumeUpload",
     value: function _resumeUpload() {
-      var _this3 = this;
+      var _this4 = this;
 
       var xhr = (0, _request.newRequest)();
       xhr.open("HEAD", this.url, true);
 
       xhr.onload = function () {
         if (!inStatusCategory(xhr.status, 200)) {
-          if (_this3.options.resume && inStatusCategory(xhr.status, 400)) {
+          if (_this4.options.resume && inStatusCategory(xhr.status, 400)) {
             // Remove stored fingerprint and corresponding endpoint,
             // on client errors since the file can not be found
-            Storage.removeItem(_this3._fingerprint);
+            Storage.removeItem(_this4._fingerprint);
           }
 
           // If the upload is locked (indicated by the 423 Locked status code), we
@@ -643,48 +708,48 @@ var Upload = function () {
           // is usually locked for a short period of time and will be available
           // afterwards.
           if (xhr.status === 423) {
-            _this3._emitXhrError(xhr, new Error("tus: upload is currently locked; retry later"));
+            _this4._emitXhrError(xhr, new Error("tus: upload is currently locked; retry later"));
             return;
           }
 
-          if (!_this3.options.endpoint) {
+          if (!_this4.options.endpoint) {
             // Don't attempt to create a new upload if no endpoint is provided.
-            _this3._emitXhrError(xhr, new Error("tus: unable to resume upload (new upload cannot be created without an endpoint)"));
+            _this4._emitXhrError(xhr, new Error("tus: unable to resume upload (new upload cannot be created without an endpoint)"));
             return;
           }
 
           // Try to create a new upload
-          _this3.url = null;
-          _this3._createUpload();
+          _this4.url = null;
+          _this4._createUpload();
           return;
         }
 
         var offset = parseInt(xhr.getResponseHeader("Upload-Offset"), 10);
         if (isNaN(offset)) {
-          _this3._emitXhrError(xhr, new Error("tus: invalid or missing offset value"));
+          _this4._emitXhrError(xhr, new Error("tus: invalid or missing offset value"));
           return;
         }
 
         var length = parseInt(xhr.getResponseHeader("Upload-Length"), 10);
         if (isNaN(length)) {
-          _this3._emitXhrError(xhr, new Error("tus: invalid or missing length value"));
+          _this4._emitXhrError(xhr, new Error("tus: invalid or missing length value"));
           return;
         }
 
         // Upload has already been completed and we do not need to send additional
         // data to the server
         if (offset === length) {
-          _this3._emitProgress(length, length);
-          _this3._emitSuccess();
+          _this4._emitProgress(length, length);
+          _this4._emitSuccess();
           return;
         }
 
-        _this3._offset = offset;
-        _this3._startUpload();
+        _this4._offset = offset;
+        _this4._startUpload();
       };
 
       xhr.onerror = function (err) {
-        _this3._emitXhrError(xhr, new Error("tus: failed to resume upload"), err);
+        _this4._emitXhrError(xhr, new Error("tus: failed to resume upload"), err);
       };
 
       this._setupXHR(xhr);
@@ -702,7 +767,7 @@ var Upload = function () {
   }, {
     key: "_startUpload",
     value: function _startUpload() {
-      var _this4 = this;
+      var _this5 = this;
 
       // If the upload has been aborted, we will not send the next PATCH request.
       // This is important if the abort method was called during a callback, such
@@ -725,44 +790,44 @@ var Upload = function () {
 
       xhr.onload = function () {
         if (!inStatusCategory(xhr.status, 200)) {
-          _this4._emitXhrError(xhr, new Error("tus: unexpected response while uploading chunk"));
+          _this5._emitXhrError(xhr, new Error("tus: unexpected response while uploading chunk"));
           return;
         }
 
         var offset = parseInt(xhr.getResponseHeader("Upload-Offset"), 10);
         if (isNaN(offset)) {
-          _this4._emitXhrError(xhr, new Error("tus: invalid or missing offset value"));
+          _this5._emitXhrError(xhr, new Error("tus: invalid or missing offset value"));
           return;
         }
 
-        _this4._emitProgress(offset, _this4._size);
-        _this4._emitChunkComplete(offset - _this4._offset, offset, _this4._size);
+        _this5._emitProgress(offset, _this5._size);
+        _this5._emitChunkComplete(offset - _this5._offset, offset, _this5._size);
 
-        _this4._offset = offset;
+        _this5._offset = offset;
 
-        if (offset == _this4._size) {
-          if (_this4.options.removeFingerprintOnSuccess && _this4.options.resume) {
+        if (offset == _this5._size) {
+          if (_this5.options.removeFingerprintOnSuccess && _this5.options.resume) {
             // Remove stored fingerprint and corresponding endpoint. This causes
             // new upload of the same file must be treated as a different file.
-            Storage.removeItem(_this4._fingerprint);
+            Storage.removeItem(_this5._fingerprint);
           }
 
           // Yay, finally done :)
-          _this4._emitSuccess();
-          _this4._source.close();
+          _this5._emitSuccess();
+          _this5._source.close();
           return;
         }
 
-        _this4._startUpload();
+        _this5._startUpload();
       };
 
       xhr.onerror = function (err) {
         // Don't emit an error if the upload was aborted manually
-        if (_this4._aborted) {
+        if (_this5._aborted) {
           return;
         }
 
-        _this4._emitXhrError(xhr, new Error("tus: failed to upload chunk at offset " + _this4._offset), err);
+        _this5._emitXhrError(xhr, new Error("tus: failed to upload chunk at offset " + _this5._offset), err);
       };
 
       // Test support for progress events before attaching an event listener
@@ -772,7 +837,7 @@ var Upload = function () {
             return;
           }
 
-          _this4._emitProgress(start + e.loaded, _this4._size);
+          _this5._emitProgress(start + e.loaded, _this5._size);
         };
       }
 
@@ -802,14 +867,10 @@ var Upload = function () {
 }();
 
 function encodeMetadata(metadata) {
-  if (!Base64.isSupported) {
-    return "";
-  }
-
   var encoded = [];
 
   for (var key in metadata) {
-    encoded.push(key + " " + Base64.encode(metadata[key]));
+    encoded.push(key + " " + _jsBase.Base64.encode(metadata[key]));
   }
 
   return encoded.join(",");
@@ -829,7 +890,7 @@ Upload.defaultOptions = defaultOptions;
 
 exports.default = Upload;
 
-},{"./error":5,"./fingerprint":6,"./node/base64":1,"./node/request":2,"./node/source":3,"./node/storage":4,"extend":9}],9:[function(_dereq_,module,exports){
+},{"./error":6,"./fingerprint":7,"./node/request":2,"./node/source":3,"./node/storage":4,"extend":10,"js-base64":11}],10:[function(_dereq_,module,exports){
 'use strict';
 
 var hasOwn = Object.prototype.hasOwnProperty;
@@ -917,7 +978,243 @@ module.exports = function extend() {
 };
 
 
-},{}],10:[function(_dereq_,module,exports){
+},{}],11:[function(_dereq_,module,exports){
+(function (global){
+/*
+ *  base64.js
+ *
+ *  Licensed under the BSD 3-Clause License.
+ *    http://opensource.org/licenses/BSD-3-Clause
+ *
+ *  References:
+ *    http://en.wikipedia.org/wiki/Base64
+ */
+;(function (global, factory) {
+    typeof exports === 'object' && typeof module !== 'undefined'
+        ? module.exports = factory(global)
+        : typeof define === 'function' && define.amd
+        ? define(factory) : factory(global)
+}((
+    typeof self !== 'undefined' ? self
+        : typeof window !== 'undefined' ? window
+        : typeof global !== 'undefined' ? global
+: this
+), function(global) {
+    'use strict';
+    // existing version for noConflict()
+    var _Base64 = global.Base64;
+    var version = "2.4.9";
+    // if node.js and NOT React Native, we use Buffer
+    var buffer;
+    if (typeof module !== 'undefined' && module.exports) {
+        try {
+            buffer = eval("require('buffer').Buffer");
+        } catch (err) {
+            buffer = undefined;
+        }
+    }
+    // constants
+    var b64chars
+        = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    var b64tab = function(bin) {
+        var t = {};
+        for (var i = 0, l = bin.length; i < l; i++) t[bin.charAt(i)] = i;
+        return t;
+    }(b64chars);
+    var fromCharCode = String.fromCharCode;
+    // encoder stuff
+    var cb_utob = function(c) {
+        if (c.length < 2) {
+            var cc = c.charCodeAt(0);
+            return cc < 0x80 ? c
+                : cc < 0x800 ? (fromCharCode(0xc0 | (cc >>> 6))
+                                + fromCharCode(0x80 | (cc & 0x3f)))
+                : (fromCharCode(0xe0 | ((cc >>> 12) & 0x0f))
+                   + fromCharCode(0x80 | ((cc >>>  6) & 0x3f))
+                   + fromCharCode(0x80 | ( cc         & 0x3f)));
+        } else {
+            var cc = 0x10000
+                + (c.charCodeAt(0) - 0xD800) * 0x400
+                + (c.charCodeAt(1) - 0xDC00);
+            return (fromCharCode(0xf0 | ((cc >>> 18) & 0x07))
+                    + fromCharCode(0x80 | ((cc >>> 12) & 0x3f))
+                    + fromCharCode(0x80 | ((cc >>>  6) & 0x3f))
+                    + fromCharCode(0x80 | ( cc         & 0x3f)));
+        }
+    };
+    var re_utob = /[\uD800-\uDBFF][\uDC00-\uDFFFF]|[^\x00-\x7F]/g;
+    var utob = function(u) {
+        return u.replace(re_utob, cb_utob);
+    };
+    var cb_encode = function(ccc) {
+        var padlen = [0, 2, 1][ccc.length % 3],
+        ord = ccc.charCodeAt(0) << 16
+            | ((ccc.length > 1 ? ccc.charCodeAt(1) : 0) << 8)
+            | ((ccc.length > 2 ? ccc.charCodeAt(2) : 0)),
+        chars = [
+            b64chars.charAt( ord >>> 18),
+            b64chars.charAt((ord >>> 12) & 63),
+            padlen >= 2 ? '=' : b64chars.charAt((ord >>> 6) & 63),
+            padlen >= 1 ? '=' : b64chars.charAt(ord & 63)
+        ];
+        return chars.join('');
+    };
+    var btoa = global.btoa ? function(b) {
+        return global.btoa(b);
+    } : function(b) {
+        return b.replace(/[\s\S]{1,3}/g, cb_encode);
+    };
+    var _encode = buffer ?
+        buffer.from && Uint8Array && buffer.from !== Uint8Array.from
+        ? function (u) {
+            return (u.constructor === buffer.constructor ? u : buffer.from(u))
+                .toString('base64')
+        }
+        :  function (u) {
+            return (u.constructor === buffer.constructor ? u : new  buffer(u))
+                .toString('base64')
+        }
+        : function (u) { return btoa(utob(u)) }
+    ;
+    var encode = function(u, urisafe) {
+        return !urisafe
+            ? _encode(String(u))
+            : _encode(String(u)).replace(/[+\/]/g, function(m0) {
+                return m0 == '+' ? '-' : '_';
+            }).replace(/=/g, '');
+    };
+    var encodeURI = function(u) { return encode(u, true) };
+    // decoder stuff
+    var re_btou = new RegExp([
+        '[\xC0-\xDF][\x80-\xBF]',
+        '[\xE0-\xEF][\x80-\xBF]{2}',
+        '[\xF0-\xF7][\x80-\xBF]{3}'
+    ].join('|'), 'g');
+    var cb_btou = function(cccc) {
+        switch(cccc.length) {
+        case 4:
+            var cp = ((0x07 & cccc.charCodeAt(0)) << 18)
+                |    ((0x3f & cccc.charCodeAt(1)) << 12)
+                |    ((0x3f & cccc.charCodeAt(2)) <<  6)
+                |     (0x3f & cccc.charCodeAt(3)),
+            offset = cp - 0x10000;
+            return (fromCharCode((offset  >>> 10) + 0xD800)
+                    + fromCharCode((offset & 0x3FF) + 0xDC00));
+        case 3:
+            return fromCharCode(
+                ((0x0f & cccc.charCodeAt(0)) << 12)
+                    | ((0x3f & cccc.charCodeAt(1)) << 6)
+                    |  (0x3f & cccc.charCodeAt(2))
+            );
+        default:
+            return  fromCharCode(
+                ((0x1f & cccc.charCodeAt(0)) << 6)
+                    |  (0x3f & cccc.charCodeAt(1))
+            );
+        }
+    };
+    var btou = function(b) {
+        return b.replace(re_btou, cb_btou);
+    };
+    var cb_decode = function(cccc) {
+        var len = cccc.length,
+        padlen = len % 4,
+        n = (len > 0 ? b64tab[cccc.charAt(0)] << 18 : 0)
+            | (len > 1 ? b64tab[cccc.charAt(1)] << 12 : 0)
+            | (len > 2 ? b64tab[cccc.charAt(2)] <<  6 : 0)
+            | (len > 3 ? b64tab[cccc.charAt(3)]       : 0),
+        chars = [
+            fromCharCode( n >>> 16),
+            fromCharCode((n >>>  8) & 0xff),
+            fromCharCode( n         & 0xff)
+        ];
+        chars.length -= [0, 0, 2, 1][padlen];
+        return chars.join('');
+    };
+    var atob = global.atob ? function(a) {
+        return global.atob(a);
+    } : function(a){
+        return a.replace(/[\s\S]{1,4}/g, cb_decode);
+    };
+    var _decode = buffer ?
+        buffer.from && Uint8Array && buffer.from !== Uint8Array.from
+        ? function(a) {
+            return (a.constructor === buffer.constructor
+                    ? a : buffer.from(a, 'base64')).toString();
+        }
+        : function(a) {
+            return (a.constructor === buffer.constructor
+                    ? a : new buffer(a, 'base64')).toString();
+        }
+        : function(a) { return btou(atob(a)) };
+    var decode = function(a){
+        return _decode(
+            String(a).replace(/[-_]/g, function(m0) { return m0 == '-' ? '+' : '/' })
+                .replace(/[^A-Za-z0-9\+\/]/g, '')
+        );
+    };
+    var noConflict = function() {
+        var Base64 = global.Base64;
+        global.Base64 = _Base64;
+        return Base64;
+    };
+    // export Base64
+    global.Base64 = {
+        VERSION: version,
+        atob: atob,
+        btoa: btoa,
+        fromBase64: decode,
+        toBase64: encode,
+        utob: utob,
+        encode: encode,
+        encodeURI: encodeURI,
+        btou: btou,
+        decode: decode,
+        noConflict: noConflict,
+        __buffer__: buffer
+    };
+    // if ES5 is available, make Base64.extendString() available
+    if (typeof Object.defineProperty === 'function') {
+        var noEnum = function(v){
+            return {value:v,enumerable:false,writable:true,configurable:true};
+        };
+        global.Base64.extendString = function () {
+            Object.defineProperty(
+                String.prototype, 'fromBase64', noEnum(function () {
+                    return decode(this)
+                }));
+            Object.defineProperty(
+                String.prototype, 'toBase64', noEnum(function (urisafe) {
+                    return encode(this, urisafe)
+                }));
+            Object.defineProperty(
+                String.prototype, 'toBase64URI', noEnum(function () {
+                    return encode(this, true)
+                }));
+        };
+    }
+    //
+    // export Base64 to the namespace
+    //
+    if (global['Meteor']) { // Meteor.js
+        Base64 = global.Base64;
+    }
+    // module.exports and AMD are mutually exclusive.
+    // module.exports has precedence.
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports.Base64 = global.Base64;
+    }
+    else if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define([], function(){ return global.Base64 });
+    }
+    // that's it!
+    return {Base64: global.Base64}
+}));
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
+},{}],12:[function(_dereq_,module,exports){
 'use strict';
 
 var has = Object.prototype.hasOwnProperty;
@@ -994,7 +1291,7 @@ function querystringify(obj, prefix) {
 exports.stringify = querystringify;
 exports.parse = querystring;
 
-},{}],11:[function(_dereq_,module,exports){
+},{}],13:[function(_dereq_,module,exports){
 'use strict';
 
 /**
@@ -1034,7 +1331,7 @@ module.exports = function required(port, protocol) {
   return port !== 0;
 };
 
-},{}],12:[function(_dereq_,module,exports){
+},{}],14:[function(_dereq_,module,exports){
 (function (global){
 'use strict';
 
@@ -1464,6 +1761,6 @@ module.exports = Url;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"querystringify":10,"requires-port":11}]},{},[7])(7)
+},{"querystringify":12,"requires-port":13}]},{},[8])(8)
 });
 //# sourceMappingURL=tus.js.map

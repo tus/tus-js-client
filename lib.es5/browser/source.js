@@ -8,6 +8,16 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.getSource = getSource;
 
+var _isReactNative = require("./isReactNative");
+
+var _isReactNative2 = _interopRequireDefault(_isReactNative);
+
+var _uriToBlob = require("./uriToBlob");
+
+var _uriToBlob2 = _interopRequireDefault(_uriToBlob);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var FileSource = function () {
@@ -31,14 +41,33 @@ var FileSource = function () {
   return FileSource;
 }();
 
-function getSource(input) {
+function getSource(input, chunkSize, callback) {
+  // In React Native, when user selects a file, instead of a File or Blob,
+  // you usually get a file object {} with a uri property that contains
+  // a local path to the file. We use XMLHttpRequest to fetch
+  // the file blob, before uploading with tus.
+  // TODO: The __tus__forceReactNative property is currently used to force
+  // a React Native environment during testing. This should be removed
+  // once we move away from PhantomJS and can overwrite navigator.product
+  // properly.
+  if ((_isReactNative2.default || window.__tus__forceReactNative) && input && typeof input.uri !== "undefined") {
+    (0, _uriToBlob2.default)(input.uri, function (err, blob) {
+      if (err) {
+        return callback(new Error("tus: cannot fetch `file.uri` as Blob, make sure the uri is correct and accessible. " + err));
+      }
+      callback(null, new FileSource(blob));
+    });
+    return;
+  }
+
   // Since we emulate the Blob type in our tests (not all target browsers
   // support it), we cannot use `instanceof` for testing whether the input value
   // can be handled. Instead, we simply check is the slice() function and the
   // size property are available.
   if (typeof input.slice === "function" && typeof input.size !== "undefined") {
-    return new FileSource(input);
+    callback(null, new FileSource(input));
+    return;
   }
 
-  throw new Error("source object may only be an instance of File or Blob in this environment");
+  callback(new Error("source object may only be an instance of File or Blob in this environment"));
 }

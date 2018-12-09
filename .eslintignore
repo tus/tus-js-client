@@ -1,0 +1,2 @@
+# ESLint ignores the root node_modules directory by default but not other node_modules folders
+demos/reactnative/node_modules
