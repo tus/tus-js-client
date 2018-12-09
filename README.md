@@ -1,6 +1,6 @@
 # tus-js-client [![Build Status](https://travis-ci.org/tus/tus-js-client.svg?branch=master)](https://travis-ci.org/tus/tus-js-client)
 A pure JavaScript client for the [tus resumable upload protocol](http://tus.io)
-which works in browser environments, Node.js and React Native.
+which works in browser environments, Node.js, React Native and Apache Cordova.
 
 ## Example
 
