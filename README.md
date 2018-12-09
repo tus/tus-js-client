@@ -1,6 +1,6 @@
 # tus-js-client [![Build Status](https://travis-ci.org/tus/tus-js-client.svg?branch=master)](https://travis-ci.org/tus/tus-js-client)
 A pure JavaScript client for the [tus resumable upload protocol](http://tus.io)
-which works in browser environments and Node.js.
+which works in browser environments, Node.js and React Native.
 
 ## Example
 
@@ -81,7 +81,7 @@ in the corresponding browsers on [BrowserStack](https://browserstack.com),
 who provide their great service glady for Open Source project for free.
 
 
-## Node compatibility
+## Node.js support
 
 Since Node's environment is quite different than a browser's runtime and
 provides other capabilities but also restrictions, tus-js-client will have a
@@ -109,6 +109,17 @@ functionality, you may want to wrap the `fs.ReadStream` into a
 
 Finally, you may be interested in the `demos/nodejs/index.js` example which demonstrates
 a simple example on how to easily use tus-js-client using Node.js.
+
+## React Native support
+
+tus-js-client can be used in React Native applications with all of its functionality.
+Since there is no browser-like File object types in React Native, files are represented
+by objects with an `uri` property (i.e. `{ uri: 'file:///...', ... }`).
+tus-js-client accepts these objects and automatically resolves the file URI and
+uploads the fetched file.
+This allows you to directly pass the results from a file/image picker to
+tus-js-client. A full example of this can be found in our
+[React Native demo](/demos/reactnative/App.js).
 
 ## Internals
 
