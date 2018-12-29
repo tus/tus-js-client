@@ -253,7 +253,8 @@ header.
 Create a new tus.Upload object. The upload will not be started automatically,
 use `start` to do so.
 
-The `file` argument must be an instance of `File`, `Blob`, or `Reader` if you
+The `file` argument must be an instance of `File`, `Blob`, or
+[`Reader`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader) if you
 are in a browser environment. If it is executed using Node.js, the allowed types
 are `Buffer` and a `Readable` stream.
 The `options` argument will be merged deeply with `tus.defaultOptions`.
