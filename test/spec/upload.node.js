@@ -62,6 +62,18 @@ describe("tus", function () {
       expectHelloWorldUpload(input, options, done);
     });
 
+    it("should accept Readable streams with deferred size", function (done) {
+      var input = new stream.PassThrough();
+      var options = {
+        endpoint: "/uploads",
+        chunkSize: 7,
+        uploadLengthDeferred: true
+      };
+
+      input.write("hello WORLD");
+      expectHelloWorldUpload(input, options, done);
+    });
+
     it("should accept ReadStreams streams", function (done) {
       // Create a temporary file
       var path = temp.path();
@@ -72,6 +84,21 @@ describe("tus", function () {
         endpoint: "/uploads",
         chunkSize: 7,
         uploadSize: 11
+      };
+
+      expectHelloWorldUpload(file, options, done);
+    });
+
+    it("should accept ReadStreams streams with deferred size", function (done) {
+      // Create a temporary file
+      var path = temp.path();
+      fs.writeFileSync(path, "hello world");
+      var file = fs.createReadStream(path);
+
+      var options = {
+        endpoint: "/uploads",
+        chunkSize: 7,
+        uploadLengthDeferred: true
       };
 
       expectHelloWorldUpload(file, options, done);
@@ -110,7 +137,13 @@ function expectHelloWorldUpload(input, options, done) {
   var req = jasmine.Ajax.requests.mostRecent();
   expect(req.url).toBe("/uploads");
   expect(req.method).toBe("POST");
-  expect(req.requestHeaders["Upload-Length"]).toBe(11);
+  if (options.uploadLengthDeferred) {
+    expect(req.requestHeaders["Upload-Length"]).toBe(undefined);
+    expect(req.requestHeaders["Upload-Defer-Length"]).toBe(1);
+  } else {
+    expect(req.requestHeaders["Upload-Length"]).toBe(11);
+    expect(req.requestHeaders["Upload-Defer-Length"]).toBe(undefined);
+  }
 
   req.respondWith({
     status: 201,
@@ -128,6 +161,11 @@ function expectHelloWorldUpload(input, options, done) {
   // Simulate asyncronous responses for requests with bodies which is required
   // if we are dealing with streams.
   process.nextTick(function () {
+    if (options.uploadLengthDeferred) {
+      // setting the upload size amid the upload.
+      // In a real scenario this could be done in the onChunkComplete function
+      upload.setSize(11);
+    }
     req.respondWith({
       status: 204,
       responseHeaders: {
@@ -140,6 +178,9 @@ function expectHelloWorldUpload(input, options, done) {
     expect(req.method).toBe("PATCH");
     expect(req.requestHeaders["Upload-Offset"]).toBe(7);
     expect(req.params.size).toBe(4);
+    if (options.uploadLengthDeferred) {
+      expect(req.requestHeaders["Upload-Length"]).toBe(11);
+    }
 
     process.nextTick(function () {
       req.respondWith({
