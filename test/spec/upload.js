@@ -6,6 +6,7 @@ if (isNode) {
   // SpecRunner.html, but in Node we have to require them.
   var axios = require("axios");
   var tus = require("../../");
+  var SynchronousPromise = require("synchronous-promise").SynchronousPromise;
 
   // These tests use browser's Blob constructor. To make these tests also
   // work in Node.js, we make it an alias for Buffer, which have the same
@@ -26,6 +27,7 @@ describe("tus", function () {
   describe("#Upload", function () {
     beforeEach(function () {
       jasmine.Ajax.install();
+      SynchronousPromise.installGlobally();
 
       // Clear localStorage before every test to prevent stored URLs to
       // interfere with our setup.
@@ -36,6 +38,7 @@ describe("tus", function () {
 
     afterEach(function () {
       jasmine.Ajax.uninstall();
+      SynchronousPromise.uninstallGlobally();
     });
 
     it("should throw if no error handler is available", function () {

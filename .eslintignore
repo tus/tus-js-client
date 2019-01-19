@@ -1,2 +1,5 @@
 # ESLint ignores the root node_modules directory by default but not other node_modules folders
 demos/reactnative/node_modules
+demos/cordova/node_modules
+demos/cordova/platforms
+demos/cordova/www/js/tus.js

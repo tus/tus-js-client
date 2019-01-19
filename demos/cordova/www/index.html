@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!--
+        Customize this policy to fit your own app's needs. For more guidance, see:
+            https://github.com/apache/cordova-plugin-whitelist/blob/master/README.md#content-security-policy
+        Some notes:
+            * gap: is required only on iOS (when using UIWebView) and is needed for JS->native communication
+            * https://ssl.gstatic.com is required only on Android and is needed for TalkBack to function properly
+            * Disables use of inline scripts in order to mitigate risk of XSS vulnerabilities. To change this:
+                * Enable inline JS: add 'unsafe-inline' to default-src
+        -->
+        <meta charset="utf-8">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://master.tus.io 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:;">
+        <meta name="format-detection" content="telephone=no">
+        <meta name="msapplication-tap-highlight" content="no">
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+        <link rel="stylesheet" type="text/css" href="css/index.css">
+        <title>tus-js-client demo for Apache Corodva</title>
+    </head>
+    <body>
+        <div class="Logo__wrapper">
+            <img class="Logo__image" src="img/logo.png" />
+        </div>
+
+        <ol class="List">
+            <li>
+                <span class="List__text">Select a file for uploading:</span>
+                <div class="List__content">
+                    <button class="File__button" id="js-upload-file">Select File</button>
+                    <div class="File__link" id="js-file-link">no file selected</div>
+                </div>
+            </li>
+            <li>
+                <span class="List__text">Start (and pause) the upload:</span>
+                <div class="List__content">
+                    <button class="Upload__button" id="js-upload-button">Start Upload</button>
+
+                    <div class="Upload__progress">
+                        <progress id="js-upload-progress"></progress>
+                        <div id="js-upload-progress-text"></div>
+                    </div>
+                </div>
+            </li>
+            <li>
+                <span class="List__text">Succesful upload will be listed here:</span>
+                <div class="Upload__link" id="js-upload-link">no link available yet</div>
+            </li>
+
+        </ol>
+
+        <script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="js/tus.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
+    </body>
+</html>

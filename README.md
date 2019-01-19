@@ -243,15 +243,17 @@ This value is `false` for not breaking the previous API contract, but we strongl
 suggest to set it to `true` to avoid cluttering the storage space. The effect is
 that if the same file is uploaded again, it will create an entirely new upload.
 Furthermore, this option will only change behaviour if `resume` is set to `true`.
+* `uploadLengthDeferred = false`: a boolean indicating whether a stream of data is going to be uploaded as a [`Reader`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader). If so, the total size isn't available when we begin uploading, so we use the Tus [`Upload-Defer-Length`](https://tus.io/protocols/resumable-upload.html#upload-defer-length) header. Once the reader is finished, the total file size is sent to the tus server in order to complete the upload. It is recommended to set `resume` to `false` when using this option. Furthermore, `chunkSize` must be set to a finite number.
 
 ### new tus.Upload(file, options)
 
 Create a new tus.Upload object. The upload will not be started automatically,
 use `start` to do so.
 
-The `file` argument must be an instance of `File` or `Blob` if you are in a
-browser environment. If it is executed using Node.js, the allowed types are
-`Buffer` and a `Readable` stream.
+The `file` argument must be an instance of `File`, `Blob`, or
+[`Reader`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader) if you
+are in a browser environment. If it is executed using Node.js, the allowed types
+are `Buffer` and a `Readable` stream.
 The `options` argument will be merged deeply with `tus.defaultOptions`.
 
 ### tus.Upload#options
