@@ -30,16 +30,17 @@ uploadButton.addEventListener("click", toggleUpload);
 function openFilePicker() {
   resetUpload();
   var options = {    
-    destinationType: Camera.DestinationType.FILE_URI,
-    sourceType: Camera.PictureSourceType.SAVEDPHOTOALBUM,
-    encodingType: Camera.EncodingType.JPEG,
-    mediaType: Camera.MediaType.PICTURE,
+    destinationType: navigator.camera.destinationType.FILE_URI,
+    sourceType: navigator.camera.PICTURE.SAVEDPHOTOALBUM,
+    encodingType: navigator.camera.encodingType.JPEG,
+    mediaType: navigator.camera.mediaType.PICTUREs,
     allowEdit: true,
     correctOrientation: true //Corrects Android orientation quirks
   };
 
   navigator.camera.getPicture(function cameraSuccess(imageUri) {
-    fileEntry = getFileEntry(imageUri);
+    file = getFileEntry(imageUri);
+    fileLink.innerHTML = file.name
   }, function cameraError(error) {
     window.alert("Unable to obtain picture: " + error, "app");
   }, options);
@@ -48,8 +49,7 @@ function openFilePicker() {
 function getFileEntry(imgUri) {
   window.resolveLocalFileSystemURL(imgUri, function success(fileEntry) {
     fileEntry.file(function (file) {
-      this.file = file;
-      fileLink.innerHTML = file.name;
+      return file;
     });
   }, function () {
     window.alert("Could not create FileEntry");
