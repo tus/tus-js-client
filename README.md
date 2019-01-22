@@ -253,7 +253,7 @@ use `start` to do so.
 Depending on the platform, the `file` argument must be an instance of the following types:
 - inside browser: `File`, `Blob`, or [`Reader`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader)
 - inside Node.js: `Buffer` or `Readable` stream
-- inside Cordova: `File` object from a `FileEntry` (see [demo](demos/cordova/www/js/index.js)
+- inside Cordova: `File` object from a `FileEntry` (see [demo](demos/cordova/www/js/index.js))
 
 The `options` argument will be merged deeply with `tus.defaultOptions`.
 
