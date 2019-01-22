@@ -2,4 +2,5 @@
 demos/reactnative/node_modules
 demos/cordova/node_modules
 demos/cordova/platforms
+demos/cordova/plugins
 demos/cordova/www/js/tus.js

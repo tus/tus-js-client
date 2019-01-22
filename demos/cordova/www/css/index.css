@@ -79,6 +79,7 @@ ol.List li:before {
     margin: 15px 0;
 }
 
+.File__button,
 .Upload__button {
     background: #48aa92;
     color: white;
@@ -89,6 +90,7 @@ ol.List li:before {
     padding: 1em 1.5em;
 }
 
+.File__link,
 .Upload__link {
     text-align: center;
     font-style: italic;

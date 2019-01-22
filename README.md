@@ -1,6 +1,6 @@
 # tus-js-client [![Build Status](https://travis-ci.org/tus/tus-js-client.svg?branch=master)](https://travis-ci.org/tus/tus-js-client)
 A pure JavaScript client for the [tus resumable upload protocol](http://tus.io)
-which works in browser environments, Node.js and React Native.
+which works in browser environments, Node.js, React Native and Apache Cordova.
 
 ## Example
 
@@ -250,10 +250,11 @@ Furthermore, this option will only change behaviour if `resume` is set to `true`
 Create a new tus.Upload object. The upload will not be started automatically,
 use `start` to do so.
 
-The `file` argument must be an instance of `File`, `Blob`, or
-[`Reader`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader) if you
-are in a browser environment. If it is executed using Node.js, the allowed types
-are `Buffer` and a `Readable` stream.
+Depending on the platform, the `file` argument must be an instance of the following types:
+- inside browser: `File`, `Blob`, or [`Reader`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader)
+- inside Node.js: `Buffer` or `Readable` stream
+- inside Cordova: `File` object from a `FileEntry` (see [demo](demos/cordova/www/js/index.js)
+
 The `options` argument will be merged deeply with `tus.defaultOptions`.
 
 ### tus.Upload#options
