@@ -102,6 +102,6 @@ page.onCallback = function (passed) {
 
 page.open("./test/SpecRunner.html", function (status) {
   if (status !== "success") {
-      console.log("Network error.");
+    console.log("Network error.");
   }
 });

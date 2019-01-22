@@ -33,14 +33,14 @@ export default class App extends React.Component {
       if (!isAllowed) return;
 
       ImagePicker.launchImageLibraryAsync({})
-      .then((result) => {
-        if (!result.cancelled) {
-          this.setState({
-            file: result,
-            status: "file selected"
-          });
-        }
-      });
+        .then((result) => {
+          if (!result.cancelled) {
+            this.setState({
+              file: result,
+              status: "file selected"
+            });
+          }
+        });
     });
   }
 
@@ -118,8 +118,8 @@ export default class App extends React.Component {
         }
 
         <Button
-         onPress={this.selectPhotoTapped}
-         title="Select a Photo"
+          onPress={this.selectPhotoTapped}
+          title="Select a Photo"
         />
 
         <Text>Status: {this.state.status}</Text>

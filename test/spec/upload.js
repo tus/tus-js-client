@@ -898,8 +898,8 @@ describe("tus", function () {
 
   it("should upload to a real tus server", function (done) {
     var file = isNode
-               ? Buffer.from("hello world")
-               : new Blob("hello world".split(""));
+      ? Buffer.from("hello world")
+      : new Blob("hello world".split(""));
     var options = {
       resume: false,
       endpoint: "https://master.tus.io/files/",
@@ -942,26 +942,26 @@ function validateUploadMetadata(upload, done) {
       "Tus-Resumable": "1.0.0"
     }
   }).then(function (res) {
-      expect(res.status).toBe(200);
-      expect(res.data).toBe("");
-      expect(res.headers["tus-resumable"]).toBe("1.0.0");
-      expect(res.headers["upload-offset"]).toBe("11");
-      expect(res.headers["upload-length"]).toBe("11");
+    expect(res.status).toBe(200);
+    expect(res.data).toBe("");
+    expect(res.headers["tus-resumable"]).toBe("1.0.0");
+    expect(res.headers["upload-offset"]).toBe("11");
+    expect(res.headers["upload-length"]).toBe("11");
 
-      // The values in the Upload-Metadata header may not be in^the same
-      // order as we submitted them (the specification does not require
-      // that). Therefore, we split the values and verify that each one
-      // is present.
-      var metadataStr = res.headers["upload-metadata"];
-      expect(metadataStr).toBeTruthy();
-      var metadata = metadataStr.split(",");
-      expect(metadata).toContain("filename aGVsbG8udHh0");
-      expect(metadata).toContain("filetype dGV4dC9wbGFpbg==");
-      expect(metadata).toContain("nonlatin c8WCb8WEY2U=");
-      expect(metadata).toContain("number MTAw");
-      expect(metadata.length).toBe(4);
+    // The values in the Upload-Metadata header may not be in^the same
+    // order as we submitted them (the specification does not require
+    // that). Therefore, we split the values and verify that each one
+    // is present.
+    var metadataStr = res.headers["upload-metadata"];
+    expect(metadataStr).toBeTruthy();
+    var metadata = metadataStr.split(",");
+    expect(metadata).toContain("filename aGVsbG8udHh0");
+    expect(metadata).toContain("filetype dGV4dC9wbGFpbg==");
+    expect(metadata).toContain("nonlatin c8WCb8WEY2U=");
+    expect(metadata).toContain("number MTAw");
+    expect(metadata.length).toBe(4);
 
-      done();
-    })
+    done();
+  })
     .catch(done.fail);
 }
