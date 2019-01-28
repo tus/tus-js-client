@@ -34,6 +34,14 @@ class MockRequest {
     this.requestHeaders = opt.headers;
     this.params = {};
     this.params.size = opt.headers["Content-Length"];
+    if (opt.headers["Content-Length"] === undefined) {
+      this.params.size = 0;
+      req.__originalWrite = req.write;
+      req.write = (chunk) => {
+        this.params.size += chunk.length;
+        req.__originalWrite(chunk);
+      };
+    }
   }
 
   respondWith(options) {
