@@ -12,7 +12,7 @@ input.addEventListener("change", function(e) {
     // Create a new tus upload
     var upload = new tus.Upload(file, {
         endpoint: "http://localhost:1080/files/",
-        retryDelays: [0, 1000, 3000, 5000],
+        retryDelays: [0, 3000, 5000, 10000, 20000],
         metadata: {
             filename: file.name,
             filetype: file.type
