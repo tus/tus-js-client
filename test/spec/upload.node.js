@@ -58,7 +58,19 @@ describe("tus", function () {
         uploadSize: 11
       };
 
-      input.write("hello WORLD");
+      input.end("hello WORLD");
+      expectHelloWorldUpload(input, options, done);
+    });
+
+    it("should accept Readable streams with deferred size", function (done) {
+      var input = new stream.PassThrough();
+      var options = {
+        endpoint: "/uploads",
+        chunkSize: 7,
+        uploadLengthDeferred: true
+      };
+
+      input.end("hello WORLD");
       expectHelloWorldUpload(input, options, done);
     });
 
@@ -110,7 +122,13 @@ function expectHelloWorldUpload(input, options, done) {
   var req = jasmine.Ajax.requests.mostRecent();
   expect(req.url).toBe("/uploads");
   expect(req.method).toBe("POST");
-  expect(req.requestHeaders["Upload-Length"]).toBe(11);
+  if (options.uploadLengthDeferred) {
+    expect(req.requestHeaders["Upload-Length"]).toBe(undefined);
+    expect(req.requestHeaders["Upload-Defer-Length"]).toBe(1);
+  } else {
+    expect(req.requestHeaders["Upload-Length"]).toBe(11);
+    expect(req.requestHeaders["Upload-Defer-Length"]).toBe(undefined);
+  }
 
   req.respondWith({
     status: 201,
@@ -119,15 +137,14 @@ function expectHelloWorldUpload(input, options, done) {
     }
   });
 
-  req = jasmine.Ajax.requests.mostRecent();
-  expect(req.url).toBe("/uploads/blargh");
-  expect(req.method).toBe("PATCH");
-  expect(req.requestHeaders["Upload-Offset"]).toBe(0);
-  expect(req.params.size).toBe(7);
-
   // Simulate asyncronous responses for requests with bodies which is required
   // if we are dealing with streams.
-  process.nextTick(function () {
+  tickTillNewReq(req, function (req) {
+    expect(req.url).toBe("/uploads/blargh");
+    expect(req.method).toBe("PATCH");
+    expect(req.requestHeaders["Upload-Offset"]).toBe(0);
+    expect(req.params.size).toBe(7);
+
     req.respondWith({
       status: 204,
       responseHeaders: {
@@ -135,13 +152,11 @@ function expectHelloWorldUpload(input, options, done) {
       }
     });
 
-    req = jasmine.Ajax.requests.mostRecent();
-    expect(req.url).toBe("/uploads/blargh");
-    expect(req.method).toBe("PATCH");
-    expect(req.requestHeaders["Upload-Offset"]).toBe(7);
-    expect(req.params.size).toBe(4);
-
-    process.nextTick(function () {
+    tickTillNewReq(req, function (req) {
+      expect(req.url).toBe("/uploads/blargh");
+      expect(req.method).toBe("PATCH");
+      expect(req.requestHeaders["Upload-Offset"]).toBe(7);
+      expect(req.params.size).toBe(4);
       req.respondWith({
         status: 204,
         responseHeaders: {
@@ -149,8 +164,48 @@ function expectHelloWorldUpload(input, options, done) {
         }
       });
 
-      done();
+      if (options.uploadLengthDeferred) {
+        tickTillNewReq(req, function (req) {
+          expect(req.url).toBe("/uploads/blargh");
+          expect(req.method).toBe("PATCH");
+          expect(req.params.size).toBe(0);
+
+          req.respondWith({
+            status: 204,
+            responseHeaders: {
+              "Upload-Offset": 11
+            }
+          });
+
+          tickTillNewReq(req, function (req) {
+            expect(req.url).toBe("/uploads/blargh");
+            expect(req.method).toBe("PATCH");
+            expect(req.params.size).toBe(0);
+            expect(req.requestHeaders["Upload-Length"]).toBe(11);
+            done();
+          });
+        });
+      } else {
+        done();
+      }
     });
+  });
+}
+
+// it keeps ticking till it finds that a new request has been produced
+function tickTillNewReq(oldReq, cb, level) {
+  const allowedLevels = 5;
+  level = level || 0;
+  if (level >= allowedLevels) {
+    throw new Error("call level exceeded");
+  }
+  process.nextTick(function () {
+    const req = jasmine.Ajax.requests.mostRecent();
+    if (oldReq != req) {
+      cb(req);
+    } else {
+      tickTillNewReq(oldReq, cb, level + 1);
+    }
   });
 }
 
