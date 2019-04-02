@@ -58,13 +58,14 @@
     "synchronous-promise": "^2.0.5",
     "temp": "^0.8.3",
     "uglify-js": "^2.6.0",
-    "watchify": "^3.11.0"
+    "watchify": "^3.11.1"
   },
   "dependencies": {
     "buffer-from": "^0.1.1",
     "extend": "^3.0.0",
     "js-base64": "^2.4.9",
     "lodash.throttle": "^4.1.1",
+    "proper-lockfile": "^4.1.0",
     "url-parse": "^1.4.3"
   },
   "scripts": {
