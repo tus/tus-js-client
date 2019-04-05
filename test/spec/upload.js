@@ -54,8 +54,9 @@ describe("tus", function () {
 
     it("should upload a file", function (done) {
       var file = new Blob("hello world".split(""));
+      var host = "http://files.tus.io";
       var options = {
-        endpoint: "http://tus.io/uploads",
+        endpoint: host + "/uploads",
         headers: {
           Custom: "blargh"
         },
@@ -77,43 +78,44 @@ describe("tus", function () {
 
       expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options);
 
-      var req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/uploads");
-      expect(req.method).toBe("POST");
-      expect(req.requestHeaders.Custom).toBe("blargh");
-      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
-      expect(req.requestHeaders["Upload-Length"]).toBe(11);
-      if (isBrowser) expect(req.withCredentials).toBe(true);
-      expect(req.requestHeaders["Upload-Metadata"]).toBe("foo aGVsbG8=,bar d29ybGQ=,nonlatin c8WCb8WEY2U=,number MTAw");
+      waitTillNextReq(host, null, function (req) {
+        expect(req.url).toBe(host + "/uploads");
+        expect(req.method).toBe("POST");
+        expect(req.requestHeaders.Custom).toBe("blargh");
+        expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+        expect(req.requestHeaders["Upload-Length"]).toBe(11);
+        if (isBrowser) expect(req.withCredentials).toBe(true);
+        expect(req.requestHeaders["Upload-Metadata"]).toBe("foo aGVsbG8=,bar d29ybGQ=,nonlatin c8WCb8WEY2U=,number MTAw");
 
-      req.respondWith({
-        status: 201,
-        responseHeaders: {
-          Location: "http://tus.io/uploads/blargh"
-        }
-      });
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: host + "/uploads/blargh"
+          }
+        });
 
-      expect(upload.url).toBe("http://tus.io/uploads/blargh");
+        expect(upload.url).toBe(host + "/uploads/blargh");
 
-      req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/uploads/blargh");
-      expect(req.method).toBe("PATCH");
-      expect(req.requestHeaders.Custom).toBe("blargh");
-      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
-      expect(req.requestHeaders["Upload-Offset"]).toBe(0);
-      expect(req.contentType()).toBe("application/offset+octet-stream");
-      expect(req.params.size).toBe(11);
-      if (isBrowser) expect(req.withCredentials).toBe(true);
+        req = jasmine.Ajax.requests.mostRecent();
+        expect(req.url).toBe(host + "/uploads/blargh");
+        expect(req.method).toBe("PATCH");
+        expect(req.requestHeaders.Custom).toBe("blargh");
+        expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+        expect(req.requestHeaders["Upload-Offset"]).toBe(0);
+        expect(req.contentType()).toBe("application/offset+octet-stream");
+        expect(req.params.size).toBe(11);
+        if (isBrowser) expect(req.withCredentials).toBe(true);
 
-      req.respondWith({
-        status: 204,
-        responseHeaders: {
-          "Upload-Offset": 11
-        }
-      });
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            "Upload-Offset": 11
+          }
+        });
 
-      expect(options.onProgress).toHaveBeenCalledWith(11, 11);
-      done();
+        expect(options.onProgress).toHaveBeenCalledWith(11, 11);
+        done();
+      })
     });
 
     it("should create an upload if resuming fails", function (done) {
@@ -169,50 +171,54 @@ describe("tus", function () {
       done();
     });
 
-    it("should resolve relative URLs", function () {
+    it("should resolve relative URLs", function (done) {
       var file = new Blob("hello world".split(""));
+      var host = "http://relative.tus.io"
       var options = {
-        endpoint: "http://master.tus.io:1080/files/"
+        endpoint: host + "/files/"
       };
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://master.tus.io:1080/files/");
-      expect(req.method).toBe("POST");
+      waitTillNextReq(host, null, function (req) {
+        expect(req.url).toBe(host + "/files/");
+        expect(req.method).toBe("POST");
 
-      req.respondWith({
-        status: 201,
-        responseHeaders: {
-          "Location": "//localhost/uploads/foo"
-        }
-      });
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            "Location": "//relative.tus.io/uploads/foo"
+          }
+        });
 
-      expect(upload.url).toBe("http://localhost/uploads/foo");
+        expect(upload.url).toBe(host + "/uploads/foo");
 
-      req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://localhost/uploads/foo");
-      expect(req.method).toBe("PATCH");
+        req = jasmine.Ajax.requests.mostRecent();
+        expect(req.url).toBe(host + "/uploads/foo");
+        expect(req.method).toBe("PATCH");
 
-      req.respondWith({
-        status: 204,
-        responseHeaders: {
-          "Upload-Offset": 11
-        }
-      });
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            "Upload-Offset": 11
+          }
+        });
+        done();
+      })
     });
 
     it("should upload a file in chunks", function (done) {
+      var host = "http://chunks.tus.io";
       var file = new Blob("hello world".split(""));
       var options = {
-        endpoint: "http://tus.io/uploads",
+        endpoint: host + "/uploads",
         chunkSize: 7,
         onProgress: function () {},
         onChunkComplete: function () {},
         fingerprint: function () {}
       };
-      spyOn(options, "fingerprint").and.returnValue("fingerprinted");
+      spyOn(options, "fingerprint").and.returnValue("fingerprinted.chunk");
       spyOn(options, "onProgress");
       spyOn(options, "onChunkComplete");
 
@@ -221,61 +227,63 @@ describe("tus", function () {
 
       expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options);
 
-      var req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/uploads");
-      expect(req.method).toBe("POST");
-      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
-      expect(req.requestHeaders["Upload-Length"]).toBe(11);
+      waitTillNextReq(host, null, function (req) {
+        expect(req.url).toBe(host + "/uploads");
+        expect(req.method).toBe("POST");
+        expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+        expect(req.requestHeaders["Upload-Length"]).toBe(11);
 
-      req.respondWith({
-        status: 201,
-        responseHeaders: {
-          Location: "/uploads/blargh"
-        }
-      });
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: "/uploads/blargh"
+          }
+        });
 
-      expect(upload.url).toBe("http://tus.io/uploads/blargh");
+        expect(upload.url).toBe(host + "/uploads/blargh");
 
-      req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/uploads/blargh");
-      expect(req.method).toBe("PATCH");
-      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
-      expect(req.requestHeaders["Upload-Offset"]).toBe(0);
-      expect(req.contentType()).toBe("application/offset+octet-stream");
-      expect(req.params.size).toBe(7);
+        req = jasmine.Ajax.requests.mostRecent();
+        expect(req.url).toBe(host + "/uploads/blargh");
+        expect(req.method).toBe("PATCH");
+        expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+        expect(req.requestHeaders["Upload-Offset"]).toBe(0);
+        expect(req.contentType()).toBe("application/offset+octet-stream");
+        expect(req.params.size).toBe(7);
 
-      req.respondWith({
-        status: 204,
-        responseHeaders: {
-          "Upload-Offset": 7
-        }
-      });
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            "Upload-Offset": 7
+          }
+        });
 
-      req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/uploads/blargh");
-      expect(req.method).toBe("PATCH");
-      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
-      expect(req.requestHeaders["Upload-Offset"]).toBe(7);
-      expect(req.contentType()).toBe("application/offset+octet-stream");
-      expect(req.params.size).toBe(4);
+        req = jasmine.Ajax.requests.mostRecent();
+        expect(req.url).toBe(host + "/uploads/blargh");
+        expect(req.method).toBe("PATCH");
+        expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+        expect(req.requestHeaders["Upload-Offset"]).toBe(7);
+        expect(req.contentType()).toBe("application/offset+octet-stream");
+        expect(req.params.size).toBe(4);
 
-      req.respondWith({
-        status: 204,
-        responseHeaders: {
-          "Upload-Offset": 11
-        }
-      });
-      expect(options.onProgress).toHaveBeenCalledWith(11, 11);
-      expect(options.onChunkComplete).toHaveBeenCalledWith(7, 7, 11);
-      expect(options.onChunkComplete).toHaveBeenCalledWith(4, 11, 11);
-      done();
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            "Upload-Offset": 11
+          }
+        });
+        expect(options.onProgress).toHaveBeenCalledWith(11, 11);
+        expect(options.onChunkComplete).toHaveBeenCalledWith(7, 7, 11);
+        expect(options.onChunkComplete).toHaveBeenCalledWith(4, 11, 11);
+        done();
+      })
     });
 
-    it("should add the original request to errors", function () {
+    it("should add the original request to errors", function (done) {
       var file = new Blob("hello world".split(""));
+      var host = "http://original.tus.io";
       var err;
       var options = {
-        endpoint: "http://tus.io/uploads",
+        endpoint: host + "/uploads",
         onError: function (e) {
           err = e;
         }
@@ -284,28 +292,31 @@ describe("tus", function () {
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/uploads");
-      expect(req.method).toBe("POST");
+      waitTillNextReq(host, null, function (req) {
+        expect(req.url).toBe(host + "/uploads");
+        expect(req.method).toBe("POST");
 
-      req.respondWith({
-        status: 500,
-        responseHeaders: {
-          Custom: "blargh"
-        }
+        req.respondWith({
+          status: 500,
+          responseHeaders: {
+            Custom: "blargh"
+          }
+        });
+
+        expect(upload.url).toBe(null);
+
+        expect(err.message).toBe("tus: unexpected response while creating upload, originated from request (response code: 500, response text: )");
+        expect(err.originalRequest).toBeDefined();
+        expect(err.originalRequest.getResponseHeader("Custom")).toBe("blargh");
+        done();
       });
-
-      expect(upload.url).toBe(null);
-
-      expect(err.message).toBe("tus: unexpected response while creating upload, originated from request (response code: 500, response text: )");
-      expect(err.originalRequest).toBeDefined();
-      expect(err.originalRequest.getResponseHeader("Custom")).toBe("blargh");
     });
 
     it("should only create an upload for empty files", function (done) {
       var file = new Blob([]);
+      var host = "http://empty.tus.io"
       var options = {
-        endpoint: "http://tus.io/uploads",
+        endpoint: host + "/uploads",
         onSuccess: function () {}
       };
       spyOn(options, "onSuccess");
@@ -313,21 +324,22 @@ describe("tus", function () {
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/uploads");
-      expect(req.method).toBe("POST");
-      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
-      expect(req.requestHeaders["Upload-Length"]).toBe(0);
+      waitTillNextReq(host, null, function (req) {
+        expect(req.url).toBe(host + "/uploads");
+        expect(req.method).toBe("POST");
+        expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+        expect(req.requestHeaders["Upload-Length"]).toBe(0);
 
-      req.respondWith({
-        status: 201,
-        responseHeaders: {
-          "Location": "http://tus.io/uploads/empty"
-        }
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            "Location": host + "/uploads/empty"
+          }
+        });
+
+        expect(options.onSuccess).toHaveBeenCalled();
+        done();
       });
-
-      expect(options.onSuccess).toHaveBeenCalled();
-      done();
     });
 
     it("should not resume a finished upload", function (done) {
@@ -478,50 +490,53 @@ describe("tus", function () {
 
     it("should override the PATCH method", function (done) {
       var file = new Blob("hello world".split(""));
+      var host = "http://override.tus.io";
       var options = {
-        endpoint: "http://tus.io/uploads",
-        uploadUrl: "http://tus.io/files/upload",
+        endpoint: host + "/uploads",
+        uploadUrl: host + "/files/upload",
         overridePatchMethod: true
       };
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/files/upload");
-      expect(req.method).toBe("HEAD");
-      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+      waitTillNextReq(host, null, function (req) {
+        expect(req.url).toBe(host + "/files/upload");
+        expect(req.method).toBe("HEAD");
+        expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
 
-      req.respondWith({
-        status: 204,
-        responseHeaders: {
-          "Upload-Length": 11,
-          "Upload-Offset": 3
-        }
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            "Upload-Length": 11,
+            "Upload-Offset": 3
+          }
+        });
+
+        req = jasmine.Ajax.requests.mostRecent();
+        expect(req.url).toBe(host + "/files/upload");
+        expect(req.method).toBe("POST");
+        expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+        expect(req.requestHeaders["Upload-Offset"]).toBe(3);
+        expect(req.requestHeaders["X-HTTP-Method-Override"]).toBe("PATCH");
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            "Upload-Offset": 11
+          }
+        });
+
+        done();
       });
-
-      req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/files/upload");
-      expect(req.method).toBe("POST");
-      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
-      expect(req.requestHeaders["Upload-Offset"]).toBe(3);
-      expect(req.requestHeaders["X-HTTP-Method-Override"]).toBe("PATCH");
-
-      req.respondWith({
-        status: 204,
-        responseHeaders: {
-          "Upload-Offset": 11
-        }
-      });
-
-      done();
     });
 
     it("should emit an error if an upload is locked", function (done) {
       var file = new Blob("hello world".split(""));
+      var host = "http://locked.tus.io";
       var options = {
-        endpoint: "http://tus.io/uploads",
-        uploadUrl: "http://tus.io/files/upload",
+        endpoint: host + "/uploads",
+        uploadUrl: host + "/files/upload",
         onError: function () {}
       };
 
@@ -530,22 +545,24 @@ describe("tus", function () {
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/files/upload");
-      expect(req.method).toBe("HEAD");
+      waitTillNextReq(host, null, function (req) {
+        expect(req.url).toBe(host + "/files/upload");
+        expect(req.method).toBe("HEAD");
 
-      req.respondWith({
-        status: 423 // Locked
+        req.respondWith({
+          status: 423 // Locked
+        });
+
+        expect(options.onError).toHaveBeenCalledWith(new Error("tus: upload is currently locked; retry later, originated from request (response code: 423, response text: )"));
+        done();
       });
-
-      expect(options.onError).toHaveBeenCalledWith(new Error("tus: upload is currently locked; retry later, originated from request (response code: 423, response text: )"));
-      done();
     });
 
     it("should emit an error if no Location header is presented", function (done) {
       var file = new Blob("hello world".split(""));
+      var host = "http://emit.tus.io";
       var options = {
-        endpoint: "http://tus.io/uploads",
+        endpoint: host + "/uploads",
         onError: function () {}
       };
 
@@ -554,17 +571,18 @@ describe("tus", function () {
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/uploads");
-      expect(req.method).toBe("POST");
-      // The Location header is omitted on purpose here
+      waitTillNextReq(host, null, function (req) {
+        expect(req.url).toBe(host + "/uploads");
+        expect(req.method).toBe("POST");
+        // The Location header is omitted on purpose here
 
-      req.respondWith({
-        status: 201
+        req.respondWith({
+          status: 201
+        });
+
+        expect(options.onError).toHaveBeenCalledWith(new Error("tus: invalid or missing Location header, originated from request (response code: 201, response text: )"));
+        done();
       });
-
-      expect(options.onError).toHaveBeenCalledWith(new Error("tus: invalid or missing Location header, originated from request (response code: 201, response text: )"));
-      done();
     });
 
     it("should throw if retryDelays is not an array", function () {
@@ -580,8 +598,9 @@ describe("tus", function () {
     // response has the code 500 Internal Error, 423 Locked or 409 Conflict.
     it("should retry the upload", function (done) {
       var file = new Blob("hello world".split(""));
+      var host = "http://retry.tus.io";
       var options = {
-        endpoint: "http://tus.io/files/",
+        endpoint: host + "/files/",
         retryDelays: [10, 10, 10],
         onSuccess: function () {}
       };
@@ -591,53 +610,21 @@ describe("tus", function () {
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/files/");
-      expect(req.method).toBe("POST");
-
-      req.respondWith({
-        status: 500
-      });
-
-      setTimeout(function () {
-        req = jasmine.Ajax.requests.mostRecent();
-        expect(req.url).toBe("http://tus.io/files/");
+      waitTillNextReq(host, null, function (req) {
+        expect(req.url).toBe(host + "/files/");
         expect(req.method).toBe("POST");
 
         req.respondWith({
-          status: 201,
-          responseHeaders: {
-            Location: "/files/foo"
-          }
-        });
-
-        req = jasmine.Ajax.requests.mostRecent();
-        expect(req.url).toBe("http://tus.io/files/foo");
-        expect(req.method).toBe("PATCH");
-
-        req.respondWith({
-          status: 423
+          status: 500
         });
 
         setTimeout(function () {
           req = jasmine.Ajax.requests.mostRecent();
-          expect(req.url).toBe("http://tus.io/files/foo");
-          expect(req.method).toBe("HEAD");
+          expect(req.url).toBe(host + "/files/");
+          expect(req.method).toBe("POST");
 
           req.respondWith({
-            status: 201,
-            responseHeaders: {
-              "Upload-Offset": 0,
-              "Upload-Length": 11
-            }
-          });
-
-          req = jasmine.Ajax.requests.mostRecent();
-          expect(req.url).toBe("http://tus.io/files/foo");
-          expect(req.method).toBe("PATCH");
-
-          req.respondWith({
-            status: 409
+            status: 423
           });
 
           setTimeout(function () {
@@ -658,20 +645,42 @@ describe("tus", function () {
             expect(req.method).toBe("PATCH");
 
             req.respondWith({
-              status: 204,
-              responseHeaders: {
-                "Upload-Offset": 11
-              }
+              status: 409
             });
 
-            expect(options.onSuccess).toHaveBeenCalled();
-            done();
+            setTimeout(function () {
+              req = jasmine.Ajax.requests.mostRecent();
+              expect(req.url).toBe("http://tus.io/files/foo");
+              expect(req.method).toBe("HEAD");
+
+              req.respondWith({
+                status: 201,
+                responseHeaders: {
+                  "Upload-Offset": 0,
+                  "Upload-Length": 11
+                }
+              });
+
+              req = jasmine.Ajax.requests.mostRecent();
+              expect(req.url).toBe("http://tus.io/files/foo");
+              expect(req.method).toBe("PATCH");
+
+              req.respondWith({
+                status: 204,
+                responseHeaders: {
+                  "Upload-Offset": 11
+                }
+              });
+
+              expect(options.onSuccess).toHaveBeenCalled();
+              done();
+            }, 20);
           }, 20);
         }, 20);
-      }, 20);
+      });
     });
 
-    it("should not retry if the error has not been caused by a request", function () {
+    it("should not retry if the error has not been caused by a request", function (done) {
       var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/files/",
@@ -687,19 +696,22 @@ describe("tus", function () {
       spyOn(upload, "_createUpload");
       upload.start();
 
+      setTimeout(function() {
+        var error = new Error("custom error");
+        upload._emitError(error);
 
-      var error = new Error("custom error");
-      upload._emitError(error);
-
-      expect(upload._createUpload).toHaveBeenCalledTimes(1);
-      expect(options.onError).toHaveBeenCalledWith(error);
-      expect(options.onSuccess).not.toHaveBeenCalled();
+        expect(upload._createUpload).toHaveBeenCalledTimes(1);
+        expect(options.onError).toHaveBeenCalledWith(error);
+        expect(options.onSuccess).not.toHaveBeenCalled();
+        done();
+      }, 200);
     });
 
     it("should stop retrying after all delays have been used", function (done) {
       var file = new Blob("hello world".split(""));
+      var host = "http://delays.tus.io";
       var options = {
-        endpoint: "http://tus.io/files/",
+        endpoint: host + "/files/",
         retryDelays: [10],
         onSuccess: function () {},
         onError: function () {}
@@ -711,35 +723,37 @@ describe("tus", function () {
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/files/");
-      expect(req.method).toBe("POST");
-
-      req.respondWith({
-        status: 500
-      });
-
-      setTimeout(function () {
-        expect(options.onError).not.toHaveBeenCalled();
-
-        var req = jasmine.Ajax.requests.mostRecent();
-        expect(req.url).toBe("http://tus.io/files/");
+      waitTillNextReq(host, null, function (req) {
+        expect(req.url).toBe(host + "/files/");
         expect(req.method).toBe("POST");
 
         req.respondWith({
           status: 500
         });
 
-        expect(options.onSuccess).not.toHaveBeenCalled();
-        expect(options.onError).toHaveBeenCalledTimes(1);
-        done();
-      }, 200);
+        setTimeout(function () {
+          expect(options.onError).not.toHaveBeenCalled();
+
+          var req = jasmine.Ajax.requests.mostRecent();
+          expect(req.url).toBe(host + "/files/");
+          expect(req.method).toBe("POST");
+
+          req.respondWith({
+            status: 500
+          });
+
+          expect(options.onSuccess).not.toHaveBeenCalled();
+          expect(options.onError).toHaveBeenCalledTimes(1);
+          done();
+        }, 200);
+      });
     });
 
     it("should stop retrying when the abort function is called", function (done) {
       var file = new Blob("hello world".split(""));
+      var host = "http://noretry.tus.io"
       var options = {
-        endpoint: "http://tus.io/files/",
+        endpoint: host + "/files/",
         retryDelays: [100],
         onError: function () {}
       };
@@ -749,29 +763,31 @@ describe("tus", function () {
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/files/");
-      expect(req.method).toBe("POST");
+      waitTillNextReq(host, null, function (req) {
+        expect(req.url).toBe(host + "/files/");
+        expect(req.method).toBe("POST");
 
-      spyOn(upload, "start");
+        spyOn(upload, "start");
 
-      req.respondWith({
-        status: 500
+        req.respondWith({
+          status: 500
+        });
+
+        upload.abort();
+
+        setTimeout(function () {
+          expect(upload.start).not.toHaveBeenCalled();
+          done();
+        }, 200);
       });
-
-      upload.abort();
-
-      setTimeout(function () {
-        expect(upload.start).not.toHaveBeenCalled();
-        done();
-      }, 200);
     });
 
     it("should stop upload when the abort function is called during a callback", function (done) {
       var upload;
+      var host = "http://abort2.tus.io";
       var file = new Blob("hello world".split(""));
       var options = {
-        endpoint: "http://tus.io/files/",
+        endpoint: host + "/files/",
         chunkSize: 5,
         onChunkComplete: function () {
           upload.abort();
@@ -783,39 +799,41 @@ describe("tus", function () {
       upload = new tus.Upload(file, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/files/");
-      expect(req.method).toBe("POST");
+      waitTillNextReq(host, null, function (req) {
+        expect(req.url).toBe(host + "/files/");
+        expect(req.method).toBe("POST");
 
-      req.respondWith({
-        status: 201,
-        responseHeaders: {
-          Location: "/files/foo"
-        }
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: "/files/foo"
+          }
+        });
+
+        req = jasmine.Ajax.requests.mostRecent();
+        expect(req.url).toBe(host + "/files/foo");
+        expect(req.method).toBe("PATCH");
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            "Upload-Offset": 5
+          }
+        });
+
+        setTimeout(function () {
+          expect(options.onChunkComplete).toHaveBeenCalled();
+          expect(jasmine.Ajax.requests.mostRecent()).toBe(req);
+          done();
+        }, 200);
       });
-
-      req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/files/foo");
-      expect(req.method).toBe("PATCH");
-
-      req.respondWith({
-        status: 204,
-        responseHeaders: {
-          "Upload-Offset": 5
-        }
-      });
-
-      setTimeout(function () {
-        expect(options.onChunkComplete).toHaveBeenCalled();
-        expect(jasmine.Ajax.requests.mostRecent()).toBe(req);
-        done();
-      }, 200);
     });
 
     it("should stop upload when the abort function is called during the POST request", function (done) {
       var file = new Blob("hello world".split(""));
+      var host = "http://abort.tus.io";
       var options = {
-        endpoint: "http://tus.io/files/",
+        endpoint: host + "/files/",
         onError: function () {}
       };
 
@@ -826,28 +844,30 @@ describe("tus", function () {
 
       upload.abort();
 
-      var req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/files/");
-      expect(req.method).toBe("POST");
+      waitTillNextReq(host, null, function (req) {
+        expect(req.url).toBe(host + "/files/");
+        expect(req.method).toBe("POST");
 
-      req.respondWith({
-        status: 201,
-        responseHeaders: {
-          Location: "/files/foo"
-        }
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: "/files/foo"
+          }
+        });
+
+        setTimeout(function () {
+          expect(options.onError).not.toHaveBeenCalled();
+          expect(jasmine.Ajax.requests.mostRecent()).toBe(req);
+          done();
+        }, 200);
       });
-
-      setTimeout(function () {
-        expect(options.onError).not.toHaveBeenCalled();
-        expect(jasmine.Ajax.requests.mostRecent()).toBe(req);
-        done();
-      }, 200);
     });
 
     it("should reset the attempt counter if an upload proceeds", function (done) {
       var file = new Blob("hello world".split(""));
+      var host = "http://reset.tus.io"
       var options = {
-        endpoint: "http://tus.io/files/",
+        endpoint: host + "/files/",
         retryDelays: [10],
         onError: function () {},
         onSuccess: function () {}
@@ -859,51 +879,19 @@ describe("tus", function () {
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/files/");
-      expect(req.method).toBe("POST");
-
-      req.respondWith({
-        status: 201,
-        responseHeaders: {
-          Location: "/files/foo"
-        }
-      });
-
-      req = jasmine.Ajax.requests.mostRecent();
-      expect(req.url).toBe("http://tus.io/files/foo");
-      expect(req.method).toBe("PATCH");
-
-      req.respondWith({
-        status: 500
-      });
-
-      setTimeout(function () {
-        req = jasmine.Ajax.requests.mostRecent();
-        expect(req.url).toBe("http://tus.io/files/foo");
-        expect(req.method).toBe("HEAD");
+      waitTillNextReq(host, null, function (req) {
+        expect(req.url).toBe(host + "/files/");
+        expect(req.method).toBe("POST");
 
         req.respondWith({
-          status: 204,
+          status: 201,
           responseHeaders: {
-            "Upload-Offset": 0,
-            "Upload-Length": 11
+            Location: "/files/foo"
           }
         });
 
         req = jasmine.Ajax.requests.mostRecent();
-        expect(req.url).toBe("http://tus.io/files/foo");
-        expect(req.method).toBe("PATCH");
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            "Upload-Offset": 5
-          }
-        });
-
-        req = jasmine.Ajax.requests.mostRecent();
-        expect(req.url).toBe("http://tus.io/files/foo");
+        expect(req.url).toBe(host + "/files/foo");
         expect(req.method).toBe("PATCH");
 
         req.respondWith({
@@ -912,33 +900,67 @@ describe("tus", function () {
 
         setTimeout(function () {
           req = jasmine.Ajax.requests.mostRecent();
-          expect(req.url).toBe("http://tus.io/files/foo");
+          expect(req.url).toBe(host + "/files/foo");
           expect(req.method).toBe("HEAD");
 
           req.respondWith({
             status: 204,
             responseHeaders: {
-              "Upload-Offset": 5,
+              "Upload-Offset": 0,
               "Upload-Length": 11
             }
           });
 
           req = jasmine.Ajax.requests.mostRecent();
-          expect(req.url).toBe("http://tus.io/files/foo");
+          expect(req.url).toBe(host + "/files/foo");
           expect(req.method).toBe("PATCH");
 
           req.respondWith({
             status: 204,
             responseHeaders: {
-              "Upload-Offset": 11
+              "Upload-Offset": 5
             }
           });
 
-          expect(options.onError).not.toHaveBeenCalled();
-          expect(options.onSuccess).toHaveBeenCalled();
-          done();
+          waitTillNextReq(host, req, function (req) {
+            expect(req.url).toBe(host + "/files/foo");
+            expect(req.method).toBe("PATCH");
+
+            req.respondWith({
+              status: 500
+            });
+
+            setTimeout(function () {
+              req = jasmine.Ajax.requests.mostRecent();
+              expect(req.url).toBe(host + "/files/foo");
+              expect(req.method).toBe("HEAD");
+
+              req.respondWith({
+                status: 204,
+                responseHeaders: {
+                  "Upload-Offset": 5,
+                  "Upload-Length": 11
+                }
+              });
+
+              req = jasmine.Ajax.requests.mostRecent();
+              expect(req.url).toBe(host + "/files/foo");
+              expect(req.method).toBe("PATCH");
+
+              req.respondWith({
+                status: 204,
+                responseHeaders: {
+                  "Upload-Offset": 11
+                }
+              });
+
+              expect(options.onError).not.toHaveBeenCalled();
+              expect(options.onSuccess).toHaveBeenCalled();
+              done();
+            }, 20);
+          });
         }, 20);
-      }, 20);
+      })
     });
   });
 
@@ -1010,4 +1032,23 @@ function validateUploadMetadata(upload, done) {
     done();
   })
     .catch(done.fail);
+}
+
+function waitTillNextReq(id, req, cb, level) {
+  var allowedLevels = 5;
+  level = level || 0;
+  if (level >= allowedLevels) {
+    fail(new Error("call level exceeded"));
+    return;
+  }
+  setTimeout(function() {
+    var newReq = jasmine.Ajax.requests.mostRecent();
+    if (!req || (req && newReq != req)) {
+      if (newReq.url.indexOf(id) === 0) {
+        return cb(newReq);
+      }
+    }
+
+    waitTillNextReq(id, req, cb, level + 1);
+  }, 20);
 }

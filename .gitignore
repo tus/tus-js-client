@@ -2,4 +2,5 @@ node_modules
 demos/reactnative/.expo
 lib.es5
 dist
+tus-url-storage.json
 .DS_Store
