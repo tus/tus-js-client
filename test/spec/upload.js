@@ -115,7 +115,7 @@ describe("tus", function () {
 
         expect(options.onProgress).toHaveBeenCalledWith(11, 11);
         done();
-      })
+      });
     });
 
     it("should create an upload if resuming fails", function (done) {
@@ -173,7 +173,7 @@ describe("tus", function () {
 
     it("should resolve relative URLs", function (done) {
       var file = new Blob("hello world".split(""));
-      var host = "http://relative.tus.io"
+      var host = "http://relative.tus.io";
       var options = {
         endpoint: host + "/files/"
       };
@@ -205,7 +205,7 @@ describe("tus", function () {
           }
         });
         done();
-      })
+      });
     });
 
     it("should upload a file in chunks", function (done) {
@@ -275,7 +275,7 @@ describe("tus", function () {
         expect(options.onChunkComplete).toHaveBeenCalledWith(7, 7, 11);
         expect(options.onChunkComplete).toHaveBeenCalledWith(4, 11, 11);
         done();
-      })
+      });
     });
 
     it("should add the original request to errors", function (done) {
@@ -314,7 +314,7 @@ describe("tus", function () {
 
     it("should only create an upload for empty files", function (done) {
       var file = new Blob([]);
-      var host = "http://empty.tus.io"
+      var host = "http://empty.tus.io";
       var options = {
         endpoint: host + "/uploads",
         onSuccess: function () {}
@@ -696,7 +696,7 @@ describe("tus", function () {
       spyOn(upload, "_createUpload");
       upload.start();
 
-      setTimeout(function() {
+      setTimeout(function () {
         var error = new Error("custom error");
         upload._emitError(error);
 
@@ -751,7 +751,7 @@ describe("tus", function () {
 
     it("should stop retrying when the abort function is called", function (done) {
       var file = new Blob("hello world".split(""));
-      var host = "http://noretry.tus.io"
+      var host = "http://noretry.tus.io";
       var options = {
         endpoint: host + "/files/",
         retryDelays: [100],
@@ -865,7 +865,7 @@ describe("tus", function () {
 
     it("should reset the attempt counter if an upload proceeds", function (done) {
       var file = new Blob("hello world".split(""));
-      var host = "http://reset.tus.io"
+      var host = "http://reset.tus.io";
       var options = {
         endpoint: host + "/files/",
         retryDelays: [10],
@@ -960,7 +960,7 @@ describe("tus", function () {
             }, 20);
           });
         }, 20);
-      })
+      });
     });
   });
 
@@ -1041,7 +1041,7 @@ function waitTillNextReq(id, req, cb, level) {
     fail(new Error("call level exceeded"));
     return;
   }
-  setTimeout(function() {
+  setTimeout(function () {
     var newReq = jasmine.Ajax.requests.mostRecent();
     if (!req || (req && newReq != req)) {
       if (newReq.url.indexOf(id) === 0) {
