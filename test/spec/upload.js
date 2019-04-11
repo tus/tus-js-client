@@ -576,6 +576,8 @@ describe("tus", function () {
       expect(upload.start.bind(upload)).toThrowError("tus: the `retryDelays` option must either be an array or null");
     });
 
+    // This tests ensures that tus-js-client correctly retries if the
+    // response has the code 500 Internal Error, 423 Locked or 409 Conflict.
     it("should retry the upload", function (done) {
       var file = new Blob("hello world".split(""));
       var options = {
@@ -614,14 +616,58 @@ describe("tus", function () {
         expect(req.method).toBe("PATCH");
 
         req.respondWith({
-          status: 204,
-          responseHeaders: {
-            "Upload-Offset": 11
-          }
+          status: 423
         });
 
-        expect(options.onSuccess).toHaveBeenCalled();
-        done();
+        setTimeout(function () {
+          req = jasmine.Ajax.requests.mostRecent();
+          expect(req.url).toBe("http://tus.io/files/foo");
+          expect(req.method).toBe("HEAD");
+
+          req.respondWith({
+            status: 201,
+            responseHeaders: {
+              "Upload-Offset": 0,
+              "Upload-Length": 11
+            }
+          });
+
+          req = jasmine.Ajax.requests.mostRecent();
+          expect(req.url).toBe("http://tus.io/files/foo");
+          expect(req.method).toBe("PATCH");
+
+          req.respondWith({
+            status: 409
+          });
+
+          setTimeout(function () {
+            req = jasmine.Ajax.requests.mostRecent();
+            expect(req.url).toBe("http://tus.io/files/foo");
+            expect(req.method).toBe("HEAD");
+
+            req.respondWith({
+              status: 201,
+              responseHeaders: {
+                "Upload-Offset": 0,
+                "Upload-Length": 11
+              }
+            });
+
+            req = jasmine.Ajax.requests.mostRecent();
+            expect(req.url).toBe("http://tus.io/files/foo");
+            expect(req.method).toBe("PATCH");
+
+            req.respondWith({
+              status: 204,
+              responseHeaders: {
+                "Upload-Offset": 11
+              }
+            });
+
+            expect(options.onSuccess).toHaveBeenCalled();
+            done();
+          }, 20);
+        }, 20);
       }, 20);
     });
 
