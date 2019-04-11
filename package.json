@@ -67,7 +67,7 @@
     "extend": "^3.0.0",
     "js-base64": "^2.4.9",
     "lodash.throttle": "^4.1.1",
-    "proper-lockfile": "^4.1.0",
+    "proper-lockfile": "^2.0.1",
     "url-parse": "^1.4.3"
   },
   "scripts": {
