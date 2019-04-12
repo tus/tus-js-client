@@ -638,12 +638,23 @@ describe("tus", function () {
           expect(req.method).toBe("POST");
 
           req.respondWith({
+            status: 201,
+            responseHeaders: {
+              Location: "/files/foo"
+            }
+          });
+
+          req = jasmine.Ajax.requests.mostRecent();
+          expect(req.url).toBe(host + "/files/foo");
+          expect(req.method).toBe("PATCH");
+
+          req.respondWith({
             status: 423
           });
 
           setTimeout(function () {
             req = jasmine.Ajax.requests.mostRecent();
-            expect(req.url).toBe("http://tus.io/files/foo");
+            expect(req.url).toBe(host + "/files/foo");
             expect(req.method).toBe("HEAD");
 
             req.respondWith({
@@ -655,7 +666,7 @@ describe("tus", function () {
             });
 
             req = jasmine.Ajax.requests.mostRecent();
-            expect(req.url).toBe("http://tus.io/files/foo");
+            expect(req.url).toBe(host + "/files/foo");
             expect(req.method).toBe("PATCH");
 
             req.respondWith({
@@ -664,7 +675,7 @@ describe("tus", function () {
 
             setTimeout(function () {
               req = jasmine.Ajax.requests.mostRecent();
-              expect(req.url).toBe("http://tus.io/files/foo");
+              expect(req.url).toBe(host + "/files/foo");
               expect(req.method).toBe("HEAD");
 
               req.respondWith({
@@ -676,7 +687,7 @@ describe("tus", function () {
               });
 
               req = jasmine.Ajax.requests.mostRecent();
-              expect(req.url).toBe("http://tus.io/files/foo");
+              expect(req.url).toBe(host + "/files/foo");
               expect(req.method).toBe("PATCH");
 
               req.respondWith({
