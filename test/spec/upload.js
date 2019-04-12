@@ -14,6 +14,18 @@ if (isNode) {
   var Blob = Buffer;
 }
 
+var getStorage = function () {
+  // this storage is only needed for the node environment. It defaults to localStorage
+  // for browser.
+  if (isNode) {
+    var temp = require("temp");
+    var storagePath = temp.path();
+    return new tus.FileStorage(storagePath);
+  }
+
+  return null;
+};
+
 // Set Jasmine's timeout for a single test to 10s
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 1000;
 
@@ -67,6 +79,7 @@ describe("tus", function () {
           number: 100
         },
         withCredentials: true,
+        urlStorage: getStorage(),
         onProgress: function () {},
         fingerprint: function () {}
       };
@@ -214,6 +227,7 @@ describe("tus", function () {
       var options = {
         endpoint: host + "/uploads",
         chunkSize: 7,
+        urlStorage: getStorage(),
         onProgress: function () {},
         onChunkComplete: function () {},
         fingerprint: function () {}

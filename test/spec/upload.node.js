@@ -1,5 +1,4 @@
 const tus = require("../../");
-const { FileStorage } = require("../../lib.es5/node/storage");
 const stream = require("stream");
 const temp = require("temp");
 const fs = require("fs");
@@ -124,7 +123,7 @@ describe("tus", function () {
     it("should resume an upload from a stored url", function (done) {
       var storagePath = temp.path();
       fs.writeFileSync(storagePath, "{\"fingerprinted.resume\":\"/uploads/resuming\"}");
-      var storage = new FileStorage(storagePath);
+      var storage = new tus.FileStorage(storagePath);
       var input = new Buffer("hello world");
       var options = {
         endpoint: "/uploads",
