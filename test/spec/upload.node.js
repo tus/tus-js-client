@@ -5,8 +5,8 @@ const fs = require("fs");
 
 describe("tus", function () {
   describe("#canStoreURLs", function () {
-    it("should be false", function () {
-      expect(tus.canStoreURLs).toBe(false);
+    it("should be true", function () {
+      expect(tus.canStoreURLs).toBe(true);
     });
   });
 
@@ -22,6 +22,7 @@ describe("tus", function () {
     it("should accept Buffers", function (done) {
       var buffer = new Buffer("hello world");
       var options = {
+        resume: false,
         endpoint: "/uploads",
         chunkSize: 7
       };
@@ -32,6 +33,7 @@ describe("tus", function () {
     it("should reject streams without specifing the size", function () {
       var input = new stream.PassThrough();
       var options = {
+        resume: false,
         endpoint: "/uploads",
         chunkSize: 100
       };
@@ -43,6 +45,7 @@ describe("tus", function () {
     it("should reject streams without specifing the chunkSize", function () {
       var input = new stream.PassThrough();
       var options = {
+        resume: false,
         endpoint: "/uploads"
       };
 
@@ -53,6 +56,7 @@ describe("tus", function () {
     it("should accept Readable streams", function (done) {
       var input = new stream.PassThrough();
       var options = {
+        resume: false,
         endpoint: "/uploads",
         chunkSize: 7,
         uploadSize: 11
@@ -65,6 +69,7 @@ describe("tus", function () {
     it("should accept Readable streams with deferred size", function (done) {
       var input = new stream.PassThrough();
       var options = {
+        resume: false,
         endpoint: "/uploads",
         chunkSize: 7,
         uploadLengthDeferred: true
@@ -81,6 +86,7 @@ describe("tus", function () {
       var file = fs.createReadStream(path);
 
       var options = {
+        resume: false,
         endpoint: "/uploads",
         chunkSize: 7,
         uploadSize: 11
@@ -93,6 +99,7 @@ describe("tus", function () {
       var resErr = new Error("something bad, really!");
       var buffer = new Buffer("hello world");
       var option = {
+        resume: false,
         endpoint: "/uploads",
         onError: function (err) {
           expect(err.causingError).toBe(resErr);
@@ -111,6 +118,57 @@ describe("tus", function () {
       req.responseError(resErr);
 
       expect(option.onError).toHaveBeenCalled();
+    });
+
+    it("should resume an upload from a stored url", function (done) {
+      var storagePath = temp.path();
+      fs.writeFileSync(storagePath, "{\"fingerprinted.resume\":\"/uploads/resuming\"}");
+      var storage = new tus.FileStorage(storagePath);
+      var input = new Buffer("hello world");
+      var options = {
+        endpoint: "/uploads",
+        fingerprint: () => "fingerprinted.resume",
+        urlStorage: storage
+      };
+
+      var upload = new tus.Upload(input, options);
+      upload.start();
+      var req = jasmine.Ajax.requests.mostRecent();
+
+      setTimeout(() => {
+        tickTillNewReq(req, (req) => {
+          expect(req.url).toBe("/uploads/resuming");
+          expect(req.method).toBe("HEAD");
+          expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+
+          req.respondWith({
+            status: 204,
+            responseHeaders: {
+              "Upload-Length": 11,
+              "Upload-Offset": 3
+            }
+          });
+
+          expect(upload.url).toBe("/uploads/resuming");
+
+          req = jasmine.Ajax.requests.mostRecent();
+          expect(req.url).toBe("/uploads/resuming");
+          expect(req.method).toBe("PATCH");
+          expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+          expect(req.requestHeaders["Upload-Offset"]).toBe(3);
+          expect(req.contentType()).toBe("application/offset+octet-stream");
+          expect(req.params.size).toBe(11 - 3);
+
+          req.respondWith({
+            status: 204,
+            responseHeaders: {
+              "Upload-Offset": 11
+            }
+          });
+
+          done();
+        });
+      }, 200);
     });
   });
 });
@@ -197,7 +255,8 @@ function tickTillNewReq(oldReq, cb, level) {
   const allowedLevels = 5;
   level = level || 0;
   if (level >= allowedLevels) {
-    throw new Error("call level exceeded");
+    fail(new Error("call level exceeded"));
+    return;
   }
   process.nextTick(function () {
     const req = jasmine.Ajax.requests.mostRecent();
