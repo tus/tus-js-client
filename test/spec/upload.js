@@ -186,7 +186,7 @@ describe("tus", function () {
 
     it("should resolve relative URLs", function (done) {
       var file = new Blob("hello world".split(""));
-      var host = "http://relative.tus.io";
+      var host = "http://relative.tus.io:1080";
       var options = {
         endpoint: host + "/files/"
       };
@@ -201,14 +201,14 @@ describe("tus", function () {
         req.respondWith({
           status: 201,
           responseHeaders: {
-            "Location": "//relative.tus.io/uploads/foo"
+            "Location": "//localhost/uploads/foo"
           }
         });
 
-        expect(upload.url).toBe(host + "/uploads/foo");
+        expect(upload.url).toBe("http://localhost/uploads/foo");
 
         req = jasmine.Ajax.requests.mostRecent();
-        expect(req.url).toBe(host + "/uploads/foo");
+        expect(req.url).toBe("http://localhost/uploads/foo");
         expect(req.method).toBe("PATCH");
 
         req.respondWith({
