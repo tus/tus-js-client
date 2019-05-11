@@ -127,7 +127,7 @@ describe("tus", function () {
       var input = new Buffer("hello world");
       var options = {
         endpoint: "/uploads",
-        fingerprint: () => "fingerprinted.resume",
+        fingerprint: (_, __, cb) => cb(null, "fingerprinted.resume"),
         urlStorage: storage
       };
 

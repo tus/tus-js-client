@@ -21,15 +21,15 @@ describe("tus", function () {
       var options = {
         endpoint: "http://tus.io/uploads",
         onProgress: function () {},
-        fingerprint: function () {}
+        fingerprint: function (_, __, cb) {cb(null, "fingerprinted");}
       };
-      spyOn(options, "fingerprint").and.returnValue("fingerprinted");
+      spyOn(options, "fingerprint").and.callThrough();
       spyOn(options, "onProgress");
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options);
+      expect(options.fingerprint).toHaveBeenCalled();
 
       var req = jasmine.Ajax.requests.mostRecent();
       expect(req.url).toBe("http://tus.io/uploads/resuming");
@@ -68,16 +68,16 @@ describe("tus", function () {
     describe("storing of upload urls", function () {
       var options = {
         endpoint: "http://tus.io/uploads",
-        fingerprint: function () {}
+        fingerprint: function (_, __, cb) {cb(null, "fingerprinted");}
       };
       var startUpload = function () {
         var file = new Blob("hello world".split(""));
-        spyOn(options, "fingerprint").and.returnValue("fingerprinted");
+        spyOn(options, "fingerprint").and.callThrough();
 
         var upload = new tus.Upload(file, options);
         upload.start();
 
-        expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options);
+        expect(options.fingerprint).toHaveBeenCalled();
 
         var req = jasmine.Ajax.requests.mostRecent();
         expect(req.url).toBe("http://tus.io/uploads");
@@ -129,9 +129,9 @@ describe("tus", function () {
       var file = new Blob("hello world".split(""));
       var options = {
         endpoint: "http://tus.io/uploads",
-        fingerprint: function () {}
+        fingerprint: function (_, __, cb) {cb(null, "fingerprinted");}
       };
-      spyOn(options, "fingerprint").and.returnValue("fingerprinted");
+      spyOn(options, "fingerprint").and.callThrough();
 
       var upload = new tus.Upload(file, options);
       upload.start();
@@ -192,10 +192,10 @@ describe("tus", function () {
         endpoint: "http://tus.io/uploads",
         chunkSize: 100,
         onProgress: function () {},
-        fingerprint: function () {},
+        fingerprint: function (_, __, cb) {cb(null, "fingerprinted");},
         uploadLengthDeferred: true
       };
-      spyOn(options, "fingerprint").and.returnValue("fingerprinted");
+      spyOn(options, "fingerprint").and.callThrough();
       spyOn(options, "onProgress");
 
       var upload = new tus.Upload(reader, options);
@@ -271,10 +271,10 @@ describe("tus", function () {
         endpoint: "http://tus.io/uploads",
         chunkSize: 6,
         onProgress: function () {},
-        fingerprint: function () {},
+        fingerprint: function (_, __, cb) {cb(null, "fingerprinted");},
         uploadLengthDeferred: true
       };
-      spyOn(options, "fingerprint").and.returnValue("fingerprinted");
+      spyOn(options, "fingerprint").and.callThrough();
       spyOn(options, "onProgress");
 
       var upload = new tus.Upload(reader, options);
@@ -365,10 +365,10 @@ describe("tus", function () {
         endpoint: "http://tus.io/uploads",
         chunkSize: 6,
         onProgress: function () {},
-        fingerprint: function () {},
+        fingerprint: function (_, __, cb) {cb(null, "fingerprinted");},
         uploadLengthDeferred: true
       };
-      spyOn(options, "fingerprint").and.returnValue("fingerprinted");
+      spyOn(options, "fingerprint").and.callThrough();
       spyOn(options, "onProgress");
 
       var upload = new tus.Upload(reader, options);
