@@ -29,6 +29,9 @@ var getStorage = function () {
 // Set Jasmine's timeout for a single test to 10s
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 1000;
 
+// NOTE: if a test case uses the 'waitTillNextReq' function,
+// a unique request host (different from those in other test cases)
+// must be specified in order to be able to uniquely identify the request being waited for.
 describe("tus", function () {
   describe("#isSupported", function () {
     it("should be true", function () {
