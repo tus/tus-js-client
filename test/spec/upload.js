@@ -29,6 +29,9 @@ var getStorage = function () {
 // Set Jasmine's timeout for a single test to 10s
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 1000;
 
+// NOTE: if a test case uses the 'waitTillNextReq' function,
+// a unique request host (different from those in other test cases)
+// must be specified in order to be able to uniquely identify the request being waited for.
 describe("tus", function () {
   describe("#isSupported", function () {
     it("should be true", function () {
@@ -67,6 +70,8 @@ describe("tus", function () {
     it("should upload a file", function (done) {
       var file = new Blob("hello world".split(""));
       var host = "http://files.tus.io";
+      var passedOptions;
+      var passedFile;
       var options = {
         endpoint: host + "/uploads",
         headers: {
@@ -81,15 +86,21 @@ describe("tus", function () {
         withCredentials: true,
         urlStorage: getStorage(),
         onProgress: function () {},
-        fingerprint: function () {}
+        fingerprint: function (_file, _options, cb) {
+          passedOptions = _options;
+          passedFile = _file;
+          cb(null, "fingerprinted");
+        }
       };
-      spyOn(options, "fingerprint").and.returnValue("fingerprinted");
+      spyOn(options, "fingerprint").and.callThrough();
       spyOn(options, "onProgress");
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options);
+      expect(options.fingerprint).toHaveBeenCalled();
+      expect(passedOptions).toBe(upload.options);
+      expect(passedFile).toBe(file);
 
       waitTillNextReq(host, null, function (req) {
         expect(req.url).toBe(host + "/uploads");
@@ -186,7 +197,7 @@ describe("tus", function () {
 
     it("should resolve relative URLs", function (done) {
       var file = new Blob("hello world".split(""));
-      var host = "http://relative.tus.io";
+      var host = "http://relative.tus.io:1080";
       var options = {
         endpoint: host + "/files/"
       };
@@ -201,14 +212,14 @@ describe("tus", function () {
         req.respondWith({
           status: 201,
           responseHeaders: {
-            "Location": "//relative.tus.io/uploads/foo"
+            "Location": "//localhost/uploads/foo"
           }
         });
 
-        expect(upload.url).toBe(host + "/uploads/foo");
+        expect(upload.url).toBe("http://localhost/uploads/foo");
 
         req = jasmine.Ajax.requests.mostRecent();
-        expect(req.url).toBe(host + "/uploads/foo");
+        expect(req.url).toBe("http://localhost/uploads/foo");
         expect(req.method).toBe("PATCH");
 
         req.respondWith({
@@ -224,22 +235,30 @@ describe("tus", function () {
     it("should upload a file in chunks", function (done) {
       var host = "http://chunks.tus.io";
       var file = new Blob("hello world".split(""));
+      var passedOptions;
+      var passedFile;
       var options = {
         endpoint: host + "/uploads",
         chunkSize: 7,
         urlStorage: getStorage(),
         onProgress: function () {},
         onChunkComplete: function () {},
-        fingerprint: function () {}
+        fingerprint: function (_file, _options, cb) {
+          passedOptions = _options;
+          passedFile = _file;
+          cb(null, "fingerprinted");
+        }
       };
-      spyOn(options, "fingerprint").and.returnValue("fingerprinted.chunk");
+      spyOn(options, "fingerprint").and.callThrough();
       spyOn(options, "onProgress");
       spyOn(options, "onChunkComplete");
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options);
+      expect(options.fingerprint).toHaveBeenCalled();
+      expect(passedOptions).toBe(upload.options);
+      expect(passedFile).toBe(file);
 
       waitTillNextReq(host, null, function (req) {
         expect(req.url).toBe(host + "/uploads");
@@ -394,9 +413,9 @@ describe("tus", function () {
         endpoint: "http://tus.io/uploads",
         uploadUrl: "http://tus.io/files/upload",
         onProgress: function () {},
-        fingerprint: function () {}
+        fingerprint: function (_, __, cb) {cb(null, "fingerprinted");}
       };
-      spyOn(options, "fingerprint").and.returnValue("fingerprinted");
+      spyOn(options, "fingerprint").and.callThrough();
       spyOn(options, "onProgress");
 
       var upload = new tus.Upload(file, options);
@@ -1069,7 +1088,7 @@ function waitTillNextReq(id, req, cb, level) {
   setTimeout(function () {
     var newReq = jasmine.Ajax.requests.mostRecent();
     if (!req || (req && newReq != req)) {
-      if (newReq.url.indexOf(id) === 0) {
+      if (newReq && newReq.url.indexOf(id) === 0) {
         return cb(newReq);
       }
     }

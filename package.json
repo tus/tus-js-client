@@ -17,11 +17,11 @@
     "./lib/node/base64.js": "./lib/browser/base64.js",
     "./lib/node/storage.js": "./lib/browser/storage.js",
     "./lib/node/source.js": "./lib/browser/source.js",
-    "./lib/node/isReactNative.js": "./lib/browser/isReactNative.js",
+    "./lib/node/fingerprint.js": "./lib/browser/fingerprint.js",
     "./lib.es5/node/request.js": "./lib.es5/browser/request.js",
     "./lib.es5/node/storage.js": "./lib.es5/browser/storage.js",
     "./lib.es5/node/source.js": "./lib.es5/browser/source.js",
-    "./lib.es5/node/isReactNative.js": "./lib.es5/browser/isReactNative.js"
+    "./lib.es5/node/fingerprint.js": "./lib.es5/browser/fingerprint.js"
   },
   "repository": {
     "type": "git",
@@ -64,6 +64,7 @@
   },
   "dependencies": {
     "buffer-from": "^0.1.1",
+    "combine-errors": "^3.0.3",
     "extend": "^3.0.0",
     "js-base64": "^2.4.9",
     "lodash.throttle": "^4.1.1",
