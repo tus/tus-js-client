@@ -1025,7 +1025,22 @@ describe("tus", function () {
         expect(upload.url).toMatch(/^https:\/\/master\.tus\.io\/files\//);
         console.log("Upload URL:", upload.url); // eslint-disable-line no-console
 
-        validateUploadContent(upload, done);
+        validateUploadContent(upload, function (err) {
+          if (err) {
+            done.fail(err);
+            return;
+          }
+
+          // delete the upload after it was completed
+          upload.abort(true, function (err) {
+            if (err) {
+              done.fail(err);
+              return;
+            }
+
+            validateUploadDeletion(upload, done);
+          });
+        });
       },
       onError: function (err) {
         done.fail(err);
@@ -1037,18 +1052,18 @@ describe("tus", function () {
   });
 });
 
-function validateUploadContent(upload, done) {
+function validateUploadContent(upload, cb) {
   axios.get(upload.url)
     .then(function (res) {
       expect(res.status).toBe(200);
       expect(res.data).toBe("hello world");
 
-      validateUploadMetadata(upload, done);
+      validateUploadMetadata(upload, cb);
     })
-    .catch(done.fail);
+    .catch(cb);
 }
 
-function validateUploadMetadata(upload, done) {
+function validateUploadMetadata(upload, cb) {
   axios.head(upload.url, {
     headers: {
       "Tus-Resumable": "1.0.0"
@@ -1073,8 +1088,21 @@ function validateUploadMetadata(upload, done) {
     expect(metadata).toContain("number MTAw");
     expect(metadata.length).toBe(4);
 
-    done();
+    cb();
   })
+    .catch(cb);
+}
+
+function validateUploadDeletion(upload, done) {
+  const validateStatus = function (status) {
+    return status === 404;
+  };
+
+  axios.get(upload.url, {validateStatus})
+    .then(function (res) {
+      expect(res.status).toBe(404);
+      done();
+    })
     .catch(done.fail);
 }
 
