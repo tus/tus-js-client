@@ -873,6 +873,62 @@ describe("tus", function () {
       });
     });
 
+    it("should terminate upload when abort is called with true", function (done) {
+      var upload;
+      var host = "http://abort2.tus.io";
+      var file = new Blob("hello world".split(""));
+      var callbackTriggered = false;
+      var options = {
+        endpoint: host + "/files/",
+        chunkSize: 5,
+        onChunkComplete: function () {
+          upload.abort(true, function () {
+            callbackTriggered = true;
+          });
+        }
+      };
+
+      spyOn(options, "onChunkComplete").and.callThrough();
+
+      upload = new tus.Upload(file, options);
+      upload.start();
+
+      waitTillNextReq(host, null, function (req) {
+        expect(req.url).toBe(host + "/files/");
+        expect(req.method).toBe("POST");
+
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: "/files/foo"
+          }
+        });
+
+        req = jasmine.Ajax.requests.mostRecent();
+        expect(req.url).toBe(host + "/files/foo");
+        expect(req.method).toBe("PATCH");
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            "Upload-Offset": 5
+          }
+        });
+
+        setTimeout(function () {
+          expect(options.onChunkComplete).toHaveBeenCalled();
+
+          req = jasmine.Ajax.requests.mostRecent();
+          expect(req.url).toBe(host + "/files/foo");
+          expect(req.method).toBe("DELETE");
+          req.respondWith({status: 204});
+
+          expect(callbackTriggered).toBe(true);
+          done();
+        }, 200);
+      });
+    });
+
     it("should stop upload when the abort function is called during the POST request", function (done) {
       var file = new Blob("hello world".split(""));
       var host = "http://abort.tus.io";
