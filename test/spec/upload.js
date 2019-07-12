@@ -873,6 +873,62 @@ describe("tus", function () {
       });
     });
 
+    it("should terminate upload when abort is called with true", function (done) {
+      var upload;
+      var host = "http://abort2.tus.io";
+      var file = new Blob("hello world".split(""));
+      var callbackTriggered = false;
+      var options = {
+        endpoint: host + "/files/",
+        chunkSize: 5,
+        onChunkComplete: function () {
+          upload.abort(true, function () {
+            callbackTriggered = true;
+          });
+        }
+      };
+
+      spyOn(options, "onChunkComplete").and.callThrough();
+
+      upload = new tus.Upload(file, options);
+      upload.start();
+
+      waitTillNextReq(host, null, function (req) {
+        expect(req.url).toBe(host + "/files/");
+        expect(req.method).toBe("POST");
+
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: "/files/foo"
+          }
+        });
+
+        req = jasmine.Ajax.requests.mostRecent();
+        expect(req.url).toBe(host + "/files/foo");
+        expect(req.method).toBe("PATCH");
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            "Upload-Offset": 5
+          }
+        });
+
+        setTimeout(function () {
+          expect(options.onChunkComplete).toHaveBeenCalled();
+
+          req = jasmine.Ajax.requests.mostRecent();
+          expect(req.url).toBe(host + "/files/foo");
+          expect(req.method).toBe("DELETE");
+          req.respondWith({status: 204});
+
+          expect(callbackTriggered).toBe(true);
+          done();
+        }, 200);
+      });
+    });
+
     it("should stop upload when the abort function is called during the POST request", function (done) {
       var file = new Blob("hello world".split(""));
       var host = "http://abort.tus.io";
@@ -1025,7 +1081,22 @@ describe("tus", function () {
         expect(upload.url).toMatch(/^https:\/\/master\.tus\.io\/files\//);
         console.log("Upload URL:", upload.url); // eslint-disable-line no-console
 
-        validateUploadContent(upload, done);
+        validateUploadContent(upload, function (err) {
+          if (err) {
+            done.fail(err);
+            return;
+          }
+
+          // delete the upload after it was completed
+          upload.abort(true, function (err) {
+            if (err) {
+              done.fail(err);
+              return;
+            }
+
+            validateUploadDeletion(upload, done);
+          });
+        });
       },
       onError: function (err) {
         done.fail(err);
@@ -1037,18 +1108,18 @@ describe("tus", function () {
   });
 });
 
-function validateUploadContent(upload, done) {
+function validateUploadContent(upload, cb) {
   axios.get(upload.url)
     .then(function (res) {
       expect(res.status).toBe(200);
       expect(res.data).toBe("hello world");
 
-      validateUploadMetadata(upload, done);
+      validateUploadMetadata(upload, cb);
     })
-    .catch(done.fail);
+    .catch(cb);
 }
 
-function validateUploadMetadata(upload, done) {
+function validateUploadMetadata(upload, cb) {
   axios.head(upload.url, {
     headers: {
       "Tus-Resumable": "1.0.0"
@@ -1073,8 +1144,21 @@ function validateUploadMetadata(upload, done) {
     expect(metadata).toContain("number MTAw");
     expect(metadata.length).toBe(4);
 
-    done();
+    cb();
   })
+    .catch(cb);
+}
+
+function validateUploadDeletion(upload, done) {
+  const validateStatus = function (status) {
+    return status === 404;
+  };
+
+  axios.get(upload.url, {validateStatus})
+    .then(function (res) {
+      expect(res.status).toBe(404);
+      done();
+    })
     .catch(done.fail);
 }
 

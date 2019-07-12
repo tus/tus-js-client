@@ -283,10 +283,25 @@ uploaded and tries to resume.
 If no upload can be resume it will create a new upload using the supplied
 `endpoint` option.
 
-### tus.Upload#abort()
+### tus.Upload#abort(shouldTerminate, callback)
 
 Abort the currently running upload request and don't continue. You can resume
 the upload by calling the `start` method again.
+
+The `shouldTerminate` argument is a `boolean` value that determines whether or not the upload
+should be terminated according to the [termination extension](https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md#termination).
+
+The `callback` argument is a function that would be called after the `abort` function is complete. If an `error`
+occurs during the `abort` process, this `error` will be passed as argument to the `callback`.
+
+### tus.Upload.terminate(url, [options], callback)
+
+Terminate an upload based on the [termination extension](https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md#termination).
+
+The `url` argument is the URL for the upload which you want to terminate. The `options` argument is an object with
+the `tus.defaultOptions` schema, which can be passed to specify certain request related options (e.g `headers`).
+The `callback` argument is a function that would be called after the `terminate` function is complete. If an `error`
+occurs during the `terminate` process, this `error` will be passed as argument to the `callback`.
 
 ### Difference between onProgress and onChunkComplete
 
