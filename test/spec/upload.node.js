@@ -20,7 +20,7 @@ describe("tus", function () {
     });
 
     it("should accept Buffers", function (done) {
-      var buffer = new Buffer("hello world");
+      var buffer = Buffer.from("hello world");
       var options = {
         resume: false,
         endpoint: "/uploads",
@@ -97,7 +97,7 @@ describe("tus", function () {
 
     it("should pass through errors from the request", function () {
       var resErr = new Error("something bad, really!");
-      var buffer = new Buffer("hello world");
+      var buffer = Buffer.from("hello world");
       var option = {
         resume: false,
         endpoint: "/uploads",
@@ -124,7 +124,7 @@ describe("tus", function () {
       var storagePath = temp.path();
       fs.writeFileSync(storagePath, "{\"fingerprinted.resume\":\"/uploads/resuming\"}");
       var storage = new tus.FileStorage(storagePath);
-      var input = new Buffer("hello world");
+      var input = Buffer.from("hello world");
       var options = {
         endpoint: "/uploads",
         fingerprint: (_, __, cb) => cb(null, "fingerprinted.resume"),
