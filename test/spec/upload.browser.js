@@ -749,12 +749,21 @@ describe("tus", function () {
     });
 
     describe("resolving of URIs", function () {
+      const originalProduct = navigator.product;
+
       beforeEach(function () {
-        window.__tus__forceReactNative = true;
+        // Simulate React Native environment to enable URIs as input objects.
+        Object.defineProperty(navigator, "product", {
+          value: "ReactNative",
+          configurable: true
+        });
       });
 
       afterEach(function () {
-        window.__tus__forceReactNative = false;
+        Object.defineProperty(navigator, "product", {
+          value: originalProduct,
+          configurable: true
+        });
       });
 
       it("should upload a file from an URI", function (done) {
