@@ -5,6 +5,8 @@ let testsCompleted = false;
 let testsPassed = true;
 
 // This reporter is used by bin/puppeteer-jasmine.js to obtain the test results.
+// See https://jasmine.github.io/api/edge/Reporter.html for more details on the
+// function signatures.
 const reporter = {
   jasmineStarted: function (suiteInfo) { },
   suiteStarted: function (result) { },
