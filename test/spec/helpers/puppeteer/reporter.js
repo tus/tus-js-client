@@ -1,0 +1,47 @@
+/* eslint no-console: 0 */
+/* eslint no-unused-vars: 0 */
+
+let testsCompleted = false;
+let testsPassed = true;
+
+// This reporter is used by bin/puppeteer-jasmine.js to obtain the test results.
+const reporter = {
+  jasmineStarted: function (suiteInfo) { },
+  suiteStarted: function (result) { },
+  specStarted: function (result) { },
+  specDone: function (result) {
+    // Print the test result to the console.
+    const passed = result.status === "passed";
+    const prefix = passed ? "✓" : "✘";
+    console.log(prefix, result.fullName);
+
+    testsCompleted = true;
+    testsPassed = testsPassed && passed;
+
+
+    for (var i = 0; i < result.failedExpectations.length; i++) {
+      console.log("Failure: " + result.failedExpectations[i].message);
+      console.log(result.failedExpectations[i].stack);
+      console.log("");
+    }
+
+  },
+  suiteDone: function (result) { },
+  jasmineDone: function (result) {
+    const success = testsCompleted && testsPassed;
+
+    if (success) {
+      console.log("Tests passed!");
+    } else {
+      console.log("Tests failed!");
+    }
+
+    // The __jasmineCallback function is exposed by the bin/puppeteer-jasmine.js
+    // script. See it for more details.
+    if (typeof window.__jasmineCallback === "function") {
+      window.__jasmineCallback(success);
+    }
+  }
+};
+
+window.jasmine.getEnv().addReporter(reporter);

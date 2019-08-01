@@ -14,9 +14,9 @@ if [[ $TEST_TARGET == *"node"* ]]; then
   npm run node-test
 fi
 
-# Browser tests using Phantom and zuul on SauceLabs
+# Browser tests using Puppeteer and on BrowserStack
 if [[ $TEST_TARGET == *"browser"* ]]; then
-  npm run phantom-test
+  npm run puppeteer-test
 
   if [ "${CI}" = "true" ] && [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
     npm run browserstack-test
