@@ -9,11 +9,11 @@ if (isNode) {
   var SynchronousPromise = require("synchronous-promise").SynchronousPromise;
 }
 
-var getBlob = function (data) {
+var getBlob = function (str) {
   if (isNode) {
-    return Buffer.from(data);
+    return Buffer.from(str);
   } else {
-    return new Blob(data);
+    return new Blob(str.split(""));
   }
 };
 
@@ -65,13 +65,13 @@ describe("tus", function () {
     });
 
     it("should throw if no endpoint and upload URL is provided", function () {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var upload = new tus.Upload(file);
       expect(upload.start.bind(upload)).toThrowError("tus: neither an endpoint or an upload URL is provided");
     });
 
     it("should upload a file", function (done) {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var host = "http://files.tus.io";
       var passedOptions;
       var passedFile;
@@ -146,7 +146,7 @@ describe("tus", function () {
     });
 
     it("should create an upload if resuming fails", function (done) {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var options = {
         endpoint: "http://tus.io/uploads",
         uploadUrl: "http://tus.io/uploads/resuming"
@@ -175,7 +175,7 @@ describe("tus", function () {
     });
 
     it("should throw an error if resuming fails and no endpoint is provided", function (done) {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var options = {
         uploadUrl: "http://tus.io/uploads/resuming",
         onError: function () {}
@@ -199,7 +199,7 @@ describe("tus", function () {
     });
 
     it("should resolve relative URLs", function (done) {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var host = "http://relative.tus.io:1080";
       var options = {
         endpoint: host + "/files/"
@@ -237,7 +237,7 @@ describe("tus", function () {
 
     it("should upload a file in chunks", function (done) {
       var host = "http://chunks.tus.io";
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var passedOptions;
       var passedFile;
       var options = {
@@ -315,7 +315,7 @@ describe("tus", function () {
     });
 
     it("should add the original request to errors", function (done) {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var host = "http://original.tus.io";
       var err;
       var options = {
@@ -349,7 +349,7 @@ describe("tus", function () {
     });
 
     it("should only create an upload for empty files", function (done) {
-      var file = getBlob([]);
+      var file = getBlob("");
       var host = "http://empty.tus.io";
       var options = {
         endpoint: host + "/uploads",
@@ -379,7 +379,7 @@ describe("tus", function () {
     });
 
     it("should not resume a finished upload", function (done) {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var options = {
         endpoint: "http://tus.io/uploads",
         onProgress: function () {},
@@ -411,7 +411,7 @@ describe("tus", function () {
     });
 
     it("should resume an upload from a specified url", function (done) {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var options = {
         endpoint: "http://tus.io/uploads",
         uploadUrl: "http://tus.io/files/upload",
@@ -460,7 +460,7 @@ describe("tus", function () {
     });
 
     it("should resume a previously started upload", function (done) {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var options = {
         resume: false,
         endpoint: "http://tus.io/uploads",
@@ -525,7 +525,7 @@ describe("tus", function () {
     });
 
     it("should override the PATCH method", function (done) {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var host = "http://override.tus.io";
       var options = {
         endpoint: host + "/uploads",
@@ -568,7 +568,7 @@ describe("tus", function () {
     });
 
     it("should emit an error if an upload is locked", function (done) {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var host = "http://locked.tus.io";
       var options = {
         endpoint: host + "/uploads",
@@ -595,7 +595,7 @@ describe("tus", function () {
     });
 
     it("should emit an error if no Location header is presented", function (done) {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var host = "http://emit.tus.io";
       var options = {
         endpoint: host + "/uploads",
@@ -622,7 +622,7 @@ describe("tus", function () {
     });
 
     it("should throw if retryDelays is not an array", function () {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var upload = new tus.Upload(file, {
         endpoint: "http://endpoint/",
         retryDelays: 44
@@ -633,7 +633,7 @@ describe("tus", function () {
     // This tests ensures that tus-js-client correctly retries if the
     // response has the code 500 Internal Error, 423 Locked or 409 Conflict.
     it("should retry the upload", function (done) {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var host = "http://retry.tus.io";
       var options = {
         endpoint: host + "/files/",
@@ -728,7 +728,7 @@ describe("tus", function () {
     });
 
     it("should not retry if the error has not been caused by a request", function (done) {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var options = {
         endpoint: "http://tus.io/files/",
         retryDelays: [10, 10, 10],
@@ -755,7 +755,7 @@ describe("tus", function () {
     });
 
     it("should stop retrying after all delays have been used", function (done) {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var host = "http://delays.tus.io";
       var options = {
         endpoint: host + "/files/",
@@ -797,7 +797,7 @@ describe("tus", function () {
     });
 
     it("should stop retrying when the abort function is called", function (done) {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var host = "http://noretry.tus.io";
       var options = {
         endpoint: host + "/files/",
@@ -832,7 +832,7 @@ describe("tus", function () {
     it("should stop upload when the abort function is called during a callback", function (done) {
       var upload;
       var host = "http://abort2.tus.io";
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var options = {
         endpoint: host + "/files/",
         chunkSize: 5,
@@ -879,7 +879,7 @@ describe("tus", function () {
     it("should terminate upload when abort is called with true", function (done) {
       var upload;
       var host = "http://abort2.tus.io";
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var callbackTriggered = false;
       var options = {
         endpoint: host + "/files/",
@@ -933,7 +933,7 @@ describe("tus", function () {
     });
 
     it("should stop upload when the abort function is called during the POST request", function (done) {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var host = "http://abort.tus.io";
       var options = {
         endpoint: host + "/files/",
@@ -967,7 +967,7 @@ describe("tus", function () {
     });
 
     it("should reset the attempt counter if an upload proceeds", function (done) {
-      var file = getBlob("hello world".split(""));
+      var file = getBlob("hello world");
       var host = "http://reset.tus.io";
       var options = {
         endpoint: host + "/files/",
@@ -1068,7 +1068,7 @@ describe("tus", function () {
   });
 
   it("should upload to a real tus server", function (done) {
-    var file = getBlob("hello world".split(""));
+    var file = getBlob("hello world");
     var options = {
       resume: false,
       endpoint: "https://master.tus.io/files/",

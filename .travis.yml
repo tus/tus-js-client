@@ -4,8 +4,6 @@ matrix:
   - env: TEST_TARGET=browser
     node_js: 10
   - env: TEST_TARGET=node
-    node_js: 5
-  - env: TEST_TARGET=node
     node_js: 6
   - env: TEST_TARGET=node
     node_js: 7
@@ -15,6 +13,10 @@ matrix:
     node_js: 9
   - env: TEST_TARGET=node
     node_js: 10
+  - env: TEST_TARGET=node
+    node_js: 11
+  - env: TEST_TARGET=node
+    node_js: 12
 script:
 - npm run lint
 - npm run dist
