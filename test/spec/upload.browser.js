@@ -179,9 +179,9 @@ describe("tus", function () {
         value: "hello world".split(""),
         read: function () {
           if (this.value) {
-            const value = this.value;
+            var value = this.value;
             this.value = null;
-            return Promise.resolve({ value, done: false });
+            return Promise.resolve({ value: value, done: false });
           } else {
             return Promise.resolve({ value: undefined, done: true });
           }
@@ -258,9 +258,9 @@ describe("tus", function () {
         value: "hello world".split(""),
         read: function () {
           if (this.value) {
-            const value = this.value;
+            var value = this.value;
             this.value = null;
-            return Promise.resolve({ value, done: false });
+            return Promise.resolve({ value: value, done: false });
           } else {
             return Promise.resolve({ value: undefined, done: true });
           }
@@ -350,14 +350,14 @@ describe("tus", function () {
       var reader = {
         value: "hello world".split(""),
         read: function () {
-          let value, done = false;
+          var value, done = false;
           if (this.value.length > 0) {
             value = this.value.slice(0,1);
             this.value = this.value.slice(1);
           } else {
             done = true;
           }
-          return Promise.resolve({ value, done });
+          return Promise.resolve({ value: value, done: done });
         }
       };
 
@@ -447,14 +447,14 @@ describe("tus", function () {
       var reader = {
         value: "hello world".split(""),
         read: function () {
-          let value, done = false;
+          var value, done = false;
           if (this.value.length > 0) {
             value = this.value.slice(0,1);
             this.value = this.value.slice(1);
           } else {
             done = true;
           }
-          return Promise.resolve({ value, done });
+          return Promise.resolve({ value: value, done: done });
         }
       };
       var options = {
@@ -523,14 +523,14 @@ describe("tus", function () {
       var reader = {
         value: "hello world".split(""),
         read: function () {
-          let value, done = false;
+          var value, done = false;
           if (this.value.length > 0) {
             value = this.value.slice(0,1);
             this.value = this.value.slice(1);
           } else {
             done = true;
           }
-          return Promise.resolve({ value, done });
+          return Promise.resolve({ value: value, done: done });
         }
       };
       var options = {
@@ -610,14 +610,14 @@ describe("tus", function () {
       var reader = {
         value: "hello there world!".split(""),
         read: function () {
-          let value, done = false;
+          var value, done = false;
           if (this.value) {
             value = this.value;
             this.value = undefined;
           } else {
             done = true;
           }
-          return Promise.resolve({ value, done });
+          return Promise.resolve({ value: value, done: done });
         }
       };
       var options = {
@@ -719,14 +719,14 @@ describe("tus", function () {
       var reader = {
         value: "hello there world!".split(""),
         read: function () {
-          let value, done = false;
+          var value, done = false;
           if (this.value) {
             value = this.value;
             this.value = undefined;
           } else {
             done = true;
           }
-          return Promise.resolve({ value, done });
+          return Promise.resolve({ value: value, done: done });
         },
         cancel: function () {}
       };
@@ -749,7 +749,15 @@ describe("tus", function () {
     });
 
     describe("resolving of URIs", function () {
-      const originalProduct = navigator.product;
+      // Disable these tests for IE 10 and 11 because it's not possible to overwrite
+      // the navigator.product property.
+      var isIE = navigator.userAgent.indexOf("Trident/") > 0;
+      if (isIE) {
+        console.log("Skipping tests for React Native in Internet Explorer"); // eslint-disable-line no-console
+        return;
+      }
+
+      var originalProduct = navigator.product;
 
       beforeEach(function () {
         // Simulate React Native environment to enable URIs as input objects.

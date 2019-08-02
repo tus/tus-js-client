@@ -6,6 +6,8 @@ const browserstack = require("browserstack-runner");
 const BS_USERNAME = process.env.BROWSERSTACK_USERNAME;
 const BS_KEY = process.env.BROWSERSTACK_KEY;
 
+// A list of available browsers is available at:
+// https://www.browserstack.com/list-of-browsers-and-platforms/js_testing
 const browsers = [
   "ie_10",
   "ie_11",
@@ -27,33 +29,21 @@ const browsers = [
 
   {
     "os": "ios",
+    "os_version": "12.1",
+    "device": "iPhone XS",
+    "realMobile": true
+  },
+  {
+    "os": "ios",
     "os_version": "11.0",
-    "device": "iPhone X"
+    "device": "iPhone X",
+    "realMobile": true
   },
   {
     "os": "ios",
-    "os_version": "10",
-    "device": "iPhone 7"
-  },
-  {
-    "os": "ios",
-    "os_version": "9",
-    "device": "iPhone 6S"
-  },
-  {
-    "os": "ios",
-    "os_version": "8",
-    "device": "iPhone 6"
-  },
-  {
-    "os": "ios",
-    "os_version": "7",
-    "device": "iPhone 5S"
-  },
-  {
-    "os": "ios",
-    "os_version": "6.0",
-    "device": "iPhone 5"
+    "os_version": "10.3",
+    "device": "iPhone 7",
+    "realMobile": true
   }
 ];
 
@@ -70,13 +60,39 @@ function runTests(cb) {
     test_framework: "jasmine2",
     test_server_port: 8081,
     browsers: browsers
-  }, function (err, report) {
+  }, function (err, reports) {
     if (err) {
       return cb(err);
     }
 
-    console.log(JSON.stringify(report, null, 2));
+    // Enable to see full report
+    // console.log(JSON.stringify(reports, null, 2));
     console.log("Test Finished");
+    console.log("");
+
+    reports.forEach((report) => {
+      const testCount = report.suites.testCounts.total;
+
+      if (testCount === 0) {
+        console.log(`✘ ${report.browser}: No tests ran, which is considered a failure`);
+        process.exitCode = 1;
+        return;
+      }
+
+      if (report.suites.status !== "passed") {
+        console.log(`✘ ${report.browser}: Test suite failed`);
+        process.exitCode = 1;
+        return;
+      }
+
+      console.log(`✓ ${report.browser}: Test suite passed`);
+    });
+
+    if (reports.length != browsers.length) {
+      console.log(`✘ Only received ${reports.length} reports but expected ${browsers.length}!`);
+      process.exitCode = 1;
+    }
+
     cb();
   });
 }

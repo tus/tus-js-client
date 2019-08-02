@@ -29,8 +29,8 @@ var getStorage = function () {
   return null;
 };
 
-// Set Jasmine's timeout for a single test to 10s
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 1000;
+// Set Jasmine's timeout for a single test to 20s
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 20 * 1000;
 
 // NOTE: if a test case uses the 'waitTillNextReq' function,
 // a unique request host (different from those in other test cases)
@@ -1151,11 +1151,11 @@ function validateUploadMetadata(upload, cb) {
 }
 
 function validateUploadDeletion(upload, done) {
-  const validateStatus = function (status) {
+  var validateStatus = function (status) {
     return status === 404;
   };
 
-  axios.get(upload.url, {validateStatus})
+  axios.get(upload.url, { validateStatus: validateStatus })
     .then(function (res) {
       expect(res.status).toBe(404);
       done();
