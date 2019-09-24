@@ -174,6 +174,113 @@ describe("tus", function () {
       done();
     });
 
+    it("should create an upload with the full data", function (done) {
+      var file = getBlob("hello world");
+      var options = {
+        endpoint: "http://tus.io/uploads",
+        uploadDataDuringCreation: true,
+        onProgress: function () {},
+        onChunkComplete: function () {},
+        onSuccess: function () {}
+      };
+
+      spyOn(options, "onProgress");
+      spyOn(options, "onChunkComplete");
+      spyOn(options, "onSuccess");
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      var req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("http://tus.io/uploads");
+      expect(req.method).toBe("POST");
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+      expect(req.requestHeaders["Upload-Length"]).toBe(11);
+      expect(req.contentType()).toBe("application/offset+octet-stream");
+      expect(req.params.size).toBe(11);
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: "http://tus.io/uploads/blargh",
+          "Upload-Offset": 11
+        }
+      });
+
+
+      expect(options.onProgress).toHaveBeenCalledWith(11, 11);
+      expect(options.onChunkComplete).toHaveBeenCalledWith(11, 11, 11);
+      expect(options.onSuccess).toHaveBeenCalled();
+
+      expect(upload.url).toBe("http://tus.io/uploads/blargh");
+      done();
+    });
+
+    it("should create an upload with partial data and continue", function (done) {
+      var file = getBlob("hello world");
+      var options = {
+        endpoint: "http://tus.io/uploads",
+        uploadDataDuringCreation: true,
+        chunkSize: 6,
+        onProgress: function () {},
+        onChunkComplete: function () {},
+        onSuccess: function () {}
+      };
+
+      spyOn(options, "onProgress");
+      spyOn(options, "onChunkComplete");
+      spyOn(options, "onSuccess");
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      var req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("http://tus.io/uploads");
+      expect(req.method).toBe("POST");
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+      expect(req.requestHeaders["Upload-Length"]).toBe(11);
+      expect(req.contentType()).toBe("application/offset+octet-stream");
+      expect(req.params.size).toBe(6);
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: "http://tus.io/uploads/blargh",
+          "Upload-Offset": 6
+        }
+      });
+
+
+      expect(options.onProgress).toHaveBeenCalledWith(6, 11);
+      expect(options.onChunkComplete).toHaveBeenCalledWith(6, 6, 11);
+      expect(options.onSuccess).not.toHaveBeenCalled();
+
+      expect(upload.url).toBe("http://tus.io/uploads/blargh");
+
+      req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("http://tus.io/uploads/blargh");
+      expect(req.method).toBe("PATCH");
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+      expect(req.requestHeaders["Upload-Offset"]).toBe(6);
+      expect(req.contentType()).toBe("application/offset+octet-stream");
+      expect(req.params.size).toBe(5);
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: "http://tus.io/uploads/blargh",
+          "Upload-Offset": 11
+        }
+      });
+
+
+      expect(options.onProgress).toHaveBeenCalledWith(11, 11);
+      expect(options.onChunkComplete).toHaveBeenCalledWith(5, 11, 11);
+      expect(options.onSuccess).toHaveBeenCalled();
+      done();
+    });
+
+
     it("should throw an error if resuming fails and no endpoint is provided", function (done) {
       var file = getBlob("hello world");
       var options = {
@@ -1098,6 +1205,33 @@ describe("tus", function () {
             validateUploadDeletion(upload, done);
           });
         });
+      },
+      onError: function (err) {
+        done.fail(err);
+      }
+    };
+
+    var upload = new tus.Upload(file, options);
+    upload.start();
+  });
+
+  it("should upload to a real tus server with creation-with-upload", function (done) {
+    var file = getBlob("hello world");
+    var options = {
+      resume: false,
+      endpoint: "https://master.tus.io/files/",
+      uploadDataDuringCreation: true,
+      metadata: {
+        nonlatin: "słońce",
+        number: 100,
+        filename: "hello.txt",
+        filetype: "text/plain"
+      },
+      onSuccess: function () {
+        expect(upload.url).toMatch(/^https:\/\/master\.tus\.io\/files\//);
+        console.log("Upload URL:", upload.url); // eslint-disable-line no-console
+
+        validateUploadContent(upload, done);
       },
       onError: function (err) {
         done.fail(err);
