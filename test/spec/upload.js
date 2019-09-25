@@ -280,6 +280,31 @@ describe("tus", function () {
       done();
     });
 
+    it("should add the request's body to errors", function () {
+      var file = getBlob("hello world");
+      var err;
+      var options = {
+        endpoint: "http://tus.io/uploads",
+        onError: function (e) {
+          err = e;
+        }
+      };
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      var req = jasmine.Ajax.requests.mostRecent();
+      expect(req.url).toBe("http://tus.io/uploads");
+      expect(req.method).toBe("POST");
+
+      req.respondWith({
+        status: 500,
+        responseText: "server_error"
+      });
+
+      expect(err.message).toBe("tus: unexpected response while creating upload, originated from request (response code: 500, response text: server_error)");
+      expect(err.originalRequest).toBeDefined();
+    });
 
     it("should throw an error if resuming fails and no endpoint is provided", function (done) {
       var file = getBlob("hello world");

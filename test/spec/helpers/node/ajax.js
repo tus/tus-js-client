@@ -2,8 +2,8 @@
 var http = require("http");
 var url = require("url");
 var util = require("util");
-var stream = require("stream");
 var httpAgent = require("_http_agent");
+var events = require("events");
 
 class MockAgent extends http.Agent {
   constructor() {
@@ -57,6 +57,12 @@ class MockRequest {
     }
 
     this._req.emit("response", res);
+
+    if ("responseText" in options) {
+      res.emit("data", Buffer.from(options.responseText, "utf8"));
+    }
+
+    res.emit("end");
   }
 
   responseError(err) {
@@ -72,10 +78,7 @@ class MockRequest {
   }
 }
 
-class MockResponse extends stream.Readable {
-  _read() {
-    this.push(null);
-  }
+class MockResponse extends events.EventEmitter {
 }
 
 let agent = new MockAgent();
