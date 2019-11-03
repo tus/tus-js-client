@@ -1064,6 +1064,68 @@ describe("tus", function () {
       });
     });
 
+    it("should retry terminate when an error is returned on first try", function (done) {
+      var upload;
+      var host = "http://abort2.tus.io";
+      var file = getBlob("hello world");
+      var callbackTriggered = false;
+      var options = {
+        endpoint: host + "/files/",
+        chunkSize: 5,
+        retryDelays: [10, 10, 10],
+        onChunkComplete: function () {
+          upload.abort(true, function () {
+            callbackTriggered = true;
+          });
+        }
+      };
+
+      spyOn(options, "onChunkComplete").and.callThrough();
+
+      upload = new tus.Upload(file, options);
+      upload.start();
+
+      waitTillNextReq(host, null, function (req) {
+        expect(req.url).toBe(host + "/files/");
+        expect(req.method).toBe("POST");
+
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: "/files/foo"
+          }
+        });
+
+        req = jasmine.Ajax.requests.mostRecent();
+        expect(req.url).toBe(host + "/files/foo");
+        expect(req.method).toBe("PATCH");
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            "Upload-Offset": 5
+          }
+        });
+
+        setTimeout(function () {
+          expect(options.onChunkComplete).toHaveBeenCalled();
+
+          req = jasmine.Ajax.requests.mostRecent();
+          expect(req.url).toBe(host + "/files/foo");
+          expect(req.method).toBe("DELETE");
+          req.respondWith({status: 423});
+
+          waitTillNextReq(host, req, function (req) {
+            expect(req.url).toBe(host + "/files/foo");
+            expect(req.method).toBe("DELETE");
+            req.respondWith({status: 204});
+            expect(callbackTriggered).toBe(true);
+            done();
+          });
+        }, 200);
+      });
+    });
+
     it("should stop upload when the abort function is called during the POST request", function (done) {
       var file = getBlob("hello world");
       var host = "http://abort.tus.io";
