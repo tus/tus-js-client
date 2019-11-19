@@ -300,9 +300,9 @@ occurs during the `abort` process, this `error` will be passed as argument to th
 Terminate an upload based on the [termination extension](https://github.com/tus/tus-resumable-upload-protocol/blob/master/protocol.md#termination).
 
 The `url` argument is the URL for the upload which you want to terminate. The `options` argument is an object with
-the `tus.defaultOptions` schema, which can be passed to specify certain request related options (e.g `headers`).
+the `tus.defaultOptions` schema, which can be passed to specify certain request related options (e.g `headers`, `retryDelays`).
 The `callback` argument is a function that would be called after the `terminate` function is complete. If an `error`
-occurs during the `terminate` process, this `error` will be passed as argument to the `callback`.
+occurs during the `terminate` process, the `terminate` function may retry to send the request depending on the nature of the error, and depending on whether or not the `retryDelays` options is set. If the request can no longer be retried, the `error` will be passed as argument to the `callback`.
 
 ### Difference between onProgress and onChunkComplete
 
