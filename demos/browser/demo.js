@@ -69,7 +69,6 @@ function startUpload() {
     resume  : !resumeCheckbox.checked,
     chunkSize: chunkSize,
     retryDelays: [0, 1000, 3000, 5000],
-    uploadDataDuringCreation: true,
     metadata: {
       filename: file.name,
       filetype: file.type
