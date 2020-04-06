@@ -280,11 +280,12 @@ describe("tus", function () {
       done();
     });
 
-    it("should add the request's body to errors", function () {
+    it("should add the request's body and ID to errors", function () {
       var file = getBlob("hello world");
       var err;
       var options = {
         endpoint: "http://tus.io/uploads",
+        addRequestId: true,
         onError: function (e) {
           err = e;
         }
@@ -297,12 +298,16 @@ describe("tus", function () {
       expect(req.url).toBe("http://tus.io/uploads");
       expect(req.method).toBe("POST");
 
+      const reqId =  req.requestHeaders["X-Request-ID"];
+      expect(typeof reqId).toBe("string");
+      expect(reqId.length).toBe(36);
+
       req.respondWith({
         status: 500,
         responseText: "server_error"
       });
 
-      expect(err.message).toBe("tus: unexpected response while creating upload, originated from request (response code: 500, response text: server_error)");
+      expect(err.message).toBe("tus: unexpected response while creating upload, originated from request (method: POST, url: http://tus.io/uploads, response code: 500, response text: server_error, request id: " + reqId + ")");
       expect(err.originalRequest).toBeDefined();
     });
 
@@ -326,7 +331,7 @@ describe("tus", function () {
         status: 404
       });
 
-      expect(options.onError).toHaveBeenCalledWith(new Error("tus: unable to resume upload (new upload cannot be created without an endpoint), originated from request (response code: 404, response text: )"));
+      expect(options.onError).toHaveBeenCalledWith(new Error("tus: unable to resume upload (new upload cannot be created without an endpoint), originated from request (method: HEAD, url: http://tus.io/uploads/resuming, response code: 404, response text: , request id: null)"));
       done();
     });
 
@@ -473,7 +478,7 @@ describe("tus", function () {
 
         expect(upload.url).toBe(null);
 
-        expect(err.message).toBe("tus: unexpected response while creating upload, originated from request (response code: 500, response text: )");
+        expect(err.message).toBe("tus: unexpected response while creating upload, originated from request (method: POST, url: http://original.tus.io/uploads, response code: 500, response text: , request id: null)");
         expect(err.originalRequest).toBeDefined();
         expect(err.originalRequest.getResponseHeader("Custom")).toBe("blargh");
         done();
@@ -721,7 +726,7 @@ describe("tus", function () {
           status: 423 // Locked
         });
 
-        expect(options.onError).toHaveBeenCalledWith(new Error("tus: upload is currently locked; retry later, originated from request (response code: 423, response text: )"));
+        expect(options.onError).toHaveBeenCalledWith(new Error("tus: upload is currently locked; retry later, originated from request (method: HEAD, url: http://locked.tus.io/files/upload, response code: 423, response text: , request id: null)"));
         done();
       });
     });
@@ -748,7 +753,7 @@ describe("tus", function () {
           status: 201
         });
 
-        expect(options.onError).toHaveBeenCalledWith(new Error("tus: invalid or missing Location header, originated from request (response code: 201, response text: )"));
+        expect(options.onError).toHaveBeenCalledWith(new Error("tus: invalid or missing Location header, originated from request (method: POST, url: http://emit.tus.io/uploads, response code: 201, response text: , request id: null)"));
         done();
       });
     });
