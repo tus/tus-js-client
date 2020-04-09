@@ -3,7 +3,7 @@
   "version": "1.8.0",
   "description": "A pure JavaScript client for the tus resumable upload protocol",
   "main": "lib.es5/node/index.js",
-  "jsnext:main": "lib/node/index.js",
+  "module": "lib/node/index.js",
   "files": [
     "lib/**/*",
     "lib.es5/**/*",
