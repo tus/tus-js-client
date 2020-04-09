@@ -2,8 +2,8 @@
   "name": "tus-js-client",
   "version": "1.8.0",
   "description": "A pure JavaScript client for the tus resumable upload protocol",
-  "main": "lib.es5/index.js",
-  "jsnext:main": "lib/index.js",
+  "main": "lib.es5/node/index.js",
+  "jsnext:main": "lib/node/index.js",
   "files": [
     "lib/**/*",
     "lib.es5/**/*",
@@ -13,15 +13,8 @@
     "test/**/*"
   ],
   "browser": {
-    "./lib/node/request.js": "./lib/browser/request.js",
-    "./lib/node/base64.js": "./lib/browser/base64.js",
-    "./lib/node/storage.js": "./lib/browser/storage.js",
-    "./lib/node/source.js": "./lib/browser/source.js",
-    "./lib/node/fingerprint.js": "./lib/browser/fingerprint.js",
-    "./lib.es5/node/request.js": "./lib.es5/browser/request.js",
-    "./lib.es5/node/storage.js": "./lib.es5/browser/storage.js",
-    "./lib.es5/node/source.js": "./lib.es5/browser/source.js",
-    "./lib.es5/node/fingerprint.js": "./lib.es5/browser/fingerprint.js"
+    "./lib.es5/node/index.js": "./lib.es5/browser/index.js",
+    "./lib/node/index.js": "./lib/browser/index.js"
   },
   "repository": {
     "type": "git",
@@ -72,7 +65,7 @@
     "url-parse": "^1.4.3"
   },
   "scripts": {
-    "build": "mkdir -p dist && browserify lib/index.js -t [ babelify ] -s tus -d | exorcist ./dist/tus.js.map | derequire > dist/tus.js",
+    "build": "mkdir -p dist && browserify lib/browser/index.js -t [ babelify ] -s tus -d | exorcist ./dist/tus.js.map | derequire > dist/tus.js",
     "watch": "watchify lib/index.js -t babelify -o dist/tus.js -s tus -v -d",
     "test": "./bin/test",
     "puppeteer-test": "node bin/puppeteer-jasmine.js",
