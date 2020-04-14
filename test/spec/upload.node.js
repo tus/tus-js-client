@@ -1,3 +1,4 @@
+const { TestHttpStack, waitableFunction } = require("./helpers/utils");
 const tus = require("../../");
 const stream = require("stream");
 const temp = require("temp");

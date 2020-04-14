@@ -1,12 +1,9 @@
+const { TestHttpStack, waitableFunction, wait } = require("./helpers/utils");
+const tus = require("../../");
+const axios = require("axios");
+
 var isBrowser  = typeof window !== "undefined";
 var isNode     = !isBrowser;
-
-if (isNode) {
-  // In the browser environment, Axios and tus are provided directly from
-  // SpecRunner.html, but in Node we have to require them.
-  var axios = require("axios");
-  var tus = require("../../");
-}
 
 var getBlob = function (str) {
   if (isNode) {
@@ -847,6 +844,7 @@ describe("tus", function () {
     it("should not retry if the error has not been caused by a request", async function () {
       var file = getBlob("hello world");
       var options = {
+        httpStack: new TestHttpStack(),
         endpoint: "http://tus.io/files/",
         retryDelays: [10, 10, 10],
         onSuccess: function () {},

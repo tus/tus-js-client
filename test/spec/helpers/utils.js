@@ -136,3 +136,9 @@ class TestResponse {
     throw new Error("not implemented");
   }
 }
+
+module.exports = {
+  TestHttpStack,
+  waitableFunction,
+  wait
+};

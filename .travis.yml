@@ -2,11 +2,7 @@ language: node_js
 matrix:
   include:
   - env: TEST_TARGET=browser
-    node_js: 10
-  - env: TEST_TARGET=node
-    node_js: 6
-  - env: TEST_TARGET=node
-    node_js: 7
+    node_js: 12
   - env: TEST_TARGET=node
     node_js: 8
   - env: TEST_TARGET=node
@@ -17,10 +13,13 @@ matrix:
     node_js: 11
   - env: TEST_TARGET=node
     node_js: 12
+  - env: TEST_TARGET=node
+    node_js: 13
 script:
 - npm run lint
 - npm run dist
 - npm run transpile
+- npm run build-test
 - npm test
 deploy:
   provider: npm
@@ -31,4 +30,4 @@ deploy:
   on:
     tags: true
     repo: tus/tus-js-client
-    node: 10
+    node: 12

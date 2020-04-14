@@ -1,4 +1,7 @@
-/* global Blob tus */
+/* global Blob  */
+
+const { TestHttpStack, waitableFunction, wait } = require("./helpers/utils");
+const tus = require("../../");
 
 describe("tus", function () {
   describe("#Upload", function () {
@@ -562,6 +565,7 @@ describe("tus", function () {
         var reader = makeReader("hello there world");
 
         var options = {
+          httpStack: new TestHttpStack(),
           endpoint: "http://tus.io/files/",
           chunkSize: 6,
           retryDelays: [10, 10, 10],

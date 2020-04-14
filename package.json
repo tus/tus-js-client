@@ -43,6 +43,7 @@
     "browserify": "^12.0.0",
     "browserstack": "^1.5.2",
     "browserstack-runner": "git://github.com/Acconut/browserstack-runner.git#fix_etxtbsy",
+    "core-js": "^3.6.5",
     "eslint": "^4.19.1",
     "eslint-plugin-react": "^7.11.1",
     "exorcist": "^0.4.0",
@@ -50,6 +51,7 @@
     "jasmine-ajax": "^3.2.0",
     "jasmine-core": "^3.5.0",
     "puppeteer": "^1.19.0",
+    "regenerator-runtime": "^0.13.5",
     "temp": "^0.8.3",
     "uglify-js": "^2.6.0",
     "watchify": "^3.11.1"
@@ -64,6 +66,7 @@
     "url-parse": "^1.4.3"
   },
   "scripts": {
+    "build-test": "mkdir -p dist && browserify test/spec/browser-index.js -t [ babelify ] -d > dist/browser-test-bundle.js",
     "build": "mkdir -p dist && browserify lib/browser/index.js -t [ babelify ] -s tus -d | exorcist ./dist/tus.js.map > dist/tus.js",
     "watch": "watchify lib/browser/index.js -t babelify -o dist/tus.js -s tus -v -d",
     "test": "./bin/test",
