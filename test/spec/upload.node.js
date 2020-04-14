@@ -128,9 +128,12 @@ describe("tus", function () {
         urlStorage: storage,
         onSuccess: waitableFunction("onSuccess")
       };
+      spyOn(options, "fingerprint").and.callThrough();
 
       var upload = new tus.Upload(input, options);
       upload.start();
+
+      expect(options.fingerprint).toHaveBeenCalledWith(input, upload.options, jasmine.any(Function));
 
       var req = await options.httpStack.nextRequest();
       expect(req.url).toBe("/uploads/resuming");

@@ -27,7 +27,7 @@ describe("tus", function () {
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      expect(options.fingerprint).toHaveBeenCalled();
+      expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options, jasmine.any(Function));
 
       var req = await testStack.nextRequest();
       expect(req.url).toBe("http://tus.io/uploads/resuming");

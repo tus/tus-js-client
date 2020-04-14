@@ -13,18 +13,6 @@ var getBlob = function (str) {
   }
 };
 
-var getStorage = function () {
-  // this storage is only needed for the node environment. It defaults to localStorage
-  // for browser.
-  if (isNode) {
-    var temp = require("temp");
-    var storagePath = temp.path();
-    return new tus.FileStorage(storagePath);
-  }
-
-  return null;
-};
-
 // Set Jasmine's timeout for a single test to 20s
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 20 * 1000;
 
@@ -71,20 +59,13 @@ describe("tus", function () {
           number: 100
         },
         withCredentials: true,
-        urlStorage: getStorage(),
         onProgress: function () {},
-        onSuccess: waitableFunction(),
-        fingerprint: function (_file, _options, cb) {
-          cb(null, "fingerprinted");
-        }
+        onSuccess: waitableFunction()
       };
-      spyOn(options, "fingerprint").and.callThrough();
       spyOn(options, "onProgress");
 
       const upload = new tus.Upload(file, options);
       upload.start();
-
-      expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options, jasmine.any(Function));
 
       let req = await testStack.nextRequest();
 
@@ -367,22 +348,15 @@ describe("tus", function () {
         httpStack: testStack,
         endpoint: "http://tus.io/uploads",
         chunkSize: 7,
-        urlStorage: getStorage(),
         onSuccess: waitableFunction("onSuccess"),
         onProgress: function () {},
-        onChunkComplete: function () {},
-        fingerprint: function (_file, _options, cb) {
-          cb(null, "fingerprinted");
-        }
+        onChunkComplete: function () {}
       };
-      spyOn(options, "fingerprint").and.callThrough();
       spyOn(options, "onProgress");
       spyOn(options, "onChunkComplete");
 
       var upload = new tus.Upload(file, options);
       upload.start();
-
-      expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options, jasmine.any(Function));
 
       let req = await testStack.nextRequest();
       expect(req.url).toBe("http://tus.io/uploads");
