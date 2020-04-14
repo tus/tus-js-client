@@ -338,11 +338,8 @@ If all of these conditions are met, an attempt will be issued after applying the
 # Install dependencies
 npm install
 
-# Build dist/tus.js a single time
+# Build bundle and test scripts
 npm run build
-
-# Build all dist files (including minification)
-npm run dist
 
 # Watch source and rebuild
 npm run watch

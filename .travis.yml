@@ -16,11 +16,9 @@ matrix:
   - env: TEST_TARGET=node
     node_js: 13
 script:
+- npm run build
 - npm run lint
-- npm run dist
-- npm run transpile
-- npm run build-test
-- npm test
+- npm run test
 deploy:
   provider: npm
   email: marius@transloadit.com

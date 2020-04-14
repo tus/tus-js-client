@@ -50,6 +50,7 @@
     "jasmine": "^3.5.0",
     "jasmine-ajax": "^3.2.0",
     "jasmine-core": "^3.5.0",
+    "npm-run-all": "^4.1.5",
     "puppeteer": "^1.19.0",
     "regenerator-runtime": "^0.13.5",
     "temp": "^0.8.3",
@@ -66,16 +67,19 @@
     "url-parse": "^1.4.3"
   },
   "scripts": {
-    "build-test": "mkdir -p dist && browserify test/spec/browser-index.js -t [ babelify ] -d > dist/browser-test-bundle.js",
-    "build": "mkdir -p dist && browserify lib/browser/index.js -t [ babelify ] -s tus -d | exorcist ./dist/tus.js.map > dist/tus.js",
-    "watch": "watchify lib/browser/index.js -t babelify -o dist/tus.js -s tus -v -d",
+    "build-test-bundle": "mkdir -p dist && browserify test/spec/browser-index.js -t babelify -d -o dist/browser-test-bundle.js",
+    "build-bundle": "mkdir -p dist && browserify lib/browser/index.js -t babelify -s tus -d | exorcist ./dist/tus.js.map > dist/tus.js",
+    "build-minify": "uglifyjs ./dist/tus.js -o ./dist/tus.min.js --in-source-map ./dist/tus.js.map --source-map ./dist/tus.min.js.map --source-map-url tus.min.js.map",
+    "build-transpile": "babel -d lib.es5/ lib/",
+    "build": "npm-run-all build-bundle build-minify build-transpile build-test-bundle",
+    "watch-bundle": "watchify lib/browser/index.js -t babelify -o dist/tus.js -s tus -v -d",
+    "watch-test-bundle": "watchify test/spec/browser-index.js -t babelify -d -o dist/browser-test-bundle.js",
+    "watch-tranpile": "babel --watch -d lib.es5/ lib/",
+    "watch": "npm-run-all --parallel watch-*",
+    "test-puppeteer": "node bin/puppeteer-jasmine.js",
+    "test-browserstack": "node bin/browserstack-jasmine.js",
+    "test-node": "jasmine test/spec/node-index.js",
     "test": "./bin/test",
-    "puppeteer-test": "node bin/puppeteer-jasmine.js",
-    "browserstack-test": "node bin/browserstack-jasmine.js",
-    "node-test": "jasmine test/spec/node-index.js",
-    "minify": "uglifyjs ./dist/tus.js -o ./dist/tus.min.js --in-source-map ./dist/tus.js.map --source-map ./dist/tus.min.js.map --source-map-url tus.min.js.map",
-    "dist": "npm run build && npm run minify",
-    "lint": "eslint lib demos test bin",
-    "transpile": "babel -d lib.es5/ lib/"
+    "lint": "eslint lib demos test bin"
   }
 }
