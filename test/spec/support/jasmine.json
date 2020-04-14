@@ -5,7 +5,7 @@
     "upload.node.js"
   ],
   "helpers": [
-    "helpers/node/*.js"
+    "helpers/utils.js"
   ],
   "stopSpecOnExpectationFailure": false,
   "random": false

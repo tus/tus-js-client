@@ -11,23 +11,16 @@ describe("tus", function () {
   });
 
   describe("#Upload", function () {
-    beforeEach(function () {
-      jasmine.Ajax.install();
-    });
-
-    afterEach(function () {
-      jasmine.Ajax.uninstall();
-    });
-
-    it("should accept Buffers", function (done) {
+    it("should accept Buffers", async function () {
       var buffer = Buffer.from("hello world");
       var options = {
+        httpStack: new TestHttpStack(),
         resume: false,
         endpoint: "/uploads",
         chunkSize: 7
       };
 
-      expectHelloWorldUpload(buffer, options, done);
+      await expectHelloWorldUpload(buffer, options);
     });
 
     it("should reject streams without specifing the size", function () {
@@ -53,9 +46,10 @@ describe("tus", function () {
       expect(upload.start.bind(upload)).toThrow(new Error("cannot create source for stream without a finite value for the `chunkSize` option"));
     });
 
-    it("should accept Readable streams", function (done) {
+    it("should accept Readable streams", async function () {
       var input = new stream.PassThrough();
       var options = {
+        httpStack: new TestHttpStack(),
         resume: false,
         endpoint: "/uploads",
         chunkSize: 7,
@@ -63,12 +57,13 @@ describe("tus", function () {
       };
 
       input.end("hello WORLD");
-      expectHelloWorldUpload(input, options, done);
+      await expectHelloWorldUpload(input, options);
     });
 
-    it("should accept Readable streams with deferred size", function (done) {
+    it("should accept Readable streams with deferred size", async function () {
       var input = new stream.PassThrough();
       var options = {
+        httpStack: new TestHttpStack(),
         resume: false,
         endpoint: "/uploads",
         chunkSize: 7,
@@ -76,108 +71,128 @@ describe("tus", function () {
       };
 
       input.end("hello WORLD");
-      expectHelloWorldUpload(input, options, done);
+      await expectHelloWorldUpload(input, options);
     });
 
-    it("should accept ReadStreams streams", function (done) {
+    it("should accept ReadStreams streams", async function () {
       // Create a temporary file
       var path = temp.path();
       fs.writeFileSync(path, "hello world");
       var file = fs.createReadStream(path);
 
       var options = {
+        httpStack: new TestHttpStack(),
         resume: false,
         endpoint: "/uploads",
         chunkSize: 7,
         uploadSize: 11
       };
 
-      expectHelloWorldUpload(file, options, done);
+      await expectHelloWorldUpload(file, options);
     });
 
-    it("should pass through errors from the request", function () {
+
+    it("should pass through errors from the request", async function () {
       var resErr = new Error("something bad, really!");
       var buffer = Buffer.from("hello world");
-      var option = {
+      var options = {
+        httpStack: new TestHttpStack(),
         resume: false,
         endpoint: "/uploads",
-        onError: function (err) {
-          expect(err.causingError).toBe(resErr);
-        }
+        onError: waitableFunction("onError")
       };
 
-      spyOn(option, "onError").and.callThrough();
-
-      var upload = new tus.Upload(buffer, option);
+      var upload = new tus.Upload(buffer, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
+      var req = await options.httpStack.nextRequest();
       expect(req.url).toBe("/uploads");
       expect(req.method).toBe("POST");
 
       req.responseError(resErr);
 
-      expect(option.onError).toHaveBeenCalled();
+      const err = await options.onError.toBeCalled;
+      expect(err.causingError).toBe(resErr);
     });
 
-    it("should resume an upload from a stored url", function (done) {
+    it("should resume an upload from a stored url", async function () {
       var storagePath = temp.path();
       fs.writeFileSync(storagePath, "{\"fingerprinted.resume\":\"/uploads/resuming\"}");
       var storage = new tus.FileStorage(storagePath);
       var input = Buffer.from("hello world");
       var options = {
+        httpStack: new TestHttpStack(),
         endpoint: "/uploads",
         fingerprint: (_, __, cb) => cb(null, "fingerprinted.resume"),
-        urlStorage: storage
+        urlStorage: storage,
+        onSuccess: waitableFunction("onSuccess")
       };
 
       var upload = new tus.Upload(input, options);
       upload.start();
-      var req = jasmine.Ajax.requests.mostRecent();
 
-      setTimeout(() => {
-        tickTillNewReq(req, (req) => {
-          expect(req.url).toBe("/uploads/resuming");
-          expect(req.method).toBe("HEAD");
-          expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+      var req = await options.httpStack.nextRequest();
+      expect(req.url).toBe("/uploads/resuming");
+      expect(req.method).toBe("HEAD");
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
 
-          req.respondWith({
-            status: 204,
-            responseHeaders: {
-              "Upload-Length": 11,
-              "Upload-Offset": 3
-            }
-          });
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Length": 11,
+          "Upload-Offset": 3
+        }
+      });
 
-          expect(upload.url).toBe("/uploads/resuming");
+      expect(upload.url).toBe("/uploads/resuming");
 
-          req = jasmine.Ajax.requests.mostRecent();
-          expect(req.url).toBe("/uploads/resuming");
-          expect(req.method).toBe("PATCH");
-          expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
-          expect(req.requestHeaders["Upload-Offset"]).toBe(3);
-          expect(req.contentType()).toBe("application/offset+octet-stream");
-          expect(req.params.size).toBe(11 - 3);
+      req = await options.httpStack.nextRequest();
+      expect(req.url).toBe("/uploads/resuming");
+      expect(req.method).toBe("PATCH");
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+      expect(req.requestHeaders["Upload-Offset"]).toBe(3);
+      expect(req.requestHeaders["Content-Type"]).toBe("application/offset+octet-stream");
+      expect(req.body.size).toBe(11 - 3);
 
-          req.respondWith({
-            status: 204,
-            responseHeaders: {
-              "Upload-Offset": 11
-            }
-          });
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 11
+        }
+      });
 
-          done();
-        });
-      }, 200);
+      await options.onSuccess.toBeCalled;
     });
   });
 });
 
-function expectHelloWorldUpload(input, options, done) {
+async function getBodySize(body) {
+  if (body == null) {
+    return 0;
+  }
+
+  if (body.size != null) {
+    return body.size;
+  }
+
+  return new Promise((resolve) => {
+    body.on("readable", () => {
+      let chunk;
+      while (null !== (chunk = body.read())) {
+        resolve(chunk.length);
+      }
+    });
+  });
+}
+
+async function expectHelloWorldUpload(input, options) {
+  options.httpStack = new TestHttpStack();
+  options.onSuccess = waitableFunction("onSuccess");
+
   var upload = new tus.Upload(input, options);
   upload.start();
 
-  var req = jasmine.Ajax.requests.mostRecent();
+  var req = await options.httpStack.nextRequest();
   expect(req.url).toBe("/uploads");
   expect(req.method).toBe("POST");
   if (options.uploadLengthDeferred) {
@@ -195,76 +210,46 @@ function expectHelloWorldUpload(input, options, done) {
     }
   });
 
-  // Simulate asyncronous responses for requests with bodies which is required
-  // if we are dealing with streams.
-  tickTillNewReq(req, function (req) {
+  req = await options.httpStack.nextRequest();
+  expect(req.url).toBe("/uploads/blargh");
+  expect(req.method).toBe("PATCH");
+  expect(req.requestHeaders["Upload-Offset"]).toBe(0);
+  expect(await getBodySize(req.body)).toBe(7);
+
+  req.respondWith({
+    status: 204,
+    responseHeaders: {
+      "Upload-Offset": 7
+    }
+  });
+
+  req = await options.httpStack.nextRequest();
+  expect(req.url).toBe("/uploads/blargh");
+  expect(req.method).toBe("PATCH");
+  expect(req.requestHeaders["Upload-Offset"]).toBe(7);
+  expect(await getBodySize(req.body)).toBe(4);
+  req.respondWith({
+    status: 204,
+    responseHeaders: {
+      "Upload-Offset": 11
+    }
+  });
+
+  if (options.uploadLengthDeferred) {
+    req = await options.httpStack.nextRequest();
     expect(req.url).toBe("/uploads/blargh");
     expect(req.method).toBe("PATCH");
-    expect(req.requestHeaders["Upload-Offset"]).toBe(0);
-    expect(req.params.size).toBe(7);
+    expect(req.requestHeaders["Upload-Length"]).toBe(11);
+    expect(await getBodySize(req.body)).toBe(0);
 
     req.respondWith({
       status: 204,
       responseHeaders: {
-        "Upload-Offset": 7
+        "Upload-Offset": 11,
+        "Upload-Length": 11
       }
     });
-
-    tickTillNewReq(req, function (req) {
-      expect(req.url).toBe("/uploads/blargh");
-      expect(req.method).toBe("PATCH");
-      expect(req.requestHeaders["Upload-Offset"]).toBe(7);
-      expect(req.params.size).toBe(4);
-      req.respondWith({
-        status: 204,
-        responseHeaders: {
-          "Upload-Offset": 11
-        }
-      });
-
-      if (options.uploadLengthDeferred) {
-        tickTillNewReq(req, function (req) {
-          expect(req.url).toBe("/uploads/blargh");
-          expect(req.method).toBe("PATCH");
-          expect(req.params.size).toBe(0);
-
-          req.respondWith({
-            status: 204,
-            responseHeaders: {
-              "Upload-Offset": 11
-            }
-          });
-
-          tickTillNewReq(req, function (req) {
-            expect(req.url).toBe("/uploads/blargh");
-            expect(req.method).toBe("PATCH");
-            expect(req.params.size).toBe(0);
-            expect(req.requestHeaders["Upload-Length"]).toBe(11);
-            done();
-          });
-        });
-      } else {
-        done();
-      }
-    });
-  });
-}
-
-// it keeps ticking till it finds that a new request has been produced
-function tickTillNewReq(oldReq, cb, level) {
-  const allowedLevels = 5;
-  level = level || 0;
-  if (level >= allowedLevels) {
-    fail(new Error("call level exceeded"));
-    return;
   }
-  process.nextTick(function () {
-    const req = jasmine.Ajax.requests.mostRecent();
-    if (oldReq != req) {
-      cb(req);
-    } else {
-      tickTillNewReq(oldReq, cb, level + 1);
-    }
-  });
-}
 
+  await options.onSuccess.toBeCalled;
+}

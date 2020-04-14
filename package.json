@@ -46,11 +46,10 @@
     "eslint": "^4.19.1",
     "eslint-plugin-react": "^7.11.1",
     "exorcist": "^0.4.0",
-    "jasmine": "^2.5.2",
+    "jasmine": "^3.5.0",
     "jasmine-ajax": "^3.2.0",
-    "jasmine-core": "^2.4.1",
+    "jasmine-core": "^3.5.0",
     "puppeteer": "^1.19.0",
-    "synchronous-promise": "^2.0.5",
     "temp": "^0.8.3",
     "uglify-js": "^2.6.0",
     "watchify": "^3.11.1"
@@ -66,7 +65,7 @@
   },
   "scripts": {
     "build": "mkdir -p dist && browserify lib/browser/index.js -t [ babelify ] -s tus -d | exorcist ./dist/tus.js.map > dist/tus.js",
-    "watch": "watchify lib/index.js -t babelify -o dist/tus.js -s tus -v -d",
+    "watch": "watchify lib/browser/index.js -t babelify -o dist/tus.js -s tus -v -d",
     "test": "./bin/test",
     "puppeteer-test": "node bin/puppeteer-jasmine.js",
     "browserstack-test": "node bin/browserstack-jasmine.js",

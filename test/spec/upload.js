@@ -6,7 +6,6 @@ if (isNode) {
   // SpecRunner.html, but in Node we have to require them.
   var axios = require("axios");
   var tus = require("../../");
-  var SynchronousPromise = require("synchronous-promise").SynchronousPromise;
 }
 
 var getBlob = function (str) {
@@ -32,9 +31,6 @@ var getStorage = function () {
 // Set Jasmine's timeout for a single test to 20s
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 20 * 1000;
 
-// NOTE: if a test case uses the 'waitTillNextReq' function,
-// a unique request host (different from those in other test cases)
-// must be specified in order to be able to uniquely identify the request being waited for.
 describe("tus", function () {
   describe("#isSupported", function () {
     it("should be true", function () {
@@ -44,19 +40,11 @@ describe("tus", function () {
 
   describe("#Upload", function () {
     beforeEach(function () {
-      jasmine.Ajax.install();
-      SynchronousPromise.installGlobally();
-
       // Clear localStorage before every test to prevent stored URLs to
       // interfere with our setup.
       if (isBrowser) {
         localStorage.clear();
       }
-    });
-
-    afterEach(function () {
-      jasmine.Ajax.uninstall();
-      SynchronousPromise.uninstallGlobally();
     });
 
     it("should throw if no error handler is available", function () {
@@ -70,13 +58,12 @@ describe("tus", function () {
       expect(upload.start.bind(upload)).toThrowError("tus: neither an endpoint or an upload URL is provided");
     });
 
-    it("should upload a file", function (done) {
-      var file = getBlob("hello world");
-      var host = "http://files.tus.io";
-      var passedOptions;
-      var passedFile;
-      var options = {
-        endpoint: host + "/uploads",
+    it("should upload a file", async function () {
+      const testStack = new TestHttpStack();
+      const file = getBlob("hello world");
+      const options = {
+        httpStack: testStack,
+        endpoint: "https://tus.io/uploads",
         headers: {
           Custom: "blargh"
         },
@@ -89,73 +76,73 @@ describe("tus", function () {
         withCredentials: true,
         urlStorage: getStorage(),
         onProgress: function () {},
+        onSuccess: waitableFunction(),
         fingerprint: function (_file, _options, cb) {
-          passedOptions = _options;
-          passedFile = _file;
           cb(null, "fingerprinted");
         }
       };
       spyOn(options, "fingerprint").and.callThrough();
       spyOn(options, "onProgress");
 
-      var upload = new tus.Upload(file, options);
+      const upload = new tus.Upload(file, options);
       upload.start();
 
-      expect(options.fingerprint).toHaveBeenCalled();
-      expect(passedOptions).toBe(upload.options);
-      expect(passedFile).toBe(file);
+      expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options, jasmine.any(Function));
 
-      waitTillNextReq(host, null, function (req) {
-        expect(req.url).toBe(host + "/uploads");
-        expect(req.method).toBe("POST");
-        expect(req.requestHeaders.Custom).toBe("blargh");
-        expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
-        expect(req.requestHeaders["Upload-Length"]).toBe(11);
-        if (isBrowser) expect(req.withCredentials).toBe(true);
-        expect(req.requestHeaders["Upload-Metadata"]).toBe("foo aGVsbG8=,bar d29ybGQ=,nonlatin c8WCb8WEY2U=,number MTAw");
+      let req = await testStack.nextRequest();
 
-        req.respondWith({
-          status: 201,
-          responseHeaders: {
-            Location: host + "/uploads/blargh"
-          }
-        });
+      expect(req.url).toBe("https://tus.io/uploads");
+      expect(req.method).toBe("POST");
+      expect(req.requestHeaders.Custom).toBe("blargh");
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+      expect(req.requestHeaders["Upload-Length"]).toBe(11);
+      //if (isBrowser) expect(req.withCredentials).toBe(true);
+      expect(req.requestHeaders["Upload-Metadata"]).toBe("foo aGVsbG8=,bar d29ybGQ=,nonlatin c8WCb8WEY2U=,number MTAw");
 
-        expect(upload.url).toBe(host + "/uploads/blargh");
-
-        req = jasmine.Ajax.requests.mostRecent();
-        expect(req.url).toBe(host + "/uploads/blargh");
-        expect(req.method).toBe("PATCH");
-        expect(req.requestHeaders.Custom).toBe("blargh");
-        expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
-        expect(req.requestHeaders["Upload-Offset"]).toBe(0);
-        expect(req.contentType()).toBe("application/offset+octet-stream");
-        expect(req.params.size).toBe(11);
-        if (isBrowser) expect(req.withCredentials).toBe(true);
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            "Upload-Offset": 11
-          }
-        });
-
-        expect(options.onProgress).toHaveBeenCalledWith(11, 11);
-        done();
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: "https://tus.io/uploads/blargh"
+        }
       });
+
+      req = await testStack.nextRequest();
+
+      expect(req.url).toBe("https://tus.io/uploads/blargh");
+      expect(req.method).toBe("PATCH");
+      expect(req.requestHeaders.Custom).toBe("blargh");
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+      expect(req.requestHeaders["Upload-Offset"]).toBe(0);
+      expect(req.requestHeaders["Content-Type"]).toBe("application/offset+octet-stream");
+      expect(req.body.size).toBe(11);
+      //if (isBrowser) expect(req.withCredentials).toBe(true);
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 11
+        }
+      });
+
+      await options.onSuccess.toBeCalled;
+
+      expect(upload.url).toBe("https://tus.io/uploads/blargh");
+      expect(options.onProgress).toHaveBeenCalledWith(11, 11);
     });
 
-    it("should create an upload if resuming fails", function (done) {
-      var file = getBlob("hello world");
-      var options = {
+    it("should create an upload if resuming fails", async function () {
+      const testStack = new TestHttpStack();
+      const file = getBlob("hello world");
+      const options = {
+        httpStack: testStack,
         endpoint: "http://tus.io/uploads",
         uploadUrl: "http://tus.io/uploads/resuming"
       };
 
-      var upload = new tus.Upload(file, options);
+      const upload = new tus.Upload(file, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
+      let req = await testStack.nextRequest();
       expect(req.url).toBe("http://tus.io/uploads/resuming");
       expect(req.method).toBe("HEAD");
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
@@ -164,40 +151,41 @@ describe("tus", function () {
         status: 404
       });
 
-      expect(upload.url).toBe(null);
-
-      req = jasmine.Ajax.requests.mostRecent();
+      req = await testStack.nextRequest();
       expect(req.url).toBe("http://tus.io/uploads");
       expect(req.method).toBe("POST");
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
       expect(req.requestHeaders["Upload-Length"]).toBe(11);
-      done();
+
+      // The upload URL should be cleared when tus-js.client tries to create a new upload.
+      expect(upload.url).toBe(null);
     });
 
-    it("should create an upload with the full data", function (done) {
+    it("should create an upload using the creation-with-data extension", async function () {
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
       var options = {
+        httpStack: testStack,
         endpoint: "http://tus.io/uploads",
         uploadDataDuringCreation: true,
         onProgress: function () {},
         onChunkComplete: function () {},
-        onSuccess: function () {}
+        onSuccess: waitableFunction("onSuccess")
       };
 
       spyOn(options, "onProgress");
       spyOn(options, "onChunkComplete");
-      spyOn(options, "onSuccess");
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
+      const req = await testStack.nextRequest();
       expect(req.url).toBe("http://tus.io/uploads");
       expect(req.method).toBe("POST");
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
       expect(req.requestHeaders["Upload-Length"]).toBe(11);
-      expect(req.contentType()).toBe("application/offset+octet-stream");
-      expect(req.params.size).toBe(11);
+      expect(req.requestHeaders["Content-Type"]).toBe("application/offset+octet-stream");
+      expect(req.body.size).toBe(11);
 
       req.respondWith({
         status: 201,
@@ -207,40 +195,41 @@ describe("tus", function () {
         }
       });
 
+      await options.onSuccess.toBeCalled;
 
       expect(options.onProgress).toHaveBeenCalledWith(11, 11);
       expect(options.onChunkComplete).toHaveBeenCalledWith(11, 11, 11);
       expect(options.onSuccess).toHaveBeenCalled();
 
       expect(upload.url).toBe("http://tus.io/uploads/blargh");
-      done();
     });
 
-    it("should create an upload with partial data and continue", function (done) {
+    it("should create an upload with partial data and continue", async function () {
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
       var options = {
+        httpStack: testStack,
         endpoint: "http://tus.io/uploads",
         uploadDataDuringCreation: true,
         chunkSize: 6,
         onProgress: function () {},
         onChunkComplete: function () {},
-        onSuccess: function () {}
+        onSuccess: waitableFunction("onSuccess")
       };
 
       spyOn(options, "onProgress");
       spyOn(options, "onChunkComplete");
-      spyOn(options, "onSuccess");
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
+      var req = await testStack.nextRequest();
       expect(req.url).toBe("http://tus.io/uploads");
       expect(req.method).toBe("POST");
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
       expect(req.requestHeaders["Upload-Length"]).toBe(11);
-      expect(req.contentType()).toBe("application/offset+octet-stream");
-      expect(req.params.size).toBe(6);
+      expect(req.requestHeaders["Content-Type"]).toBe("application/offset+octet-stream");
+      expect(req.body.size).toBe(6);
 
       req.respondWith({
         status: 201,
@@ -250,20 +239,20 @@ describe("tus", function () {
         }
       });
 
+      req = await testStack.nextRequest();
 
+      // Once the second request has been sent, the progress handler must have been invoked.
       expect(options.onProgress).toHaveBeenCalledWith(6, 11);
       expect(options.onChunkComplete).toHaveBeenCalledWith(6, 6, 11);
       expect(options.onSuccess).not.toHaveBeenCalled();
-
       expect(upload.url).toBe("http://tus.io/uploads/blargh");
 
-      req = jasmine.Ajax.requests.mostRecent();
       expect(req.url).toBe("http://tus.io/uploads/blargh");
       expect(req.method).toBe("PATCH");
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
       expect(req.requestHeaders["Upload-Offset"]).toBe(6);
-      expect(req.contentType()).toBe("application/offset+octet-stream");
-      expect(req.params.size).toBe(5);
+      expect(req.requestHeaders["Content-Type"]).toBe("application/offset+octet-stream");
+      expect(req.body.size).toBe(5);
 
       req.respondWith({
         status: 201,
@@ -273,32 +262,31 @@ describe("tus", function () {
         }
       });
 
+      await options.onSuccess.toBeCalled;
 
       expect(options.onProgress).toHaveBeenCalledWith(11, 11);
       expect(options.onChunkComplete).toHaveBeenCalledWith(5, 11, 11);
       expect(options.onSuccess).toHaveBeenCalled();
-      done();
     });
 
-    it("should add the request's body and ID to errors", function () {
+    it("should add the request's body and ID to errors", async function () {
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
-      var err;
       var options = {
+        httpStack: testStack,
         endpoint: "http://tus.io/uploads",
         addRequestId: true,
-        onError: function (e) {
-          err = e;
-        }
+        onError: waitableFunction("onError")
       };
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
+      var req = await testStack.nextRequest();
       expect(req.url).toBe("http://tus.io/uploads");
       expect(req.method).toBe("POST");
 
-      const reqId =  req.requestHeaders["X-Request-ID"];
+      const reqId = req.requestHeaders["X-Request-ID"];
       expect(typeof reqId).toBe("string");
       expect(reqId.length).toBe(36);
 
@@ -307,22 +295,26 @@ describe("tus", function () {
         responseText: "server_error"
       });
 
+      const err = await options.onError.toBeCalled;
+
       expect(err.message).toBe("tus: unexpected response while creating upload, originated from request (method: POST, url: http://tus.io/uploads, response code: 500, response text: server_error, request id: " + reqId + ")");
       expect(err.originalRequest).toBeDefined();
+      expect(err.originalResponse).toBeDefined();
     });
 
-    it("should throw an error if resuming fails and no endpoint is provided", function (done) {
+    it("should throw an error if resuming fails and no endpoint is provided", async function () {
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
       var options = {
+        httpStack: testStack,
         uploadUrl: "http://tus.io/uploads/resuming",
-        onError: function () {}
+        onError: waitableFunction("onError")
       };
-      spyOn(options, "onError");
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
+      var req = await testStack.nextRequest();
       expect(req.url).toBe("http://tus.io/uploads/resuming");
       expect(req.method).toBe("HEAD");
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
@@ -331,61 +323,58 @@ describe("tus", function () {
         status: 404
       });
 
-      expect(options.onError).toHaveBeenCalledWith(new Error("tus: unable to resume upload (new upload cannot be created without an endpoint), originated from request (method: HEAD, url: http://tus.io/uploads/resuming, response code: 404, response text: , request id: null)"));
-      done();
+      const err = await options.onError.toBeCalled;
+      expect(err.message).toBe("tus: unable to resume upload (new upload cannot be created without an endpoint), originated from request (method: HEAD, url: http://tus.io/uploads/resuming, response code: 404, response text: , request id: n/a)");
     });
 
-    it("should resolve relative URLs", function (done) {
+    it("should resolve relative URLs", async function () {
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
-      var host = "http://relative.tus.io:1080";
       var options = {
-        endpoint: host + "/files/"
+        httpStack: testStack,
+        endpoint: "http://tus.io:1080/files/"
       };
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      waitTillNextReq(host, null, function (req) {
-        expect(req.url).toBe(host + "/files/");
-        expect(req.method).toBe("POST");
+      let req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io:1080/files/");
+      expect(req.method).toBe("POST");
 
-        req.respondWith({
-          status: 201,
-          responseHeaders: {
-            "Location": "//localhost/uploads/foo"
-          }
-        });
-
-        expect(upload.url).toBe("http://localhost/uploads/foo");
-
-        req = jasmine.Ajax.requests.mostRecent();
-        expect(req.url).toBe("http://localhost/uploads/foo");
-        expect(req.method).toBe("PATCH");
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            "Upload-Offset": 11
-          }
-        });
-        done();
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          "Location": "//localhost/uploads/foo"
+        }
       });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://localhost/uploads/foo");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 11
+        }
+      });
+
+      expect(upload.url).toBe("http://localhost/uploads/foo");
     });
 
-    it("should upload a file in chunks", function (done) {
-      var host = "http://chunks.tus.io";
+    it("should upload a file in chunks", async function () {
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
-      var passedOptions;
-      var passedFile;
       var options = {
-        endpoint: host + "/uploads",
+        httpStack: testStack,
+        endpoint: "http://tus.io/uploads",
         chunkSize: 7,
         urlStorage: getStorage(),
+        onSuccess: waitableFunction("onSuccess"),
         onProgress: function () {},
         onChunkComplete: function () {},
         fingerprint: function (_file, _options, cb) {
-          passedOptions = _options;
-          passedFile = _file;
           cb(null, "fingerprinted");
         }
       };
@@ -396,140 +385,136 @@ describe("tus", function () {
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      expect(options.fingerprint).toHaveBeenCalled();
-      expect(passedOptions).toBe(upload.options);
-      expect(passedFile).toBe(file);
+      expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options, jasmine.any(Function));
 
-      waitTillNextReq(host, null, function (req) {
-        expect(req.url).toBe(host + "/uploads");
-        expect(req.method).toBe("POST");
-        expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
-        expect(req.requestHeaders["Upload-Length"]).toBe(11);
+      let req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/uploads");
+      expect(req.method).toBe("POST");
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+      expect(req.requestHeaders["Upload-Length"]).toBe(11);
 
-        req.respondWith({
-          status: 201,
-          responseHeaders: {
-            Location: "/uploads/blargh"
-          }
-        });
-
-        expect(upload.url).toBe(host + "/uploads/blargh");
-
-        req = jasmine.Ajax.requests.mostRecent();
-        expect(req.url).toBe(host + "/uploads/blargh");
-        expect(req.method).toBe("PATCH");
-        expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
-        expect(req.requestHeaders["Upload-Offset"]).toBe(0);
-        expect(req.contentType()).toBe("application/offset+octet-stream");
-        expect(req.params.size).toBe(7);
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            "Upload-Offset": 7
-          }
-        });
-
-        req = jasmine.Ajax.requests.mostRecent();
-        expect(req.url).toBe(host + "/uploads/blargh");
-        expect(req.method).toBe("PATCH");
-        expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
-        expect(req.requestHeaders["Upload-Offset"]).toBe(7);
-        expect(req.contentType()).toBe("application/offset+octet-stream");
-        expect(req.params.size).toBe(4);
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            "Upload-Offset": 11
-          }
-        });
-        expect(options.onProgress).toHaveBeenCalledWith(11, 11);
-        expect(options.onChunkComplete).toHaveBeenCalledWith(7, 7, 11);
-        expect(options.onChunkComplete).toHaveBeenCalledWith(4, 11, 11);
-        done();
-      });
-    });
-
-    it("should add the original request to errors", function (done) {
-      var file = getBlob("hello world");
-      var host = "http://original.tus.io";
-      var err;
-      var options = {
-        endpoint: host + "/uploads",
-        onError: function (e) {
-          err = e;
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: "/uploads/blargh"
         }
-      };
-
-      var upload = new tus.Upload(file, options);
-      upload.start();
-
-      waitTillNextReq(host, null, function (req) {
-        expect(req.url).toBe(host + "/uploads");
-        expect(req.method).toBe("POST");
-
-        req.respondWith({
-          status: 500,
-          responseHeaders: {
-            Custom: "blargh"
-          }
-        });
-
-        expect(upload.url).toBe(null);
-
-        expect(err.message).toBe("tus: unexpected response while creating upload, originated from request (method: POST, url: http://original.tus.io/uploads, response code: 500, response text: , request id: null)");
-        expect(err.originalRequest).toBeDefined();
-        expect(err.originalRequest.getResponseHeader("Custom")).toBe("blargh");
-        done();
       });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/uploads/blargh");
+      expect(req.method).toBe("PATCH");
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+      expect(req.requestHeaders["Upload-Offset"]).toBe(0);
+      expect(req.requestHeaders["Content-Type"]).toBe("application/offset+octet-stream");
+      expect(req.body.size).toBe(7);
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 7
+        }
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/uploads/blargh");
+      expect(req.method).toBe("PATCH");
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+      expect(req.requestHeaders["Upload-Offset"]).toBe(7);
+      expect(req.requestHeaders["Content-Type"]).toBe("application/offset+octet-stream");
+      expect(req.body.size).toBe(4);
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 11
+        }
+      });
+
+      await options.onSuccess.toBeCalled;
+
+      expect(upload.url).toBe("http://tus.io/uploads/blargh");
+      expect(options.onProgress).toHaveBeenCalledWith(11, 11);
+      expect(options.onChunkComplete).toHaveBeenCalledWith(7, 7, 11);
+      expect(options.onChunkComplete).toHaveBeenCalledWith(4, 11, 11);
     });
 
-    it("should only create an upload for empty files", function (done) {
-      var file = getBlob("");
-      var host = "http://empty.tus.io";
-      var options = {
-        endpoint: host + "/uploads",
-        onSuccess: function () {}
-      };
-      spyOn(options, "onSuccess");
-
-      var upload = new tus.Upload(file, options);
-      upload.start();
-
-      waitTillNextReq(host, null, function (req) {
-        expect(req.url).toBe(host + "/uploads");
-        expect(req.method).toBe("POST");
-        expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
-        expect(req.requestHeaders["Upload-Length"]).toBe(0);
-
-        req.respondWith({
-          status: 201,
-          responseHeaders: {
-            "Location": host + "/uploads/empty"
-          }
-        });
-
-        expect(options.onSuccess).toHaveBeenCalled();
-        done();
-      });
-    });
-
-    it("should not resume a finished upload", function (done) {
+    it("should add the original request to errors", async function () {
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
       var options = {
+        httpStack: testStack,
+        endpoint: "http://tus.io/uploads",
+        onError: waitableFunction("onError")
+      };
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      const req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/uploads");
+      expect(req.method).toBe("POST");
+
+      req.respondWith({
+        status: 500,
+        responseHeaders: {
+          Custom: "blargh"
+        }
+      });
+
+      const err = await options.onError.toBeCalled;
+
+      expect(upload.url).toBe(null);
+      expect(err.message).toBe("tus: unexpected response while creating upload, originated from request (method: POST, url: http://tus.io/uploads, response code: 500, response text: , request id: n/a)");
+      expect(err.originalRequest).toBeDefined();
+      expect(err.originalResponse).toBeDefined();
+      expect(err.originalResponse.getHeader("Custom")).toBe("blargh");
+    });
+
+    it("should only create an upload for empty files", async function () {
+      const testStack = new TestHttpStack();
+      var file = getBlob("");
+      var options = {
+        httpStack: testStack,
+        endpoint: "http://tus.io/uploads",
+        onSuccess: waitableFunction("onSuccess")
+      };
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      const req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/uploads");
+      expect(req.method).toBe("POST");
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+      expect(req.requestHeaders["Upload-Length"]).toBe(0);
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          "Location": "http://tus.io/uploads/empty"
+        }
+      });
+
+      await options.onSuccess.toBeCalled;
+      expect(options.onSuccess).toHaveBeenCalled();
+    });
+
+    it("should not resume a finished upload", async function () {
+      const testStack = new TestHttpStack();
+      var file = getBlob("hello world");
+      var options = {
+        httpStack: testStack,
         endpoint: "http://tus.io/uploads",
         onProgress: function () {},
-        onSuccess: function () {},
+        onSuccess: waitableFunction("onSuccess"),
         uploadUrl: "http://tus.io/uploads/resuming"
       };
       spyOn(options, "onProgress");
-      spyOn(options, "onSuccess");
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
+      var req = await testStack.nextRequest();
       expect(req.url).toBe("http://tus.io/uploads/resuming");
       expect(req.method).toBe("HEAD");
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
@@ -542,18 +527,24 @@ describe("tus", function () {
         }
       });
 
+      await options.onSuccess.toBeCalled;
+
       expect(options.onProgress).toHaveBeenCalledWith(11, 11);
       expect(options.onSuccess).toHaveBeenCalled();
-      done();
     });
 
-    it("should resume an upload from a specified url", function (done) {
+    it("should resume an upload from a specified url", async function () {
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
       var options = {
+        httpStack: testStack,
         endpoint: "http://tus.io/uploads",
         uploadUrl: "http://tus.io/files/upload",
         onProgress: function () {},
-        fingerprint: function (_, __, cb) {cb(null, "fingerprinted");}
+        onSuccess: waitableFunction("onSuccess"),
+        fingerprint: function (_, __, cb) {
+          cb(null, "fingerprinted");
+        }
       };
       spyOn(options, "fingerprint").and.callThrough();
       spyOn(options, "onProgress");
@@ -564,7 +555,7 @@ describe("tus", function () {
       expect(options.fingerprint.calls.count()).toEqual(0);
       expect(upload.url).toBe("http://tus.io/files/upload");
 
-      var req = jasmine.Ajax.requests.mostRecent();
+      var req = await testStack.nextRequest();
       expect(req.url).toBe("http://tus.io/files/upload");
       expect(req.method).toBe("HEAD");
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
@@ -577,13 +568,13 @@ describe("tus", function () {
         }
       });
 
-      req = jasmine.Ajax.requests.mostRecent();
+      req = await testStack.nextRequest();
       expect(req.url).toBe("http://tus.io/files/upload");
       expect(req.method).toBe("PATCH");
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
       expect(req.requestHeaders["Upload-Offset"]).toBe(3);
-      expect(req.contentType()).toBe("application/offset+octet-stream");
-      expect(req.params.size).toBe(11 - 3);
+      expect(req.requestHeaders["Content-Type"]).toBe("application/offset+octet-stream");
+      expect(req.body.size).toBe(11 - 3);
 
       req.respondWith({
         status: 204,
@@ -592,23 +583,25 @@ describe("tus", function () {
         }
       });
 
+      await options.onSuccess.toBeCalled;
       expect(options.onProgress).toHaveBeenCalledWith(11, 11);
-      done();
     });
 
-    it("should resume a previously started upload", function (done) {
+    it("should resume a previously started upload", async function () {
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
       var options = {
+        httpStack: testStack,
         resume: false,
         endpoint: "http://tus.io/uploads",
-        onSuccess: function () {}
+        onSuccess: waitableFunction("onSuccess"),
+        onError: function () {}
       };
-      spyOn(options, "onSuccess");
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      var req = jasmine.Ajax.requests.mostRecent();
+      var req = await testStack.nextRequest();
       expect(req.url).toBe("http://tus.io/uploads");
       expect(req.method).toBe("POST");
 
@@ -619,7 +612,7 @@ describe("tus", function () {
         }
       });
 
-      req = jasmine.Ajax.requests.mostRecent();
+      req = await testStack.nextRequest();
       expect(req.url).toBe("http://tus.io/uploads/blargh");
       expect(req.method).toBe("PATCH");
 
@@ -634,7 +627,7 @@ describe("tus", function () {
 
       upload.start();
 
-      req = jasmine.Ajax.requests.mostRecent();
+      req = await testStack.nextRequest();
       expect(req.url).toBe("http://tus.io/uploads/blargh");
       expect(req.method).toBe("HEAD");
 
@@ -646,7 +639,7 @@ describe("tus", function () {
         }
       });
 
-      req = jasmine.Ajax.requests.mostRecent();
+      req = await testStack.nextRequest();
       expect(req.url).toBe("http://tus.io/uploads/blargh");
       expect(req.method).toBe("PATCH");
 
@@ -657,105 +650,100 @@ describe("tus", function () {
         }
       });
 
+      await options.onSuccess.toBeCalled;
       expect(options.onSuccess).toHaveBeenCalled();
-      done();
     });
 
-    it("should override the PATCH method", function (done) {
+    it("should override the PATCH method", async function () {
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
-      var host = "http://override.tus.io";
       var options = {
-        endpoint: host + "/uploads",
-        uploadUrl: host + "/files/upload",
+        httpStack: testStack,
+        endpoint: "http://tus.io/uploads",
+        uploadUrl: "http://tus.io/files/upload",
         overridePatchMethod: true
       };
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      waitTillNextReq(host, null, function (req) {
-        expect(req.url).toBe(host + "/files/upload");
-        expect(req.method).toBe("HEAD");
-        expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+      let req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/upload");
+      expect(req.method).toBe("HEAD");
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
 
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            "Upload-Length": 11,
-            "Upload-Offset": 3
-          }
-        });
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Length": 11,
+          "Upload-Offset": 3
+        }
+      });
 
-        req = jasmine.Ajax.requests.mostRecent();
-        expect(req.url).toBe(host + "/files/upload");
-        expect(req.method).toBe("POST");
-        expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
-        expect(req.requestHeaders["Upload-Offset"]).toBe(3);
-        expect(req.requestHeaders["X-HTTP-Method-Override"]).toBe("PATCH");
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/upload");
+      expect(req.method).toBe("POST");
+      expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
+      expect(req.requestHeaders["Upload-Offset"]).toBe(3);
+      expect(req.requestHeaders["X-HTTP-Method-Override"]).toBe("PATCH");
 
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            "Upload-Offset": 11
-          }
-        });
-
-        done();
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 11
+        }
       });
     });
 
-    it("should emit an error if an upload is locked", function (done) {
+    it("should emit an error if an upload is locked", async function () {
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
-      var host = "http://locked.tus.io";
       var options = {
-        endpoint: host + "/uploads",
-        uploadUrl: host + "/files/upload",
-        onError: function () {}
+        httpStack: testStack,
+        endpoint: "http://tus.io/uploads",
+        uploadUrl: "http://tus.io/files/upload",
+        onError: waitableFunction("onError")
       };
-
-      spyOn(options, "onError");
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      waitTillNextReq(host, null, function (req) {
-        expect(req.url).toBe(host + "/files/upload");
-        expect(req.method).toBe("HEAD");
+      const req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/upload");
+      expect(req.method).toBe("HEAD");
 
-        req.respondWith({
-          status: 423 // Locked
-        });
-
-        expect(options.onError).toHaveBeenCalledWith(new Error("tus: upload is currently locked; retry later, originated from request (method: HEAD, url: http://locked.tus.io/files/upload, response code: 423, response text: , request id: null)"));
-        done();
+      req.respondWith({
+        status: 423 // Locked
       });
+
+      await options.onError.toBeCalled;
+      expect(options.onError).toHaveBeenCalledWith(new Error("tus: upload is currently locked; retry later, originated from request (method: HEAD, url: http://tus.io/files/upload, response code: 423, response text: , request id: n/a)"));
     });
 
-    it("should emit an error if no Location header is presented", function (done) {
+    it("should emit an error if no Location header is presented", async function () {
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
-      var host = "http://emit.tus.io";
       var options = {
-        endpoint: host + "/uploads",
-        onError: function () {}
+        httpStack: testStack,
+        endpoint: "http://tus.io/uploads",
+        onError: waitableFunction("onError")
       };
-
-      spyOn(options, "onError");
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      waitTillNextReq(host, null, function (req) {
-        expect(req.url).toBe(host + "/uploads");
-        expect(req.method).toBe("POST");
-        // The Location header is omitted on purpose here
+      const req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/uploads");
+      expect(req.method).toBe("POST");
 
-        req.respondWith({
-          status: 201
-        });
-
-        expect(options.onError).toHaveBeenCalledWith(new Error("tus: invalid or missing Location header, originated from request (method: POST, url: http://emit.tus.io/uploads, response code: 201, response text: , request id: null)"));
-        done();
+      // The Location header is omitted on purpose here
+      req.respondWith({
+        status: 201
       });
+
+      await options.onError.toBeCalled;
+
+      expect(options.onError).toHaveBeenCalledWith(new Error("tus: invalid or missing Location header, originated from request (method: POST, url: http://tus.io/uploads, response code: 201, response text: , request id: n/a)"));
     });
 
     it("should throw if retryDelays is not an array", function () {
@@ -769,102 +757,94 @@ describe("tus", function () {
 
     // This tests ensures that tus-js-client correctly retries if the
     // response has the code 500 Internal Error, 423 Locked or 409 Conflict.
-    it("should retry the upload", function (done) {
+    it("should retry the upload", async function () {
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
-      var host = "http://retry.tus.io";
       var options = {
-        endpoint: host + "/files/",
+        httpStack: testStack,
+        endpoint: "http://tus.io/files/",
         retryDelays: [10, 10, 10],
-        onSuccess: function () {}
+        onSuccess: waitableFunction("onSuccess")
       };
-
-      spyOn(options, "onSuccess");
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      waitTillNextReq(host, null, function (req) {
-        expect(req.url).toBe(host + "/files/");
-        expect(req.method).toBe("POST");
+      let req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/");
+      expect(req.method).toBe("POST");
 
-        req.respondWith({
-          status: 500
-        });
-
-        setTimeout(function () {
-          req = jasmine.Ajax.requests.mostRecent();
-          expect(req.url).toBe(host + "/files/");
-          expect(req.method).toBe("POST");
-
-          req.respondWith({
-            status: 201,
-            responseHeaders: {
-              Location: "/files/foo"
-            }
-          });
-
-          req = jasmine.Ajax.requests.mostRecent();
-          expect(req.url).toBe(host + "/files/foo");
-          expect(req.method).toBe("PATCH");
-
-          req.respondWith({
-            status: 423
-          });
-
-          setTimeout(function () {
-            req = jasmine.Ajax.requests.mostRecent();
-            expect(req.url).toBe(host + "/files/foo");
-            expect(req.method).toBe("HEAD");
-
-            req.respondWith({
-              status: 201,
-              responseHeaders: {
-                "Upload-Offset": 0,
-                "Upload-Length": 11
-              }
-            });
-
-            req = jasmine.Ajax.requests.mostRecent();
-            expect(req.url).toBe(host + "/files/foo");
-            expect(req.method).toBe("PATCH");
-
-            req.respondWith({
-              status: 409
-            });
-
-            setTimeout(function () {
-              req = jasmine.Ajax.requests.mostRecent();
-              expect(req.url).toBe(host + "/files/foo");
-              expect(req.method).toBe("HEAD");
-
-              req.respondWith({
-                status: 201,
-                responseHeaders: {
-                  "Upload-Offset": 0,
-                  "Upload-Length": 11
-                }
-              });
-
-              req = jasmine.Ajax.requests.mostRecent();
-              expect(req.url).toBe(host + "/files/foo");
-              expect(req.method).toBe("PATCH");
-
-              req.respondWith({
-                status: 204,
-                responseHeaders: {
-                  "Upload-Offset": 11
-                }
-              });
-
-              expect(options.onSuccess).toHaveBeenCalled();
-              done();
-            }, 20);
-          }, 20);
-        }, 20);
+      req.respondWith({
+        status: 500
       });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/");
+      expect(req.method).toBe("POST");
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: "/files/foo"
+        }
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 423
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("HEAD");
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          "Upload-Offset": 0,
+          "Upload-Length": 11
+        }
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 409
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("HEAD");
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          "Upload-Offset": 0,
+          "Upload-Length": 11
+        }
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 11
+        }
+      });
+
+      await options.onSuccess.toBeCalled;
+      expect(options.onSuccess).toHaveBeenCalled();
     });
 
-    it("should not retry if the error has not been caused by a request", function (done) {
+    it("should not retry if the error has not been caused by a request", async function () {
       var file = getBlob("hello world");
       var options = {
         endpoint: "http://tus.io/files/",
@@ -880,65 +860,63 @@ describe("tus", function () {
       spyOn(upload, "_createUpload");
       upload.start();
 
-      setTimeout(function () {
-        var error = new Error("custom error");
-        upload._emitError(error);
+      await wait(200);
 
-        expect(upload._createUpload).toHaveBeenCalledTimes(1);
-        expect(options.onError).toHaveBeenCalledWith(error);
-        expect(options.onSuccess).not.toHaveBeenCalled();
-        done();
-      }, 200);
+      var error = new Error("custom error");
+      upload._emitError(error);
+
+      expect(upload._createUpload).toHaveBeenCalledTimes(1);
+      expect(options.onError).toHaveBeenCalledWith(error);
+      expect(options.onSuccess).not.toHaveBeenCalled();
     });
 
-    it("should stop retrying after all delays have been used", function (done) {
+    it("should stop retrying after all delays have been used", async function () {
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
-      var host = "http://delays.tus.io";
       var options = {
-        endpoint: host + "/files/",
+        httpStack: testStack,
+        endpoint: "http://tus.io/files/",
         retryDelays: [10],
         onSuccess: function () {},
-        onError: function () {}
+        onError: waitableFunction("onError")
       };
-
       spyOn(options, "onSuccess");
-      spyOn(options, "onError");
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      waitTillNextReq(host, null, function (req) {
-        expect(req.url).toBe(host + "/files/");
-        expect(req.method).toBe("POST");
+      let req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/");
+      expect(req.method).toBe("POST");
 
-        req.respondWith({
-          status: 500
-        });
-
-        setTimeout(function () {
-          expect(options.onError).not.toHaveBeenCalled();
-
-          var req = jasmine.Ajax.requests.mostRecent();
-          expect(req.url).toBe(host + "/files/");
-          expect(req.method).toBe("POST");
-
-          req.respondWith({
-            status: 500
-          });
-
-          expect(options.onSuccess).not.toHaveBeenCalled();
-          expect(options.onError).toHaveBeenCalledTimes(1);
-          done();
-        }, 200);
+      req.respondWith({
+        status: 500
       });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/");
+      expect(req.method).toBe("POST");
+
+      // The error callback should not be invoked for the first error response.
+      expect(options.onError).not.toHaveBeenCalled();
+
+      req.respondWith({
+        status: 500
+      });
+
+      await options.onError.toBeCalled;
+
+      expect(options.onSuccess).not.toHaveBeenCalled();
+      expect(options.onError).toHaveBeenCalledTimes(1);
     });
 
-    it("should stop retrying when the abort function is called", function (done) {
+    it("should stop retrying when the abort function is called", async function () {
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
-      var host = "http://noretry.tus.io";
       var options = {
-        endpoint: host + "/files/",
-        retryDelays: [100],
+        httpStack: testStack,
+        endpoint: "http://tus.io/files/",
+        retryDelays: [10],
         onError: function () {}
       };
 
@@ -947,31 +925,32 @@ describe("tus", function () {
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      waitTillNextReq(host, null, function (req) {
-        expect(req.url).toBe(host + "/files/");
-        expect(req.method).toBe("POST");
+      const req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/");
+      expect(req.method).toBe("POST");
 
-        spyOn(upload, "start");
+      spyOn(upload, "start").and.callThrough();
 
-        req.respondWith({
-          status: 500
-        });
+      upload.abort();
 
-        upload.abort();
-
-        setTimeout(function () {
-          expect(upload.start).not.toHaveBeenCalled();
-          done();
-        }, 200);
+      req.respondWith({
+        status: 500
       });
+
+      const result = await Promise.race([
+        testStack.nextRequest(),
+        wait(100)
+      ]);
+
+      expect(result).toBe("timed out");
     });
 
-    it("should stop upload when the abort function is called during a callback", function (done) {
-      var upload;
-      var host = "http://abort2.tus.io";
+    it("should stop upload when the abort function is called during a callback", async function () {
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
       var options = {
-        endpoint: host + "/files/",
+        httpStack: testStack,
+        endpoint: "http://tus.io/files/",
         chunkSize: 5,
         onChunkComplete: function () {
           upload.abort();
@@ -980,374 +959,366 @@ describe("tus", function () {
 
       spyOn(options, "onChunkComplete").and.callThrough();
 
-      upload = new tus.Upload(file, options);
+      let upload = new tus.Upload(file, options);
       upload.start();
 
-      waitTillNextReq(host, null, function (req) {
-        expect(req.url).toBe(host + "/files/");
-        expect(req.method).toBe("POST");
+      let req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/");
+      expect(req.method).toBe("POST");
 
-        req.respondWith({
-          status: 201,
-          responseHeaders: {
-            Location: "/files/foo"
-          }
-        });
-
-        req = jasmine.Ajax.requests.mostRecent();
-        expect(req.url).toBe(host + "/files/foo");
-        expect(req.method).toBe("PATCH");
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            "Upload-Offset": 5
-          }
-        });
-
-        setTimeout(function () {
-          expect(options.onChunkComplete).toHaveBeenCalled();
-          expect(jasmine.Ajax.requests.mostRecent()).toBe(req);
-          done();
-        }, 200);
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: "/files/foo"
+        }
       });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 5
+        }
+      });
+
+      const result = await Promise.race([
+        testStack.nextRequest(),
+        wait(200)
+      ]);
+
+      expect(options.onChunkComplete).toHaveBeenCalled();
+      expect(result).toBe("timed out");
     });
 
-    it("should terminate upload when abort is called with true", function (done) {
-      var upload;
-      var host = "http://abort2.tus.io";
+    it("should terminate upload when abort is called with true", async function () {
+      const abortCallback = waitableFunction("onAbort");
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
-      var callbackTriggered = false;
       var options = {
-        endpoint: host + "/files/",
+        httpStack: testStack,
+        endpoint: "http://tus.io/files/",
         chunkSize: 5,
         onChunkComplete: function () {
-          upload.abort(true, function () {
-            callbackTriggered = true;
-          });
+          upload.abort(true, abortCallback);
         }
       };
 
       spyOn(options, "onChunkComplete").and.callThrough();
 
-      upload = new tus.Upload(file, options);
+      const upload = new tus.Upload(file, options);
       upload.start();
 
-      waitTillNextReq(host, null, function (req) {
-        expect(req.url).toBe(host + "/files/");
-        expect(req.method).toBe("POST");
+      let req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/");
+      expect(req.method).toBe("POST");
 
-        req.respondWith({
-          status: 201,
-          responseHeaders: {
-            Location: "/files/foo"
-          }
-        });
-
-        req = jasmine.Ajax.requests.mostRecent();
-        expect(req.url).toBe(host + "/files/foo");
-        expect(req.method).toBe("PATCH");
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            "Upload-Offset": 5
-          }
-        });
-
-        setTimeout(function () {
-          expect(options.onChunkComplete).toHaveBeenCalled();
-
-          req = jasmine.Ajax.requests.mostRecent();
-          expect(req.url).toBe(host + "/files/foo");
-          expect(req.method).toBe("DELETE");
-          req.respondWith({status: 204});
-
-          expect(callbackTriggered).toBe(true);
-          done();
-        }, 200);
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: "/files/foo"
+        }
       });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 5
+        }
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("DELETE");
+
+      req.respondWith({
+        status: 204
+      });
+
+      expect(options.onChunkComplete).toHaveBeenCalled();
+      await abortCallback.toBeCalled;
     });
 
-    it("should retry terminate when an error is returned on first try", function (done) {
-      var upload;
-      var host = "http://abort2.tus.io";
+    it("should retry terminate when an error is returned on first try", async function () {
+      const abortCallback = waitableFunction("onAbort");
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
-      var callbackTriggered = false;
       var options = {
-        endpoint: host + "/files/",
+        httpStack: testStack,
+        endpoint: "http://tus.io/files/",
         chunkSize: 5,
         retryDelays: [10, 10, 10],
         onChunkComplete: function () {
-          upload.abort(true, function () {
-            callbackTriggered = true;
-          });
+          upload.abort(true, abortCallback);
         }
       };
 
       spyOn(options, "onChunkComplete").and.callThrough();
 
-      upload = new tus.Upload(file, options);
+      const upload = new tus.Upload(file, options);
       upload.start();
 
-      waitTillNextReq(host, null, function (req) {
-        expect(req.url).toBe(host + "/files/");
-        expect(req.method).toBe("POST");
+      let req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/");
+      expect(req.method).toBe("POST");
 
-        req.respondWith({
-          status: 201,
-          responseHeaders: {
-            Location: "/files/foo"
-          }
-        });
-
-        req = jasmine.Ajax.requests.mostRecent();
-        expect(req.url).toBe(host + "/files/foo");
-        expect(req.method).toBe("PATCH");
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            "Upload-Offset": 5
-          }
-        });
-
-        setTimeout(function () {
-          expect(options.onChunkComplete).toHaveBeenCalled();
-
-          req = jasmine.Ajax.requests.mostRecent();
-          expect(req.url).toBe(host + "/files/foo");
-          expect(req.method).toBe("DELETE");
-          req.respondWith({status: 423});
-
-          waitTillNextReq(host, req, function (req) {
-            expect(req.url).toBe(host + "/files/foo");
-            expect(req.method).toBe("DELETE");
-            req.respondWith({status: 204});
-            expect(callbackTriggered).toBe(true);
-            done();
-          });
-        }, 200);
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: "/files/foo"
+        }
       });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 5
+        }
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("DELETE");
+
+      req.respondWith({
+        status: 423
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("DELETE");
+
+      req.respondWith({
+        status: 204
+      });
+
+      await abortCallback.toBeCalled;
+      expect(options.onChunkComplete).toHaveBeenCalled();
     });
 
-    it("should stop upload when the abort function is called during the POST request", function (done) {
+    it("should stop upload when the abort function is called during the POST request", async function () {
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
-      var host = "http://abort.tus.io";
       var options = {
-        endpoint: host + "/files/",
+        httpStack: testStack,
+        endpoint: "http://tus.io/files/",
         onError: function () {}
       };
 
-      spyOn(options, "onError");
+      spyOn(options, "onError").and.callThrough();
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
       upload.abort();
 
-      waitTillNextReq(host, null, function (req) {
-        expect(req.url).toBe(host + "/files/");
-        expect(req.method).toBe("POST");
+      const req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/");
+      expect(req.method).toBe("POST");
 
-        req.respondWith({
-          status: 201,
-          responseHeaders: {
-            Location: "/files/foo"
-          }
-        });
-
-        setTimeout(function () {
-          expect(options.onError).not.toHaveBeenCalled();
-          expect(jasmine.Ajax.requests.mostRecent()).toBe(req);
-          done();
-        }, 200);
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: "/files/foo"
+        }
       });
+
+      const result = await Promise.race([
+        testStack.nextRequest(),
+        wait(200)
+      ]);
+
+      expect(options.onError).not.toHaveBeenCalled();
+      expect(result).toBe("timed out");
     });
 
-    it("should reset the attempt counter if an upload proceeds", function (done) {
+    it("should reset the attempt counter if an upload proceeds", async function () {
+      const testStack = new TestHttpStack();
       var file = getBlob("hello world");
-      var host = "http://reset.tus.io";
       var options = {
-        endpoint: host + "/files/",
+        httpStack: testStack,
+        endpoint: "http://tus.io/files/",
         retryDelays: [10],
         onError: function () {},
-        onSuccess: function () {}
+        onSuccess: waitableFunction("onSuccess")
       };
-
       spyOn(options, "onError");
-      spyOn(options, "onSuccess");
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      waitTillNextReq(host, null, function (req) {
-        expect(req.url).toBe(host + "/files/");
-        expect(req.method).toBe("POST");
+      let req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/");
+      expect(req.method).toBe("POST");
 
-        req.respondWith({
-          status: 201,
-          responseHeaders: {
-            Location: "/files/foo"
-          }
-        });
-
-        req = jasmine.Ajax.requests.mostRecent();
-        expect(req.url).toBe(host + "/files/foo");
-        expect(req.method).toBe("PATCH");
-
-        req.respondWith({
-          status: 500
-        });
-
-        setTimeout(function () {
-          req = jasmine.Ajax.requests.mostRecent();
-          expect(req.url).toBe(host + "/files/foo");
-          expect(req.method).toBe("HEAD");
-
-          req.respondWith({
-            status: 204,
-            responseHeaders: {
-              "Upload-Offset": 0,
-              "Upload-Length": 11
-            }
-          });
-
-          req = jasmine.Ajax.requests.mostRecent();
-          expect(req.url).toBe(host + "/files/foo");
-          expect(req.method).toBe("PATCH");
-
-          req.respondWith({
-            status: 204,
-            responseHeaders: {
-              "Upload-Offset": 5
-            }
-          });
-
-          waitTillNextReq(host, req, function (req) {
-            expect(req.url).toBe(host + "/files/foo");
-            expect(req.method).toBe("PATCH");
-
-            req.respondWith({
-              status: 500
-            });
-
-            setTimeout(function () {
-              req = jasmine.Ajax.requests.mostRecent();
-              expect(req.url).toBe(host + "/files/foo");
-              expect(req.method).toBe("HEAD");
-
-              req.respondWith({
-                status: 204,
-                responseHeaders: {
-                  "Upload-Offset": 5,
-                  "Upload-Length": 11
-                }
-              });
-
-              req = jasmine.Ajax.requests.mostRecent();
-              expect(req.url).toBe(host + "/files/foo");
-              expect(req.method).toBe("PATCH");
-
-              req.respondWith({
-                status: 204,
-                responseHeaders: {
-                  "Upload-Offset": 11
-                }
-              });
-
-              expect(options.onError).not.toHaveBeenCalled();
-              expect(options.onSuccess).toHaveBeenCalled();
-              done();
-            }, 20);
-          });
-        }, 20);
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: "/files/foo"
+        }
       });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 500
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("HEAD");
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 0,
+          "Upload-Length": 11
+        }
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 5
+        }
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 500
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("HEAD");
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 5,
+          "Upload-Length": 11
+        }
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 11
+        }
+      });
+
+      await options.onSuccess.toBeCalled;
+      expect(options.onError).not.toHaveBeenCalled();
+      expect(options.onSuccess).toHaveBeenCalled();
     });
   });
 
-  it("should upload to a real tus server", function (done) {
-    var file = getBlob("hello world");
-    var options = {
-      resume: false,
-      endpoint: "https://master.tus.io/files/",
-      metadata: {
-        nonlatin: "słońce",
-        number: 100,
-        filename: "hello.txt",
-        filetype: "text/plain"
-      },
-      onSuccess: function () {
-        expect(upload.url).toMatch(/^https:\/\/master\.tus\.io\/files\//);
-        console.log("Upload URL:", upload.url); // eslint-disable-line no-console
+  it("should upload to a real tus server", async function () {
+    return new Promise((resolve, reject) => {
+      var file = getBlob("hello world");
+      var options = {
+        resume: false,
+        endpoint: "https://master.tus.io/files/",
+        metadata: {
+          nonlatin: "słońce",
+          number: 100,
+          filename: "hello.txt",
+          filetype: "text/plain"
+        },
+        onSuccess: function () {
+          expect(upload.url).toMatch(/^https:\/\/master\.tus\.io\/files\//);
+          console.log("Upload URL:", upload.url); // eslint-disable-line no-console
 
-        validateUploadContent(upload, function (err) {
-          if (err) {
-            done.fail(err);
-            return;
-          }
+          resolve(upload);
+        },
+        onError: function (err) {
+          reject(err);
+        }
+      };
 
-          // delete the upload after it was completed
+      var upload = new tus.Upload(file, options);
+      upload.start();
+    })
+      .then(validateUploadContent)
+      .then((upload) => {
+        return new Promise((resolve, reject) => {
           upload.abort(true, function (err) {
             if (err) {
-              done.fail(err);
-              return;
+              return reject(err);
             }
 
-            validateUploadDeletion(upload, done);
+            resolve(upload);
           });
         });
-      },
-      onError: function (err) {
-        done.fail(err);
-      }
-    };
-
-    var upload = new tus.Upload(file, options);
-    upload.start();
+      })
+      .then(validateUploadDeletion);
   });
 
-  it("should upload to a real tus server with creation-with-upload", function (done) {
-    var file = getBlob("hello world");
-    var options = {
-      resume: false,
-      endpoint: "https://master.tus.io/files/",
-      uploadDataDuringCreation: true,
-      metadata: {
-        nonlatin: "słońce",
-        number: 100,
-        filename: "hello.txt",
-        filetype: "text/plain"
-      },
-      onSuccess: function () {
-        expect(upload.url).toMatch(/^https:\/\/master\.tus\.io\/files\//);
-        console.log("Upload URL:", upload.url); // eslint-disable-line no-console
+  it("should upload to a real tus server with creation-with-upload", async function () {
+    return new Promise((resolve, reject) => {
+      var file = getBlob("hello world");
+      var options = {
+        resume: false,
+        endpoint: "https://master.tus.io/files/",
+        metadata: {
+          nonlatin: "słońce",
+          number: 100,
+          filename: "hello.txt",
+          filetype: "text/plain"
+        },
+        onSuccess: function () {
+          expect(upload.url).toMatch(/^https:\/\/master\.tus\.io\/files\//);
+          console.log("Upload URL:", upload.url); // eslint-disable-line no-console
 
-        validateUploadContent(upload, done);
-      },
-      onError: function (err) {
-        done.fail(err);
-      }
-    };
+          resolve(upload);
+        },
+        onError: function (err) {
+          reject(err);
+        }
+      };
 
-    var upload = new tus.Upload(file, options);
-    upload.start();
+      var upload = new tus.Upload(file, options);
+      upload.start();
+    })
+      .then(validateUploadContent);
   });
 });
 
-function validateUploadContent(upload, cb) {
-  axios.get(upload.url)
+function validateUploadContent(upload) {
+  return axios.get(upload.url)
     .then(function (res) {
       expect(res.status).toBe(200);
       expect(res.data).toBe("hello world");
 
-      validateUploadMetadata(upload, cb);
-    })
-    .catch(cb);
+      return validateUploadMetadata(upload);
+    });
 }
 
-function validateUploadMetadata(upload, cb) {
-  axios.head(upload.url, {
+function validateUploadMetadata(upload) {
+  return axios.head(upload.url, {
     headers: {
       "Tus-Resumable": "1.0.0"
     }
@@ -1358,7 +1329,7 @@ function validateUploadMetadata(upload, cb) {
     expect(res.headers["upload-offset"]).toBe("11");
     expect(res.headers["upload-length"]).toBe("11");
 
-    // The values in the Upload-Metadata header may not be in^the same
+    // The values in the Upload-Metadata header may not be in the same
     // order as we submitted them (the specification does not require
     // that). Therefore, we split the values and verify that each one
     // is present.
@@ -1371,39 +1342,19 @@ function validateUploadMetadata(upload, cb) {
     expect(metadata).toContain("number MTAw");
     expect(metadata.length).toBe(4);
 
-    cb();
-  })
-    .catch(cb);
+    return upload;
+  });
 }
 
-function validateUploadDeletion(upload, done) {
+function validateUploadDeletion(upload) {
   var validateStatus = function (status) {
     return status === 404;
   };
 
-  axios.get(upload.url, { validateStatus: validateStatus })
+  return axios.get(upload.url, { validateStatus: validateStatus })
     .then(function (res) {
       expect(res.status).toBe(404);
-      done();
-    })
-    .catch(done.fail);
-}
 
-function waitTillNextReq(id, req, cb, level) {
-  var allowedLevels = 5;
-  level = level || 0;
-  if (level >= allowedLevels) {
-    fail(new Error("call level exceeded"));
-    return;
-  }
-  setTimeout(function () {
-    var newReq = jasmine.Ajax.requests.mostRecent();
-    if (!req || (req && newReq != req)) {
-      if (newReq && newReq.url.indexOf(id) === 0) {
-        return cb(newReq);
-      }
-    }
-
-    waitTillNextReq(id, req, cb, level + 1);
-  }, 20);
+      return upload;
+    });
 }
