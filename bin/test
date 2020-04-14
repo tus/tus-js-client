@@ -11,15 +11,15 @@ TEST_TARGET=${TEST_TARGET:-"node browser"}
 
 # Node.js tests
 if [[ $TEST_TARGET == *"node"* ]]; then
-  npm run node-test
+  npm run test-node
 fi
 
 # Browser tests using Puppeteer and on BrowserStack
 if [[ $TEST_TARGET == *"browser"* ]]; then
-  npm run puppeteer-test
+  npm run test-puppeteer
 
   if [ "${CI}" = "true" ] && [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
-    npm run browserstack-test
+    npm run test-browserstack
   else
     echo "Skipping sauce-test as this is not a master CI branch test run"
   fi
