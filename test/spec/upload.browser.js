@@ -11,7 +11,9 @@ describe("tus", function () {
     });
 
     it("should resume an upload from a stored url", async function () {
-      localStorage.setItem("fingerprinted", "http://tus.io/uploads/resuming");
+      localStorage.setItem("tus::fingerprinted::1337", JSON.stringify({
+        uploadUrl: "http://tus.io/uploads/resuming"
+      }));
 
       const testStack = new TestHttpStack();
       var file = new Blob("hello world".split(""));
@@ -19,15 +21,23 @@ describe("tus", function () {
         httpStack: testStack,
         endpoint: "http://tus.io/uploads",
         onProgress: function () {},
-        fingerprint: function (_, __, cb) {cb(null, "fingerprinted");}
+        fingerprint: function () {}
       };
-      spyOn(options, "fingerprint").and.callThrough();
+      spyOn(options, "fingerprint").and.resolveTo("fingerprinted");
       spyOn(options, "onProgress");
 
       var upload = new tus.Upload(file, options);
+
+      const previousUploads = await upload.findPreviousUploads();
+      expect(previousUploads).toEqual([{
+        uploadUrl: "http://tus.io/uploads/resuming",
+        urlStorageKey: "tus::fingerprinted::1337"
+      }]);
+      upload.resumeFromPreviousUpload(previousUploads[0]);
+
       upload.start();
 
-      expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options, jasmine.any(Function));
+      expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options);
 
       var req = await testStack.nextRequest();
       expect(req.url).toBe("http://tus.io/uploads/resuming");
@@ -66,12 +76,12 @@ describe("tus", function () {
       var options = {
         httpStack: testStack,
         endpoint: "http://tus.io/uploads",
-        fingerprint: function (_, __, cb) {cb(null, "fingerprinted");}
+        fingerprint: function () {}
       };
 
       var startUpload = async function () {
         var file = new Blob("hello world".split(""));
-        spyOn(options, "fingerprint").and.callThrough();
+        spyOn(options, "fingerprint").and.resolveTo("fingerprinted");
         options.onSuccess = waitableFunction("onSuccess");
 
         var upload = new tus.Upload(file, options);
@@ -109,33 +119,52 @@ describe("tus", function () {
       it("should store and retain with default options", async function () {
         options.removeFingerprintOnSuccess = false;
         await startUpload();
-        expect(localStorage.getItem("fingerprinted")).toBe("http://tus.io/uploads/blargh");
+
+        const key = localStorage.key(0);
+        expect(key.indexOf("tus::fingerprinted::")).toBe(0);
+
+        const storedUpload = JSON.parse(localStorage.getItem(key));
+        expect(storedUpload.uploadUrl).toBe("http://tus.io/uploads/blargh");
+        expect(storedUpload.size).toBe(11);
+
         await finishUpload();
-        expect(localStorage.getItem("fingerprinted")).toBe("http://tus.io/uploads/blargh");
+
+        expect(localStorage.getItem(key)).toBe(JSON.stringify(storedUpload));
       });
 
       it("should store and remove with option removeFingerprintOnSuccess set", async function () {
         options.removeFingerprintOnSuccess = true;
         await startUpload();
-        expect(localStorage.getItem("fingerprinted")).toBe("http://tus.io/uploads/blargh");
+
+        const key = localStorage.key(0);
+        expect(key.indexOf("tus::fingerprinted::")).toBe(0);
+
+        const storedUpload = JSON.parse(localStorage.getItem(key));
+        expect(storedUpload.uploadUrl).toBe("http://tus.io/uploads/blargh");
+        expect(storedUpload.size).toBe(11);
+
         await finishUpload();
-        expect(localStorage.getItem("fingerprinted")).toBe(null);
+        expect(localStorage.getItem(key)).toBe(null);
       });
     });
 
     it("should delete upload urls on a 4XX", async function () {
-      localStorage.setItem("fingerprinted", "http://tus.io/uploads/resuming");
-
       const testStack = new TestHttpStack();
       var file = new Blob("hello world".split(""));
       var options = {
         httpStack: testStack,
         endpoint: "http://tus.io/uploads",
-        fingerprint: function (_, __, cb) {cb(null, "fingerprinted");}
+        fingerprint: function () {}
       };
-      spyOn(options, "fingerprint").and.callThrough();
+      spyOn(options, "fingerprint").and.resolveTo("fingerprinted");
 
       var upload = new tus.Upload(file, options);
+
+      upload.resumeFromPreviousUpload({
+        uploadUrl: "http://tus.io/uploads/resuming",
+        urlStorageKey: "tus::fingerprinted::1337"
+      });
+
       upload.start();
 
       var req = await testStack.nextRequest();
@@ -148,7 +177,7 @@ describe("tus", function () {
 
       await wait(10);
 
-      expect(localStorage.getItem("fingerprinted")).toBe(null);
+      expect(localStorage.getItem("tus::fingerprinted::1337")).toBe(null);
     });
 
     describe("uploading data from a Reader", function () {
@@ -181,15 +210,15 @@ describe("tus", function () {
           chunkSize: chunkSize,
           onProgress: waitableFunction("onProgress"),
           onSuccess: waitableFunction("onSuccess"),
-          fingerprint: function (_, __, cb) {cb(null, "fingerprinted");},
+          fingerprint: function () {},
           uploadLengthDeferred: true
         };
-        spyOn(options, "fingerprint").and.callThrough();
+        spyOn(options, "fingerprint").and.resolveTo("fingerprinted");
 
         var upload = new tus.Upload(reader, options);
         upload.start();
 
-        expect(options.fingerprint).toHaveBeenCalledWith(reader, upload.options, jasmine.any(Function));
+        expect(options.fingerprint).toHaveBeenCalledWith(reader, upload.options);
 
         var req = await testStack.nextRequest();
         expect(req.url).toBe("http://tus.io/uploads");
@@ -259,15 +288,15 @@ describe("tus", function () {
           chunkSize: 6,
           onProgress: waitableFunction("onProgress"),
           onSuccess: waitableFunction("onSuccess"),
-          fingerprint: function (_, __, cb) {cb(null, "fingerprinted");},
+          fingerprint: function () {},
           uploadLengthDeferred: true
         };
-        spyOn(options, "fingerprint").and.callThrough();
+        spyOn(options, "fingerprint").and.resolveTo("fingerprinted");
 
         var upload = new tus.Upload(reader, options);
         upload.start();
 
-        expect(options.fingerprint).toHaveBeenCalledWith(reader, upload.options, jasmine.any(Function));
+        expect(options.fingerprint).toHaveBeenCalledWith(reader, upload.options);
 
         var req = await testStack.nextRequest();
         expect(req.url).toBe("http://tus.io/uploads");
@@ -575,6 +604,10 @@ describe("tus", function () {
 
         var upload = new tus.Upload(reader, options);
         upload.start();
+
+        // We wait until the first request arrives, so that the first promises have resolved.
+        await options.httpStack.nextRequest();
+
         upload.abort();
 
         await reader.cancel.toBeCalled;
@@ -611,8 +644,6 @@ describe("tus", function () {
       });
 
       it("should upload a file from an URI", async function () {
-        localStorage.setItem("fingerprinted", "http://tus.io/uploads/resuming");
-
         var file = {
           uri: "file:///my/file.dat"
         };
@@ -625,6 +656,9 @@ describe("tus", function () {
 
         var upload = new tus.Upload(file, options);
         upload.start();
+
+        // Wait a short interval to make sure that the XHR has been sent.
+        await wait(0);
 
         var req = jasmine.Ajax.requests.mostRecent();
         expect(req.url).toBe("file:///my/file.dat");
@@ -671,20 +705,20 @@ describe("tus", function () {
         expect(upload.url).toBe("http://tus.io/uploads/blargh");
       });
 
-      it("should emit an error if it can't resolve the URI", function () {
-        localStorage.setItem("fingerprinted", "http://tus.io/uploads/resuming");
-
+      it("should emit an error if it can't resolve the URI", async function () {
         var file = {
           uri: "file:///my/file.dat"
         };
         var options = {
           endpoint: "http://tus.io/uploads",
-          onError: function () {}
+          onError: waitableFunction("onError")
         };
-        spyOn(options, "onError");
 
         var upload = new tus.Upload(file, options);
         upload.start();
+
+        // Wait a short interval to make sure that the XHR has been sent.
+        await wait(0);
 
         var req = jasmine.Ajax.requests.mostRecent();
         expect(req.url).toBe("file:///my/file.dat");
@@ -693,6 +727,7 @@ describe("tus", function () {
 
         req.responseError();
 
+        await options.onError.toBeCalled;
         expect(options.onError).toHaveBeenCalledWith(new Error("tus: cannot fetch `file.uri` as Blob, make sure the uri is correct and accessible. [object Object]"));
       });
     });

@@ -24,27 +24,35 @@ describe("tus", function () {
       await expectHelloWorldUpload(buffer, options);
     });
 
-    it("should reject streams without specifing the size", function () {
+    it("should reject streams without specifing the size", async function () {
       var input = new stream.PassThrough();
       var options = {
         resume: false,
         endpoint: "/uploads",
-        chunkSize: 100
+        chunkSize: 100,
+        onError: waitableFunction("onError")
       };
 
       var upload = new tus.Upload(input, options);
-      expect(upload.start.bind(upload)).toThrow(new Error("tus: cannot automatically derive upload's size from input and must be specified manually using the `uploadSize` option"));
+      upload.start();
+
+      const err = await options.onError.toBeCalled;
+      expect(err.message).toBe("tus: cannot automatically derive upload's size from input and must be specified manually using the `uploadSize` option");
     });
 
-    it("should reject streams without specifing the chunkSize", function () {
+    it("should reject streams without specifing the chunkSize", async function () {
       var input = new stream.PassThrough();
       var options = {
         resume: false,
-        endpoint: "/uploads"
+        endpoint: "/uploads",
+        onError: waitableFunction("onError")
       };
 
       var upload = new tus.Upload(input, options);
-      expect(upload.start.bind(upload)).toThrow(new Error("cannot create source for stream without a finite value for the `chunkSize` option"));
+      upload.start();
+
+      const err = await options.onError.toBeCalled;
+      expect(err.message).toBe("cannot create source for stream without a finite value for the `chunkSize` option");
     });
 
     it("should accept Readable streams", async function () {
@@ -118,25 +126,33 @@ describe("tus", function () {
 
     it("should resume an upload from a stored url", async function () {
       var storagePath = temp.path();
-      fs.writeFileSync(storagePath, "{\"fingerprinted.resume\":\"/uploads/resuming\"}");
+      fs.writeFileSync(storagePath, "{\"tus::fingerprinted::1337\":{\"uploadUrl\":\"http://tus.io/uploads/resuming\"}}");
       var storage = new tus.FileStorage(storagePath);
       var input = Buffer.from("hello world");
       var options = {
         httpStack: new TestHttpStack(),
         endpoint: "/uploads",
-        fingerprint: (_, __, cb) => cb(null, "fingerprinted.resume"),
+        fingerprint: function () {},
         urlStorage: storage,
         onSuccess: waitableFunction("onSuccess")
       };
-      spyOn(options, "fingerprint").and.callThrough();
+      spyOn(options, "fingerprint").and.resolveTo("fingerprinted");
 
       var upload = new tus.Upload(input, options);
+
+      const previousUploads = await upload.findPreviousUploads();
+      expect(previousUploads).toEqual([{
+        uploadUrl: "http://tus.io/uploads/resuming",
+        urlStorageKey: "tus::fingerprinted::1337"
+      }]);
+      upload.resumeFromPreviousUpload(previousUploads[0]);
+
       upload.start();
 
-      expect(options.fingerprint).toHaveBeenCalledWith(input, upload.options, jasmine.any(Function));
+      expect(options.fingerprint).toHaveBeenCalledWith(input, upload.options);
 
       var req = await options.httpStack.nextRequest();
-      expect(req.url).toBe("/uploads/resuming");
+      expect(req.url).toBe("http://tus.io/uploads/resuming");
       expect(req.method).toBe("HEAD");
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
 
@@ -148,10 +164,10 @@ describe("tus", function () {
         }
       });
 
-      expect(upload.url).toBe("/uploads/resuming");
+      expect(upload.url).toBe("http://tus.io/uploads/resuming");
 
       req = await options.httpStack.nextRequest();
-      expect(req.url).toBe("/uploads/resuming");
+      expect(req.url).toBe("http://tus.io/uploads/resuming");
       expect(req.method).toBe("PATCH");
       expect(req.requestHeaders["Tus-Resumable"]).toBe("1.0.0");
       expect(req.requestHeaders["Upload-Offset"]).toBe(3);

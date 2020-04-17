@@ -513,18 +513,15 @@ describe("tus", function () {
         uploadUrl: "http://tus.io/files/upload",
         onProgress: function () {},
         onSuccess: waitableFunction("onSuccess"),
-        fingerprint: function (_, __, cb) {
-          cb(null, "fingerprinted");
-        }
+        fingerprint: function () {}
       };
-      spyOn(options, "fingerprint").and.callThrough();
+      spyOn(options, "fingerprint").and.resolveTo("fingerprinted");
       spyOn(options, "onProgress");
 
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      expect(options.fingerprint.calls.count()).toEqual(0);
-      expect(upload.url).toBe("http://tus.io/files/upload");
+      expect(options.fingerprint).toHaveBeenCalled();
 
       var req = await testStack.nextRequest();
       expect(req.url).toBe("http://tus.io/files/upload");
@@ -556,6 +553,7 @@ describe("tus", function () {
 
       await options.onSuccess.toBeCalled;
       expect(options.onProgress).toHaveBeenCalledWith(11, 11);
+      expect(upload.url).toBe("http://tus.io/files/upload");
     });
 
     it("should resume a previously started upload", async function () {
@@ -1092,11 +1090,11 @@ describe("tus", function () {
       var upload = new tus.Upload(file, options);
       upload.start();
 
-      upload.abort();
-
       const req = await testStack.nextRequest();
       expect(req.url).toBe("http://tus.io/files/");
       expect(req.method).toBe("POST");
+
+      upload.abort();
 
       req.respondWith({
         status: 201,
