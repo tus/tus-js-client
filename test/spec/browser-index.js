@@ -28,6 +28,9 @@ function t() {
 }
 t();
 
+// Enable debug output for tus-js-client
+localStorage.debug = "tus-js-client:*";
+
 require("./helpers/puppeteer/reporter.js");
 require("./upload.js");
 require("./upload.browser.js");

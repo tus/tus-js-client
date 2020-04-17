@@ -16,7 +16,6 @@ describe("tus", function () {
       var buffer = Buffer.from("hello world");
       var options = {
         httpStack: new TestHttpStack(),
-        resume: false,
         endpoint: "/uploads",
         chunkSize: 7
       };
@@ -27,7 +26,6 @@ describe("tus", function () {
     it("should reject streams without specifing the size", async function () {
       var input = new stream.PassThrough();
       var options = {
-        resume: false,
         endpoint: "/uploads",
         chunkSize: 100,
         onError: waitableFunction("onError")
@@ -43,7 +41,6 @@ describe("tus", function () {
     it("should reject streams without specifing the chunkSize", async function () {
       var input = new stream.PassThrough();
       var options = {
-        resume: false,
         endpoint: "/uploads",
         onError: waitableFunction("onError")
       };
@@ -59,7 +56,6 @@ describe("tus", function () {
       var input = new stream.PassThrough();
       var options = {
         httpStack: new TestHttpStack(),
-        resume: false,
         endpoint: "/uploads",
         chunkSize: 7,
         uploadSize: 11
@@ -73,7 +69,6 @@ describe("tus", function () {
       var input = new stream.PassThrough();
       var options = {
         httpStack: new TestHttpStack(),
-        resume: false,
         endpoint: "/uploads",
         chunkSize: 7,
         uploadLengthDeferred: true
@@ -91,7 +86,6 @@ describe("tus", function () {
 
       var options = {
         httpStack: new TestHttpStack(),
-        resume: false,
         endpoint: "/uploads",
         chunkSize: 7,
         uploadSize: 11
@@ -106,7 +100,6 @@ describe("tus", function () {
       var buffer = Buffer.from("hello world");
       var options = {
         httpStack: new TestHttpStack(),
-        resume: false,
         endpoint: "/uploads",
         onError: waitableFunction("onError")
       };

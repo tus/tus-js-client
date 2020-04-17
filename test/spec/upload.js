@@ -561,7 +561,6 @@ describe("tus", function () {
       var file = getBlob("hello world");
       var options = {
         httpStack: testStack,
-        resume: false,
         endpoint: "http://tus.io/uploads",
         onSuccess: waitableFunction("onSuccess"),
         onError: function () {}
@@ -1210,7 +1209,6 @@ describe("tus", function () {
     return new Promise((resolve, reject) => {
       var file = getBlob("hello world");
       var options = {
-        resume: false,
         endpoint: "https://master.tus.io/files/",
         metadata: {
           nonlatin: "słońce",
@@ -1251,7 +1249,6 @@ describe("tus", function () {
     return new Promise((resolve, reject) => {
       var file = getBlob("hello world");
       var options = {
-        resume: false,
         endpoint: "https://master.tus.io/files/",
         metadata: {
           nonlatin: "słońce",
