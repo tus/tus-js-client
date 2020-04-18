@@ -16,6 +16,9 @@ var getBlob = function (str) {
 // Set Jasmine's timeout for a single test to 20s
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 20 * 1000;
 
+// Enable debug log from tus-js-client
+tus.enableDebugLog();
+
 describe("tus", function () {
   describe("#isSupported", function () {
     it("should be true", function () {

@@ -60,7 +60,6 @@
   "dependencies": {
     "buffer-from": "^0.1.1",
     "combine-errors": "^3.0.3",
-    "debug": "^4.1.1",
     "extend": "^3.0.2",
     "js-base64": "^2.4.9",
     "lodash.throttle": "^4.1.1",
