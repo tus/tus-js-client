@@ -1,15 +1,15 @@
 /* global Blob  */
 
+const assertUrlStorage = require("./helpers/assertUrlStorage");
 const { TestHttpStack, waitableFunction, wait } = require("./helpers/utils");
 const tus = require("../../");
 
 describe("tus", function () {
+  beforeEach(function () {
+    localStorage.clear();
+  });
+
   describe("#Upload", function () {
-
-    beforeEach(function () {
-      localStorage.clear();
-    });
-
     it("should resume an upload from a stored url", async function () {
       localStorage.setItem("tus::fingerprinted::1337", JSON.stringify({
         uploadUrl: "http://tus.io/uploads/resuming"
@@ -730,6 +730,12 @@ describe("tus", function () {
         await options.onError.toBeCalled;
         expect(options.onError).toHaveBeenCalledWith(new Error("tus: cannot fetch `file.uri` as Blob, make sure the uri is correct and accessible. [object Object]"));
       });
+    });
+  });
+
+  describe("#LocalStorageUrlStorage", function () {
+    it("should allow storing and retrieving uploads", async function () {
+      await assertUrlStorage(tus.defaultOptions.urlStorage);
     });
   });
 });

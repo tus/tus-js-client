@@ -1,4 +1,5 @@
 const { TestHttpStack, waitableFunction } = require("./helpers/utils");
+const assertUrlStorage = require("./helpers/assertUrlStorage");
 const tus = require("../../");
 const stream = require("stream");
 const temp = require("temp");
@@ -94,7 +95,6 @@ describe("tus", function () {
       await expectHelloWorldUpload(file, options);
     });
 
-
     it("should pass through errors from the request", async function () {
       var resErr = new Error("something bad, really!");
       var buffer = Buffer.from("hello world");
@@ -120,7 +120,7 @@ describe("tus", function () {
     it("should resume an upload from a stored url", async function () {
       var storagePath = temp.path();
       fs.writeFileSync(storagePath, "{\"tus::fingerprinted::1337\":{\"uploadUrl\":\"http://tus.io/uploads/resuming\"}}");
-      var storage = new tus.FileStorage(storagePath);
+      var storage = new tus.FileUrlStorage(storagePath);
       var input = Buffer.from("hello world");
       var options = {
         httpStack: new TestHttpStack(),
@@ -175,6 +175,14 @@ describe("tus", function () {
       });
 
       await options.onSuccess.toBeCalled;
+    });
+  });
+
+  describe("#FileUrlStorage", function () {
+    it("should allow storing and retrieving uploads", async function () {
+      var storagePath = temp.path();
+      var storage = new tus.FileUrlStorage(storagePath);
+      await assertUrlStorage(storage);
     });
   });
 });
