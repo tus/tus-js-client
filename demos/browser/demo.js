@@ -121,10 +121,10 @@ function reset() {
 function askToResumeUpload(previousUploads, upload) {
   if (previousUploads.length === 0) return;
 
-  let text = "You tried to upload this file previously at these times:\n\n"
+  let text = "You tried to upload this file previously at these times:\n\n";
   previousUploads.forEach((previousUpload, index) => {
     text += "[" + index + "] " + previousUpload.creationTime + "\n";
-  })
+  });
   text += "\nEnter the corresponding number to resume an upload or press Cancel to start a new upload";
 
   const answer = prompt(text);
