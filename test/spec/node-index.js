@@ -1,2 +1,2 @@
-require("./upload");
-require("./upload.node.js");
+require("./test-common.js");
+require("./test-node-specific.js");

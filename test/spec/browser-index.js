@@ -29,5 +29,5 @@ function t() {
 t();
 
 require("./helpers/puppeteer/reporter.js");
-require("./upload.js");
-require("./upload.browser.js");
+require("./test-common.js");
+require("./test-browser-specific.js");
