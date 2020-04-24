@@ -1,3 +1,22 @@
+const isBrowser  = typeof window !== "undefined";
+const isNode     = !isBrowser;
+
+/**
+ * Obtain a platform specific buffer object, which can be
+ * handled by tus-js-client.
+ */
+function getBlob(str) {
+  if (isNode) {
+    return Buffer.from(str);
+  } else {
+    return new Blob(str.split(""));
+  }
+}
+
+/**
+ * Create a promise and obtain the resolve/reject functions
+ * outside of the Promise callback.
+ */
 function flatPromise() {
   let resolveFn;
   let rejectFn;
@@ -9,6 +28,10 @@ function flatPromise() {
   return [ p, resolveFn, rejectFn ];
 }
 
+/**
+ * Create a spy-able function which resolves a Promise
+ * once it is called.
+ */
 function waitableFunction(name = "func") {
   const [ promise, resolve ] = flatPromise();
   const fn = jasmine.createSpy(name, resolve).and.callThrough();
@@ -17,10 +40,17 @@ function waitableFunction(name = "func") {
   return fn;
 }
 
+/**
+ * Create a Promise that resolves after the specified duration.
+ */
 function wait(delay) {
   return new Promise((resolve) => setTimeout(resolve, delay, "timed out"));
 }
 
+/**
+ * TestHttpStack implements the HTTP stack interface for tus-js-client
+ * and can be used to assert outgoing requests and respond with mock data.
+ */
 class TestHttpStack {
   constructor() {
     this._pendingRequests = [];
@@ -140,5 +170,6 @@ class TestResponse {
 module.exports = {
   TestHttpStack,
   waitableFunction,
-  wait
+  wait,
+  getBlob
 };

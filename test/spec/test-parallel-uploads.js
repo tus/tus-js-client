@@ -1,17 +1,5 @@
-const { TestHttpStack, waitableFunction, wait } = require("./helpers/utils");
+const { TestHttpStack, waitableFunction, wait, getBlob } = require("./helpers/utils");
 const tus = require("../../");
-
-// TODO: move in helper
-var isBrowser  = typeof window !== "undefined";
-var isNode     = !isBrowser;
-
-var getBlob = function (str) {
-  if (isNode) {
-    return Buffer.from(str);
-  } else {
-    return new Blob(str.split(""));
-  }
-};
 
 describe("tus", function () {
   describe("parallel uploading", function () {
