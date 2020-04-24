@@ -1,5 +1,7 @@
+os: linux
+dist: xenial
 language: node_js
-matrix:
+jobs:
   include:
   - env: TEST_TARGET=browser
     node_js: 12
@@ -22,10 +24,10 @@ script:
 deploy:
   provider: npm
   email: marius@transloadit.com
-  api_key:
+  api_token:
     secure: deLv8rCb1nN4vcFCSlPLVLcZJ20vLWNPaAA4PZAUXcQdUFX8mc++qDusS0o3LqdQVIugeOkSBTuKq8GQxOpMahj3U0WDe7Dy+t5xS/kPejr1H4m/VT1A5uRfBLGHgjuQzZH1L/RzAAca7Przx9fNe/1y1+RblDbbE7oOXQWiIUs=
   skip_cleanup: true
   on:
     tags: true
     repo: tus/tus-js-client
-    node: 12
+    node_js: 12
