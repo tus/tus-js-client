@@ -28,6 +28,13 @@ function t() {
 }
 t();
 
+beforeEach(function () {
+  // Clear localStorage before every test to prevent stored URLs to
+  // interfere with our setup.
+  localStorage.clear();
+});
+
 require("./helpers/puppeteer/reporter.js");
 require("./test-common.js");
 require("./test-browser-specific.js");
+require("./test-parallel-uploads.js");

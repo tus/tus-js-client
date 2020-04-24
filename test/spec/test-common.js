@@ -13,8 +13,8 @@ var getBlob = function (str) {
   }
 };
 
-// Set Jasmine's timeout for a single test to 20s
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 20 * 1000;
+// Test timeout for end-to-end tests when uploading to real server.
+const END_TO_END_TIMEOUT = 20 * 1000;
 
 // Enable debug log from tus-js-client
 tus.enableDebugLog();
@@ -27,14 +27,6 @@ describe("tus", function () {
   });
 
   describe("#Upload", function () {
-    beforeEach(function () {
-      // Clear localStorage before every test to prevent stored URLs to
-      // interfere with our setup.
-      if (isBrowser) {
-        localStorage.clear();
-      }
-    });
-
     it("should throw if no error handler is available", function () {
       var upload = new tus.Upload(null);
       expect(upload.start.bind(upload)).toThrowError("tus: no file or stream to upload provided");
@@ -1246,7 +1238,7 @@ describe("tus", function () {
         });
       })
       .then(validateUploadDeletion);
-  });
+  }, END_TO_END_TIMEOUT);
 
   it("should upload to a real tus server with creation-with-upload", async function () {
     return new Promise((resolve, reject) => {
@@ -1274,7 +1266,7 @@ describe("tus", function () {
       upload.start();
     })
       .then(validateUploadContent);
-  });
+  }, END_TO_END_TIMEOUT);
 });
 
 function validateUploadContent(upload) {
