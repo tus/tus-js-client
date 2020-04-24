@@ -234,6 +234,7 @@ describe("tus", function () {
         httpStack: testStack,
         endpoint: "http://tus.io/uploads",
         addRequestId: true,
+        retryDelays: null,
         onError: waitableFunction("onError")
       };
 
@@ -395,6 +396,7 @@ describe("tus", function () {
       var options = {
         httpStack: testStack,
         endpoint: "http://tus.io/uploads",
+        retryDelays: null,
         onError: waitableFunction("onError")
       };
 
@@ -650,7 +652,8 @@ describe("tus", function () {
         httpStack: testStack,
         endpoint: "http://tus.io/uploads",
         uploadUrl: "http://tus.io/files/upload",
-        onError: waitableFunction("onError")
+        onError: waitableFunction("onError"),
+        retryDelays: null
       };
 
       var upload = new tus.Upload(file, options);
@@ -674,7 +677,8 @@ describe("tus", function () {
       var options = {
         httpStack: testStack,
         endpoint: "http://tus.io/uploads",
-        onError: waitableFunction("onError")
+        onError: waitableFunction("onError"),
+        retryDelays: null
       };
 
       var upload = new tus.Upload(file, options);

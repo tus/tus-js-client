@@ -185,6 +185,7 @@ describe("tus", function () {
       const options = {
         httpStack: testStack,
         parallelUploads: 2,
+        retryDelays: null,
         endpoint: "https://tus.io/uploads",
         onError: waitableFunction("onError")
       };

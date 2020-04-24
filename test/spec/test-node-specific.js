@@ -101,7 +101,8 @@ describe("tus", function () {
       var options = {
         httpStack: new TestHttpStack(),
         endpoint: "/uploads",
-        onError: waitableFunction("onError")
+        onError: waitableFunction("onError"),
+        retryDelays: null
       };
 
       var upload = new tus.Upload(buffer, options);
