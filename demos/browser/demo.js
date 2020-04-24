@@ -12,6 +12,7 @@ var progressBar     = progress.querySelector(".bar");
 var alertBox        = document.querySelector("#support-alert");
 var uploadList      = document.querySelector("#upload-list");
 var chunkInput      = document.querySelector("#chunksize");
+var parallelInput   = document.querySelector("#paralleluploads");
 var endpointInput   = document.querySelector("#endpoint");
 
 if (!tus.isSupported) {
@@ -61,12 +62,18 @@ function startUpload() {
     chunkSize = Infinity;
   }
 
+  var parallelUploads = parseInt(parallelInput.value, 10);
+  if (isNaN(parallelUploads)) {
+    parallelUploads = 1;
+  }
+
   toggleBtn.textContent = "pause upload";
 
   var options = {
     endpoint: endpoint,
     chunkSize: chunkSize,
     retryDelays: [0, 1000, 3000, 5000],
+    parallelUploads: parallelUploads,
     metadata: {
       filename: file.name,
       filetype: file.type
