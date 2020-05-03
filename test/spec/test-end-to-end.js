@@ -34,15 +34,8 @@ describe("tus", function () {
       })
         .then(validateUploadContent)
         .then((upload) => {
-          return new Promise((resolve, reject) => {
-            upload.abort(true, function (err) {
-              if (err) {
-                return reject(err);
-              }
-
-              resolve(upload);
-            });
-          });
+          return upload.abort(true)
+            .then(() => upload);
         })
         .then(validateUploadDeletion);
     }, END_TO_END_TIMEOUT);
