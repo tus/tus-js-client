@@ -150,7 +150,7 @@ describe("tus", function () {
         status: 500
       });
 
-      await expectAsync(terminatePromise).toBeRejectedWithError(Error, "tus: unexpected response while terminating upload, originated from request (method: DELETE, url: http://tus.io/files/foo, response code: 500, response text: , request id: n/a)");
+      await expectAsync(terminatePromise).toBeRejectedWithError(/tus: unexpected response while terminating upload/);
     });
   });
 });
