@@ -4,7 +4,7 @@ This document contains detailed explanation about alls available methods and cla
 
 ## tus.isSupported
 
-A boolean indicating whether the current browser/environemnt has the features necessary to use tus-js-client. This can be used to test support and warn the user or fallback to other file transfers methods. For example:
+A boolean indicating whether the current browser/environment has the features necessary to use tus-js-client. This can be used to test support and warn the user or fallback to other file transfers methods. For example:
 
 ```js
 if (!tus.isSupported) {
