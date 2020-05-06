@@ -8,8 +8,8 @@
 > the user wants to pause, or by accident in case of an network issue or server
 > outage.
 
-tus-js-client is a pure JavaScript client for the [tus resumable upload protocol](http://tus.io) and can be used inside browsers, Node.js,
-React Native and Apache Cordova.
+tus-js-client is a pure **JavaScript** client for the [tus resumable upload protocol](http://tus.io) and can be used inside **browsers**, **Node.js**,
+**React Native** and **Apache Cordova** applications.
 
 **Protocol version:** 1.0.0
 

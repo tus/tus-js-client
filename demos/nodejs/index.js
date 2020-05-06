@@ -9,7 +9,6 @@ var size = fs.statSync(path).size;
 
 var options = {
   endpoint: "https://master.tus.io/files/",
-  resume: true,
   metadata: {
     filename: "README.md",
     filetype: "text/plain"

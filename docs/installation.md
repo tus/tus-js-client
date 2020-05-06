@@ -27,9 +27,17 @@ If you are not using a web bundler, you can directly embed the prebuilt script d
 </script>
 ```
 
-# Runtime requirements
+# Runtime requirements & limitations
 
-tus-js-client has some requirements in which environments it can properly function.
+tus-js-client can be used in following environments:
+* Browsers
+* Node.js
+* React Native applications
+* Apache Cordova applications
+
+Please see the following sections for more details on environment-specific requirements and possible limitations.
+
+One general requirements is that the JavaScript environment must support [Promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises), which is the case for modern browsers and Node.js. However, if your application runs in older browsers or other environments without support for Promises, you can use a Promise polyfill to fill this gap. Have a look at [caniuse.com](https://caniuse.com/#feat=promises) for a list of those browsers and [core-js](https://github.com/zloirock/core-js#ecmascript-promise) for polyfilling.
 
 ## Browser support
 
@@ -58,16 +66,16 @@ who provide their great service glady for Open Source project for free.
 
 ## Node.js support
 
-tus-js-client is tested and known to work in Node.js v8 or newer.
+tus-js-client is tested and known to work in Node.js version 8 or newer.
 
 Since Node's environment is quite different than a browser's runtime and
 provides other capabilities but also restrictions, tus-js-client will have a
 slightly changed behavior when used in the context of a Node.js application:
 
 * As the Web Storage API is only available in browser environments,
-tus-js-client will not be able store the URLs of created uploads allowing
-automatic resuming. Please consult the documentation for the `tus.canStoreURLs`
-for more information on this specific topic.
+tus-js-client will by default not store the URLs of created uploads. To manually
+enable this feature, please consult the `urlStorage` option for the `tus.Upload`
+constructor.
 
 * The `tus.Upload` constructor will only accept instances of `buffer.Buffer`
 and `stream.Readable` as file inputs. If you are passing a readable stream as
@@ -102,6 +110,6 @@ The only unavailable feature is upload URL storage (for resuming them in later
 sessions) because React Native does not implement the Web Storage API. You can
 test this programmatically using the `tus.canStoreURLs` property which will
 always be set to `false` in React Native environments. In the end, this means
-that the `fingerprint`, `resume` and `removeFingerprintOnSuccess` options
+that the `fingerprint`, `storeFingerprintForResuming` and `removeFingerprintOnSuccess` options
 to not have any influence on the behavior because their values are ignored
 when using React Native.

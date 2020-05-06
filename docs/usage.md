@@ -1,13 +1,20 @@
 # Usage
 
-1. **Create** a new `tus.Upload` instance by passing the file to be uploaded alongside additional options to its constructor.
-2. **Start** the upload using the `Upload#start` function. This will create the upload resource if necessary and then transfer the file to the remote endpoint.
-3. Optionally **pause** the upload if the user/application wishes to do so using `Upload#abort`. This will cause any currently running transfers to be immediately stopped.
-4. Optionally **resume** the previously paused upload by called `Upload#start` again. This will resume the upload at the point at which it had stopped before. You can also use this approach to continue the upload after an error has occurred.
+This document contains an introduction and example about how to use tus-js-client. Please see the [API reference](/docs/api.md) for a more detailed explanation about alls available methods and classes.
 
-Please consult the [API reference](/docs/api.md) for more details.
+The basic flow is for every application the same:
 
-## Example
+1. **Obtain** the file that you want to upload (e.g. let the user select a file using an input element).
+2. **Create** a new `tus.Upload` instance by passing the file to be uploaded alongside additional options.
+3. Optionally **fetch** a list of previously started uploads using `tus.Upload#findPreviousUploads` method and select one of them to resume using `tus.Upload#resumeFromPreviousUpload`.
+4. **Start** the upload using the `tus.Upload#start` function. This will create the upload resource on the server if necessary and then transfer the file to the remote endpoint.
+5. Optionally **pause** the upload if the user/application wishes to do so using `tus.Upload#abort`. This will cause any currently running transfers to be immediately stopped.
+6. Optionally **unpause** the previously paused upload by called `Upload#start` again. This will resume the upload at the point at which it had stopped before. You can also use this approach to continue the upload after an error has occurred.
+
+
+## Example: Simple file upload
+
+This example demonstrates the most basic usage of tus-js-client where a single file is uploaded to a tus server:
 
 ```js
 input.addEventListener("change", function(e) {
@@ -16,19 +23,25 @@ input.addEventListener("change", function(e) {
 
     // Create a new tus upload
     var upload = new tus.Upload(file, {
+        // Endpoint is the upload creation URL from your tus server
         endpoint: "http://localhost:1080/files/",
+        // Retry delays will enable tus-js-client to automatically retry on errors
         retryDelays: [0, 3000, 5000, 10000, 20000],
+        // Attach additional meta data about the file for the server
         metadata: {
             filename: file.name,
             filetype: file.type
         },
+        // Callback for errors which cannot be fixed using retries
         onError: function(error) {
             console.log("Failed because: " + error)
         },
+        // Callback for reporting upload progress
         onProgress: function(bytesUploaded, bytesTotal) {
             var percentage = (bytesUploaded / bytesTotal * 100).toFixed(2)
             console.log(bytesUploaded, bytesTotal, percentage + "%")
         },
+        // Callback for once the upload is completed
         onSuccess: function() {
             console.log("Download %s from %s", upload.file.name, upload.url)
         }
@@ -39,67 +52,124 @@ input.addEventListener("change", function(e) {
 })
 ```
 
-## Internals
+## Example: Upload with pause button
 
-Once a new file should be uploaded the client will create a new upload resource
-on the server using a `POST` request. A successful response will contain a
-`Location` header pointing to the upload URL. This URL will be used to transfer
-the file to the server using one or multiple `PATCH` requests.
-In addition tus-js-client will generate a unique fingerprint for every file and
-store it and the upload URL using the Web Storage API. If the upload is
-interrupted or aborted manually, the client is able to resume the upload by
-retrieving the upload URL using the fingerprint. The client is even able to
-resume after you close your browser or shut down your device. Now the client can
-continue to send `PATCH` requests to the server until the upload is finished.
+This example shows how you can implement a pauseable upload using tus-js-client. The upload can be paused and unpaused using two buttons:
 
-## Extension support
+```js
+// Obtain file from user input or similar
+var file = ...
 
-The tus specification defines multiple [extensions](http://tus.io/protocols/resumable-upload.html#protocol-extensions) which can be optionally
-implemented beside the core protocol enabling specific functionality. Not all
-of these extensions are interesting or even useful for a client-side library
-and therefore support for all of them in tus-js-client is not guaranteed.
+// Create the tus upload similar to the example from above
+var upload = new tus.Upload(file, {
+    endpoint: "http://localhost:1080/files/",
+    onError: function(error) {
+        console.log("Failed because: " + error)
+    },
+    onSuccess: function() {
+        console.log("Download %s from %s", upload.file.name, upload.url)
+    }
+})
 
-* The **Creation** extension is mostly implemented and is used for creating the
-upload. Deferring the upload's length is not possible at the moment.
+// Add listeners for the pause and unpause button
+var pauseButton   = document.querySelector("#pauseButton")
+var unpauseButton = document.querySelector("#unpauseButton")
 
-* The Checksum extension requires that the checksum is calculated inside the
-browser. While this is totally doable today, it's particularly expensive and
-time intensive for bigger files and on mobile devices. One solution is to
-utilize the new Web Crypto API, which probably offers better performance and
-security, but you could argue whether it has reached critical mass yet.
+pauseButton.addEventListener("click", function() {
+    upload.abort()
+})
 
-* The Concatenation extension is mostly meant for parallel uploads where you
-need to utilize multiple HTTP connections. In most cases, this does not apply
-to the environment of the browser but it can also be used for different things.
+unpauseButton.addEventListener("click", function() {
+    upload.start()
+})
 
-At the moment, coverage for these extensions is not great but we promise to
-improve this situation in the near future.
+// Start the upload by default
+upload.start()
+```
 
-### Difference between onProgress and onChunkComplete
+## Example: Let user select upload to resume
 
-When configuring a new uploader, the `onProgress` and `onChunkComplete`
-callbacks are available. While they may seem to be equal based on their
-naming and the arguments, they provide different information in reality.
-Progress events are emitted using the `onProgress` option and provide numbers
-about how much data has been sent to the server. However, this data may not
-have been received or accepted by the endpoint. Imagine a network outage where
-the browser reports to have successfully sent 100 bytes, but none of them ever
-reach the backend. In order to provide reliable information about whether the
-chunks have been accepted by the server, `onChunkComplete` is only invoked if
-we have evidence that the remote endpoint has received and accepted the
-uploaded bytes. When consuming this functionality, the `chunkSize` option is
-from high importance since the callback will and invoked if an entire chunk
-has been uploaded.
+If tus-js-client creates an upload, it will by default save the upload URL in the URL storage. If a user selects the same file in another browsing session (e.g. after the browser has been accidentally closed), the application can query the URL storage to retrieve the original upload URL again and instruct tus-js-client to resume from that upload. This way, the resumability is also possible across browser sessions.
 
-### Automated Retries
+This example shows how the application can query the URL Storage to find uploads and how to ask the end user which upload should be resumed:
 
-Due to tus' support for resumability, tus-js-client has been engineered to work even under bad networking conditions and provides options for controlling how it should act in different circumstances.
-One of these settings is `retryDelays` which defines whether and how often tus-js-client will attempt a retry after the upload has been unintentionally interrupted. The value may either be `null`, to fully disable the described functionality, or an array of numbers. It's length will define how often retries will be attempted before giving up and the array's values indicate the delay between the upload interruption and the start of the next attempt in milliseconds. For example, a configuration of `[0, 1000, 3000, 5000]` will result in, at most, five attempts to resume the upload, including the initial one from calling `tus.Upload#start`. The first retry will occur instantly after the interruption, while the second attempt is going to be started after waiting for one second, the third after three seconds, and so on. If the fifth and final attempt also fails, the latest error will not be caught, but passed to the provided `onError` callback.
-The underlying implementation is rather straightforward: Any error which would usually trigger the `onError` callback will be caught if following criteria are matched:
-- the error has been caused by networking issues, e.g. connection interruption or an unexpected/invalid response from the server, and
-- the environment does not explicitly report that the client is disconnected from any network, e.g. `navigator.onLine` in modern browsers, and
-- the maximum number of retries, defined by the array's length, has not been reached.
+```js
+var file = ...
+var options = ...
+var upload = new tus.Upload(file, options)
 
-If all of these conditions are met, an attempt will be issued after applying the defined delay. Furthermore, once the client was able to successfully transfer chunks of the upload to the server, the counter for attempted retries will be reset to zero. For example, if an upload is interrupted the first delay will be applied. After reconnecting to the remote endpoint, it is able to transfer data to it until the connection is cut again. This time not the second delay will be used but the first one again because we were able to upload chunks. The reason for this behavior is that it will allow uploads to be interrupted more often than the `retryDelays` option defines, as long as we are making progress in uploading.
+// Retrieve a list of uploads that have been previously started for this file.
+// These uploads will be queried from the URL Storage using the file's fingerprint.
+upload.findPreviousUploads().then((previousUploads) => {
+    // previousUploads is an array containing details about the previously started uploads.
+    // The objects in the array have following properties:
+    // - size: The upload's size in bytes
+    // - metadata: The metadata associated with the upload during its creation
+    // - creationTime: The timestamp when the upload was created
+    
+    // We ask the end user if they want to resume one of those uploads or start a new one.
+    var chosenUpload = askToResumeUpload(previousUploads);
 
-## Examples
+    // If an upload has been chosen to be resumed, instruct the upload object to do so.
+    if(chosenUpload) {
+        upload.resumeFromPreviousUpload(chosenUpload);
+    }
+
+    // Finally start the upload requests.
+    upload.start();
+});
+
+// Open a dialog box to the user where they can select whether they want to resume an upload
+// or instead create a new one.
+function askToResumeUpload(previousUploads) {
+  if (previousUploads.length === 0) return null;
+
+  var text = "You tried to upload this file previously at these times:\n\n";
+  previousUploads.forEach((previousUpload, index) => {
+    text += "[" + index + "] " + previousUpload.creationTime + "\n";
+  });
+  text += "\nEnter the corresponding number to resume an upload or press Cancel to start a new upload";
+
+  var answer = prompt(text);
+  var index = parseInt(answer, 10);
+
+  if (!isNaN(index) && previousUploads[index]) {
+    return previousUploads[index];
+  }
+}
+```
+
+## Example: Upload to Vimeo
+
+The Vimeo API uses tus for its upload but has a bit unusual implementation detail: It already creates the tus upload on the server for you, so you don't have to use `endpoint` option but must use `uploadUrl` instead:
+
+```js
+// Obtain video to upload from user input or similar
+var file = ...
+
+// The upload URL you get from the Vimeo API for uploading
+var uploadUrl = ...
+
+// Create the tus upload similar to the example from above
+var upload = new tus.Upload(file, {
+    uploadUrl: uploadUrl,
+    onError: function(error) {
+        console.log("Failed because: " + error)
+    },
+    onSuccess: function() {
+        console.log("Download %s from %s", upload.file.name, upload.url)
+    }
+})
+
+// Start the upload by default
+upload.start()
+```
+
+## More examples
+
+Complete example applications can be found in the demos folder:
+
+* `/demos/browser`: Example website for upload a user-selected file
+* `/demos/nodejs`: Example script for uploading a file from Node.js
+* `/demos/reactnative`: Example application using React Native
+* `/demos/cordova`: Example application using Apache Cordova
