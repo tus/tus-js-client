@@ -261,6 +261,47 @@ describe("tus", function () {
       expect(err.originalResponse).toBeDefined();
     });
 
+    it("should invoke the request and response callbacks", async function () {
+      const testStack = new TestHttpStack();
+      var file = getBlob("hello world");
+      var options = {
+        httpStack: testStack,
+        uploadUrl: "http://tus.io/uploads/foo",
+        onBeforeRequest: function (req) {
+          expect(req.getURL()).toBe("http://tus.io/uploads/foo");
+          expect(req.getMethod()).toBe("HEAD");
+        },
+        onAfterResponse: function (req, res) {
+          expect(req.getURL()).toBe("http://tus.io/uploads/foo");
+          expect(req.getMethod()).toBe("HEAD");
+          expect(res.getStatus()).toBe(204);
+          expect(res.getHeader("Upload-Offset")).toBe(11);
+        },
+        onSuccess: waitableFunction("onSuccess")
+      };
+      spyOn(options, "onBeforeRequest");
+      spyOn(options, "onAfterResponse");
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      var req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/uploads/foo");
+      expect(req.method).toBe("HEAD");
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 11,
+          "Upload-Length": 11
+        }
+      });
+
+      await options.onSuccess.toBeCalled;
+      expect(options.onBeforeRequest).toHaveBeenCalled();
+      expect(options.onAfterResponse).toHaveBeenCalled();
+    });
+
     it("should throw an error if resuming fails and no endpoint is provided", async function () {
       const testStack = new TestHttpStack();
       var file = getBlob("hello world");

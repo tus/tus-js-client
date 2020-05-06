@@ -99,6 +99,9 @@ describe("tus", function () {
             Location: "/uploads/blargh"
           }
         });
+
+        // Wait a short delay to allow the Promises to settle
+        await wait(10);
       };
 
       var finishUpload = async function () {

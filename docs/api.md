@@ -185,6 +185,33 @@ A number indicating how many parts should be uploaded in parallel. If this numbe
 
 The idea behind this option is that you can use multiple HTTP requests in parallel to better utilize the full capacity of the network connection to the tus server. If you want to use it, please evaluate it under real world situations to see if it actually improves your upload performance. In common browser session, we were not able to find a performance improve for the average user.
 
+#### onBeforeRequest
+
+*Default value:* `null`
+
+An optional function that will be called before a HTTP request is sent out. The argument will be an instance of the `HttpRequest` interface as defined for the `httpStack` option. This can be used to modify the outgoing request. For example, you can enable the `withCredentials` setting for XMLHttpRequests in browsers:
+
+```js
+onBeforeRequest: function (req) {
+    var xhr = req.getUnderlyingObject()
+    xhr.withCredentials = true
+}
+```
+
+#### onAfterResponse
+
+*Default value:* `null`
+
+An optional function that will be called after a HTTP response has been received. The arguments will be an instance of the `HttpRequest` and `HttpResponse` interface as defined for the `httpStack` option. This can be used to retrieve additional data from the server, for example:
+
+```js
+onAfterResponse: function (req, res) {
+    var url = req.getURL()
+    var value = res.getHeader("X-My-Header")
+    console.log(`Request for ${url} responded with ${value}`)
+}
+```
+
 #### httpStack
 
 *Default value:* Environment-specific implementation
