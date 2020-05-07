@@ -6,13 +6,13 @@
 var upload          = null;
 var uploadIsRunning = false;
 var toggleBtn       = document.querySelector("#toggle-btn");
-var resumeCheckbox  = document.querySelector("#resume");
 var input           = document.querySelector("input[type=file]");
 var progress        = document.querySelector(".progress");
 var progressBar     = progress.querySelector(".bar");
 var alertBox        = document.querySelector("#support-alert");
 var uploadList      = document.querySelector("#upload-list");
 var chunkInput      = document.querySelector("#chunksize");
+var parallelInput   = document.querySelector("#paralleluploads");
 var endpointInput   = document.querySelector("#endpoint");
 
 if (!tus.isSupported) {
@@ -62,13 +62,18 @@ function startUpload() {
     chunkSize = Infinity;
   }
 
+  var parallelUploads = parseInt(parallelInput.value, 10);
+  if (isNaN(parallelUploads)) {
+    parallelUploads = 1;
+  }
+
   toggleBtn.textContent = "pause upload";
 
   var options = {
     endpoint: endpoint,
-    resume  : !resumeCheckbox.checked,
     chunkSize: chunkSize,
     retryDelays: [0, 1000, 3000, 5000],
+    parallelUploads: parallelUploads,
     metadata: {
       filename: file.name,
       filetype: file.type
@@ -103,8 +108,13 @@ function startUpload() {
   };
 
   upload = new tus.Upload(file, options);
-  upload.start();
-  uploadIsRunning = true;
+  upload.findPreviousUploads().then((previousUploads) => {
+    askToResumeUpload(previousUploads, upload);
+
+    upload.start();
+    uploadIsRunning = true;
+  });
+
 }
 
 function reset() {
@@ -112,4 +122,22 @@ function reset() {
   toggleBtn.textContent = "start upload";
   upload = null;
   uploadIsRunning = false;
+}
+
+
+function askToResumeUpload(previousUploads, upload) {
+  if (previousUploads.length === 0) return;
+
+  let text = "You tried to upload this file previously at these times:\n\n";
+  previousUploads.forEach((previousUpload, index) => {
+    text += "[" + index + "] " + previousUpload.creationTime + "\n";
+  });
+  text += "\nEnter the corresponding number to resume an upload or press Cancel to start a new upload";
+
+  const answer = prompt(text);
+  const index = parseInt(answer, 10);
+
+  if (!isNaN(index) && previousUploads[index]) {
+    upload.resumeFromPreviousUpload(previousUploads[index]);
+  }
 }

@@ -66,7 +66,7 @@ function runTests(cb) {
     }
 
     // Enable to see full report
-    // console.log(JSON.stringify(reports, null, 2));
+    console.log(JSON.stringify(reports, null, 2));
     console.log("Test Finished");
     console.log("");
 
