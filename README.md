@@ -13,7 +13,7 @@ tus-js-client is a pure **JavaScript** client for the [tus resumable upload prot
 
 **Protocol version:** 1.0.0
 
-This branch contains tus-js-client v2. If you are looking for the previous major release, after which breaking changes have been introduced, please look at the [v1.8.0 tag](https://github.com/tus/tus-js-client/tree/v1.8.0).
+This branch contains tus-js-client v2. If you are looking for the previous major release, after which [breaking changes](https://tus.io/blog/2020/05/04/tus-js-client-200/) have been introduced, please look at the [v1.8.0 tag](https://github.com/tus/tus-js-client/tree/v1.8.0).
 
 ## Example
 

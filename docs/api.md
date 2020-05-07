@@ -153,7 +153,7 @@ A boolean indicating if the upload URL should be stored in the URL storage using
 
 *Default value:* `false`
 
-A boolean indicating if the fingerprint in the URL storage will be removed once the upload is successfully completed. This value is `false` for not breaking the previous API contract, but we strongly suggest to set it to `true` to avoid cluttering the storage space. The effect is that if the same file is uploaded again, it will create an entirely new upload. Furthermore, this option will only change behavior if `urlStorage` is not `null`.
+A boolean indicating if the fingerprint in the URL storage will be removed once the upload is successfully completed. When this feature is enabled and the same file is uploaded again, it will create an entirely new upload instead of reusing the previous one. Furthermore, this option will only change behavior if `urlStorage` is not `null`.
 
 #### uploadLengthDeferred
 
@@ -171,7 +171,7 @@ A boolean indicating whether the `creation-with-upload` extension should be used
 
 *Default value:* `false`
 
-A boolean indicating whether a random request ID should be added to every HTTP request that is sent. The request ID will be sent using the `X-Request-ID` header, so your CORS setup must allow that header. The request ID can be used to correlate client errors with server logs if the tus server also adds the ID to its logs. The IDs follow the UUID v4 format, for example:
+A boolean indicating whether a random request ID should be added to every HTTP request that is sent. The request ID will be sent using the `X-Request-ID` header, so your CORS setup must allow that header. The request ID is added to error messages and can be used to correlate client errors with server logs if the tus server also adds the ID to its logs. The IDs follow the UUID v4 format, for example:
 
 ```
 X-Request-ID: fe51f777-f23e-4ed9-97d7-2785cc69f961
