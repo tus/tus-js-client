@@ -1,5 +1,6 @@
 node_modules
 demos/reactnative/.expo
 lib.es5
+lib.esm
 dist
 .DS_Store

@@ -8,9 +8,9 @@ module.exports = async function assertUrlStorage(urlStorage) {
   const key2 = await urlStorage.addUpload("fingerprintA", { id: 2 });
   const key3 = await urlStorage.addUpload("fingerprintB", { id: 3 });
 
-  expect(key1.startsWith("tus::fingerprintA::")).toBe(true);
-  expect(key2.startsWith("tus::fingerprintA::")).toBe(true);
-  expect(key3.startsWith("tus::fingerprintB::")).toBe(true);
+  expect(/^tus::fingerprintA::/.test(key1)).toBe(true);
+  expect(/^tus::fingerprintA::/.test(key2)).toBe(true);
+  expect(/^tus::fingerprintB::/.test(key3)).toBe(true);
 
   // Query the just stored uploads individually
   result = await urlStorage.findUploadsByFingerprint("fingerprintA");

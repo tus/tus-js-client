@@ -2,10 +2,8 @@
 // with the async/await keywords. See
 // https://babeljs.io/docs/en/babel-plugin-transform-regenerator
 import "regenerator-runtime/runtime";
-
-// The babel-preset-env will automatically insert polyfills from the
-// corejs library in the tests, depending on what features are used.
-// See the .babelrc for the corresponding configuration.
+// Polyfill `Promise` for Internet Explorer.
+import "es6-promise/auto";
 
 // This is a fun piece of code. Let me tell you the story behind it:
 // Internet Explorer 10 and 11 have a bug where the event handlers
