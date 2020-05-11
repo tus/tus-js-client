@@ -16,9 +16,15 @@ After that, you can load the package:
 var tus = require("tus-js-client");
 ```
 
+If your bundler supports ES Modules, you can use:
+
+```js
+import tus from "tus-js-client";
+```
+
 ## Embed using a script tag
 
-If you are not using a web bundler, you can directly embed the prebuilt script directly:
+If you are not using a web bundler, you can embed the prebuilt script directly:
 
 ```html
 <script src="dist/tus.js"></script>
@@ -37,7 +43,14 @@ tus-js-client can be used in following environments:
 
 Please see the following sections for more details on environment-specific requirements and possible limitations.
 
-One general requirements is that the JavaScript environment must support [Promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises), which is the case for modern browsers and Node.js. However, if your application runs in older browsers or other environments without support for Promises, you can use a Promise polyfill to fill this gap. Have a look at [caniuse.com](https://caniuse.com/#feat=promises) for a list of those browsers and [core-js](https://github.com/zloirock/core-js#ecmascript-promise) for polyfilling.
+One general requirement is that the JavaScript environment must support [Promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises), which is the case for modern browsers and Node.js. However, if your application runs in older browsers or other environments without support for Promises, you can use a Promise polyfill to fill this gap. Have a look at [caniuse.com](https://caniuse.com/#feat=promises) for a list of those browsers and [core-js](https://github.com/zloirock/core-js#ecmascript-promise) for polyfilling.
+
+When polyfilling, load the polyfill _before_ loading tus-js-client:
+
+```js
+require("core-js/features/promise");
+var tus = require("tus-js-client");
+```
 
 ## Browser support
 
@@ -56,11 +69,11 @@ tus-js-client is tested and known to support following browsers:
 * iOS 6.0+
 * Android 5.0+
 
-Support in other browsers is *very likely* but has not been confirimed yet.
+Support in other browsers is *very likely* but has not been confirmed yet.
 Since we only use Web Storage, XMLHttpRequest2, the File API and Blob API,
 more than 95% of today's users should be able to use tus-js-client.
 
-Compatability between browsers is continuously ensured by automated tests
+Compatibility between browsers is continuously ensured by automated tests
 in the corresponding browsers on [BrowserStack](https://browserstack.com),
 who provide their great service glady for Open Source project for free.
 
