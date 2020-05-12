@@ -15,6 +15,7 @@
   ],
   "browser": {
     "./lib.es5/node/index.js": "./lib.es5/browser/index.js",
+    "./lib.esm/node/index.js": "./lib.esm/browser/index.js",
     "./lib/node/index.js": "./lib/browser/index.js"
   },
   "repository": {
