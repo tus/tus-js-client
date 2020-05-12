@@ -18,6 +18,7 @@
     "./lib.esm/node/index.js": "./lib.esm/browser/index.js",
     "./lib/node/index.js": "./lib/browser/index.js"
   },
+  "types": "./lib/index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/tus/tus-js-client.git"
