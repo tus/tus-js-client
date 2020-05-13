@@ -11,7 +11,8 @@
     "dist/**/*",
     "demos/**/*",
     "bin/**/*",
-    "test/**/*"
+    "test/**/*",
+    "lib/index.d.ts"
   ],
   "browser": {
     "./lib.es5/node/index.js": "./lib.es5/browser/index.js",
@@ -58,6 +59,7 @@
     "puppeteer": "^1.19.0",
     "regenerator-runtime": "^0.13.5",
     "temp": "^0.8.3",
+    "tsd": "^0.11.0",
     "uglify-js": "^3.9.2",
     "watchify": "^3.11.1"
   },
@@ -84,7 +86,8 @@
     "test-puppeteer": "node bin/puppeteer-jasmine.js",
     "test-browserstack": "node bin/browserstack-jasmine.js",
     "test-node": "jasmine test/spec/node-index.js",
-    "test": "./bin/test",
+    "test-types": "tsd",
+    "test": "./bin/test && npm run test-types",
     "lint": "eslint lib demos test bin"
   }
 }
