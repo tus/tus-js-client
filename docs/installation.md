@@ -24,10 +24,13 @@ import tus from "tus-js-client";
 
 ## Embed using a script tag
 
-If you are not using a web bundler, you can embed the prebuilt script directly:
+If you are not using a web bundler, you can download the latest prebuilt script and embed it directly:
+
+* Unminified version: [tus.js](https://cdn.jsdelivr.net/npm/tus-js-client@latest/dist/tus.js)
+* Minified version: [tus.min.js](https://cdn.jsdelivr.net/npm/tus-js-client@latest/dist/tus.min.js) (recommended)
 
 ```html
-<script src="dist/tus.js"></script>
+<script src="./tus.min.js"></script>
 <script>
   var upload = new tus.Upload(...);
 </script>
