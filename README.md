@@ -52,7 +52,7 @@ input.addEventListener("change", function(e) {
 * [Installation & Requirements](/docs/installation.md)
 * [Usage & Examples](/docs/usage.md)
 * [API Reference](/docs/api.md)
-* [Contribution Guidelines](/docs/contribution.md)
+* [Contribution Guidelines](/docs/contributing.md)
 * [FAQ & Common issues](/docs/faq.md)
 
 ## Build status
