@@ -39,6 +39,14 @@ input.addEventListener("change", function(e) {
         },
         onSuccess: function() {
             console.log("Download %s from %s", upload.file.name, upload.url)
+        },
+        onShouldRetry: function(err, retryAttempt, options) {
+          var status = err.originalResponse ? err.originalResponse.getStatus() : 0;
+          // in case the status if 403, fail directly
+          if (status === 403) {
+            return false;
+          }
+          return true;
         }
     })
 

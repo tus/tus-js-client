@@ -837,6 +837,130 @@ describe("tus", function () {
       expect(options.onSuccess).toHaveBeenCalled();
     });
 
+    // This tests ensures that tus-js-client correctly retries if the
+    // response of the onShouldRetry is true
+    it("should retry the upload when callback specified and returns true", async function () {
+      const testStack = new TestHttpStack();
+      var file = getBlob("hello world");
+      var options = {
+        httpStack: testStack,
+        endpoint: "http://tus.io/files/",
+        retryDelays: [10, 10, 10],
+        onSuccess: waitableFunction("onSuccess"),
+        onShouldRetry: () => true
+      };
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      let req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/");
+      expect(req.method).toBe("POST");
+
+      req.respondWith({
+        status: 500
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/");
+      expect(req.method).toBe("POST");
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: "/files/foo"
+        }
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 423
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("HEAD");
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          "Upload-Offset": 0,
+          "Upload-Length": 11
+        }
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 409
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("HEAD");
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          "Upload-Offset": 0,
+          "Upload-Length": 11
+        }
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 11
+        }
+      });
+
+      await options.onSuccess.toBeCalled;
+      expect(options.onSuccess).toHaveBeenCalled();
+    });
+
+    // This tests ensures that tus-js-client correctly abort if the
+    // response of the onShouldRetry is false
+    it("should not retry the upload when callback specified and returns false", async function () {
+      const testStack = new TestHttpStack();
+      var file = getBlob("hello world");
+      var options = {
+        httpStack: testStack,
+        endpoint: "http://tus.io/files/",
+        retryDelays: [10, 10, 10],
+        onSuccess: waitableFunction("onSuccess"),
+        onError: waitableFunction("onError"),
+        onShouldRetry: () => false
+      };
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      let req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/");
+      expect(req.method).toBe("POST");
+
+      // The error callback should not be invoked for the first error response.
+      expect(options.onError).not.toHaveBeenCalled();
+
+      req.respondWith({
+        status: 500
+      });
+
+      await options.onError.toBeCalled;
+
+      expect(options.onSuccess).not.toHaveBeenCalled();
+      expect(options.onError).toHaveBeenCalledTimes(1);
+    });
+
     it("should not retry if the error has not been caused by a request", async function () {
       var file = getBlob("hello world");
       var options = {
