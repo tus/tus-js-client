@@ -850,6 +850,9 @@ describe("tus", function () {
         onShouldRetry: () => true
       };
 
+      spyOn(options, "onShouldRetry").and.callThrough();
+      spyOn(tus.Upload.prototype, "_emitError").and.callThrough();
+
       var upload = new tus.Upload(file, options);
       upload.start();
 
@@ -925,6 +928,12 @@ describe("tus", function () {
 
       await options.onSuccess.toBeCalled;
       expect(options.onSuccess).toHaveBeenCalled();
+
+      let error = upload._emitError.calls.argsFor(0)[0];
+      expect(options.onShouldRetry).toHaveBeenCalled();
+      expect(options.onShouldRetry.calls.argsFor(0)).toEqual([error, 0, upload.options]);
+      error = upload._emitError.calls.argsFor(1)[0];
+      expect(options.onShouldRetry.calls.argsFor(1)).toEqual([error, 1, upload.options]);
     });
 
     // This tests ensures that tus-js-client correctly abort if the
