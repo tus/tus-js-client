@@ -3,8 +3,8 @@ dist: xenial
 language: node_js
 jobs:
   include:
-  - env: TEST_TARGET=browser
-    node_js: 12
+  # - env: TEST_TARGET=browser
+  #   node_js: 12
   - env: TEST_TARGET=node
     node_js: 8
   - env: TEST_TARGET=node
