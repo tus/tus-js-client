@@ -19,7 +19,7 @@ var tus = require("tus-js-client");
 If your bundler supports ES Modules, you can use:
 
 ```js
-import tus from "tus-js-client";
+import * as tus from "tus-js-client";
 ```
 
 ## Embed using a script tag
