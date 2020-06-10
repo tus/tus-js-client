@@ -838,8 +838,8 @@ describe("tus", function () {
     });
 
     // This tests ensures that tus-js-client correctly retries if the
-    // response of the onShouldRetry is true
-    it("should retry the upload when callback specified and returns true", async function () {
+    // return value of onShouldRetry is true.
+    it("should retry the upload when onShouldRetry specified and returns true", async function () {
       const testStack = new TestHttpStack();
       var file = getBlob("hello world");
       var options = {
@@ -936,8 +936,8 @@ describe("tus", function () {
       expect(options.onShouldRetry.calls.argsFor(1)).toEqual([error, 1, upload.options]);
     });
 
-    // This tests ensures that tus-js-client correctly abort if the
-    // response of the onShouldRetry is false
+    // This tests ensures that tus-js-client correctly aborts if the
+    // return value of onShouldRetry is false.
     it("should not retry the upload when callback specified and returns false", async function () {
       const testStack = new TestHttpStack();
       var file = getBlob("hello world");
