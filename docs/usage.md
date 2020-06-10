@@ -167,11 +167,7 @@ upload.start()
 
 ## Example: Overriding the default retry behavior
 
-In some cases it might be desirable to change the condition for which an upload will be retried.
-
-This example shows how to override the default retry behavior with a callback function where we decided
-that if the server returned a 403 status code, it means it's about a permission issue and we want to
-display an error message directly instead of waiting for all the retries.
+In some cases it might be desirable to change the condition for which an upload will be retried. This example shows how to override the default retry behavior with a callback function where no retry will occur after a 403 status code (indicating a permission issue) is received. This will cause the error message to be directly logged instead of the retrys kicking in.
 
 ```js
 input.addEventListener("change", function(e) {
@@ -187,16 +183,18 @@ input.addEventListener("change", function(e) {
             filetype: file.type
         },
         onError: function(error) {
-            // display error message
+            // Display an error message
             console.log("Failed because: " + error)
         },
         onShouldRetry: function(err, retryAttempt, options) {
-          var status = err.originalResponse ? err.originalResponse.getStatus() : 0;
-          // in case the status if 403, fail directly
+          var status = err.originalResponse ? err.originalResponse.getStatus() : 0
+          // If the status is a 403, we do not want to retry.
           if (status === 403) {
-            return false;
+            return false
           }
-          return true;
+          
+          // For any other status code, tus-js-client should retry.
+          return true
         }
     })
 
