@@ -106,7 +106,7 @@ upload.findPreviousUploads().then((previousUploads) => {
     // - size: The upload's size in bytes
     // - metadata: The metadata associated with the upload during its creation
     // - creationTime: The timestamp when the upload was created
-    
+
     // We ask the end user if they want to resume one of those uploads or start a new one.
     var chosenUpload = askToResumeUpload(previousUploads);
 
@@ -163,6 +163,44 @@ var upload = new tus.Upload(file, {
 
 // Start the upload by default
 upload.start()
+```
+
+## Example: Overriding the default retry behavior
+
+In some cases it might be desirable to change the condition for which an upload will be retried. This example shows how to override the default retry behavior with a callback function where no retry will occur after a 403 status code (indicating a permission issue) is received. This will cause the error message to be directly logged instead of the retrys kicking in.
+
+```js
+input.addEventListener("change", function(e) {
+    // Get the selected file from the input element
+    var file = e.target.files[0]
+
+    // Create a new tus upload
+    var upload = new tus.Upload(file, {
+        endpoint: "http://localhost:1080/files/",
+        retryDelays: [0, 3000, 5000, 10000, 20000],
+        metadata: {
+            filename: file.name,
+            filetype: file.type
+        },
+        onError: function(error) {
+            // Display an error message
+            console.log("Failed because: " + error)
+        },
+        onShouldRetry: function(err, retryAttempt, options) {
+          var status = err.originalResponse ? err.originalResponse.getStatus() : 0
+          // If the status is a 403, we do not want to retry.
+          if (status === 403) {
+            return false
+          }
+          
+          // For any other status code, tus-js-client should retry.
+          return true
+        }
+    })
+
+    // Start the upload
+    upload.start()
+})
 ```
 
 ## More examples

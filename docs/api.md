@@ -11,7 +11,7 @@ if (!tus.isSupported) {
     alert("This browser does not support uploads. Please use a modern browser instead.")
 }
 ````
- 
+
 ## tus.canStoreURLs
 
 A boolean indicating whether the current environment allows storing URLs enabling the corresponding upload to be resumed (see the `tus.Upload#resumeFromPreviousUpload` method). This value will only yield to `true` if we are in a browser environment which provides access to the
@@ -74,6 +74,35 @@ onError: function (err) {
     console.log("Error", err)
     console.log("Request", err.originalRequest)
     console.log("Response", err.originalResponse)
+}
+```
+
+#### onShouldRetry
+
+*Default value:* `null`
+
+An optional function called once an error appears and before retrying.
+
+When no callback is specified, the retry behavior will be the default one: any status codes of 409, 423 or any other than 4XX will be treated as a server error and the request will be retried automatically, as long as the browser does not indicate that we are offline.
+
+When a callback is specified, its return value will influence the retry behavior: The function must return `true` if the request should be retried, `false` otherwise. The argument will be an `Error` instance with additional information about the involved requests.
+
+Please note that the callback will not be invoked when the maximum number of retry attempts was reached.
+
+```js
+onShouldRetry: function (err, retryAttempt, options) {
+    console.log("Error", err)
+    console.log("Request", err.originalRequest)
+    console.log("Response", err.originalResponse)
+    
+    var status = err.originalResponse ? err.originalResponse.getStatus() : 0
+    // Do not retry if the status is a 403.
+    if (status === 403) {
+      return false
+    }
+    
+    // For any other status code, we retry.
+    return true
 }
 ```
 

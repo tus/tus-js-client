@@ -837,6 +837,139 @@ describe("tus", function () {
       expect(options.onSuccess).toHaveBeenCalled();
     });
 
+    // This tests ensures that tus-js-client correctly retries if the
+    // return value of onShouldRetry is true.
+    it("should retry the upload when onShouldRetry specified and returns true", async function () {
+      const testStack = new TestHttpStack();
+      var file = getBlob("hello world");
+      var options = {
+        httpStack: testStack,
+        endpoint: "http://tus.io/files/",
+        retryDelays: [10, 10, 10],
+        onSuccess: waitableFunction("onSuccess"),
+        onShouldRetry: () => true
+      };
+
+      spyOn(options, "onShouldRetry").and.callThrough();
+      spyOn(tus.Upload.prototype, "_emitError").and.callThrough();
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      let req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/");
+      expect(req.method).toBe("POST");
+
+      req.respondWith({
+        status: 500
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/");
+      expect(req.method).toBe("POST");
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: "/files/foo"
+        }
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 423
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("HEAD");
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          "Upload-Offset": 0,
+          "Upload-Length": 11
+        }
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 409
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("HEAD");
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          "Upload-Offset": 0,
+          "Upload-Length": 11
+        }
+      });
+
+      req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/foo");
+      expect(req.method).toBe("PATCH");
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 11
+        }
+      });
+
+      await options.onSuccess.toBeCalled;
+      expect(options.onSuccess).toHaveBeenCalled();
+
+      let error = upload._emitError.calls.argsFor(0)[0];
+      expect(options.onShouldRetry).toHaveBeenCalled();
+      expect(options.onShouldRetry.calls.argsFor(0)).toEqual([error, 0, upload.options]);
+      error = upload._emitError.calls.argsFor(1)[0];
+      expect(options.onShouldRetry.calls.argsFor(1)).toEqual([error, 1, upload.options]);
+    });
+
+    // This tests ensures that tus-js-client correctly aborts if the
+    // return value of onShouldRetry is false.
+    it("should not retry the upload when callback specified and returns false", async function () {
+      const testStack = new TestHttpStack();
+      var file = getBlob("hello world");
+      var options = {
+        httpStack: testStack,
+        endpoint: "http://tus.io/files/",
+        retryDelays: [10, 10, 10],
+        onSuccess: waitableFunction("onSuccess"),
+        onError: waitableFunction("onError"),
+        onShouldRetry: () => false
+      };
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      let req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/files/");
+      expect(req.method).toBe("POST");
+
+      // The error callback should not be invoked for the first error response.
+      expect(options.onError).not.toHaveBeenCalled();
+
+      req.respondWith({
+        status: 500
+      });
+
+      await options.onError.toBeCalled;
+
+      expect(options.onSuccess).not.toHaveBeenCalled();
+      expect(options.onError).toHaveBeenCalledTimes(1);
+    });
+
     it("should not retry if the error has not been caused by a request", async function () {
       var file = getBlob("hello world");
       var options = {
