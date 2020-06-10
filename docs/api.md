@@ -83,29 +83,26 @@ onError: function (err) {
 
 An optional function called once an error appears and before retrying.
 
-When no callback is specified, the retry behavior will be the default one: any status codes of 409, 423
-or any other than 4xx will be treated as a server error and the request will be retried automatically.
+When no callback is specified, the retry behavior will be the default one: any status codes of 409, 423 or any other than 4XX will be treated as a server error and the request will be retried automatically, as long as the browser does not indicate that we are offline.
 
-When a callback is specified, its return value will influence the retry behavior.
+When a callback is specified, its return value will influence the retry behavior: The function must return `true` if the request should be retried, `false` otherwise. The argument will be an `Error` instance with additional information about the involved requests.
 
-The argument will be an Error instance with additional information about the involved requests. For example:
-
-The callback must return `true` if the request should be retried, `false` otherwise.
-
-Please note that the callback will not be called when the maximum number of retry attempts was reached or
-whenever the browser indicates that we are offline.
+Please note that the callback will not be invoked when the maximum number of retry attempts was reached.
 
 ```js
 onShouldRetry: function (err, retryAttempt, options) {
     console.log("Error", err)
     console.log("Request", err.originalRequest)
     console.log("Response", err.originalResponse)
-    var status = err.originalResponse ? err.originalResponse.getStatus() : 0;
-    // in case the status if 403, fail directly
+    
+    var status = err.originalResponse ? err.originalResponse.getStatus() : 0
+    // Do not retry if the status is a 403.
     if (status === 403) {
-      return false;
+      return false
     }
-    return true;
+    
+    // For any other status code, we retry.
+    return true
 }
 ```
 
