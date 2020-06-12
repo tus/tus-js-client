@@ -4,7 +4,6 @@ const tus = require("../../");
 const stream = require("stream");
 const temp = require("temp");
 const fs = require("fs");
-const { InsecureNodeHttpStack } = require("../../lib/node/httpStack");
 
 describe("tus", function () {
   describe("#canStoreURLs", function () {
@@ -190,9 +189,8 @@ describe("tus", function () {
 
   describe("#InsecureNodeHttpStack", function () {
     it("should allow unauthorized request", function () {
-      const req = (new InsecureNodeHttpStack()).createRequest();
-
-      expect(req.options.rejectUnauthorized).toBeFalse();
+      const req = (new tus.InsecureNodeHttpStack()).createRequest();
+      expect(req._requestOptions.rejectUnauthorized).toBeFalse();
     });
   });
 });
