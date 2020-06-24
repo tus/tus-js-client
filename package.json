@@ -66,7 +66,7 @@
   "dependencies": {
     "buffer-from": "^0.1.1",
     "combine-errors": "^3.0.3",
-    "js-base64": "^2.4.9",
+    "js-base64": "^2.6.1",
     "lodash.throttle": "^4.1.1",
     "proper-lockfile": "^2.0.1",
     "url-parse": "^1.4.3"
