@@ -189,7 +189,9 @@ describe("tus", function () {
 
   describe("#InsecureNodeHttpStack", function () {
     it("should allow unauthorized request", function () {
-      const req = (new tus.InsecureNodeHttpStack()).createRequest();
+      const req = (new tus.NodeHttpStack(null, null, {
+        rejectUnauthorized: false
+      })).createRequest();
       expect(req._requestOptions.rejectUnauthorized).toBeFalse();
     });
   });
