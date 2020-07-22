@@ -1248,5 +1248,52 @@ describe("tus", function () {
       expect(options.onError).not.toHaveBeenCalled();
       expect(options.onSuccess).toHaveBeenCalled();
     });
+
+    it("should invoke the request and response Promises", async function () {
+      const testStack = new TestHttpStack();
+      var file = getBlob("hello world");
+      var options = {
+        httpStack: testStack,
+        uploadUrl: "http://tus.io/uploads/foo",
+        onBeforeRequest: function (req) {
+          return new Promise(resolve => {
+            expect(req.getURL()).toBe("http://tus.io/uploads/foo");
+            expect(req.getMethod()).toBe("HEAD");
+            resolve();
+          });
+        },
+        onAfterResponse: function (req, res) {
+          return new Promise(resolve => {
+            expect(req.getURL()).toBe("http://tus.io/uploads/foo");
+            expect(req.getMethod()).toBe("HEAD");
+            expect(res.getStatus()).toBe(204);
+            expect(res.getHeader("Upload-Offset")).toBe(11);
+            resolve();
+          });
+        },
+        onSuccess: waitableFunction("onSuccess")
+      };
+      spyOn(options, "onBeforeRequest");
+      spyOn(options, "onAfterResponse");
+
+      var upload = new tus.Upload(file, options);
+      upload.start();
+
+      var req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/uploads/foo");
+      expect(req.method).toBe("HEAD");
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          "Upload-Offset": 11,
+          "Upload-Length": 11
+        }
+      });
+
+      await options.onSuccess.toBeCalled;
+      expect(options.onBeforeRequest).toHaveBeenCalled();
+      expect(options.onAfterResponse).toHaveBeenCalled();
+    });
   });
 });
