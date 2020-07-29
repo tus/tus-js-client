@@ -24,7 +24,7 @@ describe("tus", function () {
       await expectHelloWorldUpload(buffer, options);
     });
 
-    it("should reject streams without specifing the size", async function () {
+    it("should reject streams without specifying the size", async function () {
       var input = new stream.PassThrough();
       var options = {
         endpoint: "/uploads",
@@ -39,7 +39,7 @@ describe("tus", function () {
       expect(err.message).toBe("tus: cannot automatically derive upload's size from input and must be specified manually using the `uploadSize` option");
     });
 
-    it("should reject streams without specifing the chunkSize", async function () {
+    it("should reject streams without specifying the chunkSize", async function () {
       var input = new stream.PassThrough();
       var options = {
         endpoint: "/uploads",
@@ -184,6 +184,16 @@ describe("tus", function () {
       var storagePath = temp.path();
       var storage = new tus.FileUrlStorage(storagePath);
       await assertUrlStorage(storage);
+    });
+  });
+
+  describe("#InsecureNodeHttpStack", function () {
+    it("should allow unauthorized request", function () {
+      const stack = (new tus.HttpStack({
+        rejectUnauthorized: false
+      }));
+      expect(stack._requestOptions.rejectUnauthorized).toBeFalse();
+      expect(stack.createRequest()._requestOptions.rejectUnauthorized).toBeFalse();
     });
   });
 });
