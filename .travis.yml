@@ -17,6 +17,8 @@ jobs:
     node_js: 12
   - env: TEST_TARGET=node
     node_js: 13
+  - env: TEST_TARGET=node
+    node_js: 14
 script:
 - npm run build
 - npm run lint
