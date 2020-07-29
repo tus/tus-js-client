@@ -85,7 +85,6 @@
     "watch": "npm-run-all --parallel watch-*",
     "test-puppeteer": "node bin/puppeteer-jasmine.js",
     "test-browserstack": "node bin/browserstack-jasmine.js",
-    "pretest-node": "npm run build",
     "test-node": "jasmine test/spec/node-index.js",
     "test-types": "tsd",
     "test": "./bin/test && npm run test-types",

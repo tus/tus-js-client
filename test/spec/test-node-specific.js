@@ -4,6 +4,7 @@ const tus = require("../../");
 const stream = require("stream");
 const temp = require("temp");
 const fs = require("fs");
+const https = require("https");
 
 describe("tus", function () {
   describe("#canStoreURLs", function () {
@@ -187,13 +188,16 @@ describe("tus", function () {
     });
   });
 
-  describe("#InsecureNodeHttpStack", function () {
-    it("should allow unauthorized request", function () {
+  describe("#NodeHttpStack", function () {
+    it("should allow to pass options to Node's requests", async function () {
+      const customAgent = new https.Agent();
       const stack = (new tus.HttpStack({
-        rejectUnauthorized: false
+        agent: customAgent
       }));
-      expect(stack._requestOptions.rejectUnauthorized).toBeFalse();
-      expect(stack.createRequest()._requestOptions.rejectUnauthorized).toBeFalse();
+      const req = stack.createRequest("GET", "https://master.tus.io/");
+      await req.send();
+      expect(req.getUnderlyingObject().agent).toBe(customAgent);
+      expect(req.getUnderlyingObject().agent).not.toBe(https.globalAgent);
     });
   });
 });
