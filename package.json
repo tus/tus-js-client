@@ -59,7 +59,7 @@
     "puppeteer": "^1.19.0",
     "regenerator-runtime": "^0.13.5",
     "temp": "^0.8.3",
-    "tsd": "^0.11.0",
+    "tsd": "^0.13.1",
     "uglify-js": "^3.9.2",
     "watchify": "^3.11.1"
   },
