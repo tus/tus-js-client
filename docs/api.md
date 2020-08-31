@@ -220,22 +220,22 @@ The idea behind this option is that you can use multiple HTTP requests in parall
 
 An optional function that will be called before a HTTP request is sent out. The argument will be an instance of the `HttpRequest` interface as defined for the `httpStack` option. This can be used to modify the outgoing request. For example, you can enable the `withCredentials` setting for XMLHttpRequests in browsers:
 
-- standard function
 ```js
 onBeforeRequest: function (req) {
-    const xhr = req.getUnderlyingObject();
-    xhr.withCredentials = true;
+    var xhr = req.getUnderlyingObject()
+    xhr.withCredentials = true
 }
 ```
 
-- function with Promise return type
+You can also return a Promise if you need to perform some calculations before the request is sent:
+
 ```js
 onBeforeRequest: function (req) {
     return new Promise(resolve => {
-      const xhr = req.getUnderlyingObject();
-      xhr.withCredentials = true;
-      resolve();
-    });
+        var xhr = req.getUnderlyingObect()
+        xhr.withCredentials = true
+        resolve()
+    })
 }
 ```
 
@@ -245,24 +245,24 @@ onBeforeRequest: function (req) {
 
 An optional function that will be called after a HTTP response has been received. The arguments will be an instance of the `HttpRequest` and `HttpResponse` interface as defined for the `httpStack` option. This can be used to retrieve additional data from the server, for example:
 
-- standard function
 ```js
 onAfterResponse: function (req, res) {
-    const url = req.getURL();
-    const value = res.getHeader("X-My-Header");
-    console.log(`Request for ${url} responded with ${value}`);
+    var url = req.getURL()
+    var value = res.getHeader("X-My-Header")
+    console.log(`Request for ${url} responded with ${value}`)
 }
 ```
 
-- function with Promise return type
+You can also return a Promise if you need to perform some calculations before tus-js-client processes the response:
+
 ```js
 onAfterResponse: function (req, res) {
-  return new Promise(resolve => {
-    const url = req.getURL();
-    const value = res.getHeader("X-My-Header");
-    console.log(`Request for ${url} responded with ${value}`);
-    resolve();
-  });
+    return new Promise(resolve => {
+        var url = req.getURL()
+        var value = res.getHeader("X-My-Header")
+        console.log(`Request for ${url} responded with ${value}`)
+        resolve()
+    })
 }
 ```
 
