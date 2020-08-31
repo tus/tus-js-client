@@ -11,7 +11,7 @@ export class Upload {
   options: UploadOptions;
   url: string | null;
 
-  static terminate(url: string, options?: UploadOptions, callback?: (error?: Error) => void): void;
+  static terminate(url: string, options?: UploadOptions): Promise<void>;
   start(): void;
   abort(shouldTerminate?: boolean): Promise<void>;
   findPreviousUploads(): Promise<PreviousUpload[]>;
