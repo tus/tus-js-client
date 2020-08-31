@@ -227,6 +227,18 @@ onBeforeRequest: function (req) {
 }
 ```
 
+You can also return a Promise if you need to perform some calculations before the request is sent:
+
+```js
+onBeforeRequest: function (req) {
+    return new Promise(resolve => {
+        var xhr = req.getUnderlyingObect()
+        xhr.withCredentials = true
+        resolve()
+    })
+}
+```
+
 #### onAfterResponse
 
 *Default value:* `null`
@@ -238,6 +250,19 @@ onAfterResponse: function (req, res) {
     var url = req.getURL()
     var value = res.getHeader("X-My-Header")
     console.log(`Request for ${url} responded with ${value}`)
+}
+```
+
+You can also return a Promise if you need to perform some calculations before tus-js-client processes the response:
+
+```js
+onAfterResponse: function (req, res) {
+    return new Promise(resolve => {
+        var url = req.getURL()
+        var value = res.getHeader("X-My-Header")
+        console.log(`Request for ${url} responded with ${value}`)
+        resolve()
+    })
 }
 ```
 
