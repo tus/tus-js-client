@@ -152,5 +152,43 @@ describe("tus", function () {
 
       await expectAsync(terminatePromise).toBeRejectedWithError(/tus: unexpected response while terminating upload/);
     });
+
+    it("should invoke the request and response Promises", async function () {
+      const testStack = new TestHttpStack();
+      var options = {
+        httpStack: testStack,
+        onBeforeRequest: function (req) {
+          return new Promise(resolve => {
+            expect(req.getURL()).toBe("http://tus.io/uploads/foo");
+            expect(req.getMethod()).toBe("DELETE");
+            resolve();
+          });
+        },
+        onAfterResponse: function (req, res) {
+          return new Promise(resolve => {
+            expect(req.getURL()).toBe("http://tus.io/uploads/foo");
+            expect(req.getMethod()).toBe("DELETE");
+            expect(res.getStatus()).toBe(204);
+            resolve();
+          });
+        }
+      };
+      spyOn(options, "onBeforeRequest");
+      spyOn(options, "onAfterResponse");
+
+      const terminatePromise = tus.Upload.terminate("http://tus.io/uploads/foo", options);
+
+      let req = await testStack.nextRequest();
+      expect(req.url).toBe("http://tus.io/uploads/foo");
+      expect(req.method).toBe("DELETE");
+
+      req.respondWith({
+        status: 204
+      });
+
+      await expectAsync(terminatePromise).toBeResolved();
+      expect(options.onBeforeRequest).toHaveBeenCalled();
+      expect(options.onAfterResponse).toHaveBeenCalled();
+    });
   });
 });
