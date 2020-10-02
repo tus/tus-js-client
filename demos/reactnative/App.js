@@ -65,7 +65,7 @@ export default class App extends React.Component {
 
     const extension = this.getFileExtension(file.uri);
     const upload = new tus.Upload(file, {
-      endpoint: "https://master.tus.io/files/",
+      endpoint: "https://tusd.tusdemo.net/files/",
       retryDelays: [0, 1000, 3000, 5000],
       metadata: {
         filename: `photo.${extension}`,

@@ -8,7 +8,7 @@ var file = fs.createReadStream(path);
 var size = fs.statSync(path).size;
 
 var options = {
-  endpoint: "https://master.tus.io/files/",
+  endpoint: "https://tusd.tusdemo.net/files/",
   metadata: {
     filename: "README.md",
     filetype: "text/plain"

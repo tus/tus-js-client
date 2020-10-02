@@ -28,7 +28,7 @@ An object containing the default options used when creating a new upload:
 The upload creation URL which will be used to create new uploads. For example:
 
 ```js
-endpoint: "http://master.tus.io/files/"
+endpoint: "http://tusd.tusdemo.net/files/"
 ```
 
 #### fingerprint
@@ -407,7 +407,7 @@ The `url` argument is the URL for the upload which you want to terminate. The `o
 The function returns a `Promise` object, which is resolved once the operation is complete, for example:
 
 ```js
-const url = "https://master.tus.io/files/my_upload_1"
+const url = "https://tusd.tusdemo.net/files/my_upload_1"
 tus.Upload.terminate(url).then(function () {
     // Upload has been terminated
 }).catch(function (err) {

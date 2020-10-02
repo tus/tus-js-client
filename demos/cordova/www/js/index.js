@@ -65,7 +65,7 @@ function toggleUpload() {
     if (!file) return;
 
     var options = {
-      endpoint: "https://master.tus.io/files/",
+      endpoint: "https://tusd.tusdemo.net/files/",
       retryDelays: [0, 1000, 3000, 5000],
       metadata: {
         filename: file.name,

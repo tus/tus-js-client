@@ -194,7 +194,7 @@ describe("tus", function () {
       const stack = (new tus.HttpStack({
         agent: customAgent
       }));
-      const req = stack.createRequest("GET", "https://master.tus.io/");
+      const req = stack.createRequest("GET", "https://tusd.tusdemo.net/");
       await req.send();
       expect(req.getUnderlyingObject().agent).toBe(customAgent);
       expect(req.getUnderlyingObject().agent).not.toBe(https.globalAgent);
