@@ -31,6 +31,7 @@ interface UploadOptions {
   onChunkComplete?: ((chunkSize: number, bytesAccepted: number, bytesTotal: number) => void) | null;
   onSuccess?: (() => void) | null;
   onError?: ((error: Error) => void) | null;
+  onShouldRetry?: ((error: Error, retryAttempt: number, options: UploadOptions) => boolean) | null;
 
   overridePatchMethod?: boolean;
   headers?: { [key: string]: string };
