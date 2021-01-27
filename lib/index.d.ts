@@ -1,5 +1,7 @@
 // Type definitions for tus-js-client
 
+import { RequestOptions } from "https";
+
 export const isSupported: boolean;
 export const canStoreURLs: boolean;
 export const defaultOptions: UploadOptions;
@@ -83,7 +85,8 @@ interface SliceResult {
   done: boolean;
 }
 
-export interface HttpStack {
+export class HttpStack {
+  constructor(requestOptions?: RequestOptions);
   createRequest(method: string, url: string): HttpRequest;
   getName(): string;
 }
