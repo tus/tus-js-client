@@ -1,4 +1,5 @@
 // Type definitions for tus-js-client
+import { RequestOptions } from 'https'
 
 export const isSupported: boolean;
 export const canStoreURLs: boolean;
@@ -81,6 +82,13 @@ interface SliceResult {
   // Platform-specific data type which must be usable by the HTTP stack as a body.
   value: any;
   done: boolean;
+}
+
+export class DefaultHttpStack {
+  _requestOptions: Partial<RequestOptions>;
+  constructor(requestOptions?: RequestOptions);
+  createRequest(method: string, url: string): HttpRequest;
+  getName(): string;
 }
 
 export interface HttpStack {

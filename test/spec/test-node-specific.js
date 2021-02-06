@@ -205,7 +205,7 @@ describe('tus', () => {
   describe('#NodeHttpStack', () => {
     it("should allow to pass options to Node's requests", async () => {
       const customAgent = new https.Agent()
-      const stack = (new tus.HttpStack({
+      const stack = (new tus.DefaultHttpStack({
         agent: customAgent,
       }))
       const req = stack.createRequest('GET', 'https://tusd.tusdemo.net/')
