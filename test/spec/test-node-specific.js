@@ -5,6 +5,7 @@ const stream = require("stream");
 const temp = require("temp");
 const fs = require("fs");
 const https = require("https");
+const intoStream = require("into-stream");
 
 describe("tus", function () {
   describe("#canStoreURLs", function () {
@@ -64,6 +65,19 @@ describe("tus", function () {
       };
 
       input.end("hello WORLD");
+      await expectHelloWorldUpload(input, options);
+    });
+
+    it("should accept stream-like objects", async function () {
+      // This function returns an object that works like a stream but does not inherit stream.Readable
+      const input = intoStream("hello WORLD");
+      var options = {
+        httpStack: new TestHttpStack(),
+        endpoint: "/uploads",
+        chunkSize: 7,
+        uploadSize: 11
+      };
+
       await expectHelloWorldUpload(input, options);
     });
 
