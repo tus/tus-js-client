@@ -1,9 +1,9 @@
 // The regenerator runtime is needed since the test use functions
 // with the async/await keywords. See
 // https://babeljs.io/docs/en/babel-plugin-transform-regenerator
-import "regenerator-runtime/runtime";
+import 'regenerator-runtime/runtime'
 // Polyfill `Promise` for Internet Explorer.
-import "es6-promise/auto";
+import 'es6-promise/auto'
 
 // This is a fun piece of code. Let me tell you the story behind it:
 // Internet Explorer 10 and 11 have a bug where the event handlers
@@ -21,20 +21,20 @@ import "es6-promise/auto";
 // delays to vanish.
 // Whoever found that patch, I hope they will go to heaven.
 // See https://github.com/axios/axios/issues/1862
-function t() {
-  window.setTimeout(t, 10);
+function t () {
+  window.setTimeout(t, 10)
 }
-t();
+t()
 
-beforeEach(function () {
+beforeEach(() => {
   // Clear localStorage before every test to prevent stored URLs to
   // interfere with our setup.
-  localStorage.clear();
-});
+  localStorage.clear()
+})
 
-require("./helpers/puppeteer/reporter.js");
-require("./test-common.js");
-require("./test-browser-specific.js");
-require("./test-parallel-uploads.js");
-require("./test-terminate.js");
-require("./test-end-to-end.js");
+require('./helpers/puppeteer/reporter.js')
+require('./test-common.js')
+require('./test-browser-specific.js')
+require('./test-parallel-uploads.js')
+require('./test-terminate.js')
+require('./test-end-to-end.js')
