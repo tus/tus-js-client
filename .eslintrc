@@ -21,6 +21,11 @@
     "ecmaVersion": 2020,
     "sourceType": "module",
     "requireConfigFile": false,
+    "babelOptions": {
+      "plugins": [
+        "@babel/plugin-syntax-jsx"
+      ]
+    },
     "ecmaFeatures": {
       "jsx": true
     }
