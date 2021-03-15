@@ -31,10 +31,14 @@
     }
   },
   "rules": {
+    // transloadit rules we are actually ok with in the tus-js-client repo
+    ////////////////////////////////////////////////////////////
+    "class-methods-use-this": ["off"],
+
+
     // rules we had to turn off just to get a pass, but we'd
     // like to turn on one by one with separate PRs
     ////////////////////////////////////////////////////////////
-    "class-methods-use-this": ["warn"],
     "consistent-return": ["warn"],
     "eqeqeq": ["warn"],
     "guard-for-in": ["warn"],
@@ -55,6 +59,8 @@
     "node/no-deprecated-api": ["warn"],
     "prefer-destructuring": ["warn"],
     "prefer-rest-params": ["warn"],
+    "react/destructuring-assignment": ["warn"],
+    "react/sort-comp": ["warn"],
     "vars-on-top": ["warn"]
   }
 }
