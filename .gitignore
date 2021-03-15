@@ -4,3 +4,4 @@ lib.es5
 lib.esm
 dist
 .DS_Store
+yarn-error.log
