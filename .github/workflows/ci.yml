@@ -14,8 +14,7 @@ jobs:
     strategy:
       matrix:
         node: 
-          #  into-stream@6.0.0: The engine "node" is incompatible with this module. Expected version ">=10". Got "8.17.0"
-          - 10
+          - 10 #  into-stream@6.0.0: The engine "node" is incompatible with this module. Expected version ">=10". Got "8.17.0"
           - 12
           - 14
     name: Node ${{ matrix.node }}          
