@@ -1,0 +1,40 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types:
+      - opened
+      - synchronize
+jobs:
+  content:
+    if: "!contains(github.event.pull_request.title, 'WIP: ')"
+    runs-on: ubuntu-20.04
+    steps  : 
+      - name: Check out sources
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: Git Clean
+        run: git clean -fxd --exclude=node_modules/
+      - name: Install Node.js 14.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+      - name: Install dependencies
+        uses: sergioramos/yarn-actions/install@v6
+        with:
+          frozen-lockfile: true
+      - name: Lint
+        uses: sergioramos/yarn-actions/run@v6
+        with:
+          script: lint     
+      - name: Build
+        uses: sergioramos/yarn-actions/run@v6
+        with:
+          script: build
+      - name: Build
+        uses: sergioramos/yarn-actions/run@v6
+        with:
+          script: test
