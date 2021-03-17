@@ -11,6 +11,17 @@ jobs:
   content:
     if: "!contains(github.event.pull_request.title, 'WIP: ')"
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        node: 
+          - 8
+          - 9
+          - 10
+          - 11
+          - 12
+          - 13
+          - 14
+    name: Node ${{ matrix.node }}          
     steps  : 
       - name: Check out sources
         uses: actions/checkout@v2
@@ -21,7 +32,7 @@ jobs:
       - name: Install Node.js 14.x
         uses: actions/setup-node@v2
         with:
-          node-version: 14.x
+          node-version: ${{ matrix.node }}
       - name: Install dependencies
         uses: sergioramos/yarn-actions/install@v6
         with:
@@ -34,7 +45,19 @@ jobs:
         uses: sergioramos/yarn-actions/run@v6
         with:
           script: build
-      - name: Build
+      - name: Test
         uses: sergioramos/yarn-actions/run@v6
         with:
           script: test
+
+# @TODO: port this Travis CI automation to GHA one day:
+# deploy:
+#   provider: npm
+#   email: marius@transloadit.com
+#   api_token:
+#     secure: deLv8rCb1nN4vcFCSlPLVLcZJ20vLWNPaAA4PZAUXcQdUFX8mc++qDusS0o3LqdQVIugeOkSBTuKq8GQxOpMahj3U0WDe7Dy+t5xS/kPejr1H4m/VT1A5uRfBLGHgjuQzZH1L/RzAAca7Przx9fNe/1y1+RblDbbE7oOXQWiIUs=
+#   skip_cleanup: true
+#   on:
+#     tags: true
+#     repo: tus/tus-js-client
+#     node_js: 12
