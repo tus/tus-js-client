@@ -14,12 +14,12 @@ jobs:
     strategy:
       matrix:
         node: 
-          - 8
-          - 9
-          - 10
-          - 11
-          - 12
-          - 13
+          # - 8
+          # - 9
+          # - 10
+          # - 11
+          # - 12
+          # - 13
           - 14
     name: Node ${{ matrix.node }}          
     steps  : 
