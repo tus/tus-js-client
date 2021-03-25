@@ -47,8 +47,16 @@ input.addEventListener("change", function(e) {
         }
     })
 
-    // Start the upload
-    upload.start()
+     // Check if there are any previous uploads to continue.
+    upload.findPreviousUploads().then(function (previousUploads) {
+        // Found previous uploads so we select the first one. 
+        if (previousUploads.length) {
+            upload.resumeFromPreviousUpload(previousUploads[0])
+        }
+
+        // Start the upload
+        upload.start()
+    })
 })
 ```
 
@@ -59,6 +67,19 @@ This example shows how you can implement a pauseable upload using tus-js-client.
 ```js
 // Obtain file from user input or similar
 var file = ...
+
+function startOrResumeUpload(upload) {
+    // Check if there are any previous uploads to continue.
+    upload.findPreviousUploads().then(function (previousUploads) {
+        // Found previous uploads so we select the first one. 
+        if (previousUploads.length) {
+            upload.resumeFromPreviousUpload(previousUploads[0])
+        }
+
+        // Start the upload
+        upload.start()
+    })
+}
 
 // Create the tus upload similar to the example from above
 var upload = new tus.Upload(file, {
@@ -80,11 +101,11 @@ pauseButton.addEventListener("click", function() {
 })
 
 unpauseButton.addEventListener("click", function() {
-    upload.start()
+    startOrResumeUpload(upload)
 })
 
 // Start the upload by default
-upload.start()
+startOrResumeUpload(upload)
 ```
 
 ## Example: Let user select upload to resume
@@ -161,7 +182,7 @@ var upload = new tus.Upload(file, {
     }
 })
 
-// Start the upload by default
+// Start the upload
 upload.start()
 ```
 
@@ -198,8 +219,16 @@ input.addEventListener("change", function(e) {
         }
     })
 
-    // Start the upload
-    upload.start()
+     // Check if there are any previous uploads to continue.
+    upload.findPreviousUploads().then(function (previousUploads) {
+        // Found previous uploads so we select the first one. 
+        if (previousUploads.length) {
+            upload.resumeFromPreviousUpload(previousUploads[0])
+        }
+
+        // Start the upload
+        upload.start()
+    })
 })
 ```
 

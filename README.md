@@ -42,8 +42,16 @@ input.addEventListener("change", function(e) {
         }
     })
 
-    // Start the upload
-    upload.start()
+    // Check if there are any previous uploads to continue.
+    upload.findPreviousUploads().then(function (previousUploads) {
+        // Found previous uploads so we select the first one. 
+        if (previousUploads.length) {
+            upload.resumeFromPreviousUpload(previousUploads[0])
+        }
+
+        // Start the upload
+        upload.start()
+    })
 })
 ```
 
