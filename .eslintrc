@@ -2,21 +2,12 @@
   "extends": [
     "transloadit"
   ],
-  "plugins": [
-    "@babel/eslint-plugin",
-    "jest",
-    "node",
-    "prefer-import",
-    "promise",
-    "react"
-  ],
   "env": {
     "es6": true,
     "node": true,
     "browser": true,
     "jasmine": true
   },
-  "parser": "@babel/eslint-parser",
   "parserOptions": {
     "ecmaVersion": 2020,
     "sourceType": "module",
