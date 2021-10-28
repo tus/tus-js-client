@@ -41,6 +41,9 @@ module.exports = {
     // rules we had to turn off just to get a pass, but we'd
     // like to turn on one by one with separate PRs
     /// /////////////////////////////////////////////////////////
+    'max-classes-per-file': ['warn'],
+    'no-unused-vars'      : ['warn'],
+
     'consistent-return'                : ['warn'],
     'import/extensions'                : ['warn'],
     'eqeqeq'                           : ['warn'],
