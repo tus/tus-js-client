@@ -46,6 +46,7 @@
     "react/sort-comp": ["warn"],
     "vars-on-top": ["warn"],
 
-    "no-underscore-dangle": ["warn"]
+    // Used so many places
+    "no-underscore-dangle": ["off"]
   }
 }
