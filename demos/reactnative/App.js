@@ -7,7 +7,7 @@ import {
   View,
   Button,
   Image,
-  Linking
+  Linking,
 } from 'react-native'
 import { ImagePicker, Permissions } from 'expo'
 import tus from 'tus-js-client'
