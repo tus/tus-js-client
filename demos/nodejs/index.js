@@ -1,6 +1,7 @@
 /* eslint no-console: 0 */
 
 var fs = require('fs')
+// eslint-disable-next-line import/no-unresolved,import/extensions
 var tus = require('../..')
 
 var path = `${__dirname}/../../README.md`

@@ -1,5 +1,6 @@
 const axios = require('axios')
 const { getBlob } = require('./helpers/utils')
+// eslint-disable-next-line import/no-unresolved,import/extensions
 const tus = require('../..')
 
 // Test timeout for end-to-end tests when uploading to real server.
