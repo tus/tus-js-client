@@ -3,3 +3,4 @@ demos/*/node_modules
 demos/cordova/platforms
 demos/cordova/plugins
 demos/cordova/www/js/tus.js
+demos/reactnative

@@ -20,15 +20,7 @@
   "parserOptions": {
     "ecmaVersion": 2020,
     "sourceType": "module",
-    "requireConfigFile": false,
-    "babelOptions": {
-      "plugins": [
-        "@babel/plugin-syntax-jsx"
-      ]
-    },
-    "ecmaFeatures": {
-      "jsx": true
-    }
+    "requireConfigFile": false
   },
   "rules": {
     // transloadit rules we are actually ok with in the tus-js-client repo
