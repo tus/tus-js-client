@@ -4,6 +4,7 @@
 
 import * as tus from '../';
 import {expectType} from 'tsd';
+import { DetailedError } from '../';
 
 expectType<boolean>(tus.isSupported);
 expectType<boolean>(tus.canStoreURLs);
@@ -26,7 +27,7 @@ const upload = new tus.Upload(file, {
     onSuccess: () => {
     	console.log("Download from %s complete", upload.url);
     },
-    onError: (error: Error) => {
+    onError: (error: (Error | DetailedError)) => {
     	console.log("Failed because: " + error);
     },
     headers: {TestHeader: 'TestValue'},
