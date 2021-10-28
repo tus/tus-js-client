@@ -4,3 +4,6 @@ demos/cordova/platforms
 demos/cordova/plugins
 demos/cordova/www/js/tus.js
 demos/reactnative
+lib.esm
+lib.es5
+dist

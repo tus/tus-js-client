@@ -97,6 +97,6 @@
     "test-node": "jasmine test/spec/node-index.js",
     "test-types": "tsd",
     "test": "./bin/test && npm run test-types",
-    "lint": "eslint lib demos test bin"
+    "lint": "eslint ."
   }
 }
