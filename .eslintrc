@@ -44,6 +44,8 @@
     "prefer-rest-params": ["warn"],
     "react/destructuring-assignment": ["warn"],
     "react/sort-comp": ["warn"],
-    "vars-on-top": ["warn"]
+    "vars-on-top": ["warn"],
+
+    "no-underscore-dangle": ["warn"]
   }
 }
