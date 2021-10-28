@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 const isBrowser  = typeof window !== 'undefined'
 const isNode     = !isBrowser
 
