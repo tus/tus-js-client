@@ -188,8 +188,8 @@ describe('tus', () => {
         const reader = {
           value: content.split(''),
           read () {
-            var value,
-              done = false
+            var value
+            var done = false
             if (this.value.length > 0) {
               value = this.value.slice(0, readSize)
               this.value = this.value.slice(readSize)

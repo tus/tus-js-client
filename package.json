@@ -51,12 +51,17 @@
     "browserify": "^12.0.0",
     "browserstack": "^1.5.2",
     "browserstack-runner": "git://github.com/Acconut/browserstack-runner.git#fix_etxtbsy",
+    "chokidar-cli": "^3.0.0",
     "es6-promise": "^4.2.8",
     "eslint": "^7.22.0",
-    "eslint-config-transloadit": "1.1.4",
+    "eslint-config-transloadit": "2.0.0-0",
+    "eslint-plugin-import": "^2.25.2",
     "eslint-plugin-jest": "^24.3.1",
     "eslint-plugin-jsx-a11y": "^6.4.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.3.1",
     "eslint-plugin-react": "^7.22.0",
+    "eslint-plugin-react-hooks": "^4.2.0",
     "exorcist": "^0.4.0",
     "into-stream": "^6.0.0",
     "jasmine": "^3.5.0",
@@ -66,9 +71,9 @@
     "puppeteer": "^1.19.0",
     "regenerator-runtime": "^0.13.5",
     "temp": "^0.8.3",
+    "throttle": "^1.0.3",
     "tsd": "0.12.1",
-    "uglify-js": "^3.9.2",
-    "watchify": "^3.11.1"
+    "uglify-js": "^3.9.2"
   },
   "dependencies": {
     "buffer-from": "^0.1.1",
@@ -87,15 +92,15 @@
     "build-transpile-cjs": "babel --no-babelrc --plugins @babel/transform-modules-commonjs -d lib.es5/ lib.esm/",
     "build-transpile": "npm-run-all build-transpile-esm build-transpile-cjs",
     "build": "npm-run-all build-bundle build-minify build-transpile build-test-bundle",
-    "watch-bundle": "watchify lib/browser/index.js -t [ babelify --plugins [ @babel/transform-modules-commonjs ] ] -o dist/tus.js -s tus -v -d",
-    "watch-test-bundle": "watchify test/spec/browser-index.js -t [ babelify --plugins [ @babel/transform-modules-commonjs ] ] -d -o dist/browser-test-bundle.js",
-    "watch-transpile": "babel --watch -d lib.es5/ lib/",
+    "watch-bundle": "chokidar --initial \"lib/**/*\" -c \"npm run build-bundle\"",
+    "watch-test-bundle": "chokidar --initial \"test/spec/**/*\" -c \"npm run build-test-bundle\"",
+    "watch-transpile": "chokidar --initial \"lib/**/*\" -c \"npm run build-transpile\"",
     "watch": "npm-run-all --parallel watch-*",
     "test-puppeteer": "node bin/puppeteer-jasmine.js",
     "test-browserstack": "node bin/browserstack-jasmine.js",
     "test-node": "jasmine test/spec/node-index.js",
     "test-types": "tsd",
     "test": "./bin/test && npm run test-types",
-    "lint": "eslint lib demos test bin"
+    "lint": "eslint ."
   }
 }

@@ -2,33 +2,16 @@
   "extends": [
     "transloadit"
   ],
-  "plugins": [
-    "@babel/eslint-plugin",
-    "jest",
-    "node",
-    "prefer-import",
-    "promise",
-    "react"
-  ],
   "env": {
     "es6": true,
     "node": true,
     "browser": true,
     "jasmine": true
   },
-  "parser": "@babel/eslint-parser",
   "parserOptions": {
     "ecmaVersion": 2020,
     "sourceType": "module",
-    "requireConfigFile": false,
-    "babelOptions": {
-      "plugins": [
-        "@babel/plugin-syntax-jsx"
-      ]
-    },
-    "ecmaFeatures": {
-      "jsx": true
-    }
+    "requireConfigFile": false
   },
   "rules": {
     // transloadit rules we are actually ok with in the tus-js-client repo
@@ -61,6 +44,9 @@
     "prefer-rest-params": ["warn"],
     "react/destructuring-assignment": ["warn"],
     "react/sort-comp": ["warn"],
-    "vars-on-top": ["warn"]
+    "vars-on-top": ["warn"],
+
+    // Used so many places
+    "no-underscore-dangle": ["off"]
   }
 }
