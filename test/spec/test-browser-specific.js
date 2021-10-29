@@ -2,7 +2,6 @@
 
 const assertUrlStorage = require('./helpers/assertUrlStorage')
 const { TestHttpStack, waitableFunction, wait } = require('./helpers/utils')
-// eslint-disable-next-line import/no-unresolved,import/extensions
 const tus = require('../..')
 
 describe('tus', () => {

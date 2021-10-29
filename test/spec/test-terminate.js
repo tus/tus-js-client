@@ -1,6 +1,5 @@
 /* global expectAsync */
 const { TestHttpStack, getBlob } = require('./helpers/utils')
-// eslint-disable-next-line import/no-unresolved,import/extensions
 const tus = require('../..')
 
 describe('tus', () => {

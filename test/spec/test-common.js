@@ -1,5 +1,4 @@
 const { TestHttpStack, waitableFunction, wait, getBlob } = require('./helpers/utils')
-// eslint-disable-next-line import/no-unresolved,import/extensions
 const tus = require('../..')
 
 // Uncomment to enable debug log from tus-js-client

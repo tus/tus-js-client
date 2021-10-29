@@ -3,7 +3,6 @@ const temp = require('temp')
 const fs = require('fs')
 const https = require('https')
 const intoStream = require('into-stream')
-// eslint-disable-next-line import/no-unresolved,import/extensions
 const tus = require('../..')
 const assertUrlStorage = require('./helpers/assertUrlStorage')
 const { TestHttpStack, waitableFunction } = require('./helpers/utils')
