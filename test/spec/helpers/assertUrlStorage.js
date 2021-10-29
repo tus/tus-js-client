@@ -1,3 +1,8 @@
+// Sort the results from the URL storage since the order in not deterministic.
+function sort (result) {
+  result.sort((a, b) => a.id - b.id)
+}
+
 module.exports = async function assertUrlStorage (urlStorage) {
   // In the beginning of the test, the storage should be empty.
   let result = await urlStorage.findAllUploads()
@@ -46,9 +51,4 @@ module.exports = async function assertUrlStorage (urlStorage) {
 
   result = await urlStorage.findUploadsByFingerprint('fingerprintB')
   expect(result).toEqual([])
-}
-
-// Sort the results from the URL storage since the order in not deterministic.
-function sort (result) {
-  result.sort((a, b) => a.id - b.id)
 }

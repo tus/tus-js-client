@@ -2,8 +2,9 @@
 demos/*/node_modules
 demos/cordova/platforms
 demos/cordova/plugins
-demos/cordova/www/js/tus.js
+demos/cordova/www/js/index.js
 demos/reactnative
+demos/browser
 lib.esm
 lib.es5
 dist

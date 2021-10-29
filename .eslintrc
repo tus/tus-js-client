@@ -22,29 +22,6 @@
     // rules we had to turn off just to get a pass, but we'd
     // like to turn on one by one with separate PRs
     ////////////////////////////////////////////////////////////
-    "consistent-return": ["warn"],
-    "eqeqeq": ["warn"],
-    "guard-for-in": ["warn"],
-    "import/no-extraneous-dependencies": ["warn"],
-    "import/no-unresolved": ["warn"],
-    "no-bitwise": ["warn"],
-    "no-mixed-operators": ["warn"],
-    "no-multi-assign": ["warn"],
-    "no-param-reassign": ["warn"],
-    "no-redeclare": ["warn"],
-    "no-restricted-globals": ["warn"],
-    "no-restricted-syntax": ["warn"],
-    "no-return-assign": ["warn"],
-    "no-shadow": ["warn"],
-    "no-unused-expressions": ["warn"],
-    "no-use-before-define": ["warn"],
-    "no-var": ["warn"],
-    "node/no-deprecated-api": ["warn"],
-    "prefer-destructuring": ["warn"],
-    "prefer-rest-params": ["warn"],
-    "react/destructuring-assignment": ["warn"],
-    "react/sort-comp": ["warn"],
-    "vars-on-top": ["warn"],
 
     // Used so many places
     "no-underscore-dangle": ["off"]

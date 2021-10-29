@@ -47,36 +47,25 @@ function wait (delay) {
   return new Promise((resolve) => setTimeout(resolve, delay, 'timed out'))
 }
 
-/**
- * TestHttpStack implements the HTTP stack interface for tus-js-client
- * and can be used to assert outgoing requests and respond with mock data.
- */
-class TestHttpStack {
-  constructor () {
-    this._pendingRequests = []
-    this._pendingWaits = []
+class TestResponse {
+  constructor (res) {
+    this._response = res
   }
 
-  createRequest (method, url) {
-    return new TestRequest(method, url, (req) => {
-      if (this._pendingWaits.length >= 1) {
-        const handler = this._pendingWaits.shift()
-        handler(req)
-        return
-      }
-
-      this._pendingRequests.push(req)
-    })
+  getStatus () {
+    return this._response.status
   }
 
-  nextRequest () {
-    if (this._pendingRequests.length >= 1) {
-      return Promise.resolve(this._pendingRequests.shift())
-    }
+  getHeader (header) {
+    return this._response.responseHeaders[header]
+  }
 
-    return new Promise((resolve) => {
-      this._pendingWaits.push(resolve)
-    })
+  getBody () {
+    return this._response.responseText
+  }
+
+  getUnderlyingObject () {
+    throw new Error('not implemented')
   }
 }
 
@@ -88,7 +77,7 @@ class TestRequest {
     this.body = null
 
     this._onRequestSend = onRequestSend
-    this._onProgress = function () {};
+    this._onProgress = () => {};
 
     [this._requestPromise, this._resolveRequest, this._rejectRequest] = flatPromise()
   }
@@ -134,9 +123,10 @@ class TestRequest {
   }
 
   respondWith (resData) {
-    resData.responseHeaders = resData.responseHeaders || {}
-
-    const res = new TestResponse(resData)
+    const res = new TestResponse({
+      ...resData,
+      responseHeaders: resData.responseHeaders || {},
+    })
     this._resolveRequest(res)
   }
 
@@ -145,25 +135,36 @@ class TestRequest {
   }
 }
 
-class TestResponse {
-  constructor (res) {
-    this._response = res
+/**
+ * TestHttpStack implements the HTTP stack interface for tus-js-client
+ * and can be used to assert outgoing requests and respond with mock data.
+ */
+class TestHttpStack {
+  constructor () {
+    this._pendingRequests = []
+    this._pendingWaits = []
   }
 
-  getStatus () {
-    return this._response.status
+  createRequest (method, url) {
+    return new TestRequest(method, url, (req) => {
+      if (this._pendingWaits.length >= 1) {
+        const handler = this._pendingWaits.shift()
+        handler(req)
+        return
+      }
+
+      this._pendingRequests.push(req)
+    })
   }
 
-  getHeader (header) {
-    return this._response.responseHeaders[header]
-  }
+  nextRequest () {
+    if (this._pendingRequests.length >= 1) {
+      return Promise.resolve(this._pendingRequests.shift())
+    }
 
-  getBody () {
-    return this._response.responseText
-  }
-
-  getUnderlyingObject () {
-    throw new Error('not implemented')
+    return new Promise((resolve) => {
+      this._pendingWaits.push(resolve)
+    })
   }
 }
 

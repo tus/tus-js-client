@@ -6,6 +6,7 @@
  * according to the result.
  */
 
+// eslint-disable-next-line import/no-extraneous-dependencies
 const puppeteer = require('puppeteer')
 const path = require('path')
 

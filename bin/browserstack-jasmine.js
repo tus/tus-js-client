@@ -1,5 +1,6 @@
 /* eslint no-console: 0 */
 
+// eslint-disable-next-line import/no-extraneous-dependencies
 const browserstack = require('browserstack-runner')
 
 const BS_USERNAME = process.env.BROWSERSTACK_USERNAME
@@ -46,7 +47,7 @@ const browsers = [
   },
 ]
 
-if (!BS_USERNAME || BS_USERNAME == '' || !BS_KEY || BS_KEY == '') {
+if (!BS_USERNAME || BS_USERNAME === '' || !BS_KEY || BS_KEY === '') {
   console.log('Please provide the BROWSERSTACK_USERNAME and BROWSERSTACK_KEY environment variables.')
   process.exit(1)
 }
@@ -61,7 +62,8 @@ function runTests (cb) {
     browsers,
   }, (err, reports) => {
     if (err) {
-      return cb(err)
+      cb(err)
+      return
     }
 
     // Enable to see full report
@@ -87,7 +89,7 @@ function runTests (cb) {
       console.log(`✓ ${report.browser}: Test suite passed`)
     })
 
-    if (reports.length != browsers.length) {
+    if (reports.length !== browsers.length) {
       console.log(`✘ Only received ${reports.length} reports but expected ${browsers.length}!`)
       process.exitCode = 1
     }

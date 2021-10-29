@@ -1,26 +1,26 @@
 /* eslint no-console: 0 */
 /* eslint no-unused-vars: 0 */
 
-var testsCompleted = false
-var testsPassed = true
+let testsCompleted = false
+let testsPassed = true
 
 // This reporter is used by bin/puppeteer-jasmine.js to obtain the test results.
 // See https://jasmine.github.io/api/edge/Reporter.html for more details on the
 // function signatures.
-var reporter = {
+const reporter = {
   jasmineStarted (suiteInfo) { },
   suiteStarted (result) { },
   specStarted (result) { },
   specDone (result) {
     // Print the test result to the console.
-    var passed = result.status === 'passed'
-    var prefix = passed ? '✓' : '✘'
+    const passed = result.status === 'passed'
+    const prefix = passed ? '✓' : '✘'
     console.log(prefix, result.fullName)
 
     testsCompleted = true
     testsPassed = testsPassed && passed
 
-    for (var i = 0; i < result.failedExpectations.length; i++) {
+    for (let i = 0; i < result.failedExpectations.length; i++) {
       console.log(`Failure: ${result.failedExpectations[i].message}`)
       console.log(result.failedExpectations[i].stack)
       console.log('')
@@ -28,7 +28,7 @@ var reporter = {
   },
   suiteDone (result) { },
   jasmineDone (result) {
-    var success = testsCompleted && testsPassed
+    const success = testsCompleted && testsPassed
 
     if (success) {
       console.log('Tests passed!')
