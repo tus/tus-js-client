@@ -33,14 +33,14 @@ jobs:
         uses: sergioramos/yarn-actions/install@v6
         with:
           frozen-lockfile: true
-      - name: Lint
-        uses: sergioramos/yarn-actions/run@v6
-        with:
-          script: lint     
       - name: Build
         uses: sergioramos/yarn-actions/run@v6
         with:
           script: build
+      - name: Lint
+        uses: sergioramos/yarn-actions/run@v6
+        with:
+          script: lint     
       - name: Test
         uses: sergioramos/yarn-actions/run@v6
         with:
