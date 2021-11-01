@@ -22,6 +22,7 @@
     // rules we had to turn off just to get a pass, but we'd
     // like to turn on one by one with separate PRs
     ////////////////////////////////////////////////////////////
+    "import/extensions": ["warn"],
     "consistent-return": ["warn"],
     "eqeqeq": ["warn"],
     "guard-for-in": ["warn"],
@@ -44,9 +45,6 @@
     "prefer-rest-params": ["warn"],
     "react/destructuring-assignment": ["warn"],
     "react/sort-comp": ["warn"],
-    "vars-on-top": ["warn"],
-
-    // Used so many places
-    "no-underscore-dangle": ["off"]
+    "vars-on-top": ["warn"]
   }
 }

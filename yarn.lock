@@ -2457,10 +2457,10 @@ eslint-config-airbnb@^18.2.1:
     object.assign "^4.1.2"
     object.entries "^1.1.2"
 
-eslint-config-transloadit@2.0.0-0:
-  version "2.0.0-0"
-  resolved "https://registry.yarnpkg.com/eslint-config-transloadit/-/eslint-config-transloadit-2.0.0-0.tgz#4001bbdbf651015a228ba93c9f5e05e6544f0c15"
-  integrity sha512-uM9YoNsU0twE3rCwsKFO20YkV093ehmWZLj+LqqCPsTx7gSmDxfTpFE/zXq/DXcZIbOIr+8OwQVJCRvClEOO0Q==
+eslint-config-transloadit@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/eslint-config-transloadit/-/eslint-config-transloadit-2.0.0.tgz#6ecc08c29391e4f5d105b663fe682f5de1bb1a10"
+  integrity sha512-EQFqI1AW6frh3gYFLMBxzjIkIPp13rdN3s6yfjWvDy4qVhuRd0ItmDsadu+zwdPWTcI69apzhTzyriHhmaBTbg==
   dependencies:
     eslint-config-airbnb "^18.2.1"
 
