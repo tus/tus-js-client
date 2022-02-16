@@ -82,7 +82,7 @@
     "js-base64": "^2.6.1",
     "lodash.throttle": "^4.1.1",
     "proper-lockfile": "^2.0.1",
-    "url-parse": "^1.4.3"
+    "url-parse": "^1.5.7"
   },
   "scripts": {
     "build-test-bundle": "mkdir -p dist && browserify test/spec/browser-index.js -t [ babelify --plugins [ @babel/transform-modules-commonjs ] ] -d -o dist/browser-test-bundle.js",
