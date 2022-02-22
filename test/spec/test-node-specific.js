@@ -131,7 +131,7 @@ describe('tus', () => {
       upload.start()
 
       const err = await options.onError.toBeCalled
-      expect(err.message).toBe("tus: cannot automatically derive upload's size from input and must be specified manually using the `uploadSize` option")
+      expect(err.message).toBe("tus: cannot automatically derive upload's size from input. Specify it manually using the `uploadSize` option or use the `uploadLengthDeferred` option")
     })
 
     it('should reject streams without specifying the chunkSize', async () => {

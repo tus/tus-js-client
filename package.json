@@ -1,6 +1,6 @@
 {
   "name": "tus-js-client",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "A pure JavaScript client for the tus resumable upload protocol",
   "main": "lib.es5/node/index.js",
   "module": "lib.esm/node/index.js",
@@ -54,7 +54,7 @@
     "chokidar-cli": "^3.0.0",
     "es6-promise": "^4.2.8",
     "eslint": "^7.22.0",
-    "eslint-config-transloadit": "2.0.0-0",
+    "eslint-config-transloadit": "^2.0.0",
     "eslint-plugin-import": "^2.25.2",
     "eslint-plugin-jest": "^24.3.1",
     "eslint-plugin-jsx-a11y": "^6.4.1",
@@ -82,7 +82,7 @@
     "js-base64": "^2.6.1",
     "lodash.throttle": "^4.1.1",
     "proper-lockfile": "^2.0.1",
-    "url-parse": "^1.4.3"
+    "url-parse": "^1.5.7"
   },
   "scripts": {
     "build-test-bundle": "mkdir -p dist && browserify test/spec/browser-index.js -t [ babelify --plugins [ @babel/transform-modules-commonjs ] ] -d -o dist/browser-test-bundle.js",

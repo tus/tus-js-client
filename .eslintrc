@@ -16,14 +16,6 @@
   "rules": {
     // transloadit rules we are actually ok with in the tus-js-client repo
     ////////////////////////////////////////////////////////////
-    "class-methods-use-this": ["off"],
-
-
-    // rules we had to turn off just to get a pass, but we'd
-    // like to turn on one by one with separate PRs
-    ////////////////////////////////////////////////////////////
-
-    // Used so many places
-    "no-underscore-dangle": ["off"]
+    "class-methods-use-this": ["off"]
   }
 }
