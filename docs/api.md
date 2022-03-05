@@ -31,6 +31,8 @@ The upload creation URL which will be used to create new uploads. For example:
 endpoint: "http://tusd.tusdemo.net/files/"
 ```
 
+If `uploadUrl` is provided the `endpoint` option is ignored.
+
 #### fingerprint
 
 *Default value:* Environment-specific function
@@ -94,13 +96,13 @@ onShouldRetry: function (err, retryAttempt, options) {
     console.log("Error", err)
     console.log("Request", err.originalRequest)
     console.log("Response", err.originalResponse)
-    
+
     var status = err.originalResponse ? err.originalResponse.getStatus() : 0
     // Do not retry if the status is a 403.
     if (status === 403) {
       return false
     }
-    
+
     // For any other status code, we retry.
     return true
 }
@@ -128,11 +130,13 @@ Note that if the server has hard limits (such as the minimum 5MB chunk size impo
 
 You should also be aware that setting a low chunk size may reduce the upload performance dramatically since it causes more HTTP requests to be initiated.
 
+Note: the Vimeo API seems to require this and use it to determine the resumable "units" of the upload; e.g. with 5MB chunks, if the uploads get interrupted at say 8MB it then resumes at 5MB.
+
 #### metadata
 
 *Default value:* `{}`
 
-An object with string values used as additional meta data which will be passed along to the server when (and only when) creating a new upload. Can be used for filenames, file types etc, for example:
+An object with string values used as additional metadata which will be passed along to the server when (and only when) creating a new upload. Can be used for filenames, file types etc, for example:
 
 ```js
 metadata: {
@@ -146,7 +150,7 @@ metadata: {
 
 *Default value:* `null`
 
-A URL which will be used to directly attempt a resume without creating an upload first. Only if the resume attempt fails it will fall back to creating a new upload using the URL specified in the `endpoint` option. Using this option may be necessary if the server is automatically creating upload resources for you, which is the case with Vimeo's API, for example.
+A URL which will be used to directly attempt a resume without creating an upload first. Only if the resume attempt fails it will fall back to creating a new upload using the URL specified in the `endpoint` option. Using this option may be necessary if the server is automatically creating upload resources for you, which is the case with Vimeo's API, for example. Also, if `uploadUrl` is provided the `endpoint` option is ignored and the client assumes you will also take care of storing the URL (for later resume) on your own, therefore it will not save it to the `urlStorage`.
 
 #### uploadSize
 
@@ -176,7 +180,8 @@ retryDelays: [ 1000, 3000, 5000 ]
 
 *Default value:* `true`
 
-A boolean indicating if the upload URL should be stored in the URL storage using the file's fingerprint after an new upload resource on the server has been created. If enabled, the upload URL can later be retrieved from the URL storage using the `tus.Upload#findPreviousUploads` method. Set this value to `false` if you do not plan an resuming uploads across browser sessions.
+A boolean indicating if the upload URL should be stored in the URL storage using the file's fingerprint after a new upload resource on the server has been created. If enabled, and an `entrypoint` value is specified, the upload URL can later be retrieved from the URL storage using the `tus.Upload#findPreviousUploads` method. In case an `uploadUrl` is provided instead, no fingerprint will be saved in the URL storage.<br>
+Set this value to `false` if you do not plan on resuming uploads across browser sessions.
 
 #### removeFingerprintOnSuccess
 
@@ -379,7 +384,9 @@ The URL used to upload the file. This property will be set once an upload has be
 
 ### tus.Upload#start()
 
-Start or resume the upload using the specified file. If no `file` property is available the error handler will be called. If you supplied your own URL using the `uploadUrl` option the client will try to resume using this URL. Alternatively, you can use `tus.Upload#findPreviousUploads` and `tus.Upload#resumeFromPreviousUpload` to query the URL storage for previous uploads for this specific file. If no upload can be resume it will create a new upload using the supplied `endpoint` option.
+Start or resume the upload using the specified file. If no `file` property is available the error handler will be called. If you supplied your own URL using the `uploadUrl` option the client will try to resume using this URL, however no previous upload URL will be stored in the URL storage (i.e. `tus.Upload#findPreviousUploads`
+and `tus.Upload#resumeFromPreviousUpload` will not work). <br>
+Alternatively, you can use `tus.Upload#findPreviousUploads` and `tus.Upload#resumeFromPreviousUpload` to query the URL storage for previous uploads for this specific file. If no upload can be resumed it will create a new upload using the supplied `endpoint` option.
 
 ## tus.Upload#abort(shouldTerminate)
 
@@ -415,9 +422,13 @@ tus.Upload.terminate(url).then(function () {
 })
 ```
 
+## tus.Upload#storeUploadUrlForResume(uploadUrl)
+
+Stores the provided `uploadUrl` to the URL storage using the input file's fingerprint to allow later resume (see `tus.Upload#findPreviousUploads` or `tus.Upload#resumeFromPreviousUpload`). This method can be useful when your tus server automatically creates the upload resources, like when interacting with the Vimeo API.
+
 ## tus.Upload#findPreviousUploads()
 
-Query the URL storage using the input file's fingerprint to retrieve a list of uploads for the input file, which have previously been started by the user. If you want to resume one of this uploads, pass the corresponding object to `tus.Upload#resumeFromPreviousUpload` before calling `tus.Upload#start`.
+Query the URL storage using the input file's fingerprint to retrieve a list of uploads for the input file, which have previously been started by the user. If you want to resume one of these uploads, pass the corresponding object to `tus.Upload#resumeFromPreviousUpload` before calling `tus.Upload#start`.
 
 The function returns a `Promise`, which resolves to a list with following structure:
 

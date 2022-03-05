@@ -49,7 +49,7 @@ input.addEventListener("change", function(e) {
 
      // Check if there are any previous uploads to continue.
     upload.findPreviousUploads().then(function (previousUploads) {
-        // Found previous uploads so we select the first one. 
+        // Found previous uploads so we select the first one.
         if (previousUploads.length) {
             upload.resumeFromPreviousUpload(previousUploads[0])
         }
@@ -71,7 +71,7 @@ var file = ...
 function startOrResumeUpload(upload) {
     // Check if there are any previous uploads to continue.
     upload.findPreviousUploads().then(function (previousUploads) {
-        // Found previous uploads so we select the first one. 
+        // Found previous uploads so we select the first one.
         if (previousUploads.length) {
             upload.resumeFromPreviousUpload(previousUploads[0])
         }
@@ -162,18 +162,26 @@ function askToResumeUpload(previousUploads) {
 
 ## Example: Upload to Vimeo
 
-The Vimeo API uses tus for its upload but has a bit unusual implementation detail: It already creates the tus upload on the server for you, so you don't have to use `endpoint` option but must use `uploadUrl` instead:
+The Vimeo API uses tus for its upload but has an unusual implementation detail: it already creates the tus upload on the server for you, so you must use `uploadUrl` option instead of the `endpoint` one (which would be ignored in this case).<br>
+The Vimeo API also requires few additional attributes to be defined:
 
 ```js
 // Obtain video to upload from user input or similar
 var file = ...
 
 // The upload URL you get from the Vimeo API for uploading
+// https://stackoverflow.com/a/65582420/4530144
 var uploadUrl = ...
 
-// Create the tus upload similar to the example from above
+// Create the tus client similarly to the example above, but passing the `uploadUrl` value
 var upload = new tus.Upload(file, {
-    uploadUrl: uploadUrl,
+    // the `endpoint` option is ignored if `uploadUrl` is provided
+    uploadUrl,
+    chunkSize: 5000, // required, used as resumable "units" of upload
+    headers: {
+        // required, https://developer.vimeo.com/api/upload/videos#resumable-approach-step-2
+        Accept: 'application/vnd.vimeo.*+json;version=3.4'
+    },
     onError: function(error) {
         console.log("Failed because: " + error)
     },
@@ -184,6 +192,43 @@ var upload = new tus.Upload(file, {
 
 // Start the upload
 upload.start()
+```
+
+## Example: Handle externally generated uploadUrl
+
+If your server generates the initial upload URL (e.g. when using the Vimeo API), you will need to use the `uploadUrl` option . The tus-client-js saves the upload metadata in the `urlStorage`, for later resumes, only when creating the upload URL. In this case you then will need to take care of storing the URL on your own:
+
+```js
+// File to upload
+var file = ...
+
+// The upload URL you get from your tus server
+var uploadUrl = ...
+
+// Create the tus client passing the uploadUrl
+var upload = new tus.Upload(file, {
+    uploadUrl,
+    onError: function(error) {
+        console.log("Failed because: " + error)
+    },
+    onSuccess: function() {
+        console.log("Download %s from %s", upload.file.name, upload.url)
+    }
+})
+
+// save the fingerprinted upload metadata to the urlStorage
+upload.storeUploadUrlForResume(uploadUrl)
+
+// allow resuming from existing partial uploads (see example above for more details)
+upload.findPreviousUploads().then((previousUploads) => {
+  var chosenUpload = askToResumeUpload(previousUploads);
+
+  if (chosenUpload) {
+    upload.resumeFromPreviousUpload(chosenUpload);
+  }
+
+  upload.start();
+});
 ```
 
 ## Example: Overriding the default retry behavior
@@ -213,7 +258,7 @@ input.addEventListener("change", function(e) {
           if (status === 403) {
             return false
           }
-          
+
           // For any other status code, tus-js-client should retry.
           return true
         }
@@ -221,7 +266,7 @@ input.addEventListener("change", function(e) {
 
      // Check if there are any previous uploads to continue.
     upload.findPreviousUploads().then(function (previousUploads) {
-        // Found previous uploads so we select the first one. 
+        // Found previous uploads so we select the first one.
         if (previousUploads.length) {
             upload.resumeFromPreviousUpload(previousUploads[0])
         }
