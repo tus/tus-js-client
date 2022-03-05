@@ -71,6 +71,64 @@ describe('tus', () => {
       expect(options.onProgress).toHaveBeenCalledWith(11, 11)
     })
 
+    it('should resume an external uploadUrl manually stored to localStorage', async () => {
+      const uploadUrl = 'https://external.com/uploads/resuming'
+
+      const testStack = new TestHttpStack()
+      const file = new Blob('hello world'.split(''))
+      const options = {
+        httpStack                  : testStack,
+        storeFingerprintForResuming: false,
+        uploadUrl,
+        onProgress () {},
+        fingerprint () {},
+      }
+      spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
+      spyOn(options, 'onProgress')
+
+      const upload = new tus.Upload(file, options)
+      const urlStorageKey = await upload.storeUploadUrlForResume(uploadUrl)
+
+      const storedUpload = JSON.parse(localStorage.getItem(urlStorageKey))
+      expect(storedUpload.uploadUrl).toEqual(uploadUrl)
+
+      upload.resumeFromPreviousUpload(storedUpload)
+      upload.start()
+
+      expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options)
+
+      let req = await testStack.nextRequest()
+      expect(req.url).toBe(uploadUrl)
+      expect(req.method).toBe('HEAD')
+      expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+
+      req.respondWith({
+        status         : 204,
+        responseHeaders: {
+          'Upload-Length': 11,
+          'Upload-Offset': 3,
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe(uploadUrl)
+      expect(req.method).toBe('PATCH')
+      expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+      expect(req.requestHeaders['Upload-Offset']).toBe(3)
+      expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
+      expect(req.body.size).toBe(11 - 3)
+
+      req.respondWith({
+        status         : 204,
+        responseHeaders: {
+          'Upload-Offset': 11,
+        },
+      })
+
+      expect(upload.url).toBe(uploadUrl)
+      expect(options.onProgress).toHaveBeenCalledWith(11, 11)
+    })
+
     describe('storing of upload urls', () => {
       const testStack = new TestHttpStack()
       var options = {

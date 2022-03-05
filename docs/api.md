@@ -424,7 +424,8 @@ tus.Upload.terminate(url).then(function () {
 
 ## tus.Upload#storeUploadUrlForResume(uploadUrl)
 
-Stores the provided `uploadUrl` to the URL storage using the input file's fingerprint to allow later resume (see `tus.Upload#findPreviousUploads` or `tus.Upload#resumeFromPreviousUpload`). This method can be useful when your tus server automatically creates the upload resources, like when interacting with the Vimeo API.
+Stores the provided `uploadUrl` to the URL storage using the input file's fingerprint to allow later resume (see `tus.Upload#findPreviousUploads` or `tus.Upload#resumeFromPreviousUpload`). This method can be useful when your tus server automatically creates the upload resources, like when interacting with the Vimeo API.<br>
+The function returns a `Promise`, which resolves to the `urlStorageKey` storing the upload metadata object in `localStorage`
 
 ## tus.Upload#findPreviousUploads()
 
