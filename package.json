@@ -1,7 +1,10 @@
 {
-  "name": "tus-js-client",
+  "name": "@skynetlabs/tus-js-client",
   "version": "2.3.0",
   "description": "A pure JavaScript client for the tus resumable upload protocol",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "lib.es5/node/index.js",
   "module": "lib.esm/node/index.js",
   "files": [
@@ -22,7 +25,7 @@
   "types": "./lib/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tus/tus-js-client.git"
+    "url": "https://github.com/SkynetLabs/tus-js-client.git"
   },
   "keywords": [
     "tus",
@@ -35,9 +38,9 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/tus/tus-js-client/issues"
+    "url": "https://github.com/SkynetLabs/tus-js-client/issues"
   },
-  "homepage": "https://github.com/tus/tus-js-client",
+  "homepage": "https://github.com/SkynetLabs/tus-js-client",
   "devDependencies": {
     "@babel/cli": "^7.0.0",
     "@babel/core": "^7.0.0",
