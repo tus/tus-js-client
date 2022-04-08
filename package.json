@@ -50,7 +50,7 @@
     "babelify": "^10.0.0",
     "browserify": "^12.0.0",
     "browserstack": "^1.5.2",
-    "browserstack-runner": "git://github.com/Acconut/browserstack-runner.git#fix_etxtbsy",
+    "browserstack-runner": "git+https://github.com/Acconut/browserstack-runner.git#fix_etxtbsy",
     "chokidar-cli": "^3.0.0",
     "es6-promise": "^4.2.8",
     "eslint": "^7.22.0",

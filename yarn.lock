@@ -1579,9 +1579,9 @@ browserslist@^4.14.5, browserslist@^4.16.3:
     escalade "^3.1.1"
     node-releases "^1.1.71"
 
-"browserstack-runner@git://github.com/Acconut/browserstack-runner.git#fix_etxtbsy":
+"browserstack-runner@git+https://github.com/Acconut/browserstack-runner.git#fix_etxtbsy":
   version "0.9.0"
-  resolved "git://github.com/Acconut/browserstack-runner.git#01a7f4467ffede45efc3eda3b5aec25dd0525eab"
+  resolved "git+https://github.com/Acconut/browserstack-runner.git#01a7f4467ffede45efc3eda3b5aec25dd0525eab"
   dependencies:
     browserstack "1.3.0"
     chalk "0.4.0"
