@@ -112,7 +112,7 @@ export interface HttpResponse {
   getUnderlyingObject(): any;
 }
 
-export class DetailedError {
+export class DetailedError extends Error {
   originalRequest: HttpRequest;
   originalResponse: HttpResponse;
   causingError: Error;
