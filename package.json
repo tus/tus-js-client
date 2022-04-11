@@ -76,7 +76,7 @@
     "uglify-js": "^3.9.2"
   },
   "dependencies": {
-    "buffer-from": "^0.1.1",
+    "buffer-from": "^1.1.2",
     "combine-errors": "^3.0.3",
     "is-stream": "^2.0.0",
     "js-base64": "^2.6.1",
