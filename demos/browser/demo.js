@@ -1,137 +1,141 @@
 /* global tus */
 /* eslint no-console: 0 */
 
-var upload          = null
-var uploadIsRunning = false
-var toggleBtn       = document.querySelector('#toggle-btn')
-var input           = document.querySelector('input[type=file]')
-var progress        = document.querySelector('.progress')
-var progressBar     = progress.querySelector('.bar')
-var alertBox        = document.querySelector('#support-alert')
-var uploadList      = document.querySelector('#upload-list')
-var chunkInput      = document.querySelector('#chunksize')
-var parallelInput   = document.querySelector('#paralleluploads')
-var endpointInput   = document.querySelector('#endpoint')
+var upload = null;
+var uploadIsRunning = false;
+var toggleBtn = document.querySelector("#toggle-btn");
+var input = document.querySelector("input[type=file]");
+var progress = document.querySelector(".progress");
+var progressBar = progress.querySelector(".bar");
+var alertBox = document.querySelector("#support-alert");
+var uploadList = document.querySelector("#upload-list");
+var chunkInput = document.querySelector("#chunksize");
+var parallelInput = document.querySelector("#paralleluploads");
+var endpointInput = document.querySelector("#endpoint");
 
 if (!tus.isSupported) {
-  alertBox.classList.remove('hidden')
+  alertBox.classList.remove("hidden");
 }
 
 if (!toggleBtn) {
-  throw new Error('Toggle button not found on this page. Aborting upload-demo. ')
+  throw new Error(
+    "Toggle button not found on this page. Aborting upload-demo. "
+  );
 }
 
-toggleBtn.addEventListener('click', (e) => {
-  e.preventDefault()
+toggleBtn.addEventListener("click", (e) => {
+  e.preventDefault();
 
   if (upload) {
     if (uploadIsRunning) {
-      upload.abort()
-      toggleBtn.textContent = 'resume upload'
-      uploadIsRunning = false
+      upload.abort();
+      toggleBtn.textContent = "resume upload";
+      uploadIsRunning = false;
     } else {
-      upload.start()
-      toggleBtn.textContent = 'pause upload'
-      uploadIsRunning = true
+      upload.start();
+      toggleBtn.textContent = "pause upload";
+      uploadIsRunning = true;
     }
   } else if (input.files.length > 0) {
-    startUpload()
+    startUpload();
   } else {
-    input.click()
+    input.click();
   }
-})
+});
 
-input.addEventListener('change', startUpload)
+input.addEventListener("change", startUpload);
 
-function startUpload () {
-  var file = input.files[0]
+function startUpload() {
+  var file = input.files[0];
   // Only continue if a file has actually been selected.
   // IE will trigger a change event even if we reset the input element
   // using reset() and we do not want to blow up later.
   if (!file) {
-    return
+    return;
   }
 
-  var endpoint = endpointInput.value
-  var chunkSize = parseInt(chunkInput.value, 10)
+  var endpoint = endpointInput.value;
+  var chunkSize = parseInt(chunkInput.value, 10);
   if (isNaN(chunkSize)) {
-    chunkSize = Infinity
+    chunkSize = Infinity;
   }
 
-  var parallelUploads = parseInt(parallelInput.value, 10)
+  var parallelUploads = parseInt(parallelInput.value, 10);
   if (isNaN(parallelUploads)) {
-    parallelUploads = 1
+    parallelUploads = 1;
   }
 
-  toggleBtn.textContent = 'pause upload'
+  toggleBtn.textContent = "pause upload";
 
   var options = {
     endpoint,
     chunkSize,
+    checksumAlgo: "SHA-256",
     retryDelays: [0, 1000, 3000, 5000],
     parallelUploads,
-    metadata   : {
+    metadata: {
       filename: file.name,
       filetype: file.type,
     },
-    onError (error) {
+    onError(error) {
       if (error.originalRequest) {
         if (window.confirm(`Failed because: ${error}\nDo you want to retry?`)) {
-          upload.start()
-          uploadIsRunning = true
-          return
+          upload.start();
+          uploadIsRunning = true;
+          return;
         }
       } else {
-        window.alert(`Failed because: ${error}`)
+        window.alert(`Failed because: ${error}`);
       }
 
-      reset()
+      reset();
     },
-    onProgress (bytesUploaded, bytesTotal) {
-      var percentage = (bytesUploaded / bytesTotal * 100).toFixed(2)
-      progressBar.style.width = `${percentage}%`
-      console.log(bytesUploaded, bytesTotal, `${percentage}%`)
+    onProgress(bytesUploaded, bytesTotal) {
+      var percentage = ((bytesUploaded / bytesTotal) * 100).toFixed(2);
+      progressBar.style.width = `${percentage}%`;
+      console.log(bytesUploaded, bytesTotal, `${percentage}%`);
     },
-    onSuccess () {
-      var anchor = document.createElement('a')
-      anchor.textContent = `Download ${upload.file.name} (${upload.file.size} bytes)`
-      anchor.href = upload.url
-      anchor.className = 'btn btn-success'
-      uploadList.appendChild(anchor)
+    onSuccess() {
+      var anchor = document.createElement("a");
+      anchor.textContent = `Download ${upload.file.name} (${upload.file.size} bytes)`;
+      anchor.href = upload.url;
+      anchor.className = "btn btn-success";
+      uploadList.appendChild(anchor);
 
-      reset()
+      reset();
     },
-  }
+  };
 
-  upload = new tus.Upload(file, options)
+  upload = new tus.Upload(file, options);
   upload.findPreviousUploads().then((previousUploads) => {
-    askToResumeUpload(previousUploads, upload)
+    askToResumeUpload(previousUploads, upload);
 
-    upload.start()
-    uploadIsRunning = true
-  })
+    upload.start();
+    uploadIsRunning = true;
+  });
 }
 
-function reset () {
-  input.value = ''
-  toggleBtn.textContent = 'start upload'
-  upload = null
-  uploadIsRunning = false
+function reset() {
+  input.value = "";
+  toggleBtn.textContent = "start upload";
+  upload = null;
+  uploadIsRunning = false;
 }
 
-function askToResumeUpload (previousUploads, upload) {
-  if (previousUploads.length === 0) return
+function askToResumeUpload(previousUploads, upload) {
+  if (previousUploads.length === 0) return;
 
-  let text = 'You tried to upload this file previously at these times:\n\n'
+  let text = "You tried to upload this file previously at these times:\n\n";
   previousUploads.forEach((previousUpload, index) => {
-    text += `[${index}] ${previousUpload.creationTime}\n`
-  })
-  text += '\nEnter the corresponding number to resume an upload or press Cancel to start a new upload'
+    text += `[${index}] ${previousUpload.creationTime}\n`;
+  });
+  text +=
+    "\nEnter the corresponding number to resume an upload or press Cancel to start a new upload";
 
-  const answer = prompt(text)
-  const index = parseInt(answer, 10)
+  const answer = prompt(text);
+  const index = parseInt(answer, 10);
 
   if (!isNaN(index) && previousUploads[index]) {
-    upload.resumeFromPreviousUpload(previousUploads[index])
+    upload.resumeFromPreviousUpload(previousUploads[index]);
   }
 }
