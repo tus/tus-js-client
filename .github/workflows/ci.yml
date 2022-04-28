@@ -20,13 +20,13 @@ jobs:
     name: Node ${{ matrix.node }}          
     steps  : 
       - name: Check out sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 1
       - name: Git Clean
         run: git clean -fxd --exclude=node_modules/
       - name: Install Node.js 14.x
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node }}
       - name: Install dependencies
