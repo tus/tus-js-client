@@ -4000,7 +4000,12 @@ jasmine-ajax@^3.2.0:
   resolved "https://registry.yarnpkg.com/jasmine-ajax/-/jasmine-ajax-3.4.0.tgz#8dce36c0e3f16b9b900adb1f2ef83e0cd87c6755"
   integrity sha512-LIVNVCmx5ou+IG6wgX7j73YYzvE2e3aqFWMjOhvAHWTnLICOYSobIH+PG/gOwtP20X0u2SkD3NXT/j5X8rMGOA==
 
-jasmine-core@^3.5.0, jasmine-core@~3.6.0:
+jasmine-core@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/jasmine-core/-/jasmine-core-4.1.0.tgz#2377349b0e8bfd3fbdb36c9e4f09e3b1a17cf5c2"
+  integrity sha512-8E8BiffCL8sBwK1zU9cbavLe8xpJAgOduSJ6N8PJVv8VosQ/nxVTuXj2kUeHxTlZBVvh24G19ga7xdiaxlceKg==
+
+jasmine-core@~3.6.0:
   version "3.6.0"
   resolved "https://registry.yarnpkg.com/jasmine-core/-/jasmine-core-3.6.0.tgz#491f3bb23941799c353ceb7a45b38a950ebc5a20"
   integrity sha512-8uQYa7zJN8hq9z+g8z1bqCfdC8eoDAeVnM5sfqs7KHv9/ifoJ500m018fpFc7RDaO6SWCLCXwo/wPSNcdYTgcw==
