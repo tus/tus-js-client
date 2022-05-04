@@ -1,59 +1,23 @@
-name: CI
+name: "CI"
+
 on:
   push:
-    branches:
-      - master
+    branches: [master]
   pull_request:
-    types:
-      - opened
-      - synchronize
-jobs:
-  content:
-    if: "!contains(github.event.pull_request.title, 'WIP: ')"
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        node: 
-          - 10 #  into-stream@6.0.0: The engine "node" is incompatible with this module. Expected version ">=10". Got "8.17.0"
-          - 12
-          - 14
-    name: Node ${{ matrix.node }}          
-    steps  : 
-      - name: Check out sources
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 1
-      - name: Git Clean
-        run: git clean -fxd --exclude=node_modules/
-      - name: Install Node.js 14.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node }}
-      - name: Install dependencies
-        uses: sergioramos/yarn-actions/install@v6
-        with:
-          frozen-lockfile: true
-      - name: Build
-        uses: sergioramos/yarn-actions/run@v6
-        with:
-          script: build
-      - name: Lint
-        uses: sergioramos/yarn-actions/run@v6
-        with:
-          script: lint     
-      - name: Test
-        uses: sergioramos/yarn-actions/run@v6
-        with:
-          script: test
 
-# @TODO: port this Travis CI automation to GHA one day:
-# deploy:
-#   provider: npm
-#   email: marius@transloadit.com
-#   api_token:
-#     secure: deLv8rCb1nN4vcFCSlPLVLcZJ20vLWNPaAA4PZAUXcQdUFX8mc++qDusS0o3LqdQVIugeOkSBTuKq8GQxOpMahj3U0WDe7Dy+t5xS/kPejr1H4m/VT1A5uRfBLGHgjuQzZH1L/RzAAca7Przx9fNe/1y1+RblDbbE7oOXQWiIUs=
-#   skip_cleanup: true
-#   on:
-#     tags: true
-#     repo: tus/tus-js-client
-#     node_js: 12
+jobs:
+  check:
+    name: "Checks and Tests"
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node-version: [14.x, 16.x, 18.x]
+
+    steps:
+      - name: "Run Yarn Basic Checks"
+        uses: SkynetLabs/.github/.github/actions/yarn-basic-checks@master
+        with:
+          node-version: ${{ matrix.node-version }}
