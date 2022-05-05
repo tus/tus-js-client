@@ -17,7 +17,15 @@ jobs:
         node-version: [14.x, 16.x, 18.x]
 
     steps:
-      - name: "Run Yarn Basic Checks"
-        uses: SkynetLabs/.github/.github/actions/yarn-basic-checks@master
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ inputs.node-version }}
+        uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ inputs.node-version }}
+      # Yarn equivalent of npm ci.
+      - run: yarn install --frozen-lockfile
+        shell: bash
+      - run: yarn lint
+        shell: bash
+      - run: yarn test
+        shell: bash
