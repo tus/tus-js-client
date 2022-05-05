@@ -8,12 +8,11 @@ on:
 jobs:
   check:
     name: "Checks and Tests"
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
         node-version: [14.x, 16.x, 18.x]
 
     steps:
