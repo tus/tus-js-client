@@ -29,6 +29,7 @@
     "import/no-extraneous-dependencies": ["warn"],
     "import/no-unresolved": ["warn"],
     "no-bitwise": ["warn"],
+    "no-lone-blocks": ["off"],
     "no-mixed-operators": ["warn"],
     "no-multi-assign": ["warn"],
     "no-param-reassign": ["off"],
