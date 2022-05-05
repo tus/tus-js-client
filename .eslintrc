@@ -28,6 +28,7 @@
     "guard-for-in": ["warn"],
     "import/no-extraneous-dependencies": ["warn"],
     "import/no-unresolved": ["warn"],
+    "linebreak-style": ["off"],
     "no-bitwise": ["warn"],
     "no-lone-blocks": ["off"],
     "no-mixed-operators": ["warn"],
