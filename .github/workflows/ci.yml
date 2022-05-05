@@ -24,8 +24,7 @@ jobs:
           node-version: ${{ inputs.node-version }}
       # Yarn equivalent of npm ci.
       - run: yarn install --frozen-lockfile
-        shell: bash
       - run: yarn lint
-        shell: bash
+      # Needed for yarn test.
+      - run: yarn build
       - run: yarn test
-        shell: bash
