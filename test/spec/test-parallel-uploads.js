@@ -218,8 +218,21 @@ describe('tus', () => {
         storeFingerprintForResuming: true,
         removeFingerprintOnSuccess : true,
         parallelUploads            : 2,
-        splitSizeIntoParts         : () => {
-          return [{ start: 0, end: 1 }, { start: 1, end: 11 }]
+        // Expected output: [{ start: 0, end: 1 }, { start: 1, end: 11 }]
+        splitSizeIntoParts         : (totalSize, partCount) => {
+          const partSize = 1
+          const parts = []
+
+          for (let i = 0; i < partCount; i++) {
+            parts.push({
+              start: partSize * i,
+              end  : partSize * (i + 1),
+            })
+          }
+
+          parts[partCount - 1].end = totalSize
+
+          return parts
         },
         retryDelays: [10],
         endpoint   : 'https://tus.io/uploads',
