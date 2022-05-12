@@ -13,12 +13,12 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        node:
+        node: 
           - 10 #  into-stream@6.0.0: The engine "node" is incompatible with this module. Expected version ">=10". Got "8.17.0"
           - 12
           - 14
-    name: Node ${{ matrix.node }}
-    steps  :
+    name: Node ${{ matrix.node }}          
+    steps  : 
       - name: Check out sources
         uses: actions/checkout@v3
         with:
@@ -40,7 +40,7 @@ jobs:
       - name: Lint
         uses: sergioramos/yarn-actions/run@v6
         with:
-          script: lint
+          script: lint     
       - name: Test
         uses: sergioramos/yarn-actions/run@v6
         with:
