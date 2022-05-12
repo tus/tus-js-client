@@ -218,6 +218,7 @@ describe('tus', () => {
         storeFingerprintForResuming: true,
         removeFingerprintOnSuccess : true,
         parallelUploads            : 2,
+        // Expected output: [{ start: 0, end: 1 }, { start: 1, end: 11 }]
         splitSizeIntoParts         : (totalSize, partCount) => {
           const partSize = 1
           const parts = []
@@ -233,9 +234,9 @@ describe('tus', () => {
 
           return parts
         },
-        retryDelays                : [10],
-        endpoint                   : 'https://tus.io/uploads',
-        headers                    : {
+        retryDelays: [10],
+        endpoint   : 'https://tus.io/uploads',
+        headers    : {
           Custom: 'blargh',
         },
         metadata: {
