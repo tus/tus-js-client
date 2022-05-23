@@ -68,7 +68,7 @@
     "jasmine-ajax": "^3.2.0",
     "jasmine-core": "^3.5.0",
     "npm-run-all": "^4.1.5",
-    "puppeteer": "^13.7.0",
+    "puppeteer": "^14.1.0",
     "regenerator-runtime": "^0.13.5",
     "temp": "^0.9.4",
     "throttle": "^1.0.3",
