@@ -56,6 +56,9 @@ jobs:
         uses: sergioramos/yarn-actions/run@v6
         with:
           script: test-${{ matrix.suite }}
+        env:
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_KEY: ${{ secrets.BROWSERSTACK_KEY }}
 
 # @TODO: port this Travis CI automation to GHA one day:
 # deploy:
