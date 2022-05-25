@@ -12,11 +12,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node:
-          - 14
-          - 16
-          - 18
-    name: Node ${{ matrix.node }}          
+        include:
+          - desc: "Browserstack"
+            suite: "test-browserstack"
+            node: 16
+          - desc: "Puppeteer"
+            suite: "test-puppeteer"
+            node: 16
+          - desc: "Lint & Types"
+            suite: "lint test-types"
+            node: 16
+          - desc: "Node 14"
+            suite: "test-node"
+            node: 14
+          - desc: "Node 16"
+            suite: "test-node"
+            node: 16
+          - desc: "Node 18"
+            suite: "test-node"
+            node: 18
+    name: ${{ matrix.desc }}
     steps  : 
       - name: Check out sources
         uses: actions/checkout@v3
@@ -36,14 +51,10 @@ jobs:
         uses: sergioramos/yarn-actions/run@v6
         with:
           script: build
-      - name: Lint
-        uses: sergioramos/yarn-actions/run@v6
-        with:
-          script: lint     
       - name: Test
         uses: sergioramos/yarn-actions/run@v6
         with:
-          script: test
+          script: ${{ matrix.suite }}
 
 # @TODO: port this Travis CI automation to GHA one day:
 # deploy:
