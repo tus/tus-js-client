@@ -3,6 +3,7 @@
 const assertUrlStorage = require('./helpers/assertUrlStorage')
 const { TestHttpStack, waitableFunction, wait } = require('./helpers/utils')
 const tus = require('../..')
+const { default: Checksum } = require('../../lib.es5/browser/extensions/checksum')
 
 describe('tus', () => {
   beforeEach(() => {
@@ -740,6 +741,14 @@ describe('tus', () => {
   describe('#LocalStorageUrlStorage', () => {
     it('should allow storing and retrieving uploads', async () => {
       await assertUrlStorage(tus.defaultOptions.urlStorage)
+    })
+  })
+
+  describe("#Checksum", () => {
+    it("should generate hex digest for a given chunk of file", async () => {
+      const checksum = new Checksum();
+      const hexDigest = await checksum.getHexDigest((new TextEncoder()).encode("hello"));
+      expect(hexDigest).toBe("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
     })
   })
 })
