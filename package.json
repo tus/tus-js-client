@@ -78,7 +78,7 @@
   "dependencies": {
     "buffer-from": "^1.1.2",
     "combine-errors": "^3.0.3",
-    "is-stream": "^3.0.0",
+    "is-stream": "^2.0.0",
     "js-base64": "^2.6.1",
     "lodash.throttle": "^4.1.1",
     "proper-lockfile": "^2.0.1",
