@@ -14,22 +14,19 @@ jobs:
       matrix:
         include:
           - desc: "Browserstack"
-            suite: "test-browserstack"
-            node: 16
+            suite: "browserstack"
           - desc: "Puppeteer"
-            suite: "test-puppeteer"
-            node: 16
-          - desc: "Lint & Types"
-            suite: "lint test-types"
-            node: 16
+            suite: "puppeteer"
+          - desc: "Types"
+            suite: "types"
           - desc: "Node.js 14"
-            suite: "test-node"
+            suite: "node"
             node: 14
           - desc: "Node.js 16"
-            suite: "test-node"
+            suite: "node"
             node: 16
           - desc: "Node.js 18"
-            suite: "test-node"
+            suite: "node"
             node: 18
     name: ${{ matrix.desc }}
     steps  : 
@@ -42,13 +39,23 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node }}
+          node-version: ${{ matrix.node || 16 }}
       - name: Install dependencies
         uses: sergioramos/yarn-actions/install@v6
         with:
           frozen-lockfile: true
-      - run: yarn run build
-      - run: yarn run ${{ matrix.suite }}
+      - name: Build
+        uses: sergioramos/yarn-actions/run@v6
+        with:
+          script: build
+      - name: Lint
+        uses: sergioramos/yarn-actions/run@v6
+        with:
+          script: lint
+      - name: Test
+        uses: sergioramos/yarn-actions/run@v6
+        with:
+          script: test-${{ matrix.suite }}
 
 # @TODO: port this Travis CI automation to GHA one day:
 # deploy:
