@@ -22,13 +22,13 @@ jobs:
           - desc: "Lint & Types"
             suite: "lint test-types"
             node: 16
-          - desc: "Node 14"
+          - desc: "Node.js 14"
             suite: "test-node"
             node: 14
-          - desc: "Node 16"
+          - desc: "Node.js 16"
             suite: "test-node"
             node: 16
-          - desc: "Node 18"
+          - desc: "Node.js 18"
             suite: "test-node"
             node: 18
     name: ${{ matrix.desc }}
@@ -47,14 +47,8 @@ jobs:
         uses: sergioramos/yarn-actions/install@v6
         with:
           frozen-lockfile: true
-      - name: Build
-        uses: sergioramos/yarn-actions/run@v6
-        with:
-          script: build
-      - name: Test
-        uses: sergioramos/yarn-actions/run@v6
-        with:
-          script: ${{ matrix.suite }}
+      - run: yarn run build
+      - run: yarn run ${{ matrix.suite }}
 
 # @TODO: port this Travis CI automation to GHA one day:
 # deploy:
