@@ -72,7 +72,7 @@
     "regenerator-runtime": "^0.13.5",
     "temp": "^0.9.4",
     "throttle": "^1.0.3",
-    "tsd": "0.20.0",
+    "tsd": "0.12.1",
     "uglify-js": "^3.9.2"
   },
   "dependencies": {
