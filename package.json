@@ -9,9 +9,6 @@
     "lib.es5/**/*",
     "lib.esm/**/*",
     "dist/**/*",
-    "demos/**/*",
-    "bin/**/*",
-    "test/**/*",
     "lib/index.d.ts"
   ],
   "browser": {
