@@ -63,7 +63,6 @@ var tus = require("tus-js-client");
 
 tus-js-client is tested and known to support following browsers:
 
-* Internet Explorer 10+
 * Microsoft Edge 12+
 * Mozilla Firefox 14+
 * Google Chrome 20+
@@ -82,7 +81,7 @@ who provide their great service glady for Open Source project for free.
 
 ## Node.js support
 
-tus-js-client is tested and known to work in Node.js version 8 or newer.
+tus-js-client is tested and known to work in Node.js v14 or newer.
 
 Since Node's environment is quite different than a browser's runtime and
 provides other capabilities but also restrictions, tus-js-client will have a

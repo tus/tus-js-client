@@ -8,9 +8,6 @@ const BS_KEY = process.env.BROWSERSTACK_KEY
 // A list of available browsers is available at:
 // https://www.browserstack.com/list-of-browsers-and-platforms/js_testing
 const browsers = [
-  'ie_10',
-  'ie_11',
-
   'edge_previous',
   'edge_current',
 

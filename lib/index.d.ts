@@ -4,6 +4,7 @@ export const isSupported: boolean;
 export const canStoreURLs: boolean;
 export const defaultOptions: UploadOptions;
 
+// TODO: Consider using { read: () => Promise<{ done: boolean; value?: any; }>; } as type
 export class Upload {
   constructor(file: File | Blob | Pick<ReadableStreamDefaultReader, "read">, options: UploadOptions);
 
