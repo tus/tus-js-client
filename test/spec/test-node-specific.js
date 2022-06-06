@@ -41,9 +41,7 @@ describe('tus', () => {
       expect(err.message).toBe("tus: cannot automatically derive upload's size from input. Specify it manually using the `uploadSize` option or use the `uploadLengthDeferred` option")
     })
 
-    // Disable for now, as the stream source does not have a chunk size requirement.
-    // Add this to the Upload class directly?
-    xit('should reject streams without specifying the chunkSize', async () => {
+    it('should reject streams without specifying the chunkSize', async () => {
       var input = new stream.PassThrough()
       var options = {
         endpoint: '/uploads',
@@ -54,7 +52,7 @@ describe('tus', () => {
       upload.start()
 
       const err = await options.onError.toBeCalled
-      expect(err.message).toBe('cannot create source for stream without a finite value for the `chunkSize` option')
+      expect(err.message).toBe('cannot create source for stream without a finite value for the `chunkSize` option; specify a chunkSize to control the memory consumption')
     })
 
     it('should accept Readable streams', async () => {
