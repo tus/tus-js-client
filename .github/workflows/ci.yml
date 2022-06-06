@@ -48,10 +48,6 @@ jobs:
         uses: sergioramos/yarn-actions/run@v6
         with:
           script: build
-      - name: Lint
-        uses: sergioramos/yarn-actions/run@v6
-        with:
-          script: lint
       - name: Test
         uses: sergioramos/yarn-actions/run@v6
         with:
