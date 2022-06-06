@@ -216,6 +216,58 @@ describe('tus', () => {
       expect(req.getUnderlyingObject().agent).not.toBe(https.globalAgent)
     })
   })
+
+  describe('#StreamSource', () => {
+    it('should slice at different ranges', async () => {
+      const input = stream.Readable.from(Buffer.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), {
+        objectMode: false,
+      })
+      const source = new tus.StreamSource(input)
+
+      // Read all data from stream
+      var { value, done } = await source.slice(0, 10)
+      expect(done).toBe(false)
+      expect(value.toString()).toBe('ABCDEFGHIJ')
+
+      // Read data only from buffer
+      var { value, done } = await source.slice(5, 10)
+      expect(done).toBe(false)
+      expect(value.toString()).toBe('FGHIJ')
+
+      // Read data from buffer and stream
+      var { value, done } = await source.slice(5, 15)
+      expect(done).toBe(false)
+      expect(value.toString()).toBe('FGHIJKLMNO')
+
+      // Error case: start is before previous start
+      var ret = source.slice(0, 100)
+      await expectAsync(ret).toBeRejectedWithError('cannot slice from position which we already seeked away')
+
+      // Error case: start is is outside of buffer
+      var ret = source.slice(50, 100)
+      await expectAsync(ret).toBeRejectedWithError('slice start is outside of buffer (currently not implemented)')
+
+      // Read until the end from stream
+      var { value, done } = await source.slice(15, 100)
+      expect(done).toBe(true)
+      expect(value.toString()).toBe('PQRSTUVWXYZ')
+
+      // Read until the end from buffer
+      var { value, done } = await source.slice(20, 100)
+      expect(done).toBe(true)
+      expect(value.toString()).toBe('UVWXYZ')
+    })
+
+    it('should pass through errors', async () => {
+      // Null as an element in the array causes the stream to emit an error when trying
+      // to read. This error should be passed to the caller.
+      const input = stream.Readable.from([null])
+      const source = new tus.StreamSource(input)
+
+      const ret = source.slice(0, 10)
+      await expectAsync(ret).toBeRejected({ code: 'ERR_STREAM_NULL_VALUES' })
+    })
+  })
 })
 
 async function getBodySize (body) {
