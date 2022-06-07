@@ -14,8 +14,13 @@
     "requireConfigFile": false
   },
   "rules": {
-    // transloadit rules we are actually ok with in the tus-js-client repo
+    // Rules from the transloadit preset we actually allow in tus-js-client
     ////////////////////////////////////////////////////////////
-    "class-methods-use-this": ["off"]
+    "class-methods-use-this": ["off"],
+    "no-use-before-define": ["off"],
+    "no-param-reassign": ["off"],
+    "import/no-extraneous-dependencies": ["error", {
+      "devDependencies": ["bin/*.js", "test/**/*.js"]
+    }]
   }
 }

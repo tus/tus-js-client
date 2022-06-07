@@ -16,8 +16,8 @@ describe('tus', () => {
 
   describe('#Upload', () => {
     it('should accept Buffers', async () => {
-      var buffer = Buffer.from('hello world')
-      var options = {
+      const buffer = Buffer.from('hello world')
+      const options = {
         httpStack: new TestHttpStack(),
         endpoint : '/uploads',
         chunkSize: 7,
@@ -27,14 +27,14 @@ describe('tus', () => {
     })
 
     it('should reject streams without specifying the size', async () => {
-      var input = new stream.PassThrough()
-      var options = {
+      const input = new stream.PassThrough()
+      const options = {
         endpoint : '/uploads',
         chunkSize: 100,
         onError  : waitableFunction('onError'),
       }
 
-      var upload = new tus.Upload(input, options)
+      const upload = new tus.Upload(input, options)
       upload.start()
 
       const err = await options.onError.toBeCalled
@@ -42,13 +42,13 @@ describe('tus', () => {
     })
 
     it('should reject streams without specifying the chunkSize', async () => {
-      var input = new stream.PassThrough()
-      var options = {
+      const input = new stream.PassThrough()
+      const options = {
         endpoint: '/uploads',
         onError : waitableFunction('onError'),
       }
 
-      var upload = new tus.Upload(input, options)
+      const upload = new tus.Upload(input, options)
       upload.start()
 
       const err = await options.onError.toBeCalled
@@ -56,8 +56,8 @@ describe('tus', () => {
     })
 
     it('should accept Readable streams', async () => {
-      var input = new stream.PassThrough()
-      var options = {
+      const input = new stream.PassThrough()
+      const options = {
         httpStack : new TestHttpStack(),
         endpoint  : '/uploads',
         chunkSize : 7,
@@ -71,7 +71,7 @@ describe('tus', () => {
     it('should accept stream-like objects', async () => {
       // This function returns an object that works like a stream but does not inherit stream.Readable
       const input = intoStream('hello WORLD')
-      var options = {
+      const options = {
         httpStack : new TestHttpStack(),
         endpoint  : '/uploads',
         chunkSize : 7,
@@ -82,8 +82,8 @@ describe('tus', () => {
     })
 
     it('should accept Readable streams with deferred size', async () => {
-      var input = new stream.PassThrough()
-      var options = {
+      const input = new stream.PassThrough()
+      const options = {
         httpStack           : new TestHttpStack(),
         endpoint            : '/uploads',
         chunkSize           : 7,
@@ -96,11 +96,11 @@ describe('tus', () => {
 
     it('should accept fs.ReadStream', async () => {
       // Create a temporary file
-      var path = temp.path()
+      const path = temp.path()
       fs.writeFileSync(path, 'hello world')
-      var file = fs.createReadStream(path)
+      const file = fs.createReadStream(path)
 
-      var options = {
+      const options = {
         httpStack : new TestHttpStack(),
         endpoint  : '/uploads',
         chunkSize : 7,
@@ -111,19 +111,19 @@ describe('tus', () => {
     })
 
     it('should pass through errors from the request', async () => {
-      var resErr = new Error('something bad, really!')
-      var buffer = Buffer.from('hello world')
-      var options = {
+      const resErr = new Error('something bad, really!')
+      const buffer = Buffer.from('hello world')
+      const options = {
         httpStack  : new TestHttpStack(),
         endpoint   : '/uploads',
         onError    : waitableFunction('onError'),
         retryDelays: null,
       }
 
-      var upload = new tus.Upload(buffer, options)
+      const upload = new tus.Upload(buffer, options)
       upload.start()
 
-      var req = await options.httpStack.nextRequest()
+      const req = await options.httpStack.nextRequest()
       expect(req.url).toBe('/uploads')
       expect(req.method).toBe('POST')
 
@@ -134,11 +134,11 @@ describe('tus', () => {
     })
 
     it('should resume an upload from a stored url', async () => {
-      var storagePath = temp.path()
+      const storagePath = temp.path()
       fs.writeFileSync(storagePath, '{"tus::fingerprinted::1337":{"uploadUrl":"http://tus.io/uploads/resuming"}}')
-      var storage = new tus.FileUrlStorage(storagePath)
-      var input = Buffer.from('hello world')
-      var options = {
+      const storage = new tus.FileUrlStorage(storagePath)
+      const input = Buffer.from('hello world')
+      const options = {
         httpStack : new TestHttpStack(),
         endpoint  : '/uploads',
         fingerprint () {},
@@ -147,7 +147,7 @@ describe('tus', () => {
       }
       spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
 
-      var upload = new tus.Upload(input, options)
+      const upload = new tus.Upload(input, options)
 
       const previousUploads = await upload.findPreviousUploads()
       expect(previousUploads).toEqual([{
@@ -160,7 +160,7 @@ describe('tus', () => {
 
       expect(options.fingerprint).toHaveBeenCalledWith(input, upload.options)
 
-      var req = await options.httpStack.nextRequest()
+      let req = await options.httpStack.nextRequest()
       expect(req.url).toBe('http://tus.io/uploads/resuming')
       expect(req.method).toBe('HEAD')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
@@ -196,8 +196,8 @@ describe('tus', () => {
 
   describe('#FileUrlStorage', () => {
     it('should allow storing and retrieving uploads', async () => {
-      var storagePath = temp.path()
-      var storage = new tus.FileUrlStorage(storagePath)
+      const storagePath = temp.path()
+      const storage = new tus.FileUrlStorage(storagePath)
       await assertUrlStorage(storage)
     })
   })
@@ -223,37 +223,37 @@ describe('tus', () => {
       const source = new tus.StreamSource(input)
 
       // Read all data from stream
-      var { value, done } = await source.slice(0, 10)
-      expect(done).toBe(false)
-      expect(value.toString()).toBe('ABCDEFGHIJ')
+      let ret = await source.slice(0, 10)
+      expect(ret.done).toBe(false)
+      expect(ret.value.toString()).toBe('ABCDEFGHIJ')
 
-      // Read data only from buffer
-      var { value, done } = await source.slice(5, 10)
-      expect(done).toBe(false)
-      expect(value.toString()).toBe('FGHIJ')
+      // Read data from buffer only
+      ret = await source.slice(5, 10)
+      expect(ret.done).toBe(false)
+      expect(ret.value.toString()).toBe('FGHIJ')
 
-      // Read data from buffer and stream
-      var { value, done } = await source.slice(5, 15)
-      expect(done).toBe(false)
-      expect(value.toString()).toBe('FGHIJKLMNO')
+      // Read data from buffer and new data from stream
+      ret = await source.slice(5, 15)
+      expect(ret.done).toBe(false)
+      expect(ret.value.toString()).toBe('FGHIJKLMNO')
 
       // Error case: start is before previous start
-      var ret = source.slice(0, 100)
+      ret = source.slice(0, 100)
       await expectAsync(ret).toBeRejectedWithError('cannot slice from position which we already seeked away')
 
       // Error case: start is is outside of buffer
-      var ret = source.slice(50, 100)
+      ret = source.slice(50, 100)
       await expectAsync(ret).toBeRejectedWithError('slice start is outside of buffer (currently not implemented)')
 
-      // Read until the end from stream
-      var { value, done } = await source.slice(15, 100)
-      expect(done).toBe(true)
-      expect(value.toString()).toBe('PQRSTUVWXYZ')
+      // Read remaining data from stream
+      ret = await source.slice(15, 100)
+      expect(ret.done).toBe(true)
+      expect(ret.value.toString()).toBe('PQRSTUVWXYZ')
 
-      // Read until the end from buffer
-      var { value, done } = await source.slice(20, 100)
-      expect(done).toBe(true)
-      expect(value.toString()).toBe('UVWXYZ')
+      // Read remaining data from buffer
+      ret = await source.slice(20, 100)
+      expect(ret.done).toBe(true)
+      expect(ret.value.toString()).toBe('UVWXYZ')
     })
 
     it('should pass through errors', async () => {
@@ -291,10 +291,10 @@ async function expectHelloWorldUpload (input, options) {
   options.httpStack = new TestHttpStack()
   options.onSuccess = waitableFunction('onSuccess')
 
-  var upload = new tus.Upload(input, options)
+  const upload = new tus.Upload(input, options)
   upload.start()
 
-  var req = await options.httpStack.nextRequest()
+  let req = await options.httpStack.nextRequest()
   expect(req.url).toBe('/uploads')
   expect(req.method).toBe('POST')
   if (options.uploadLengthDeferred) {

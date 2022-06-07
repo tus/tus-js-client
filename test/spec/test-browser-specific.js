@@ -1,5 +1,3 @@
-/* global Blob  */
-
 const assertUrlStorage = require('./helpers/assertUrlStorage')
 const { TestHttpStack, waitableFunction, wait } = require('./helpers/utils')
 const tus = require('../..')
@@ -16,8 +14,8 @@ describe('tus', () => {
       }))
 
       const testStack = new TestHttpStack()
-      var file = new Blob('hello world'.split(''))
-      var options = {
+      const file = new Blob('hello world'.split(''))
+      const options = {
         httpStack: testStack,
         endpoint : 'http://tus.io/uploads',
         onProgress () {},
@@ -26,7 +24,7 @@ describe('tus', () => {
       spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
       spyOn(options, 'onProgress')
 
-      var upload = new tus.Upload(file, options)
+      const upload = new tus.Upload(file, options)
 
       const previousUploads = await upload.findPreviousUploads()
       expect(previousUploads).toEqual([{
@@ -39,7 +37,7 @@ describe('tus', () => {
 
       expect(options.fingerprint).toHaveBeenCalledWith(file, upload.options)
 
-      var req = await testStack.nextRequest()
+      let req = await testStack.nextRequest()
       expect(req.url).toBe('http://tus.io/uploads/resuming')
       expect(req.method).toBe('HEAD')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
@@ -73,23 +71,23 @@ describe('tus', () => {
 
     describe('storing of upload urls', () => {
       const testStack = new TestHttpStack()
-      var options = {
+      const options = {
         httpStack: testStack,
         endpoint : 'http://tus.io/uploads',
         fingerprint () {},
       }
 
-      var startUpload = async function () {
-        var file = new Blob('hello world'.split(''))
+      async function startUpload () {
+        const file = new Blob('hello world'.split(''))
         spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
         options.onSuccess = waitableFunction('onSuccess')
 
-        var upload = new tus.Upload(file, options)
+        const upload = new tus.Upload(file, options)
         upload.start()
 
         expect(options.fingerprint).toHaveBeenCalled()
 
-        var req = await testStack.nextRequest()
+        const req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads')
         expect(req.method).toBe('POST')
 
@@ -104,8 +102,8 @@ describe('tus', () => {
         await wait(10)
       }
 
-      var finishUpload = async function () {
-        var req = await testStack.nextRequest()
+      async function finishUpload () {
+        const req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads/blargh')
         expect(req.method).toBe('PATCH')
 
@@ -153,15 +151,15 @@ describe('tus', () => {
 
     it('should delete upload urls on a 4XX', async () => {
       const testStack = new TestHttpStack()
-      var file = new Blob('hello world'.split(''))
-      var options = {
+      const file = new Blob('hello world'.split(''))
+      const options = {
         httpStack: testStack,
         endpoint : 'http://tus.io/uploads',
         fingerprint () {},
       }
       spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
 
-      var upload = new tus.Upload(file, options)
+      const upload = new tus.Upload(file, options)
 
       upload.resumeFromPreviousUpload({
         uploadUrl    : 'http://tus.io/uploads/resuming',
@@ -170,7 +168,7 @@ describe('tus', () => {
 
       upload.start()
 
-      var req = await testStack.nextRequest()
+      const req = await testStack.nextRequest()
       expect(req.url).toBe('http://tus.io/uploads/resuming')
       expect(req.method).toBe('HEAD')
 
@@ -188,8 +186,8 @@ describe('tus', () => {
         const reader = {
           value: content.split(''),
           read () {
-            var value
-            var done = false
+            let value
+            let done = false
             if (this.value.length > 0) {
               value = this.value.slice(0, readSize)
               this.value = this.value.slice(readSize)
@@ -205,10 +203,10 @@ describe('tus', () => {
       }
 
       async function assertReaderUpload ({ readSize, chunkSize }) {
-        var reader = makeReader('hello world', readSize)
+        const reader = makeReader('hello world', readSize)
 
-        var testStack = new TestHttpStack()
-        var options = {
+        const testStack = new TestHttpStack()
+        const options = {
           httpStack           : testStack,
           endpoint            : 'http://tus.io/uploads',
           chunkSize,
@@ -219,12 +217,12 @@ describe('tus', () => {
         }
         spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
 
-        var upload = new tus.Upload(reader, options)
+        const upload = new tus.Upload(reader, options)
         upload.start()
 
         expect(options.fingerprint).toHaveBeenCalledWith(reader, upload.options)
 
-        var req = await testStack.nextRequest()
+        let req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads')
         expect(req.method).toBe('POST')
         expect(req.requestHeaders['Upload-Length']).toBe(undefined)
@@ -283,10 +281,10 @@ describe('tus', () => {
       })
 
       it('should use multiple PATCH requests', async () => {
-        var reader = makeReader('hello world', 1)
+        const reader = makeReader('hello world', 1)
 
-        var testStack = new TestHttpStack()
-        var options = {
+        const testStack = new TestHttpStack()
+        const options = {
           httpStack           : testStack,
           endpoint            : 'http://tus.io/uploads',
           chunkSize           : 6,
@@ -297,12 +295,12 @@ describe('tus', () => {
         }
         spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
 
-        var upload = new tus.Upload(reader, options)
+        const upload = new tus.Upload(reader, options)
         upload.start()
 
         expect(options.fingerprint).toHaveBeenCalledWith(reader, upload.options)
 
-        var req = await testStack.nextRequest()
+        let req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads')
         expect(req.method).toBe('POST')
         expect(req.requestHeaders['Upload-Length']).toBe(undefined)
@@ -368,10 +366,10 @@ describe('tus', () => {
       })
 
       it('should retry the POST request', async () => {
-        var reader = makeReader('hello world', 1)
+        const reader = makeReader('hello world', 1)
 
-        var testStack = new TestHttpStack()
-        var options = {
+        const testStack = new TestHttpStack()
+        const options = {
           httpStack           : testStack,
           endpoint            : 'http://tus.io/files/',
           chunkSize           : 11,
@@ -380,10 +378,10 @@ describe('tus', () => {
           uploadLengthDeferred: true,
         }
 
-        var upload = new tus.Upload(reader, options)
+        const upload = new tus.Upload(reader, options)
         upload.start()
 
-        var req = await testStack.nextRequest()
+        let req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/files/')
         expect(req.method).toBe('POST')
 
@@ -429,10 +427,10 @@ describe('tus', () => {
       })
 
       it('should retry the first PATCH request', async () => {
-        var reader = makeReader('hello world', 1)
+        const reader = makeReader('hello world', 1)
 
-        var testStack = new TestHttpStack()
-        var options = {
+        const testStack = new TestHttpStack()
+        const options = {
           httpStack           : testStack,
           endpoint            : 'http://tus.io/files/',
           chunkSize           : 11,
@@ -441,10 +439,10 @@ describe('tus', () => {
           uploadLengthDeferred: true,
         }
 
-        var upload = new tus.Upload(reader, options)
+        const upload = new tus.Upload(reader, options)
         upload.start()
 
-        var req = await testStack.nextRequest()
+        let req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/files/')
         expect(req.method).toBe('POST')
 
@@ -501,10 +499,10 @@ describe('tus', () => {
       })
 
       it('should retry following PATCH requests', async () => {
-        var reader = makeReader('hello world there!')
+        const reader = makeReader('hello world there!')
 
-        var testStack = new TestHttpStack()
-        var options = {
+        const testStack = new TestHttpStack()
+        const options = {
           httpStack           : testStack,
           endpoint            : 'http://tus.io/files/',
           chunkSize           : 6,
@@ -513,10 +511,10 @@ describe('tus', () => {
           uploadLengthDeferred: true,
         }
 
-        var upload = new tus.Upload(reader, options)
+        const upload = new tus.Upload(reader, options)
         upload.start()
 
-        var req = await testStack.nextRequest()
+        let req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/files/')
         expect(req.method).toBe('POST')
 
@@ -595,9 +593,9 @@ describe('tus', () => {
       })
 
       it('should cancel the reader when aborted', async () => {
-        var reader = makeReader('hello there world')
+        const reader = makeReader('hello there world')
 
-        var options = {
+        const options = {
           httpStack           : new TestHttpStack(),
           endpoint            : 'http://tus.io/files/',
           chunkSize           : 6,
@@ -606,7 +604,7 @@ describe('tus', () => {
           uploadLengthDeferred: true,
         }
 
-        var upload = new tus.Upload(reader, options)
+        const upload = new tus.Upload(reader, options)
         upload.start()
 
         // We wait until the first request arrives, so that the first promises have resolved.
@@ -622,13 +620,13 @@ describe('tus', () => {
     describe('resolving of URIs', () => {
       // Disable these tests for IE 10 and 11 because it's not possible to overwrite
       // the navigator.product property.
-      var isIE = navigator.userAgent.indexOf('Trident/') > 0
+      const isIE = navigator.userAgent.indexOf('Trident/') > 0
       if (isIE) {
         console.log('Skipping tests for React Native in Internet Explorer') // eslint-disable-line no-console
         return
       }
 
-      var originalProduct = navigator.product
+      const originalProduct = navigator.product
 
       beforeEach(() => {
         jasmine.Ajax.install()
@@ -648,23 +646,23 @@ describe('tus', () => {
       })
 
       it('should upload a file from an URI', async () => {
-        var file = {
+        const file = {
           uri: 'file:///my/file.dat',
         }
-        var testStack = new TestHttpStack()
-        var options = {
+        const testStack = new TestHttpStack()
+        const options = {
           httpStack: testStack,
           endpoint : 'http://tus.io/uploads',
           onSuccess: waitableFunction('onSuccess'),
         }
 
-        var upload = new tus.Upload(file, options)
+        const upload = new tus.Upload(file, options)
         upload.start()
 
         // Wait a short interval to make sure that the XHR has been sent.
         await wait(0)
 
-        var req = jasmine.Ajax.requests.mostRecent()
+        let req = jasmine.Ajax.requests.mostRecent()
         expect(req.url).toBe('file:///my/file.dat')
         expect(req.method).toBe('GET')
         expect(req.responseType).toBe('blob')
@@ -710,21 +708,21 @@ describe('tus', () => {
       })
 
       it("should emit an error if it can't resolve the URI", async () => {
-        var file = {
+        const file = {
           uri: 'file:///my/file.dat',
         }
-        var options = {
+        const options = {
           endpoint: 'http://tus.io/uploads',
           onError : waitableFunction('onError'),
         }
 
-        var upload = new tus.Upload(file, options)
+        const upload = new tus.Upload(file, options)
         upload.start()
 
         // Wait a short interval to make sure that the XHR has been sent.
         await wait(0)
 
-        var req = jasmine.Ajax.requests.mostRecent()
+        const req = jasmine.Ajax.requests.mostRecent()
         expect(req.url).toBe('file:///my/file.dat')
         expect(req.method).toBe('GET')
         expect(req.responseType).toBe('blob')
