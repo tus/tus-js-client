@@ -1,14 +1,14 @@
 /* global tus */
-/* eslint no-console: 0 */
+/* eslint-disable no-console, no-alert */
 
-var stopRecording   = null
-var upload          = null
-var recordBtn       = document.querySelector('#record-btn')
-var alertBox        = document.querySelector('#support-alert')
-var progressBox     = document.querySelector('#progress-note')
-var uploadList      = document.querySelector('#upload-list')
-var chunkInput      = document.querySelector('#chunksize')
-var endpointInput   = document.querySelector('#endpoint')
+let stopRecording   = null
+let upload          = null
+const recordBtn       = document.querySelector('#record-btn')
+const alertBox        = document.querySelector('#support-alert')
+const progressBox     = document.querySelector('#progress-note')
+const uploadList      = document.querySelector('#upload-list')
+const chunkInput      = document.querySelector('#chunksize')
+const endpointInput   = document.querySelector('#endpoint')
 
 if (!tus.isSupported) {
   alertBox.classList.remove('hidden')
@@ -30,13 +30,13 @@ recordBtn.addEventListener('click', (e) => {
 })
 
 function startUpload (file) {
-  var endpoint = endpointInput.value
-  var chunkSize = parseInt(chunkInput.value, 10)
-  if (isNaN(chunkSize)) {
+  const endpoint = endpointInput.value
+  let chunkSize = parseInt(chunkInput.value, 10)
+  if (Number.isNaN(chunkSize)) {
     chunkSize = Infinity
   }
 
-  var options = {
+  const options = {
     resume              : false,
     endpoint,
     chunkSize,
@@ -62,17 +62,17 @@ function startUpload (file) {
       progressBox.textContent = `Uploaded ${bytesUploaded} bytes so far.`
     },
     onSuccess () {
-      var listItem = document.createElement('li')
+      const listItem = document.createElement('li')
 
-      var video = document.createElement('video')
+      const video = document.createElement('video')
       video.controls = true
       video.src = upload.url
       listItem.appendChild(video)
 
-      var lineBreak = document.createElement('br')
+      const lineBreak = document.createElement('br')
       listItem.appendChild(lineBreak)
 
-      var anchor = document.createElement('a')
+      const anchor = document.createElement('a')
       anchor.textContent = `Download ${options.metadata.filename}`
       anchor.href = upload.url
       anchor.className = 'btn btn-success'

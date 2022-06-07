@@ -1,4 +1,3 @@
-/* global expectAsync */
 const { TestHttpStack, getBlob } = require('./helpers/utils')
 const tus = require('../..')
 
@@ -7,8 +6,8 @@ describe('tus', () => {
     it('should terminate upload when abort is called with true', async () => {
       let abortPromise
       const testStack = new TestHttpStack()
-      var file = getBlob('hello world')
-      var options = {
+      const file = getBlob('hello world')
+      const options = {
         httpStack: testStack,
         endpoint : 'http://tus.io/files/',
         chunkSize: 5,
@@ -59,8 +58,8 @@ describe('tus', () => {
     it('should retry terminate when an error is returned on first try', async () => {
       let abortPromise
       const testStack = new TestHttpStack()
-      var file = getBlob('hello world')
-      var options = {
+      const file = getBlob('hello world')
+      const options = {
         httpStack  : testStack,
         endpoint   : 'http://tus.io/files/',
         chunkSize  : 5,
@@ -119,7 +118,7 @@ describe('tus', () => {
 
     it('should stop retrying when all delays are used up', async () => {
       const testStack = new TestHttpStack()
-      var options = {
+      const options = {
         httpStack  : testStack,
         retryDelays: [10, 10],
       }
@@ -155,7 +154,7 @@ describe('tus', () => {
 
     it('should invoke the request and response Promises', async () => {
       const testStack = new TestHttpStack()
-      var options = {
+      const options = {
         httpStack: testStack,
         onBeforeRequest (req) {
           return new Promise(resolve => {

@@ -88,7 +88,7 @@ class TestRequest {
     this.body = null
 
     this._onRequestSend = onRequestSend
-    this._onProgress = function () {};
+    this._onProgress = () => {};
 
     [this._requestPromise, this._resolveRequest, this._rejectRequest] = flatPromise()
   }

@@ -4,8 +4,8 @@ const tus = require('../..')
 describe('tus', () => {
   describe('parallel uploading', () => {
     it('should throw if incompatible options are used', () => {
-      var file = getBlob('hello world')
-      var upload = new tus.Upload(file, {
+      const file = getBlob('hello world')
+      const upload = new tus.Upload(file, {
         endpoint       : 'https://tus.io/uploads',
         parallelUploads: 2,
         uploadUrl      : 'foo',
