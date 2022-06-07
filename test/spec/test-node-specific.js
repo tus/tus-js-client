@@ -52,7 +52,7 @@ describe('tus', () => {
       upload.start()
 
       const err = await options.onError.toBeCalled
-      expect(err.message).toBe('cannot create source for stream without a finite value for the `chunkSize` option')
+      expect(err.message).toBe('cannot create source for stream without a finite value for the `chunkSize` option; specify a chunkSize to control the memory consumption')
     })
 
     it('should accept Readable streams', async () => {
@@ -94,7 +94,7 @@ describe('tus', () => {
       await expectHelloWorldUpload(input, options)
     })
 
-    it('should accept ReadStreams streams', async () => {
+    it('should accept fs.ReadStream', async () => {
       // Create a temporary file
       var path = temp.path()
       fs.writeFileSync(path, 'hello world')
@@ -214,6 +214,58 @@ describe('tus', () => {
       expect(req.getUnderlyingObject().agent).not.toBe(https.globalAgent)
     })
   })
+
+  describe('#StreamSource', () => {
+    it('should slice at different ranges', async () => {
+      const input = stream.Readable.from(Buffer.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), {
+        objectMode: false,
+      })
+      const source = new tus.StreamSource(input)
+
+      // Read all data from stream
+      var { value, done } = await source.slice(0, 10)
+      expect(done).toBe(false)
+      expect(value.toString()).toBe('ABCDEFGHIJ')
+
+      // Read data only from buffer
+      var { value, done } = await source.slice(5, 10)
+      expect(done).toBe(false)
+      expect(value.toString()).toBe('FGHIJ')
+
+      // Read data from buffer and stream
+      var { value, done } = await source.slice(5, 15)
+      expect(done).toBe(false)
+      expect(value.toString()).toBe('FGHIJKLMNO')
+
+      // Error case: start is before previous start
+      var ret = source.slice(0, 100)
+      await expectAsync(ret).toBeRejectedWithError('cannot slice from position which we already seeked away')
+
+      // Error case: start is is outside of buffer
+      var ret = source.slice(50, 100)
+      await expectAsync(ret).toBeRejectedWithError('slice start is outside of buffer (currently not implemented)')
+
+      // Read until the end from stream
+      var { value, done } = await source.slice(15, 100)
+      expect(done).toBe(true)
+      expect(value.toString()).toBe('PQRSTUVWXYZ')
+
+      // Read until the end from buffer
+      var { value, done } = await source.slice(20, 100)
+      expect(done).toBe(true)
+      expect(value.toString()).toBe('UVWXYZ')
+    })
+
+    it('should pass through errors', async () => {
+      // Null as an element in the array causes the stream to emit an error when trying
+      // to read. This error should be passed to the caller.
+      const input = stream.Readable.from([null])
+      const source = new tus.StreamSource(input)
+
+      const ret = source.slice(0, 10)
+      await expectAsync(ret).toBeRejected({ code: 'ERR_STREAM_NULL_VALUES' })
+    })
+  })
 })
 
 async function getBodySize (body) {
@@ -277,6 +329,11 @@ async function expectHelloWorldUpload (input, options) {
   expect(req.url).toBe('/uploads/blargh')
   expect(req.method).toBe('PATCH')
   expect(req.requestHeaders['Upload-Offset']).toBe(7)
+
+  if (options.uploadLengthDeferred) {
+    expect(req.requestHeaders['Upload-Length']).toBe(11)
+  }
+
   expect(await getBodySize(req.body)).toBe(4)
   req.respondWith({
     status         : 204,
@@ -284,22 +341,6 @@ async function expectHelloWorldUpload (input, options) {
       'Upload-Offset': 11,
     },
   })
-
-  if (options.uploadLengthDeferred) {
-    req = await options.httpStack.nextRequest()
-    expect(req.url).toBe('/uploads/blargh')
-    expect(req.method).toBe('PATCH')
-    expect(req.requestHeaders['Upload-Length']).toBe(11)
-    expect(await getBodySize(req.body)).toBe(0)
-
-    req.respondWith({
-      status         : 204,
-      responseHeaders: {
-        'Upload-Offset': 11,
-        'Upload-Length': 11,
-      },
-    })
-  }
 
   await options.onSuccess.toBeCalled
 }
