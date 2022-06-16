@@ -1,6 +1,8 @@
 // Karma configuration for testing using BrowserStack
 const baseConfig = require('./base.conf')
 
+process.env.BUILD_NUMBER = process.env.GITHUB_RUN_ID
+
 module.exports = (config) => {
   baseConfig(config)
   config.set({
