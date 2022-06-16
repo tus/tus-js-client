@@ -32,7 +32,6 @@ beforeEach(() => {
   localStorage.clear()
 })
 
-require('./helpers/puppeteer/reporter')
 require('./test-common')
 require('./test-browser-specific')
 require('./test-parallel-uploads')

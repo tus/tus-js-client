@@ -20,7 +20,7 @@
     "no-use-before-define": ["off"],
     "no-param-reassign": ["off"],
     "import/no-extraneous-dependencies": ["error", {
-      "devDependencies": ["bin/*.js", "test/**/*.js"]
+      "devDependencies": ["test/**/*.js"]
     }]
   }
 }
