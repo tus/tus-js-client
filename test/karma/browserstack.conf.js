@@ -82,5 +82,8 @@ module.exports = (config) => {
     // available reporters: https://www.npmjs.com/search?q=keywords:karma-reporter
     reporters: ['progress', 'BrowserStack'],
 
+    // Concurrency level
+    // how many browser instances should be started simultaneously
+    concurrency: 2,
   })
 }

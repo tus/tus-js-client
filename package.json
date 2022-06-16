@@ -47,8 +47,6 @@
     "axios": "^0.27.2",
     "babelify": "^10.0.0",
     "browserify": "^17.0.0",
-    "browserstack": "^1.5.2",
-    "browserstack-runner": "git+https://github.com/Acconut/browserstack-runner.git#fix_etxtbsy",
     "chokidar-cli": "^3.0.0",
     "es6-promise": "^4.2.8",
     "eslint": "^7.22.0",
@@ -102,7 +100,6 @@
     "test-browserstack": "karma start test/karma/browserstack.conf.js",
     "test-node": "jasmine test/spec/node-index.js",
     "test-types": "tsd",
-    "test": "./bin/test && npm run test-types",
     "lint": "eslint ."
   }
 }
