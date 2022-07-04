@@ -1080,10 +1080,10 @@
     "@nodelib/fs.scandir" "2.1.4"
     fastq "^1.6.0"
 
-"@tsd/typescript@~4.7.3":
-  version "4.7.3"
-  resolved "https://registry.yarnpkg.com/@tsd/typescript/-/typescript-4.7.3.tgz#b5855528a0cd35039341c4002ec7a74b71c34467"
-  integrity sha512-jjxcFpaWwETZZedPuPhWehlHA6cifStKV8viwc80FUVSUdv6sC4V0dWJ3OCBIWOQcxk7roxCDvzrc40CoDr5tg==
+"@tsd/typescript@~4.7.4":
+  version "4.7.4"
+  resolved "https://registry.yarnpkg.com/@tsd/typescript/-/typescript-4.7.4.tgz#f1e4e6c3099a174a0cb7aa51cf53f34f6494e528"
+  integrity sha512-jbtC+RgKZ9Kk65zuRZbKLTACf+tvFW4Rfq0JEMXrlmV3P3yme+Hm+pnb5fJRyt61SjIitcrC810wj7+1tgsEmg==
 
 "@types/component-emitter@^1.2.10":
   version "1.2.11"
@@ -5562,12 +5562,12 @@ tsconfig-paths@^3.14.1:
     minimist "^1.2.6"
     strip-bom "^3.0.0"
 
-tsd@0.21.0:
-  version "0.21.0"
-  resolved "https://registry.yarnpkg.com/tsd/-/tsd-0.21.0.tgz#fb1a1aa022cfb4a6d1065bb569687e8ac8f72daf"
-  integrity sha512-6DugCw1Q4H8HYwDT3itzgALjeDxN4RO3iqu7gRdC/YNVSCRSGXRGQRRasftL1uKDuKxlFffYKHv5j5G7YnKGxQ==
+tsd@0.22.0:
+  version "0.22.0"
+  resolved "https://registry.yarnpkg.com/tsd/-/tsd-0.22.0.tgz#2ff75cf3adff5136896abee1f2c5540497bf3b54"
+  integrity sha512-NH+tfEDQ0Ze8gH7TorB6IxYybD+M68EYawe45YNVrbQcydNBfdQHP9IiD0QbnqmwNXrv+l9GAiULT68mo4q/xA==
   dependencies:
-    "@tsd/typescript" "~4.7.3"
+    "@tsd/typescript" "~4.7.4"
     eslint-formatter-pretty "^4.1.0"
     globby "^11.0.1"
     meow "^9.0.0"
