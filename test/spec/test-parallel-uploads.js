@@ -13,14 +13,23 @@ describe('tus', () => {
       expect(upload.start.bind(upload)).toThrowError('tus: cannot use the uploadUrl option when parallelUploads is enabled')
     })
 
-    it('should throw if splitSizeIntoParts is passed without parallelUploads', () => {
+    it('should throw if `parallelUploadBoundaries` is passed without `parallelUploads`', () => {
       var file = getBlob('hello world')
       var upload = new tus.Upload(file, {
-        endpoint          : 'https://tus.io/uploads',
-        splitSizeIntoParts: () => {},
-        uploadUrl         : 'foo',
+        endpoint                : 'https://tus.io/uploads',
+        parallelUploadBoundaries: [{ start: 0, end: 2 }],
       })
-      expect(upload.start.bind(upload)).toThrowError('tus: cannot use the splitSizeIntoParts option when parallelUploads is disabled')
+      expect(upload.start.bind(upload)).toThrowError('tus: cannot use the `parallelUploadBoundaries` option when `parallelUploads` is disabled')
+    })
+
+    it('should throw if `parallelUploadBoundaries` is not the same length as the value of `parallelUploads`', () => {
+      var file = getBlob('hello world')
+      var upload = new tus.Upload(file, {
+        endpoint                : 'https://tus.io/uploads',
+        parallelUploads         : 3,
+        parallelUploadBoundaries: [{ start: 0, end: 2 }],
+      })
+      expect(upload.start.bind(upload)).toThrowError('tus: the `parallelUploadBoundaries` must have the same length as the value of `parallelUploads`')
     })
 
     it('should split a file into multiple parts and create an upload for each', async () => {
@@ -188,7 +197,7 @@ describe('tus', () => {
       expect(testUrlStorage.removeUpload).toHaveBeenCalled()
     })
 
-    it('should split a file into multiple parts based on custom splitSizeIntoParts', async () => {
+    it('should split a file into multiple parts based on custom `parallelUploadBoundaries`', async () => {
       const testStack = new TestHttpStack()
 
       const testUrlStorage = {
@@ -211,6 +220,24 @@ describe('tus', () => {
       spyOn(testUrlStorage, 'removeUpload').and.callThrough()
       spyOn(testUrlStorage, 'addUpload').and.callThrough()
 
+      let customSplitSizeFn = (totalSize, partCount) => {
+        const partSize = 1
+        const parts = []
+
+        for (let i = 0; i < partCount; i++) {
+          parts.push({
+            start: partSize * i,
+            end  : partSize * (i + 1),
+          })
+        }
+
+        parts[partCount - 1].end = totalSize
+
+        return parts
+      };
+      let parallelUploadBoundaries = customSplitSizeFn(11, 2);
+      expect(parallelUploadBoundaries).toEqual([{ start: 0, end: 1 }, { start: 1, end: 11 }]);
+
       const file = getBlob('hello world')
       const options = {
         httpStack                  : testStack,
@@ -218,24 +245,10 @@ describe('tus', () => {
         storeFingerprintForResuming: true,
         removeFingerprintOnSuccess : true,
         parallelUploads            : 2,
-        splitSizeIntoParts         : (totalSize, partCount) => {
-          const partSize = 1
-          const parts = []
-
-          for (let i = 0; i < partCount; i++) {
-            parts.push({
-              start: partSize * i,
-              end  : partSize * (i + 1),
-            })
-          }
-
-          parts[partCount - 1].end = totalSize
-
-          return parts
-        },
-        retryDelays                : [10],
-        endpoint                   : 'https://tus.io/uploads',
-        headers                    : {
+        parallelUploadBoundaries,
+        retryDelays: [10],
+        endpoint   : 'https://tus.io/uploads',
+        headers    : {
           Custom: 'blargh',
         },
         metadata: {
