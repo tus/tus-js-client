@@ -200,65 +200,18 @@ describe('tus', () => {
     it('should split a file into multiple parts based on custom `parallelUploadBoundaries`', async () => {
       const testStack = new TestHttpStack()
 
-      const testUrlStorage = {
-        addUpload: (fingerprint, upload) => {
-          expect(fingerprint).toBe('fingerprinted')
-          expect(upload.uploadUrl).toBeUndefined()
-          expect(upload.size).toBe(11)
-          expect(upload.parallelUploadUrls).toEqual([
-            'https://tus.io/uploads/upload1',
-            'https://tus.io/uploads/upload2',
-          ])
-
-          return Promise.resolve('tus::fingerprinted::1337')
-        },
-        removeUpload: (urlStorageKey) => {
-          expect(urlStorageKey).toBe('tus::fingerprinted::1337')
-          return Promise.resolve()
-        },
-      }
-      spyOn(testUrlStorage, 'removeUpload').and.callThrough()
-      spyOn(testUrlStorage, 'addUpload').and.callThrough()
-
-      let customSplitSizeFn = (totalSize, partCount) => {
-        const partSize = 1
-        const parts = []
-
-        for (let i = 0; i < partCount; i++) {
-          parts.push({
-            start: partSize * i,
-            end  : partSize * (i + 1),
-          })
-        }
-
-        parts[partCount - 1].end = totalSize
-
-        return parts
-      };
-      let parallelUploadBoundaries = customSplitSizeFn(11, 2);
-      expect(parallelUploadBoundaries).toEqual([{ start: 0, end: 1 }, { start: 1, end: 11 }]);
-
+      let parallelUploadBoundaries = [{ start: 0, end: 1 }, { start: 1, end: 11 }]
       const file = getBlob('hello world')
       const options = {
         httpStack                  : testStack,
-        urlStorage                 : testUrlStorage,
         storeFingerprintForResuming: true,
         removeFingerprintOnSuccess : true,
         parallelUploads            : 2,
         parallelUploadBoundaries,
-        retryDelays: [10],
         endpoint   : 'https://tus.io/uploads',
-        headers    : {
-          Custom: 'blargh',
-        },
-        metadata: {
-          foo: 'hello',
-        },
-        onProgress () {},
         onSuccess  : waitableFunction(),
         fingerprint: () => Promise.resolve('fingerprinted'),
       }
-      spyOn(options, 'onProgress')
 
       const upload = new tus.Upload(file, options)
       upload.start()
@@ -266,7 +219,6 @@ describe('tus', () => {
       let req = await testStack.nextRequest()
       expect(req.url).toBe('https://tus.io/uploads')
       expect(req.method).toBe('POST')
-      expect(req.requestHeaders.Custom).toBe('blargh')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Length']).toBe(1)
       expect(req.requestHeaders['Upload-Concat']).toBe('partial')
@@ -282,7 +234,6 @@ describe('tus', () => {
       req = await testStack.nextRequest()
       expect(req.url).toBe('https://tus.io/uploads')
       expect(req.method).toBe('POST')
-      expect(req.requestHeaders.Custom).toBe('blargh')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Length']).toBe(10)
       expect(req.requestHeaders['Upload-Concat']).toBe('partial')
@@ -297,12 +248,8 @@ describe('tus', () => {
 
       req = await testStack.nextRequest()
 
-      // Assert that the URLs have been stored.
-      expect(testUrlStorage.addUpload).toHaveBeenCalled()
-
       expect(req.url).toBe('https://tus.io/uploads/upload1')
       expect(req.method).toBe('PATCH')
-      expect(req.requestHeaders.Custom).toBe('blargh')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Offset']).toBe(0)
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
@@ -318,20 +265,10 @@ describe('tus', () => {
       req = await testStack.nextRequest()
       expect(req.url).toBe('https://tus.io/uploads/upload2')
       expect(req.method).toBe('PATCH')
-      expect(req.requestHeaders.Custom).toBe('blargh')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Offset']).toBe(0)
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
       expect(req.body.size).toBe(10)
-
-      // Return an error to ensure that the individual partial upload is properly retried.
-      req.respondWith({
-        status: 500,
-      })
-
-      req = await testStack.nextRequest()
-      expect(req.url).toBe('https://tus.io/uploads/upload2')
-      expect(req.method).toBe('HEAD')
 
       req.respondWith({
         status         : 204,
@@ -344,7 +281,6 @@ describe('tus', () => {
       req = await testStack.nextRequest()
       expect(req.url).toBe('https://tus.io/uploads/upload2')
       expect(req.method).toBe('PATCH')
-      expect(req.requestHeaders.Custom).toBe('blargh')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Offset']).toBe(0)
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
@@ -360,11 +296,9 @@ describe('tus', () => {
       req = await testStack.nextRequest()
       expect(req.url).toBe('https://tus.io/uploads')
       expect(req.method).toBe('POST')
-      expect(req.requestHeaders.Custom).toBe('blargh')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Length']).toBeUndefined()
       expect(req.requestHeaders['Upload-Concat']).toBe('final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2')
-      expect(req.requestHeaders['Upload-Metadata']).toBe('foo aGVsbG8=')
 
       req.respondWith({
         status         : 201,
@@ -376,9 +310,6 @@ describe('tus', () => {
       await options.onSuccess.toBeCalled
 
       expect(upload.url).toBe('https://tus.io/uploads/upload3')
-      expect(options.onProgress).toHaveBeenCalledWith(1, 11)
-      expect(options.onProgress).toHaveBeenCalledWith(11, 11)
-      expect(testUrlStorage.removeUpload).toHaveBeenCalled()
     })
 
     it('should emit error from a partial upload', async () => {
