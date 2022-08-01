@@ -11,7 +11,7 @@ describe('tus', () => {
       return new Promise((resolve, reject) => {
         const file = getBlob('hello world')
         const options = {
-          endpoint: 'https://tusd.tusdemo.net/files/',
+          endpoint: 'http://localhost:1080/files/',
           metadata: {
             nonlatin: 'słońce',
             number  : 100,
@@ -19,7 +19,7 @@ describe('tus', () => {
             filetype: 'text/plain',
           },
           onSuccess () {
-            expect(upload.url).toMatch(/^https:\/\/tusd\.tusdemo\.net\/files\//)
+            expect(upload.url).toMatch(/^http:\/\/localhost:1080\/files\//)
             console.log('Upload URL:', upload.url) // eslint-disable-line no-console
 
             resolve(upload)
@@ -44,7 +44,7 @@ describe('tus', () => {
       return new Promise((resolve, reject) => {
         const file = getBlob('hello world')
         const options = {
-          endpoint: 'https://tusd.tusdemo.net/files/',
+          endpoint: 'http://localhost:1080/files/',
           metadata: {
             nonlatin: 'słońce',
             number  : 100,
@@ -52,7 +52,7 @@ describe('tus', () => {
             filetype: 'text/plain',
           },
           onSuccess () {
-            expect(upload.url).toMatch(/^https:\/\/tusd\.tusdemo\.net\/files\//)
+            expect(upload.url).toMatch(/^http:\/\/localhost:1080\/files\//)
             console.log('Upload URL:', upload.url) // eslint-disable-line no-console
 
             resolve(upload)

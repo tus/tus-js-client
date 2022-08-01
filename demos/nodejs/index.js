@@ -13,13 +13,16 @@ const options = {
     filename: 'README.md',
     filetype: 'text/plain',
   },
-  uploadSize: size,
+  //uploadSize: size,
+  parallelUploads: 2,
   onError (error) {
     throw error
   },
   onProgress (bytesUploaded, bytesTotal) {
     const percentage = ((bytesUploaded / bytesTotal) * 100).toFixed(2)
     console.log(bytesUploaded, bytesTotal, `${percentage}%`)
+    
+    console.log(foo.baar)
   },
   onSuccess () {
     console.log('Upload finished:', upload.url)
