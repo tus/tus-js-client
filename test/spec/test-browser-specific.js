@@ -651,30 +651,6 @@ describe('tus', () => {
 
         await options.onSuccess.toBeCalled
       })
-
-      it('should cancel the reader when aborted', async () => {
-        const reader = makeReader('hello there world')
-
-        const options = {
-          httpStack           : new TestHttpStack(),
-          endpoint            : 'http://tus.io/files/',
-          chunkSize           : 6,
-          retryDelays         : [10, 10, 10],
-          onSuccess () {},
-          uploadLengthDeferred: true,
-        }
-
-        const upload = new tus.Upload(reader, options)
-        upload.start()
-
-        // We wait until the first request arrives, so that the first promises have resolved.
-        await options.httpStack.nextRequest()
-
-        upload.abort()
-
-        await reader.cancel.toBeCalled
-        expect(reader.cancel).toHaveBeenCalled()
-      })
     })
 
     describe('resolving of URIs', () => {
