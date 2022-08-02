@@ -5,7 +5,6 @@ const tus = require('../..')
 
 const path = `${__dirname}/../../README.md`
 const file = fs.createReadStream(path)
-const { size } = fs.statSync(path)
 
 const options = {
   endpoint: 'https://tusd.tusdemo.net/files/',
@@ -13,9 +12,10 @@ const options = {
     filename: 'README.md',
     filetype: 'text/plain',
   },
-  uploadSize: size,
   onError (error) {
-    throw error
+    console.error('An error occurred:')
+    console.error(error)
+    process.exitCode = 1
   },
   onProgress (bytesUploaded, bytesTotal) {
     const percentage = ((bytesUploaded / bytesTotal) * 100).toFixed(2)

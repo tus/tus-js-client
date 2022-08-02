@@ -104,7 +104,6 @@ describe('tus', () => {
         httpStack : new TestHttpStack(),
         endpoint  : '/uploads',
         chunkSize : 7,
-        uploadSize: 11,
       }
 
       await expectHelloWorldUpload(file, options)
