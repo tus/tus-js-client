@@ -13,6 +13,25 @@ describe('tus', () => {
       expect(upload.start.bind(upload)).toThrowError('tus: cannot use the uploadUrl option when parallelUploads is enabled')
     })
 
+    it('should throw if `parallelUploadBoundaries` is passed without `parallelUploads`', () => {
+      const file = getBlob('hello world')
+      const upload = new tus.Upload(file, {
+        endpoint                : 'https://tus.io/uploads',
+        parallelUploadBoundaries: [{ start: 0, end: 2 }],
+      })
+      expect(upload.start.bind(upload)).toThrowError('tus: cannot use the `parallelUploadBoundaries` option when `parallelUploads` is disabled')
+    })
+
+    it('should throw if `parallelUploadBoundaries` is not the same length as the value of `parallelUploads`', () => {
+      const file = getBlob('hello world')
+      const upload = new tus.Upload(file, {
+        endpoint                : 'https://tus.io/uploads',
+        parallelUploads         : 3,
+        parallelUploadBoundaries: [{ start: 0, end: 2 }],
+      })
+      expect(upload.start.bind(upload)).toThrowError('tus: the `parallelUploadBoundaries` must have the same length as the value of `parallelUploads`')
+    })
+
     it('should split a file into multiple parts and create an upload for each', async () => {
       const testStack = new TestHttpStack()
 
@@ -176,6 +195,115 @@ describe('tus', () => {
       expect(options.onProgress).toHaveBeenCalledWith(5, 11)
       expect(options.onProgress).toHaveBeenCalledWith(11, 11)
       expect(testUrlStorage.removeUpload).toHaveBeenCalled()
+    })
+
+    it('should split a file into multiple parts based on custom `parallelUploadBoundaries`', async () => {
+      const testStack = new TestHttpStack()
+
+      const parallelUploadBoundaries = [{ start: 0, end: 1 }, { start: 1, end: 11 }]
+      const file = getBlob('hello world')
+      const options = {
+        httpStack      : testStack,
+        parallelUploads: 2,
+        parallelUploadBoundaries,
+        endpoint       : 'https://tus.io/uploads',
+        onSuccess      : waitableFunction(),
+      }
+
+      const upload = new tus.Upload(file, options)
+      upload.start()
+
+      let req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads')
+      expect(req.method).toBe('POST')
+      expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+      expect(req.requestHeaders['Upload-Length']).toBe(1)
+      expect(req.requestHeaders['Upload-Concat']).toBe('partial')
+
+      req.respondWith({
+        status         : 201,
+        responseHeaders: {
+          Location: 'https://tus.io/uploads/upload1',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads')
+      expect(req.method).toBe('POST')
+      expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+      expect(req.requestHeaders['Upload-Length']).toBe(10)
+      expect(req.requestHeaders['Upload-Concat']).toBe('partial')
+
+      req.respondWith({
+        status         : 201,
+        responseHeaders: {
+          Location: 'https://tus.io/uploads/upload2',
+        },
+      })
+
+      req = await testStack.nextRequest()
+
+      expect(req.url).toBe('https://tus.io/uploads/upload1')
+      expect(req.method).toBe('PATCH')
+      expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+      expect(req.requestHeaders['Upload-Offset']).toBe(0)
+      expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
+      expect(req.body.size).toBe(1)
+
+      req.respondWith({
+        status         : 204,
+        responseHeaders: {
+          'Upload-Offset': 1,
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads/upload2')
+      expect(req.method).toBe('PATCH')
+      expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+      expect(req.requestHeaders['Upload-Offset']).toBe(0)
+      expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
+      expect(req.body.size).toBe(10)
+
+      req.respondWith({
+        status         : 204,
+        responseHeaders: {
+          'Upload-Length': 11,
+          'Upload-Offset': 0,
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads/upload2')
+      expect(req.method).toBe('PATCH')
+      expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+      expect(req.requestHeaders['Upload-Offset']).toBe(0)
+      expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
+      expect(req.body.size).toBe(10)
+
+      req.respondWith({
+        status         : 204,
+        responseHeaders: {
+          'Upload-Offset': 10,
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads')
+      expect(req.method).toBe('POST')
+      expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+      expect(req.requestHeaders['Upload-Length']).toBeUndefined()
+      expect(req.requestHeaders['Upload-Concat']).toBe('final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2')
+
+      req.respondWith({
+        status         : 201,
+        responseHeaders: {
+          Location: 'https://tus.io/uploads/upload3',
+        },
+      })
+
+      await options.onSuccess.toBeCalled
+      expect(upload.url).toBe('https://tus.io/uploads/upload3')
     })
 
     it('should emit error from a partial upload', async () => {

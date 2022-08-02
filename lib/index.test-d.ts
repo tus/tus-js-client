@@ -38,6 +38,7 @@ const upload = new tus.Upload(file, {
     retryDelays: [10, 20, 50],
     removeFingerprintOnSuccess: true,
     parallelUploads: 42,
+    parallelUploadBoundaries: [{ start: 0, end: 1 }, { start: 1, end: 11 }],
     onAfterResponse: function (req: tus.HttpRequest, res: tus.HttpResponse) {
 	    var url = req.getURL();
 	    var value = res.getHeader("X-My-Header");

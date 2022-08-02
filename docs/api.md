@@ -214,9 +214,23 @@ X-Request-ID: fe51f777-f23e-4ed9-97d7-2785cc69f961
 
 *Default value:* `1`
 
-A number indicating how many parts should be uploaded in parallel. If this number is not `1`, the input file will be split into roughly equally sized parts, where each part is uploaded individually in parallel. The value of `parallelUploads` determines the number of parts. After all parts have been uploaded, the [`concatenation` extension](https://tus.io/protocols/resumable-upload.html#concatenation) will be used to concatenate all the parts together on the server-side, so the tus server must support this extension. This option should not be used if the input file is a streaming resource.
+A number indicating how many parts should be uploaded in parallel. If this number is not `1`, the input file will be split into multiple parts, where each part is uploaded individually in parallel. The value of `parallelUploads` determines the number of parts. Using `parallelUploadBoundaries` the size of each part can be changed. After all parts have been uploaded, the [`concatenation` extension](https://tus.io/protocols/resumable-upload.html#concatenation) will be used to concatenate all the parts together on the server-side, so the tus server must support this extension. This option should not be used if the input file is a streaming resource.
 
 The idea behind this option is that you can use multiple HTTP requests in parallel to better utilize the full capacity of the network connection to the tus server. If you want to use it, please evaluate it under real world situations to see if it actually improves your upload performance. In common browser session, we were not able to find a performance improve for the average user.
+
+#### parallelUploadBoundaries
+
+*Default value:* `null`
+
+An array indicating the boundaries of the different parts uploaded during a parallel upload. This option is only considered if `parallelUploads` is greater than `1`. If so, the length of `parallelUploadBoundaries` must match `parallelUploads`. Each element in this array must have a `start` and `end` property indicating the start and end position of the partial upload:
+
+```
+parallelUploadBoundaries: [{ start: 0, end: 1 }, { start: 1, end: 11 }],
+```
+
+Is it the user's responsibility to ensure that the boundaries are consecutive and occupy the entire file size.
+
+If `parallelUploadBoundaries` is `null` (default value), the upload will be split into roughly equally sized parts. This setting can be used to have parts of different size distributions or parts with specific boundaries to satisfy server requirements.
 
 #### onBeforeRequest
 
