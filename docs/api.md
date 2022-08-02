@@ -122,11 +122,15 @@ headers: {
 
 *Default value:* `Infinity`
 
-A number indicating the maximum size of a `PATCH` request body in bytes. This can be used when a server or proxy has a limit on how big request bodies may be. The default value (`Infinity`) means that tus-js-client will try to upload the entire file in one request.
+A number indicating the maximum size of a `PATCH` request body in bytes. This can be used when a server or proxy has a limit on how big request bodies may be. The default value (`Infinity`) means that tus-js-client will try to upload the entire file in one request. This setting is also required if the input file is a reader/readable stream.
 
-Note that if the server has hard limits (such as the minimum 5MB chunk size imposed by S3), specifying a chunk size which falls outside those hard limits will cause chunked uploads to fail.
+Note that if the server has hard limits (such as the minimum 5 MB chunk size imposed by S3), specifying a chunk size which falls outside those hard limits will cause chunked uploads to fail.
 
-You should also be aware that setting a low chunk size may reduce the upload performance dramatically since it causes more HTTP requests to be initiated.
+Setting a good value for this setting is tricky:
+- A small chunk size (less than a few MBs) may reduce the upload performance dramatically. Each `PATCH` request can only carry little data, which requires more HTTP requests to transmit the whole file. All of these HTTP requests add overhead to the upload process.
+- A large chunk size (more than a GB) is problematic when a reader/readable stream is used as the input file. In these cases, tus-js-client will create an in-memory buffer with the size of `chunkSize`. This buffer is used to resume the upload if it gets interrupted. A large chunk size means a larger memory usage in this situation. Choosing a good value depends on the application and is a trade-off between available memory and upload performance.
+
+If in doubt, leave this value to the default or contact us for help.
 
 #### metadata
 
