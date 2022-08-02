@@ -148,7 +148,7 @@ describe('tus', () => {
         expect(localStorage.getItem(key)).toBe(null)
       })
 
-      fit('should store URLs passed in using the uploadUrl option', async () => {
+      it('should store URLs passed in using the uploadUrl option', async () => {
         const file = new Blob('hello world'.split(''))
         const options2 = {
           httpStack                 : testStack,
