@@ -365,6 +365,8 @@ Depending on the platform, the `file` argument must be an instance of the follow
 
 The `options` argument will be merged deeply with `tus.defaultOptions`. See its documentation for more details.
 
+If you pass a `Reader` or `Readable` stream, tus-js-client will take care of closing/cancelling the stream once the upload is complete (i.e. the `onSuccess` callback is invoked). It will not close the stream if you stop the upload prematurely using `abort()` or if an error occurs (`onError` callback) because you might want to resume the upload. If you do not want to continue the upload, you must close/cancel the stream on your own.
+
 ## tus.Upload#options
 
 The `options` argument used in the constructor merged deeply with `tus.defaultOptions`.
@@ -384,6 +386,8 @@ Start or resume the upload using the specified file. If no `file` property is av
 ## tus.Upload#abort(shouldTerminate)
 
 Abort the currently running upload request and don't continue. You can resume the upload by calling the `start` method again.
+
+Calling this method will not release the provided file because you might want to resume the upload later. If you do not want to resume and have passed a readable stream to tus-js-client, you must close/cancel the stream on your own.
 
 The `shouldTerminate` argument is a `boolean` value that determines whether or not the upload should be terminated according to the [termination extension](https://tus.io/protocols/resumable-upload.html#termination).
 
