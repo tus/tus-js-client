@@ -147,6 +147,66 @@ describe('tus', () => {
         await finishUpload()
         expect(localStorage.getItem(key)).toBe(null)
       })
+
+      fit('should store URLs passed in using the uploadUrl option', async () => {
+        const file = new Blob('hello world'.split(''))
+        const options2 = {
+          httpStack                 : testStack,
+          uploadUrl                 : 'http://tus.io/uploads/storedUrl',
+          fingerprint () {},
+          onSuccess                 : waitableFunction('onSuccess'),
+          removeFingerprintOnSuccess: true,
+        }
+        spyOn(options2, 'fingerprint').and.resolveTo('fingerprinted')
+
+        const upload = new tus.Upload(file, options2)
+        upload.start()
+
+        expect(options2.fingerprint).toHaveBeenCalled()
+
+        let req = await testStack.nextRequest()
+        expect(req.url).toBe('http://tus.io/uploads/storedUrl')
+        expect(req.method).toBe('HEAD')
+        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+
+        req.respondWith({
+          status         : 204,
+          responseHeaders: {
+            'Upload-Length': 11,
+            'Upload-Offset': 3,
+          },
+        })
+
+        // Wait a short delay to allow the Promises to settle
+        await wait(10)
+
+        const key = localStorage.key(0)
+        expect(key.indexOf('tus::fingerprinted::')).toBe(0)
+
+        const storedUpload = JSON.parse(localStorage.getItem(key))
+        expect(storedUpload.uploadUrl).toBe('http://tus.io/uploads/storedUrl')
+        expect(storedUpload.size).toBe(11)
+
+        req = await testStack.nextRequest()
+        expect(req.url).toBe('http://tus.io/uploads/storedUrl')
+        expect(req.method).toBe('PATCH')
+        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+        expect(req.requestHeaders['Upload-Offset']).toBe(3)
+        expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
+        expect(req.body.size).toBe(11 - 3)
+
+        req.respondWith({
+          status         : 204,
+          responseHeaders: {
+            'Upload-Offset': 11,
+          },
+        })
+
+        await options2.onSuccess.toBeCalled
+
+        // Entry in localStorage should be removed after successful upload
+        expect(localStorage.getItem(key)).toBe(null)
+      })
     })
 
     it('should delete upload urls on a 4XX', async () => {
