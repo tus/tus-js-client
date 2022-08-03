@@ -85,6 +85,12 @@ interface SliceResult {
   done: boolean;
 }
 
+export class DefaultHttpStack implements HttpStack {
+  constructor(options: any);
+  createRequest(method: string, url: string): HttpRequest;
+  getName(): string;
+}
+
 export interface HttpStack {
   createRequest(method: string, url: string): HttpRequest;
   getName(): string;
