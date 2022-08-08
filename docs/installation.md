@@ -128,3 +128,11 @@ always be set to `false` in React Native environments. In the end, this means
 that the `fingerprint`, `storeFingerprintForResuming` and `removeFingerprintOnSuccess` options
 to not have any influence on the behavior because their values are ignored
 when using React Native.
+
+## Bundle sizes
+
+tus-js-client is a small library and its bundle for the browser has roughly following sizes:
+
+- Non-minified (tus.js): ~160 KiB
+- Minified (tus.min.js): ~65 KiB
+- Minified and gzipped: ~18 KiB
