@@ -180,7 +180,7 @@ retryDelays: [ 1000, 3000, 5000 ]
 
 *Default value:* `true`
 
-A boolean indicating if the upload URL should be stored in the URL storage using the file's fingerprint after an new upload resource on the server has been created. If enabled, the upload URL can later be retrieved from the URL storage using the `tus.Upload#findPreviousUploads` method. Set this value to `false` if you do not plan an resuming uploads across browser sessions.
+A boolean indicating if the upload URL should be stored in the URL storage using the file's fingerprint after an new upload resource on the server has been created or an upload URL has been provided using the `uploadUrl` option. If enabled, the upload URL can later be retrieved from the URL storage using the `tus.Upload#findPreviousUploads` method. Set this value to `false` if you do not plan an resuming uploads across browser sessions.
 
 #### removeFingerprintOnSuccess
 
