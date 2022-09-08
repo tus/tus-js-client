@@ -1,6 +1,8 @@
 /* global tus Camera */
 /* eslint-disable no-alert */
 
+'use strict'
+
 let upload = null
 let uploadIsRunning = false
 let file = null

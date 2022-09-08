@@ -1,5 +1,7 @@
+'use strict'
+
 const { TestHttpStack, getBlob } = require('./helpers/utils')
-const tus = require('../..')
+const tus = require('../..') // eslint-disable-line import/no-unresolved
 
 describe('tus', () => {
   describe('terminate upload', () => {

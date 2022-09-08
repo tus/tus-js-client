@@ -1,6 +1,8 @@
+'use strict'
+
 const assertUrlStorage = require('./helpers/assertUrlStorage')
 const { TestHttpStack, waitableFunction, wait } = require('./helpers/utils')
-const tus = require('../..')
+const tus = require('../..') // eslint-disable-line import/no-unresolved
 
 describe('tus', () => {
   beforeEach(() => {

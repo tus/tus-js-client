@@ -1,7 +1,9 @@
 /* eslint-disable no-console */
 
+'use strict'
+
 const fs = require('fs')
-const tus = require('../..')
+const tus = require('../..') // eslint-disable-line import/no-unresolved
 
 const path = `${__dirname}/../../README.md`
 const file = fs.createReadStream(path)
