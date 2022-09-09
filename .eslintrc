@@ -4,9 +4,11 @@
   ],
   "env": {
     "es6": true,
-    "node": true,
-    "browser": true,
-    "jasmine": true
+    "node": false,
+    "jest": false,
+    "browser": false,
+    "shared-node-browser": true,
+    "jasmine": false
   },
   "parserOptions": {
     "ecmaVersion": 2020,
@@ -21,6 +23,60 @@
     "no-param-reassign": ["off"],
     "import/no-extraneous-dependencies": ["error", {
       "devDependencies": ["test/**/*.js"]
-    }]
-  }
+    }],
+    "import/extensions": ["error", "ignorePackages"]
+  },
+  "overrides": [
+    {
+      "files": ["lib/browser/**/*.js", "demos/**/*.js"],
+      "env": {
+        "browser": true
+      }
+    },
+    {
+      "files": ["lib/node/**/*.js"],
+      "env": {
+        "node": true
+      },
+      "rules": {
+        "no-restricted-globals": [
+          "error",
+          {
+            "name": "__filename",
+            "message": "Use import.meta.url instead"
+          },
+          {
+            "name": "__dirname",
+            "message": "Not available in ESM"
+          },
+          {
+            "name": "exports",
+            "message": "Not available in ESM"
+          },
+          {
+            "name": "module",
+            "message": "Not available in ESM"
+          },
+          {
+            "name": "require",
+            "message": "Use import instead"
+          }
+        ]
+      }
+    },
+    {
+      "files": ["test/**/*.js", "demos/**/*.js"],
+      "env": {
+        "browser": true,
+        "node": true,
+        "jasmine": true
+      },
+      "parserOptions": {
+        "sourceType": "script"
+      },
+      "rules": {
+        "import/extensions": "off"
+      }
+    }
+  ]
 }

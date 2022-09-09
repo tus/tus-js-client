@@ -1,3 +1,5 @@
+'use strict'
+
 // Karma configuration for testing using Puppeteer
 const baseConfig = require('./base.conf')
 

@@ -1,6 +1,8 @@
 /* global tus */
 /* eslint-disable no-console, no-alert */
 
+'use strict'
+
 let stopRecording   = null
 let upload          = null
 const recordBtn       = document.querySelector('#record-btn')

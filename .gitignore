@@ -1,3 +1,5 @@
+.eslintcache
+.vscode/settings.json
 node_modules
 demos/reactnative/.expo
 lib.es5
