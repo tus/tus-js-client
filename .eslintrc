@@ -6,7 +6,8 @@
     "es6": true,
     "node": false,
     "jest": false,
-    "browser": true,
+    "browser": false,
+    "shared-node-browser": true,
     "jasmine": false
   },
   "parserOptions": {
@@ -26,6 +27,12 @@
     "import/extensions": ["error", "ignorePackages"]
   },
   "overrides": [
+    {
+      "files": ["lib/browser/**/*.js", "demos/**/*.js"],
+      "env": {
+        "browser": true
+      }
+    },
     {
       "files": ["lib/node/**/*.js"],
       "env": {
@@ -60,6 +67,7 @@
     {
       "files": ["test/**/*.js", "demos/**/*.js"],
       "env": {
+        "browser": true,
         "node": true,
         "jasmine": true
       },

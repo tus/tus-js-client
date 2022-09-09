@@ -99,6 +99,6 @@
     "test-browserstack": "karma start test/karma/browserstack.conf.js",
     "test-node": "jasmine test/spec/node-index.js",
     "test-types": "tsd",
-    "lint": "eslint ."
+    "lint": "eslint . --cache"
   }
 }
