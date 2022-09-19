@@ -67,11 +67,11 @@
     semver "^6.3.0"
 
 "@babel/eslint-parser@^7.13.10":
-  version "7.18.9"
-  resolved "https://registry.yarnpkg.com/@babel/eslint-parser/-/eslint-parser-7.18.9.tgz#255a63796819a97b7578751bb08ab9f2a375a031"
-  integrity sha512-KzSGpMBggz4fKbRbWLNyPVTuQr6cmCcBhOyXTw/fieOVaw5oYAwcAj4a7UKcDYCPxQq+CG1NCDZH9e2JTXquiQ==
+  version "7.19.1"
+  resolved "https://registry.yarnpkg.com/@babel/eslint-parser/-/eslint-parser-7.19.1.tgz#4f68f6b0825489e00a24b41b6a1ae35414ecd2f4"
+  integrity sha512-AqNf2QWt1rtu2/1rLswy6CDP7H9Oh3mMhk177Y67Rg8d7RD9WfOLLv8CGn6tisFvS2htm86yIe1yLF6I1UDaGQ==
   dependencies:
-    eslint-scope "^5.1.1"
+    "@nicolo-ribaudo/eslint-scope-5-internals" "5.1.1-v1"
     eslint-visitor-keys "^2.1.0"
     semver "^6.3.0"
 
@@ -1128,6 +1128,13 @@
   version "2.1.8-no-fsevents.3"
   resolved "https://registry.yarnpkg.com/@nicolo-ribaudo/chokidar-2/-/chokidar-2-2.1.8-no-fsevents.3.tgz#323d72dd25103d0c4fbdce89dadf574a787b1f9b"
   integrity sha512-s88O1aVtXftvp5bCPB7WnmXc5IwOZZ7YPuwNPt+GtOOXpPvad1LfbmjYv+qII7zP6RU2QGnqve27dnLycEnyEQ==
+
+"@nicolo-ribaudo/eslint-scope-5-internals@5.1.1-v1":
+  version "5.1.1-v1"
+  resolved "https://registry.yarnpkg.com/@nicolo-ribaudo/eslint-scope-5-internals/-/eslint-scope-5-internals-5.1.1-v1.tgz#dbf733a965ca47b1973177dc0bb6c889edcfb129"
+  integrity sha512-54/JRvkLIzzDWshCWfuhadfrfZVPiElY8Fcgmg1HroEly/EDSszzhBAsarCux+D/kOslTRquNzuyGSmUSTTHGg==
+  dependencies:
+    eslint-scope "5.1.1"
 
 "@nodelib/fs.scandir@2.1.4":
   version "2.1.4"
@@ -2792,7 +2799,7 @@ eslint-rule-docs@^1.1.5:
   resolved "https://registry.yarnpkg.com/eslint-rule-docs/-/eslint-rule-docs-1.1.223.tgz#0e69fb7dd38b0622670e7b9e9ef8819fd656ef73"
   integrity sha512-6HU1vH6b3QBI2RiFyNE1cQWr2pQ+op1zqZRsVXBZsLngF5ePBGDbkwFtr1Ye4Yq1DBKc499TMEkIzx25xVetuw==
 
-eslint-scope@^5.0.0, eslint-scope@^5.1.1:
+eslint-scope@5.1.1, eslint-scope@^5.0.0, eslint-scope@^5.1.1:
   version "5.1.1"
   resolved "https://registry.yarnpkg.com/eslint-scope/-/eslint-scope-5.1.1.tgz#e786e59a66cb92b3f6c1fb0d508aab174848f48c"
   integrity sha512-2NxwbF/hZ0KpepYN0cNbo+FN6XoK7GaHlQhgx/hIZl6Va0bF45RQOOwhLIy8lQDbuCiadSLCBnH2CFYquit5bw==
