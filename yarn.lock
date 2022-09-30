@@ -11,9 +11,9 @@
     "@jridgewell/trace-mapping" "^0.3.9"
 
 "@babel/cli@^7.0.0":
-  version "7.18.10"
-  resolved "https://registry.yarnpkg.com/@babel/cli/-/cli-7.18.10.tgz#4211adfc45ffa7d4f3cee6b60bb92e9fe68fe56a"
-  integrity sha512-dLvWH+ZDFAkd2jPBSghrsFBuXrREvFwjpDycXbmUoeochqKYe4zNSLEJYErpLg8dvxvZYe79/MkN461XCwpnGw==
+  version "7.19.3"
+  resolved "https://registry.yarnpkg.com/@babel/cli/-/cli-7.19.3.tgz#55914ed388e658e0b924b3a95da1296267e278e2"
+  integrity sha512-643/TybmaCAe101m2tSVHi9UKpETXP9c/Ff4mD2tAwkdP6esKIfaauZFc67vGEM6r9fekbEGid+sZhbEnSe3dg==
   dependencies:
     "@jridgewell/trace-mapping" "^0.3.8"
     commander "^4.0.1"
@@ -76,9 +76,9 @@
     semver "^6.3.0"
 
 "@babel/eslint-plugin@^7.13.10":
-  version "7.18.10"
-  resolved "https://registry.yarnpkg.com/@babel/eslint-plugin/-/eslint-plugin-7.18.10.tgz#11f454b5d1aa64c42fcfd64abe93071c15ebea3c"
-  integrity sha512-iV1OZj/7eg4wZIcsVEkXS3MUWdhmpLsu2h+9Zr2ppywKWdCRs6VfjxbRzmHHYeurTizrrnaJ9ZkbO8KOv4lauQ==
+  version "7.19.1"
+  resolved "https://registry.yarnpkg.com/@babel/eslint-plugin/-/eslint-plugin-7.19.1.tgz#8bfde4b6e4380ea038e7947a765fe536c3057a4c"
+  integrity sha512-ElGPkQPapKMa3zVqXHkZYzuL7I5LbRw9UWBUArgWsdWDDb9XcACqOpBib5tRPA9XvbVZYrFUkoQPbiJ4BFvu4w==
   dependencies:
     eslint-rule-composer "^0.3.0"
 
