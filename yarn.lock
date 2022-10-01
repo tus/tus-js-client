@@ -4682,9 +4682,9 @@ punycode@^2.1.0:
   integrity sha512-XRsRjdf+j5ml+y/6GKHPZbrF/8p2Yga0JPtdqTIY2Xe5ohJPD9saDJJLPvp9+NSBprVvevdXZybnj2cv8OEd0A==
 
 puppeteer@^18.0.2:
-  version "18.0.2"
-  resolved "https://registry.yarnpkg.com/puppeteer/-/puppeteer-18.0.2.tgz#caa908d58aefdbf4308f843c486d9925f9f77bd7"
-  integrity sha512-EdquaZg1n5IgZJzUc/EXDmtghJU6aCZJ/pl2onwL2g+cfG5HkxwSRVNKkDf76qTk3fMh1OUtqvAJMUJ+6HvYEg==
+  version "18.0.5"
+  resolved "https://registry.yarnpkg.com/puppeteer/-/puppeteer-18.0.5.tgz#873223b17b92345182c5b5e8cfbd6f3117f1547d"
+  integrity sha512-s4erjxU0VtKojPvF+KvLKG6OHUPw7gO2YV1dtOsoryyCbhrs444fXb4QZqGWuTv3V/rgSCUzeixxu34g0ZkSMA==
   dependencies:
     cross-fetch "3.1.5"
     debug "4.3.4"
