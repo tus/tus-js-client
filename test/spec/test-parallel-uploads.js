@@ -1,12 +1,12 @@
 'use strict'
 
-const { TestHttpStack, waitableFunction, wait, getBlob } = require('./helpers/utils')
+const { TestHttpStack, waitableFunction, wait } = require('./helpers/utils')
 const tus = require('../..')
 
 describe('tus', () => {
   describe('parallel uploading', () => {
     it('should throw if incompatible options are used', () => {
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const upload = new tus.Upload(file, {
         endpoint       : 'https://tus.io/uploads',
         parallelUploads: 2,
@@ -16,7 +16,7 @@ describe('tus', () => {
     })
 
     it('should throw if `parallelUploadBoundaries` is passed without `parallelUploads`', () => {
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const upload = new tus.Upload(file, {
         endpoint                : 'https://tus.io/uploads',
         parallelUploadBoundaries: [{ start: 0, end: 2 }],
@@ -25,7 +25,7 @@ describe('tus', () => {
     })
 
     it('should throw if `parallelUploadBoundaries` is not the same length as the value of `parallelUploads`', () => {
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const upload = new tus.Upload(file, {
         endpoint                : 'https://tus.io/uploads',
         parallelUploads         : 3,
@@ -57,7 +57,7 @@ describe('tus', () => {
       spyOn(testUrlStorage, 'removeUpload').and.callThrough()
       spyOn(testUrlStorage, 'addUpload').and.callThrough()
 
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack                  : testStack,
         urlStorage                 : testUrlStorage,
@@ -203,7 +203,7 @@ describe('tus', () => {
       const testStack = new TestHttpStack()
 
       const parallelUploadBoundaries = [{ start: 0, end: 1 }, { start: 1, end: 11 }]
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack      : testStack,
         parallelUploads: 2,
@@ -310,7 +310,7 @@ describe('tus', () => {
 
     it('should emit error from a partial upload', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack      : testStack,
         parallelUploads: 2,
@@ -339,7 +339,7 @@ describe('tus', () => {
 
     it('should resume the partial uploads', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack      : testStack,
         // The client should resume the parallel uploads, even if it is not
@@ -432,7 +432,7 @@ describe('tus', () => {
 
     it('should abort all partial uploads and resume from them', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack      : testStack,
         parallelUploads: 2,

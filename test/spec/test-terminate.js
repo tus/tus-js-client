@@ -1,6 +1,6 @@
 'use strict'
 
-const { TestHttpStack, getBlob } = require('./helpers/utils')
+const { TestHttpStack } = require('./helpers/utils')
 const tus = require('../..')
 
 describe('tus', () => {
@@ -8,7 +8,7 @@ describe('tus', () => {
     it('should terminate upload when abort is called with true', async () => {
       let abortPromise
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack: testStack,
         endpoint : 'http://tus.io/files/',
@@ -60,7 +60,7 @@ describe('tus', () => {
     it('should retry terminate when an error is returned on first try', async () => {
       let abortPromise
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack  : testStack,
         endpoint   : 'http://tus.io/files/',
