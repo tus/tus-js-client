@@ -4,9 +4,11 @@
   ],
   "env": {
     "es6": true,
-    "node": true,
-    "browser": true,
-    "jasmine": true
+    "node": false,
+    "jest": false,
+    "browser": false,
+    "shared-node-browser": true,
+    "jasmine": false
   },
   "parserOptions": {
     "ecmaVersion": 2020,
@@ -14,37 +16,67 @@
     "requireConfigFile": false
   },
   "rules": {
-    // transloadit rules we are actually ok with in the tus-js-client repo
+    // Rules from the transloadit preset we actually allow in tus-js-client
     ////////////////////////////////////////////////////////////
     "class-methods-use-this": ["off"],
-
-
-    // rules we had to turn off just to get a pass, but we'd
-    // like to turn on one by one with separate PRs
-    ////////////////////////////////////////////////////////////
-    "import/extensions": ["warn"],
-    "consistent-return": ["warn"],
-    "eqeqeq": ["warn"],
-    "guard-for-in": ["warn"],
-    "import/no-extraneous-dependencies": ["warn"],
-    "import/no-unresolved": ["warn"],
-    "no-bitwise": ["warn"],
-    "no-mixed-operators": ["warn"],
-    "no-multi-assign": ["warn"],
-    "no-param-reassign": ["warn"],
-    "no-redeclare": ["warn"],
-    "no-restricted-globals": ["warn"],
-    "no-restricted-syntax": ["warn"],
-    "no-return-assign": ["warn"],
-    "no-shadow": ["warn"],
-    "no-unused-expressions": ["warn"],
-    "no-use-before-define": ["warn"],
-    "no-var": ["warn"],
-    "node/no-deprecated-api": ["warn"],
-    "prefer-destructuring": ["warn"],
-    "prefer-rest-params": ["warn"],
-    "react/destructuring-assignment": ["warn"],
-    "react/sort-comp": ["warn"],
-    "vars-on-top": ["warn"]
-  }
+    "no-use-before-define": ["off"],
+    "no-param-reassign": ["off"],
+    "import/no-extraneous-dependencies": ["error", {
+      "devDependencies": ["test/**/*.js"]
+    }],
+    "import/extensions": ["error", "ignorePackages"]
+  },
+  "overrides": [
+    {
+      "files": ["lib/browser/**/*.js", "demos/**/*.js"],
+      "env": {
+        "browser": true
+      }
+    },
+    {
+      "files": ["lib/node/**/*.js"],
+      "env": {
+        "node": true
+      },
+      "rules": {
+        "no-restricted-globals": [
+          "error",
+          {
+            "name": "__filename",
+            "message": "Use import.meta.url instead"
+          },
+          {
+            "name": "__dirname",
+            "message": "Not available in ESM"
+          },
+          {
+            "name": "exports",
+            "message": "Not available in ESM"
+          },
+          {
+            "name": "module",
+            "message": "Not available in ESM"
+          },
+          {
+            "name": "require",
+            "message": "Use import instead"
+          }
+        ]
+      }
+    },
+    {
+      "files": ["test/**/*.js", "demos/**/*.js"],
+      "env": {
+        "browser": true,
+        "node": true,
+        "jasmine": true
+      },
+      "parserOptions": {
+        "sourceType": "script"
+      },
+      "rules": {
+        "import/extensions": "off"
+      }
+    }
+  ]
 }

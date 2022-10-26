@@ -1,4 +1,7 @@
 /* eslint-disable max-classes-per-file */
+
+'use strict'
+
 const isBrowser  = typeof window !== 'undefined'
 const isNode     = !isBrowser
 
@@ -88,7 +91,7 @@ class TestRequest {
     this.body = null
 
     this._onRequestSend = onRequestSend
-    this._onProgress = function () {};
+    this._onProgress = () => {};
 
     [this._requestPromise, this._resolveRequest, this._rejectRequest] = flatPromise()
   }

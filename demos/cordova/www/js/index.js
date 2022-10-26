@@ -1,15 +1,18 @@
 /* global tus Camera */
+/* eslint-disable no-alert */
 
-var upload = null
-var uploadIsRunning = false
-var file = null
+'use strict'
 
-var uploadButton = document.querySelector('#js-upload-button')
-var fileInput = document.querySelector('#js-upload-file')
-var fileLink = document.querySelector('#js-file-link')
-var progressBar = document.querySelector('#js-upload-progress')
-var progressText = document.querySelector('#js-upload-progress-text')
-var uploadLink = document.querySelector('#js-upload-link')
+let upload = null
+let uploadIsRunning = false
+let file = null
+
+const uploadButton = document.querySelector('#js-upload-button')
+const fileInput = document.querySelector('#js-upload-file')
+const fileLink = document.querySelector('#js-file-link')
+const progressBar = document.querySelector('#js-upload-progress')
+const progressText = document.querySelector('#js-upload-progress-text')
+const uploadLink = document.querySelector('#js-upload-link')
 
 fileInput.addEventListener('click', openFilePicker)
 
@@ -30,7 +33,7 @@ uploadButton.addEventListener('click', toggleUpload)
 function openFilePicker () {
   resetUpload()
 
-  var options = {
+  const options = {
     // Camera is a global cordova-specific object used for configuring camera access.
     // See https://cordova.apache.org/docs/en/latest/reference/cordova-plugin-camera/#module_Camera
     destinationType   : Camera.DestinationType.FILE_URI,
@@ -64,7 +67,7 @@ function toggleUpload () {
   if (!upload) {
     if (!file) return
 
-    var options = {
+    const options = {
       endpoint   : 'https://tusd.tusdemo.net/files/',
       retryDelays: [0, 1000, 3000, 5000],
       metadata   : {
@@ -85,13 +88,13 @@ function toggleUpload () {
         resetUpload()
       },
       onProgress (bytesUploaded, bytesTotal) {
-        var progress = bytesUploaded / bytesTotal
-        var percentage = `${(progress * 100).toFixed(2)}%`
+        const progress = bytesUploaded / bytesTotal
+        const percentage = `${(progress * 100).toFixed(2)}%`
         progressBar.value = progress
         progressText.textContent = percentage
       },
       onSuccess () {
-        var anchor = document.createElement('a')
+        const anchor = document.createElement('a')
         anchor.textContent = `Download ${upload.file.name} (${upload.file.size} bytes)`
         anchor.target = '_blank'
         anchor.href = upload.url

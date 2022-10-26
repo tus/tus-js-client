@@ -1,24 +1,26 @@
-/* eslint no-console: 0 */
+/* eslint-disable no-console */
 
-var fs = require('fs')
-var tus = require('../..')
+'use strict'
 
-var path = `${__dirname}/../../README.md`
-var file = fs.createReadStream(path)
-var size = fs.statSync(path).size
+const fs = require('fs')
+const tus = require('../..')
 
-var options = {
+const path = `${__dirname}/../../README.md`
+const file = fs.createReadStream(path)
+
+const options = {
   endpoint: 'https://tusd.tusdemo.net/files/',
   metadata: {
     filename: 'README.md',
     filetype: 'text/plain',
   },
-  uploadSize: size,
   onError (error) {
-    throw error
+    console.error('An error occurred:')
+    console.error(error)
+    process.exitCode = 1
   },
   onProgress (bytesUploaded, bytesTotal) {
-    var percentage = (bytesUploaded / bytesTotal * 100).toFixed(2)
+    const percentage = ((bytesUploaded / bytesTotal) * 100).toFixed(2)
     console.log(bytesUploaded, bytesTotal, `${percentage}%`)
   },
   onSuccess () {
@@ -26,5 +28,5 @@ var options = {
   },
 }
 
-var upload = new tus.Upload(file, options)
+const upload = new tus.Upload(file, options)
 upload.start()

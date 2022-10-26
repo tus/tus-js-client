@@ -1,3 +1,5 @@
+'use strict'
+
 const axios = require('axios')
 const { getBlob } = require('./helpers/utils')
 const tus = require('../..')
@@ -9,8 +11,8 @@ describe('tus', () => {
   describe('end-to-end', () => {
     it('should upload to a real tus server', async () => {
       return new Promise((resolve, reject) => {
-        var file = getBlob('hello world')
-        var options = {
+        const file = getBlob('hello world')
+        const options = {
           endpoint: 'https://tusd.tusdemo.net/files/',
           metadata: {
             nonlatin: 'słońce',
@@ -29,7 +31,7 @@ describe('tus', () => {
           },
         }
 
-        var upload = new tus.Upload(file, options)
+        const upload = new tus.Upload(file, options)
         upload.start()
       })
         .then(validateUploadContent)
@@ -42,8 +44,8 @@ describe('tus', () => {
 
     it('should upload to a real tus server with creation-with-upload', async () => {
       return new Promise((resolve, reject) => {
-        var file = getBlob('hello world')
-        var options = {
+        const file = getBlob('hello world')
+        const options = {
           endpoint: 'https://tusd.tusdemo.net/files/',
           metadata: {
             nonlatin: 'słońce',
@@ -62,7 +64,7 @@ describe('tus', () => {
           },
         }
 
-        var upload = new tus.Upload(file, options)
+        const upload = new tus.Upload(file, options)
         upload.start()
       })
         .then(validateUploadContent)
@@ -96,9 +98,9 @@ function validateUploadMetadata (upload) {
     // order as we submitted them (the specification does not require
     // that). Therefore, we split the values and verify that each one
     // is present.
-    var metadataStr = res.headers['upload-metadata']
+    const metadataStr = res.headers['upload-metadata']
     expect(metadataStr).toBeTruthy()
-    var metadata = metadataStr.split(',')
+    const metadata = metadataStr.split(',')
     expect(metadata).toContain('filename aGVsbG8udHh0')
     expect(metadata).toContain('filetype dGV4dC9wbGFpbg==')
     expect(metadata).toContain('nonlatin c8WCb8WEY2U=')
@@ -110,11 +112,9 @@ function validateUploadMetadata (upload) {
 }
 
 function validateUploadDeletion (upload) {
-  var validateStatus = function (status) {
-    return status === 404
-  }
-
-  return axios.get(upload.url, { validateStatus })
+  return axios.get(upload.url, {
+    validateStatus: (status) => status === 404,
+  })
     .then((res) => {
       expect(res.status).toBe(404)
 

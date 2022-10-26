@@ -38,6 +38,7 @@ const upload = new tus.Upload(file, {
     retryDelays: [10, 20, 50],
     removeFingerprintOnSuccess: true,
     parallelUploads: 42,
+    parallelUploadBoundaries: [{ start: 0, end: 1 }, { start: 1, end: 11 }],
     onAfterResponse: function (req: tus.HttpRequest, res: tus.HttpResponse) {
 	    var url = req.getURL();
 	    var value = res.getHeader("X-My-Header");
@@ -58,13 +59,24 @@ const upload2 = new tus.Upload(file, {
 	endpoint: ""
 });
 
-const reader = {
-    read: () => Promise.resolve({ done: true, value: '' }),
-};
-const upload3 = new tus.Upload(reader, {
-    endpoint: '',
-    uploadLengthDeferred: true,
-});
+// const reader = {
+//     read: () => Promise.resolve({ done: true, value: '' }),
+// };
+// const upload3 = new tus.Upload(reader, {
+//     endpoint: '',
+//     uploadLengthDeferred: true,
+// });
+
+fetch('https://www.example.org')
+    .then(response => response.body)
+    .then(rb => {
+        const reader = rb!.getReader();
+        return new tus.Upload(reader, {
+            endpoint: '',
+            uploadLengthDeferred: true,
+        });
+    });
+
 
 tus.Upload.terminate('https://myurl.com', {
 	endpoint: ""

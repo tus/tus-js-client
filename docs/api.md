@@ -122,11 +122,17 @@ headers: {
 
 *Default value:* `Infinity`
 
-A number indicating the maximum size of a `PATCH` request body in bytes. This can be used when a server or proxy has a limit on how big request bodies may be. The default value (`Infinity`) means that tus-js-client will try to upload the entire file in one request.
+A number indicating the maximum size of a `PATCH` request body in bytes. The default value (`Infinity`) means that tus-js-client will try to upload the entire file in one request. This setting is also required if the input file is a reader/readable stream.
 
-Note that if the server has hard limits (such as the minimum 5MB chunk size imposed by S3), specifying a chunk size which falls outside those hard limits will cause chunked uploads to fail.
+**Warning:** **Do not set this value**, unless you are being forced to. The only two valid reasons for setting `chunkSize` are:
+- You are passing a reader or readable stream as input to tus-js-client and it will complain that it "cannot create source for stream without a finite value for the chunkSize option" if you leave `chunkSize` empty.
+- You are using a tus server or proxy with a limit on how big request bodies may be.
 
-You should also be aware that setting a low chunk size may reduce the upload performance dramatically since it causes more HTTP requests to be initiated.
+In all other cases, **do not set this value** as it will hurt your upload performance. If in doubt, leave this value to the default or contact us for help.
+
+If you are required to specify a value, consider this:
+- A small chunk size (less than a few MBs) may reduce the upload performance dramatically. Each `PATCH` request can only carry little data, which requires more HTTP requests to transmit the whole file. All of these HTTP requests add overhead to the upload process. In addition, if the server has hard limits (such as the minimum 5 MB chunk size imposed by S3), specifying a chunk size which below outside those hard limits will cause chunked uploads to fail.
+- A large chunk size (more than a GB) is problematic when a reader/readable stream is used as the input file. In these cases, tus-js-client will create an in-memory buffer with the size of `chunkSize`. This buffer is used to resume the upload if it gets interrupted. A large chunk size means a larger memory usage in this situation. Choosing a good value depends on the application and is a trade-off between available memory and upload performance.
 
 #### metadata
 
@@ -176,7 +182,7 @@ retryDelays: [ 1000, 3000, 5000 ]
 
 *Default value:* `true`
 
-A boolean indicating if the upload URL should be stored in the URL storage using the file's fingerprint after an new upload resource on the server has been created. If enabled, the upload URL can later be retrieved from the URL storage using the `tus.Upload#findPreviousUploads` method. Set this value to `false` if you do not plan an resuming uploads across browser sessions.
+A boolean indicating if the upload URL should be stored in the URL storage using the file's fingerprint after an new upload resource on the server has been created or an upload URL has been provided using the `uploadUrl` option. If enabled, the upload URL can later be retrieved from the URL storage using the `tus.Upload#findPreviousUploads` method. Set this value to `false` if you do not plan an resuming uploads across browser sessions.
 
 #### removeFingerprintOnSuccess
 
@@ -210,9 +216,23 @@ X-Request-ID: fe51f777-f23e-4ed9-97d7-2785cc69f961
 
 *Default value:* `1`
 
-A number indicating how many parts should be uploaded in parallel. If this number is not `1`, the input file will be split into roughly equally sized parts, where each part is uploaded individually in parallel. The value of `parallelUploads` determines the number of parts. After all parts have been uploaded, the [`concatenation` extension](https://tus.io/protocols/resumable-upload.html#concatenation) will be used to concatenate all the parts together on the server-side, so the tus server must support this extension. This option should not be used if the input file is a streaming resource.
+A number indicating how many parts should be uploaded in parallel. If this number is not `1`, the input file will be split into multiple parts, where each part is uploaded individually in parallel. The value of `parallelUploads` determines the number of parts. Using `parallelUploadBoundaries` the size of each part can be changed. After all parts have been uploaded, the [`concatenation` extension](https://tus.io/protocols/resumable-upload.html#concatenation) will be used to concatenate all the parts together on the server-side, so the tus server must support this extension. This option should not be used if the input file is a streaming resource.
 
 The idea behind this option is that you can use multiple HTTP requests in parallel to better utilize the full capacity of the network connection to the tus server. If you want to use it, please evaluate it under real world situations to see if it actually improves your upload performance. In common browser session, we were not able to find a performance improve for the average user.
+
+#### parallelUploadBoundaries
+
+*Default value:* `null`
+
+An array indicating the boundaries of the different parts uploaded during a parallel upload. This option is only considered if `parallelUploads` is greater than `1`. If so, the length of `parallelUploadBoundaries` must match `parallelUploads`. Each element in this array must have a `start` and `end` property indicating the start and end position of the partial upload:
+
+```
+parallelUploadBoundaries: [{ start: 0, end: 1 }, { start: 1, end: 11 }],
+```
+
+Is it the user's responsibility to ensure that the boundaries are consecutive and occupy the entire file size.
+
+If `parallelUploadBoundaries` is `null` (default value), the upload will be split into roughly equally sized parts. This setting can be used to have parts of different size distributions or parts with specific boundaries to satisfy server requirements.
 
 #### onBeforeRequest
 
@@ -365,6 +385,8 @@ Depending on the platform, the `file` argument must be an instance of the follow
 
 The `options` argument will be merged deeply with `tus.defaultOptions`. See its documentation for more details.
 
+If you pass a `Reader` or `Readable` stream, tus-js-client will take care of closing/cancelling the stream once the upload is complete (i.e. the `onSuccess` callback is invoked). It will not close the stream if you stop the upload prematurely using `abort()` or if an error occurs (`onError` callback) because you might want to resume the upload. If you do not want to continue the upload, you must close/cancel the stream on your own.
+
 ## tus.Upload#options
 
 The `options` argument used in the constructor merged deeply with `tus.defaultOptions`.
@@ -384,6 +406,8 @@ Start or resume the upload using the specified file. If no `file` property is av
 ## tus.Upload#abort(shouldTerminate)
 
 Abort the currently running upload request and don't continue. You can resume the upload by calling the `start` method again.
+
+Calling this method will not release the provided file because you might want to resume the upload later. If you do not want to resume and have passed a readable stream to tus-js-client, you must close/cancel the stream on your own.
 
 The `shouldTerminate` argument is a `boolean` value that determines whether or not the upload should be terminated according to the [termination extension](https://tus.io/protocols/resumable-upload.html#termination).
 

@@ -4,6 +4,7 @@ export const isSupported: boolean;
 export const canStoreURLs: boolean;
 export const defaultOptions: UploadOptions;
 
+// TODO: Consider using { read: () => Promise<{ done: boolean; value?: any; }>; } as type
 export class Upload {
   constructor(file: File | Blob | Pick<ReadableStreamDefaultReader, "read">, options: UploadOptions);
 
@@ -42,6 +43,7 @@ interface UploadOptions {
   chunkSize?: number;
   retryDelays?: number[];
   parallelUploads?: number;
+  parallelUploadBoundaries?: { start: number; end: number }[] | null;
   storeFingerprintForResuming?: boolean;  removeFingerprintOnSuccess?: boolean;
   uploadLengthDeferred?: boolean;
   uploadDataDuringCreation?: boolean;
@@ -81,6 +83,12 @@ interface SliceResult {
   // Platform-specific data type which must be usable by the HTTP stack as a body.
   value: any;
   done: boolean;
+}
+
+export class DefaultHttpStack implements HttpStack {
+  constructor(options: any);
+  createRequest(method: string, url: string): HttpRequest;
+  getName(): string;
 }
 
 export interface HttpStack {
