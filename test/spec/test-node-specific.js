@@ -216,11 +216,19 @@ describe('tus', () => {
     })
   })
 
-  describe("#Checksum", () => {
-    it("should generate hex digest for a given chunk of file", async () => {
+  describe('#Checksum', () => {
+    it('should generate hex digest for a given chunk of file', async () => {
       const checksum = new Checksum();
-      const hexDigest = await checksum.getHexDigest(Buffer.from("hello", 'utf8'));
-      expect(hexDigest).toBe("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
+      const hexDigest = await checksum.getHexDigest(Buffer.from('hello', 'utf8'))
+      expect(hexDigest).toBe('2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824')
+    })
+
+    it('should throw an error when an unsupported algo is provided', () => {
+      try {
+        const checksum = new Checksum('new-algo')
+      } catch (err) {
+        expect(err).toContain('unsupported checksumAlgo');
+      }
     })
   })
 })
