@@ -94,17 +94,23 @@ onShouldRetry: function (err, retryAttempt, options) {
     console.log("Error", err)
     console.log("Request", err.originalRequest)
     console.log("Response", err.originalResponse)
-    
+
     var status = err.originalResponse ? err.originalResponse.getStatus() : 0
     // Do not retry if the status is a 403.
     if (status === 403) {
       return false
     }
-    
+
     // For any other status code, we retry.
     return true
 }
 ```
+
+#### onUploadUrlAvailable
+
+*Default value:* `null`
+
+An optional function called once the upload URL is retrieved from the `Location` header of the initial creation POST's response. At this point, `upload.url` is guaranteed to be accessible and valid.
 
 #### headers
 
