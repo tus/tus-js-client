@@ -110,7 +110,7 @@ onShouldRetry: function (err, retryAttempt, options) {
 
 *Default value:* `null`
 
-An optional function called once the upload URL is retrieved from the `Location` header of the initial creation POST's response. At this point, `upload.url` is guaranteed to be accessible and valid.
+An optional function called once the upload URL is retrieved from the `Location` header of the initial creation POST's response, and also when an upload URL is confirmed using a HEAD request. At these points, `upload.url` is guaranteed to be accessible and valid.
 
 #### headers
 

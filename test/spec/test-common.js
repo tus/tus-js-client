@@ -42,7 +42,8 @@ describe('tus', () => {
         },
         withCredentials: true,
         onProgress () {},
-        onSuccess      : waitableFunction(),
+        onUploadUrlAvailable: waitableFunction('onUploadUrlAvailable'),
+        onSuccess           : waitableFunction('onSuccess'),
       }
       spyOn(options, 'onProgress')
 
@@ -67,6 +68,8 @@ describe('tus', () => {
       })
 
       req = await testStack.nextRequest()
+
+      expect(options.onUploadUrlAvailable).toHaveBeenCalled()
 
       expect(req.url).toBe('https://tus.io/uploads/blargh')
       expect(req.method).toBe('PATCH')
@@ -304,35 +307,6 @@ describe('tus', () => {
       expect(options.onAfterResponse).toHaveBeenCalled()
     })
 
-    it('should invoke the onUploadUrlAvailable callback', async () => {
-      const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
-      const options = {
-        httpStack: testStack,
-        uploadUrl: 'http://tus.io/uploads/foo',
-        onUploadUrlAvailable: waitableFunction('onUploadUrlAvailable'),
-        onSuccess: waitableFunction('onSuccess'),
-      }
-
-      const upload = new tus.Upload(file, options)
-      upload.start()
-
-      const req = await testStack.nextRequest()
-      expect(req.url).toBe('http://tus.io/uploads/foo')
-      expect(req.method).toBe('HEAD')
-
-      req.respondWith({
-        status         : 204,
-        responseHeaders: {
-          'Upload-Offset': 11,
-          'Upload-Length': 11,
-        },
-      })
-
-      await options.onSuccess.toBeCalled
-      expect(options.onUploadUrlAvailable).toHaveBeenCalled()
-    })
-
     it('should throw an error if resuming fails and no endpoint is provided', async () => {
       const testStack = new TestHttpStack()
       const file = getBlob('hello world')
@@ -566,6 +540,7 @@ describe('tus', () => {
         endpoint : 'http://tus.io/uploads',
         uploadUrl: 'http://tus.io/files/upload',
         onProgress () {},
+        onUploadUrlAvailable: waitableFunction('onUploadUrlAvailable'),
         onSuccess: waitableFunction('onSuccess'),
         fingerprint () {},
       }
@@ -591,6 +566,9 @@ describe('tus', () => {
       })
 
       req = await testStack.nextRequest()
+
+      expect(options.onUploadUrlAvailable).toHaveBeenCalled()
+
       expect(req.url).toBe('http://tus.io/files/upload')
       expect(req.method).toBe('PATCH')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
