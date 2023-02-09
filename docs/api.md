@@ -110,7 +110,7 @@ onShouldRetry: function (err, retryAttempt, options) {
 
 *Default value:* `null`
 
-An optional function called once the upload URL is retrieved from the `Location` header of the initial creation POST's response, and also when an upload URL is confirmed using a HEAD request. At these points, `upload.url` is guaranteed to be accessible and valid.
+An optional function called once the upload URL is available. At this point, the `tus.Upload#url` property is guaranteed to be accessible and valid. This occurs after inspecting the `Location` header in the response to the initial POST request, or when an upload URL is confirmed using a HEAD request. Due to network errors and retries, this callback might be invoked multiple times for a single upload.
 
 #### headers
 
