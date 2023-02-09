@@ -40,7 +40,7 @@ describe('tus', () => {
           nonlatin: 'słońce',
           number  : 100,
         },
-        withCredentials: true,
+        withCredentials     : true,
         onProgress () {},
         onUploadUrlAvailable: waitableFunction('onUploadUrlAvailable'),
         onSuccess           : waitableFunction('onSuccess'),
@@ -536,12 +536,12 @@ describe('tus', () => {
       const testStack = new TestHttpStack()
       const file = getBlob('hello world')
       const options = {
-        httpStack: testStack,
-        endpoint : 'http://tus.io/uploads',
-        uploadUrl: 'http://tus.io/files/upload',
+        httpStack           : testStack,
+        endpoint            : 'http://tus.io/uploads',
+        uploadUrl           : 'http://tus.io/files/upload',
         onProgress () {},
         onUploadUrlAvailable: waitableFunction('onUploadUrlAvailable'),
-        onSuccess: waitableFunction('onSuccess'),
+        onSuccess           : waitableFunction('onSuccess'),
         fingerprint () {},
       }
       spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
