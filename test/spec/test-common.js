@@ -40,9 +40,10 @@ describe('tus', () => {
           nonlatin: 'słońce',
           number  : 100,
         },
-        withCredentials: true,
+        withCredentials     : true,
         onProgress () {},
-        onSuccess      : waitableFunction(),
+        onUploadUrlAvailable: waitableFunction('onUploadUrlAvailable'),
+        onSuccess           : waitableFunction('onSuccess'),
       }
       spyOn(options, 'onProgress')
 
@@ -67,6 +68,8 @@ describe('tus', () => {
       })
 
       req = await testStack.nextRequest()
+
+      expect(options.onUploadUrlAvailable).toHaveBeenCalled()
 
       expect(req.url).toBe('https://tus.io/uploads/blargh')
       expect(req.method).toBe('PATCH')
@@ -533,11 +536,12 @@ describe('tus', () => {
       const testStack = new TestHttpStack()
       const file = getBlob('hello world')
       const options = {
-        httpStack: testStack,
-        endpoint : 'http://tus.io/uploads',
-        uploadUrl: 'http://tus.io/files/upload',
+        httpStack           : testStack,
+        endpoint            : 'http://tus.io/uploads',
+        uploadUrl           : 'http://tus.io/files/upload',
         onProgress () {},
-        onSuccess: waitableFunction('onSuccess'),
+        onUploadUrlAvailable: waitableFunction('onUploadUrlAvailable'),
+        onSuccess           : waitableFunction('onSuccess'),
         fingerprint () {},
       }
       spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
@@ -562,6 +566,9 @@ describe('tus', () => {
       })
 
       req = await testStack.nextRequest()
+
+      expect(options.onUploadUrlAvailable).toHaveBeenCalled()
+
       expect(req.url).toBe('http://tus.io/files/upload')
       expect(req.method).toBe('PATCH')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')

@@ -94,17 +94,23 @@ onShouldRetry: function (err, retryAttempt, options) {
     console.log("Error", err)
     console.log("Request", err.originalRequest)
     console.log("Response", err.originalResponse)
-    
+
     var status = err.originalResponse ? err.originalResponse.getStatus() : 0
     // Do not retry if the status is a 403.
     if (status === 403) {
       return false
     }
-    
+
     // For any other status code, we retry.
     return true
 }
 ```
+
+#### onUploadUrlAvailable
+
+*Default value:* `null`
+
+An optional function called once the upload URL is available. At this point, the `tus.Upload#url` property is guaranteed to be accessible and valid. This occurs after inspecting the `Location` header in the response to the initial POST request, or when an upload URL is confirmed using a HEAD request. Due to network errors and retries, this callback might be invoked multiple times for a single upload.
 
 #### headers
 

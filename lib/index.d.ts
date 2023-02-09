@@ -33,6 +33,7 @@ interface UploadOptions {
   onSuccess?: (() => void) | null;
   onError?: ((error: (Error | DetailedError)) => void) | null;
   onShouldRetry?: ((error: (Error | DetailedError), retryAttempt: number, options: UploadOptions) => boolean) | null;
+  onUploadUrlAvailable?: (() => void) | null;
 
   overridePatchMethod?: boolean;
   headers?: { [key: string]: string };
