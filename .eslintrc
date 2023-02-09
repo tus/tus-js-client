@@ -24,7 +24,8 @@
     "import/no-extraneous-dependencies": ["error", {
       "devDependencies": ["test/**/*.js"]
     }],
-    "import/extensions": ["error", "ignorePackages"]
+    "import/extensions": ["error", "ignorePackages"],
+    "import/no-named-as-default-member": "off"
   },
   "overrides": [
     {
@@ -70,9 +71,6 @@
         "browser": true,
         "node": true,
         "jasmine": true
-      },
-      "parserOptions": {
-        "sourceType": "script"
       },
       "rules": {
         "import/extensions": "off"

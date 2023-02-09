@@ -1,12 +1,10 @@
-'use strict'
-
 // Karma configuration for testing using Puppeteer
-const baseConfig = require('./base.conf')
+import baseConfig from './base.conf'
 
 // Configure to use Puppeteer. See https://github.com/karma-runner/karma-chrome-launcher#available-browsers
 process.env.CHROME_BIN = require('puppeteer').executablePath()
 
-module.exports = (config) => {
+export default (config) => {
   baseConfig(config)
   config.set({
 

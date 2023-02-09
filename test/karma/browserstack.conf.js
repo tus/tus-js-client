@@ -1,7 +1,5 @@
-'use strict'
-
 // Karma configuration for testing using BrowserStack
-const baseConfig = require('./base.conf')
+import baseConfig from './base.conf'
 
 // Pass ID from Github Actions to BrowserStack, so that individual
 // runs are grouped together.
@@ -10,7 +8,7 @@ if ('GITHUB_RUN_ID' in process.env) {
   process.env.BUILD_NUMBER = process.env.GITHUB_RUN_ID
 }
 
-module.exports = (config) => {
+export default (config) => {
   baseConfig(config)
   config.set({
 

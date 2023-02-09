@@ -1,13 +1,11 @@
-'use strict'
-
-const stream = require('stream')
-const temp = require('temp')
-const fs = require('fs')
-const https = require('https')
-const intoStream = require('into-stream')
-const tus = require('../..')
-const assertUrlStorage = require('./helpers/assertUrlStorage')
-const { TestHttpStack, waitableFunction } = require('./helpers/utils')
+import stream from 'stream'
+import temp from 'temp'
+import fs from 'fs'
+import https from 'https'
+import intoStream from 'into-stream'
+import tus from '../..'
+import assertUrlStorage from './helpers/assertUrlStorage'
+import { TestHttpStack, waitableFunction } from './helpers/utils'
 
 describe('tus', () => {
   describe('#canStoreURLs', () => {

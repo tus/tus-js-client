@@ -1,7 +1,5 @@
 /* eslint-disable no-console */
 
-'use strict'
-
 const fs = require('fs')
 const tus = require('../..')
 

@@ -1,8 +1,6 @@
-'use strict'
-
-const axios = require('axios')
-const { getBlob } = require('./helpers/utils')
-const tus = require('../..')
+import axios from 'axios'
+import { getBlob } from './helpers/utils'
+import tus from '../..'
 
 // Test timeout for end-to-end tests when uploading to real server.
 const END_TO_END_TIMEOUT = 20 * 1000

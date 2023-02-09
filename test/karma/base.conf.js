@@ -1,8 +1,6 @@
 // Karma base configuration
 
-'use strict'
-
-module.exports = (config) => {
+export default (config) => {
   config.set({
     // base path that will be used to resolve all patterns (eg. files, exclude)
     // realtive to the configuration file

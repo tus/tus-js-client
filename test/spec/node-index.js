@@ -1,7 +1,5 @@
-'use strict'
-
-require('./test-common')
-require('./test-node-specific')
-require('./test-parallel-uploads')
-require('./test-terminate')
-require('./test-end-to-end')
+import './test-common'
+import './test-node-specific'
+import './test-parallel-uploads'
+import './test-terminate'
+import './test-end-to-end'

@@ -1,8 +1,6 @@
-'use strict'
-
-const assertUrlStorage = require('./helpers/assertUrlStorage')
-const { TestHttpStack, waitableFunction, wait } = require('./helpers/utils')
-const tus = require('../..')
+import assertUrlStorage from './helpers/assertUrlStorage'
+import { TestHttpStack, waitableFunction, wait } from './helpers/utils'
+import tus from '../..'
 
 describe('tus', () => {
   beforeEach(() => {

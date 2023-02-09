@@ -1,7 +1,5 @@
-'use strict'
-
-const { TestHttpStack, getBlob } = require('./helpers/utils')
-const tus = require('../..')
+import { TestHttpStack, getBlob } from './helpers/utils'
+import tus from '../..'
 
 describe('tus', () => {
   describe('terminate upload', () => {

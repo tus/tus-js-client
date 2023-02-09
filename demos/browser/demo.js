@@ -1,8 +1,6 @@
 /* global tus */
 /* eslint-disable no-console, no-alert */
 
-'use strict'
-
 let upload          = null
 let uploadIsRunning = false
 const toggleBtn       = document.querySelector('#toggle-btn')

@@ -1,7 +1,5 @@
-'use strict'
-
-const { TestHttpStack, waitableFunction, wait, getBlob } = require('./helpers/utils')
-const tus = require('../..')
+import { TestHttpStack, waitableFunction, wait, getBlob } from './helpers/utils'
+import tus from '../..'
 
 describe('tus', () => {
   describe('parallel uploading', () => {
