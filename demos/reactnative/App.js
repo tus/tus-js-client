@@ -10,7 +10,7 @@ import {
   Linking
 } from 'react-native'
 import { ImagePicker, Permissions } from 'expo'
-import tus from 'tus-js-client'
+import * as tus from 'tus-js-client'
 
 const styles = StyleSheet.create({
   container: {
