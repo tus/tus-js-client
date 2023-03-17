@@ -1,6 +1,6 @@
 'use strict'
 
-const { TestHttpStack, waitableFunction, wait, getBlob } = require('./helpers/utils')
+const { TestHttpStack, waitableFunction, wait } = require('./helpers/utils')
 const tus = require('../..')
 
 // Uncomment to enable debug log from tus-js-client
@@ -20,14 +20,14 @@ describe('tus', () => {
     })
 
     it('should throw if no endpoint and upload URL is provided', () => {
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const upload = new tus.Upload(file)
       expect(upload.start.bind(upload)).toThrowError('tus: neither an endpoint or an upload URL is provided')
     })
 
     it('should upload a file', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack: testStack,
         endpoint : 'https://tus.io/uploads',
@@ -95,7 +95,7 @@ describe('tus', () => {
 
     it('should create an upload if resuming fails', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack: testStack,
         endpoint : 'http://tus.io/uploads',
@@ -126,7 +126,7 @@ describe('tus', () => {
 
     it('should create an upload using the creation-with-data extension', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack               : testStack,
         endpoint                : 'http://tus.io/uploads',
@@ -169,7 +169,7 @@ describe('tus', () => {
 
     it('should create an upload with partial data and continue', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack               : testStack,
         endpoint                : 'http://tus.io/uploads',
@@ -234,7 +234,7 @@ describe('tus', () => {
 
     it("should add the request's body and ID to errors", async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack   : testStack,
         endpoint    : 'http://tus.io/uploads',
@@ -268,7 +268,7 @@ describe('tus', () => {
 
     it('should invoke the request and response callbacks', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack: testStack,
         uploadUrl: 'http://tus.io/uploads/foo',
@@ -309,7 +309,7 @@ describe('tus', () => {
 
     it('should throw an error if resuming fails and no endpoint is provided', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack: testStack,
         uploadUrl: 'http://tus.io/uploads/resuming',
@@ -334,7 +334,7 @@ describe('tus', () => {
 
     it('should resolve relative URLs', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack: testStack,
         endpoint : 'http://tus.io:1080/files/',
@@ -370,7 +370,7 @@ describe('tus', () => {
 
     it('should upload a file in chunks', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack: testStack,
         endpoint : 'http://tus.io/uploads',
@@ -438,7 +438,7 @@ describe('tus', () => {
 
     it('should add the original request to errors', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack  : testStack,
         endpoint   : 'http://tus.io/uploads',
@@ -471,7 +471,7 @@ describe('tus', () => {
 
     it('should only create an upload for empty files', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('')
+      const file = ''
       const options = {
         httpStack: testStack,
         endpoint : 'http://tus.io/uploads',
@@ -500,7 +500,7 @@ describe('tus', () => {
 
     it('should not resume a finished upload', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack: testStack,
         endpoint : 'http://tus.io/uploads',
@@ -534,7 +534,7 @@ describe('tus', () => {
 
     it('should resume an upload from a specified url', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack           : testStack,
         endpoint            : 'http://tus.io/uploads',
@@ -590,7 +590,7 @@ describe('tus', () => {
 
     it('should resume a previously started upload', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack: testStack,
         endpoint : 'http://tus.io/uploads',
@@ -656,7 +656,7 @@ describe('tus', () => {
 
     it('should override the PATCH method', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack          : testStack,
         endpoint           : 'http://tus.io/uploads',
@@ -697,7 +697,7 @@ describe('tus', () => {
 
     it('should emit an error if an upload is locked', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack  : testStack,
         endpoint   : 'http://tus.io/uploads',
@@ -723,7 +723,7 @@ describe('tus', () => {
 
     it('should emit an error if no Location header is presented', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack  : testStack,
         endpoint   : 'http://tus.io/uploads',
@@ -749,7 +749,7 @@ describe('tus', () => {
     })
 
     it('should throw if retryDelays is not an array', () => {
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const upload = new tus.Upload(file, {
         endpoint   : 'http://endpoint/',
         retryDelays: 44,
@@ -761,7 +761,7 @@ describe('tus', () => {
     // response has the code 500 Internal Error, 423 Locked or 409 Conflict.
     it('should retry the upload', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack  : testStack,
         endpoint   : 'http://tus.io/files/',
@@ -850,7 +850,7 @@ describe('tus', () => {
     // return value of onShouldRetry is true.
     it('should retry the upload when onShouldRetry specified and returns true', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack    : testStack,
         endpoint     : 'http://tus.io/files/',
@@ -949,7 +949,7 @@ describe('tus', () => {
     // return value of onShouldRetry is false.
     it('should not retry the upload when callback specified and returns false', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack    : testStack,
         endpoint     : 'http://tus.io/files/',
@@ -980,7 +980,7 @@ describe('tus', () => {
     })
 
     it('should not retry if the error has not been caused by a request', async () => {
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack  : new TestHttpStack(),
         endpoint   : 'http://tus.io/files/',
@@ -1008,7 +1008,7 @@ describe('tus', () => {
 
     it('should stop retrying after all delays have been used', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack  : testStack,
         endpoint   : 'http://tus.io/files/',
@@ -1048,7 +1048,7 @@ describe('tus', () => {
 
     it('should stop retrying when the abort function is called', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack  : testStack,
         endpoint   : 'http://tus.io/files/',
@@ -1083,7 +1083,7 @@ describe('tus', () => {
 
     it('should stop upload when the abort function is called during a callback', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack: testStack,
         endpoint : 'http://tus.io/files/',
@@ -1131,7 +1131,7 @@ describe('tus', () => {
 
     it('should stop upload when the abort function is called during the POST request', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack: testStack,
         endpoint : 'http://tus.io/files/',
@@ -1167,7 +1167,7 @@ describe('tus', () => {
 
     it('should reset the attempt counter if an upload proceeds', async () => {
       const testStack = new TestHttpStack()
-      const file = getBlob('hello world')
+      const file = 'hello world'
       const options = {
         httpStack  : testStack,
         endpoint   : 'http://tus.io/files/',

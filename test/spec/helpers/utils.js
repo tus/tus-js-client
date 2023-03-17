@@ -2,20 +2,6 @@
 
 'use strict'
 
-const isBrowser  = typeof window !== 'undefined'
-const isNode     = !isBrowser
-
-/**
- * Obtain a platform specific buffer object, which can be
- * handled by tus-js-client.
- */
-function getBlob (str) {
-  if (isNode) {
-    return Buffer.from(str)
-  }
-  return new Blob(str.split(''))
-}
-
 /**
  * Create a promise and obtain the resolve/reject functions
  * outside of the Promise callback.
@@ -174,5 +160,4 @@ module.exports = {
   TestHttpStack,
   waitableFunction,
   wait,
-  getBlob,
 }

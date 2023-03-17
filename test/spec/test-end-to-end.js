@@ -1,7 +1,6 @@
 'use strict'
 
 const axios = require('axios')
-const { getBlob } = require('./helpers/utils')
 const tus = require('../..')
 
 // Test timeout for end-to-end tests when uploading to real server.
@@ -11,7 +10,7 @@ describe('tus', () => {
   describe('end-to-end', () => {
     it('should upload to a real tus server', async () => {
       return new Promise((resolve, reject) => {
-        const file = getBlob('hello world')
+        const file = 'hello world'
         const options = {
           endpoint: 'https://tusd.tusdemo.net/files/',
           metadata: {
@@ -44,7 +43,7 @@ describe('tus', () => {
 
     it('should upload to a real tus server with creation-with-upload', async () => {
       return new Promise((resolve, reject) => {
-        const file = getBlob('hello world')
+        const file = 'hello world'
         const options = {
           endpoint: 'https://tusd.tusdemo.net/files/',
           metadata: {
