@@ -13,21 +13,21 @@ $ npm install --save tus-js-client
 After that, you can load the package:
 
 ```js
-var tus = require("tus-js-client");
+var tus = require('tus-js-client')
 ```
 
 If your bundler supports ES Modules, you can use:
 
 ```js
-import * as tus from "tus-js-client";
+import * as tus from 'tus-js-client'
 ```
 
 ## Embed using a script tag
 
 If you are not using a web bundler, you can download the latest prebuilt script and embed it directly:
 
-* Unminified version: [tus.js](https://cdn.jsdelivr.net/npm/tus-js-client@latest/dist/tus.js)
-* Minified version: [tus.min.js](https://cdn.jsdelivr.net/npm/tus-js-client@latest/dist/tus.min.js) (recommended)
+- Unminified version: [tus.js](https://cdn.jsdelivr.net/npm/tus-js-client@latest/dist/tus.js)
+- Minified version: [tus.min.js](https://cdn.jsdelivr.net/npm/tus-js-client@latest/dist/tus.min.js) (recommended)
 
 ```html
 <script src="./tus.min.js"></script>
@@ -39,10 +39,11 @@ If you are not using a web bundler, you can download the latest prebuilt script 
 # Runtime requirements & limitations
 
 tus-js-client can be used in following environments:
-* Browsers
-* Node.js
-* React Native applications
-* Apache Cordova applications
+
+- Browsers
+- Node.js
+- React Native applications
+- Apache Cordova applications
 
 Please see the following sections for more details on environment-specific requirements and possible limitations.
 
@@ -51,8 +52,8 @@ One general requirement is that the JavaScript environment must support [Promise
 When polyfilling, load the polyfill _before_ loading tus-js-client:
 
 ```js
-require("core-js/features/promise");
-var tus = require("tus-js-client");
+require('core-js/features/promise')
+var tus = require('tus-js-client')
 ```
 
 ## Browser support
@@ -63,15 +64,15 @@ var tus = require("tus-js-client");
 
 tus-js-client is tested and known to support following browsers:
 
-* Microsoft Edge 12+
-* Mozilla Firefox 14+
-* Google Chrome 20+
-* Safari 6+
-* Opera 12.1+
-* iOS 6.0+
-* Android 5.0+
+- Microsoft Edge 12+
+- Mozilla Firefox 14+
+- Google Chrome 20+
+- Safari 6+
+- Opera 12.1+
+- iOS 6.0+
+- Android 5.0+
 
-Support in other browsers is *very likely* but has not been confirmed yet.
+Support in other browsers is _very likely_ but has not been confirmed yet.
 Since we only use Web Storage, XMLHttpRequest2, the File API and Blob API,
 more than 95% of today's users should be able to use tus-js-client.
 
@@ -87,25 +88,25 @@ Since Node's environment is quite different than a browser's runtime and
 provides other capabilities but also restrictions, tus-js-client will have a
 slightly changed behavior when used in the context of a Node.js application:
 
-* As the Web Storage API is only available in browser environments,
-tus-js-client will by default not store the URLs of created uploads. To manually
-enable this feature, please consult the `urlStorage` option for the `tus.Upload`
-constructor.
+- As the Web Storage API is only available in browser environments,
+  tus-js-client will by default not store the URLs of created uploads. To manually
+  enable this feature, please consult the `urlStorage` option for the `tus.Upload`
+  constructor.
 
-* The `tus.Upload` constructor will only accept instances of `buffer.Buffer`
-and `stream.Readable` as file inputs. If you are passing a readable stream as
-this argument, you must set the `chunkSize` option to a finite integer value
-because the chunk, which is currently being uploaded, will be held in memory
-allowing automatic retries, e.g. after connection interruptions. Therefore
-additional care should be taken when choosing the appropriate value for your
-specific application to control memory consumption.
+- The `tus.Upload` constructor will only accept instances of `buffer.Buffer`
+  and `stream.Readable` as file inputs. If you are passing a readable stream as
+  this argument, you must set the `chunkSize` option to a finite integer value
+  because the chunk, which is currently being uploaded, will be held in memory
+  allowing automatic retries, e.g. after connection interruptions. Therefore
+  additional care should be taken when choosing the appropriate value for your
+  specific application to control memory consumption.
 
-* If you call the `tus.Upload` constructor with an instance of the
-`fs.ReadStream`, the above point does not apply, meaning *no* chunk will be held
-in memory. Instead, tus-js-client will create it's own stream starting at the
-needed position using `fs.createReadStream`. If you want to disable this
-functionality, you may want to wrap the `fs.ReadStream` into a
-`stream.PassThrough`.
+- If you call the `tus.Upload` constructor with an instance of the
+  `fs.ReadStream`, the above point does not apply, meaning _no_ chunk will be held
+  in memory. Instead, tus-js-client will create it's own stream starting at the
+  needed position using `fs.createReadStream`. If you want to disable this
+  functionality, you may want to wrap the `fs.ReadStream` into a
+  `stream.PassThrough`.
 
 Finally, you may be interested in the `demos/nodejs/index.js` example which demonstrates
 a simple example on how to easily use tus-js-client using Node.js.

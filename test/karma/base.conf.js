@@ -13,19 +13,14 @@ module.exports = (config) => {
     frameworks: ['jasmine'],
 
     // list of files / patterns to load in the browser
-    files: [
-      'node_modules/jasmine-ajax/lib/mock-ajax.js',
-      'dist/browser-test-bundle.js',
-    ],
+    files: ['node_modules/jasmine-ajax/lib/mock-ajax.js', 'dist/browser-test-bundle.js'],
 
     // list of files / patterns to exclude
-    exclude: [
-    ],
+    exclude: [],
 
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://www.npmjs.com/search?q=keywords:karma-preprocessor
-    preprocessors: {
-    },
+    preprocessors: {},
 
     // web server port
     port: 9876,

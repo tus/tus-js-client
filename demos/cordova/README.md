@@ -1,7 +1,7 @@
 # Apache Cordova demo
 
 This demo shows how tus-js-client can be used inside an Apache Cordova application.
-The `cordova-plugin-camera` and `cordova-plugin-file` plugins allow it to access the device's photos library using native file system. 
+The `cordova-plugin-camera` and `cordova-plugin-file` plugins allow it to access the device's photos library using native file system.
 
 ## Instructions
 
