@@ -1,0 +1,4 @@
+dist/
+lib.es5/
+lib.esm/
+node_modules/
