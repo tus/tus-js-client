@@ -3,33 +3,34 @@
 
 'use strict'
 
-let upload          = null
+let upload = null
 let uploadIsRunning = false
-const toggleBtn       = document.querySelector('#toggle-btn')
-const input           = document.querySelector('input[type=file]')
-const progress        = document.querySelector('.progress')
-const progressBar     = progress.querySelector('.bar')
-const alertBox        = document.querySelector('#support-alert')
-const uploadList      = document.querySelector('#upload-list')
-const chunkInput      = document.querySelector('#chunksize')
-const parallelInput   = document.querySelector('#paralleluploads')
-const endpointInput   = document.querySelector('#endpoint')
+const toggleBtn = document.querySelector('#toggle-btn')
+const input = document.querySelector('input[type=file]')
+const progress = document.querySelector('.progress')
+const progressBar = progress.querySelector('.bar')
+const alertBox = document.querySelector('#support-alert')
+const uploadList = document.querySelector('#upload-list')
+const chunkInput = document.querySelector('#chunksize')
+const parallelInput = document.querySelector('#paralleluploads')
+const endpointInput = document.querySelector('#endpoint')
 
-function reset () {
+function reset() {
   input.value = ''
   toggleBtn.textContent = 'start upload'
   upload = null
   uploadIsRunning = false
 }
 
-function askToResumeUpload (previousUploads, currentUpload) {
+function askToResumeUpload(previousUploads, currentUpload) {
   if (previousUploads.length === 0) return
 
   let text = 'You tried to upload this file previously at these times:\n\n'
   previousUploads.forEach((previousUpload, index) => {
     text += `[${index}] ${previousUpload.creationTime}\n`
   })
-  text += '\nEnter the corresponding number to resume an upload or press Cancel to start a new upload'
+  text +=
+    '\nEnter the corresponding number to resume an upload or press Cancel to start a new upload'
 
   const answer = prompt(text)
   const index = parseInt(answer, 10)
@@ -39,7 +40,7 @@ function askToResumeUpload (previousUploads, currentUpload) {
   }
 }
 
-function startUpload () {
+function startUpload() {
   const file = input.files[0]
   // Only continue if a file has actually been selected.
   // IE will trigger a change event even if we reset the input element
@@ -66,11 +67,11 @@ function startUpload () {
     chunkSize,
     retryDelays: [0, 1000, 3000, 5000],
     parallelUploads,
-    metadata   : {
+    metadata: {
       filename: file.name,
       filetype: file.type,
     },
-    onError (error) {
+    onError(error) {
       if (error.originalRequest) {
         if (window.confirm(`Failed because: ${error}\nDo you want to retry?`)) {
           upload.start()
@@ -83,12 +84,12 @@ function startUpload () {
 
       reset()
     },
-    onProgress (bytesUploaded, bytesTotal) {
+    onProgress(bytesUploaded, bytesTotal) {
       const percentage = ((bytesUploaded / bytesTotal) * 100).toFixed(2)
       progressBar.style.width = `${percentage}%`
       console.log(bytesUploaded, bytesTotal, `${percentage}%`)
     },
-    onSuccess () {
+    onSuccess() {
       const anchor = document.createElement('a')
       anchor.textContent = `Download ${upload.file.name} (${upload.file.size} bytes)`
       anchor.href = upload.url

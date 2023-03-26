@@ -17,89 +17,94 @@
  * under the License.
  */
 * {
-    -webkit-tap-highlight-color: rgba(0,0,0,0); /* make transparent link selection, adjust last value opacity 0 to 1.0 */
+  -webkit-tap-highlight-color: rgba(
+    0,
+    0,
+    0,
+    0
+  ); /* make transparent link selection, adjust last value opacity 0 to 1.0 */
 }
 
 body {
-    -webkit-touch-callout: none;                /* prevent callout to copy image, etc when tap to hold */
-    -webkit-text-size-adjust: none;             /* prevent webkit from resizing text to fit */
-    -webkit-user-select: none;                  /* prevent copy paste, to allow, change 'none' to 'text' */
-    background-color:#E4E4E4;
-    background-attachment:fixed;
-    font-family:'HelveticaNeue-Light', 'HelveticaNeue', Helvetica, Arial, sans-serif;
-    font-size:15px;
-    height:100%;
-    margin:0px;
-    padding:0px;
-    width:100%;
+  -webkit-touch-callout: none; /* prevent callout to copy image, etc when tap to hold */
+  -webkit-text-size-adjust: none; /* prevent webkit from resizing text to fit */
+  -webkit-user-select: none; /* prevent copy paste, to allow, change 'none' to 'text' */
+  background-color: #e4e4e4;
+  background-attachment: fixed;
+  font-family: 'HelveticaNeue-Light', 'HelveticaNeue', Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
+  width: 100%;
 }
 
 .Logo__image {
-    max-width: 80%;
+  max-width: 80%;
 }
 
 .Logo__wrapper {
-    text-align: center;
-    margin: 40px 0 20px;
+  text-align: center;
+  margin: 40px 0 20px;
 }
 
 ol.List {
-    list-style: none;
-    counter-reset: item;
+  list-style: none;
+  counter-reset: item;
 
-    padding: 0;
-    margin: 0 10%;
+  padding: 0;
+  margin: 0 10%;
 }
 
 ol.List li {
-    counter-increment: item;
+  counter-increment: item;
 }
 
 ol.List li:before {
-    display: inline-block;
+  display: inline-block;
 
-    height: 2em;
-    width: 2em;
-    margin-right: 0.5em;
+  height: 2em;
+  width: 2em;
+  margin-right: 0.5em;
 
-    text-align: center;
-    line-height: 2em;
+  text-align: center;
+  line-height: 2em;
 
-    color: white;
-    font-style: italic;
-    font-weight: bold;
-    content: counter(item);
+  color: white;
+  font-style: italic;
+  font-weight: bold;
+  content: counter(item);
 
-    border-radius: 100%;
-    background-color: #48aa92;
+  border-radius: 100%;
+  background-color: #48aa92;
 }
 
 .List__content {
-    text-align: center;
-    margin: 15px 0;
+  text-align: center;
+  margin: 15px 0;
 }
 
 .File__button,
 .Upload__button {
-    background: #48aa92;
-    color: white;
+  background: #48aa92;
+  color: white;
 
-    border: 0;
-    border-radius: 4px;
+  border: 0;
+  border-radius: 4px;
 
-    padding: 1em 1.5em;
+  padding: 1em 1.5em;
 }
 
 .File__link,
 .Upload__link {
-    text-align: center;
-    font-style: italic;
+  text-align: center;
+  font-style: italic;
 }
 
 .Upload__progress {
-    font-style: italic;
+  font-style: italic;
 }
 
 .Upload__progress progress:not([value]) {
-    display: none;
+  display: none;
 }

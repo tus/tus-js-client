@@ -11,52 +11,51 @@ The basic flow is for every application the same:
 5. Optionally **pause** the upload if the user/application wishes to do so using `tus.Upload#abort`. This will cause any currently running transfers to be immediately stopped.
 6. Optionally **unpause** the previously paused upload by called `Upload#start` again. This will resume the upload at the point at which it had stopped before. You can also use this approach to continue the upload after an error has occurred.
 
-
 ## Example: Simple file upload
 
 This example demonstrates the most basic usage of tus-js-client where a single file is uploaded to a tus server:
 
 ```js
-input.addEventListener("change", function(e) {
-    // Get the selected file from the input element
-    var file = e.target.files[0]
+input.addEventListener('change', function (e) {
+  // Get the selected file from the input element
+  var file = e.target.files[0]
 
-    // Create a new tus upload
-    var upload = new tus.Upload(file, {
-        // Endpoint is the upload creation URL from your tus server
-        endpoint: "http://localhost:1080/files/",
-        // Retry delays will enable tus-js-client to automatically retry on errors
-        retryDelays: [0, 3000, 5000, 10000, 20000],
-        // Attach additional meta data about the file for the server
-        metadata: {
-            filename: file.name,
-            filetype: file.type
-        },
-        // Callback for errors which cannot be fixed using retries
-        onError: function(error) {
-            console.log("Failed because: " + error)
-        },
-        // Callback for reporting upload progress
-        onProgress: function(bytesUploaded, bytesTotal) {
-            var percentage = (bytesUploaded / bytesTotal * 100).toFixed(2)
-            console.log(bytesUploaded, bytesTotal, percentage + "%")
-        },
-        // Callback for once the upload is completed
-        onSuccess: function() {
-            console.log("Download %s from %s", upload.file.name, upload.url)
-        }
-    })
+  // Create a new tus upload
+  var upload = new tus.Upload(file, {
+    // Endpoint is the upload creation URL from your tus server
+    endpoint: 'http://localhost:1080/files/',
+    // Retry delays will enable tus-js-client to automatically retry on errors
+    retryDelays: [0, 3000, 5000, 10000, 20000],
+    // Attach additional meta data about the file for the server
+    metadata: {
+      filename: file.name,
+      filetype: file.type,
+    },
+    // Callback for errors which cannot be fixed using retries
+    onError: function (error) {
+      console.log('Failed because: ' + error)
+    },
+    // Callback for reporting upload progress
+    onProgress: function (bytesUploaded, bytesTotal) {
+      var percentage = ((bytesUploaded / bytesTotal) * 100).toFixed(2)
+      console.log(bytesUploaded, bytesTotal, percentage + '%')
+    },
+    // Callback for once the upload is completed
+    onSuccess: function () {
+      console.log('Download %s from %s', upload.file.name, upload.url)
+    },
+  })
 
-     // Check if there are any previous uploads to continue.
-    upload.findPreviousUploads().then(function (previousUploads) {
-        // Found previous uploads so we select the first one. 
-        if (previousUploads.length) {
-            upload.resumeFromPreviousUpload(previousUploads[0])
-        }
+  // Check if there are any previous uploads to continue.
+  upload.findPreviousUploads().then(function (previousUploads) {
+    // Found previous uploads so we select the first one.
+    if (previousUploads.length) {
+      upload.resumeFromPreviousUpload(previousUploads[0])
+    }
 
-        // Start the upload
-        upload.start()
-    })
+    // Start the upload
+    upload.start()
+  })
 })
 ```
 
@@ -71,7 +70,7 @@ var file = ...
 function startOrResumeUpload(upload) {
     // Check if there are any previous uploads to continue.
     upload.findPreviousUploads().then(function (previousUploads) {
-        // Found previous uploads so we select the first one. 
+        // Found previous uploads so we select the first one.
         if (previousUploads.length) {
             upload.resumeFromPreviousUpload(previousUploads[0])
         }
@@ -191,44 +190,44 @@ upload.start()
 In some cases it might be desirable to change the condition for which an upload will be retried. This example shows how to override the default retry behavior with a callback function where no retry will occur after a 403 status code (indicating a permission issue) is received. This will cause the error message to be directly logged instead of the retrys kicking in.
 
 ```js
-input.addEventListener("change", function(e) {
-    // Get the selected file from the input element
-    var file = e.target.files[0]
+input.addEventListener('change', function (e) {
+  // Get the selected file from the input element
+  var file = e.target.files[0]
 
-    // Create a new tus upload
-    var upload = new tus.Upload(file, {
-        endpoint: "http://localhost:1080/files/",
-        retryDelays: [0, 3000, 5000, 10000, 20000],
-        metadata: {
-            filename: file.name,
-            filetype: file.type
-        },
-        onError: function(error) {
-            // Display an error message
-            console.log("Failed because: " + error)
-        },
-        onShouldRetry: function(err, retryAttempt, options) {
-          var status = err.originalResponse ? err.originalResponse.getStatus() : 0
-          // If the status is a 403, we do not want to retry.
-          if (status === 403) {
-            return false
-          }
-          
-          // For any other status code, tus-js-client should retry.
-          return true
-        }
-    })
+  // Create a new tus upload
+  var upload = new tus.Upload(file, {
+    endpoint: 'http://localhost:1080/files/',
+    retryDelays: [0, 3000, 5000, 10000, 20000],
+    metadata: {
+      filename: file.name,
+      filetype: file.type,
+    },
+    onError: function (error) {
+      // Display an error message
+      console.log('Failed because: ' + error)
+    },
+    onShouldRetry: function (err, retryAttempt, options) {
+      var status = err.originalResponse ? err.originalResponse.getStatus() : 0
+      // If the status is a 403, we do not want to retry.
+      if (status === 403) {
+        return false
+      }
 
-     // Check if there are any previous uploads to continue.
-    upload.findPreviousUploads().then(function (previousUploads) {
-        // Found previous uploads so we select the first one. 
-        if (previousUploads.length) {
-            upload.resumeFromPreviousUpload(previousUploads[0])
-        }
+      // For any other status code, tus-js-client should retry.
+      return true
+    },
+  })
 
-        // Start the upload
-        upload.start()
-    })
+  // Check if there are any previous uploads to continue.
+  upload.findPreviousUploads().then(function (previousUploads) {
+    // Found previous uploads so we select the first one.
+    if (previousUploads.length) {
+      upload.resumeFromPreviousUpload(previousUploads[0])
+    }
+
+    // Start the upload
+    upload.start()
+  })
 })
 ```
 
@@ -236,7 +235,7 @@ input.addEventListener("change", function(e) {
 
 Complete example applications can be found in the demos folder:
 
-* `/demos/browser`: Example website for upload a user-selected file
-* `/demos/nodejs`: Example script for uploading a file from Node.js
-* `/demos/reactnative`: Example application using React Native
-* `/demos/cordova`: Example application using Apache Cordova
+- `/demos/browser`: Example website for upload a user-selected file
+- `/demos/nodejs`: Example script for uploading a file from Node.js
+- `/demos/reactnative`: Example application using React Native
+- `/demos/cordova`: Example application using Apache Cordova
