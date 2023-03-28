@@ -2,14 +2,14 @@
 
 'use strict'
 
-const isBrowser  = typeof window !== 'undefined'
-const isNode     = !isBrowser
+const isBrowser = typeof window !== 'undefined'
+const isNode = !isBrowser
 
 /**
  * Obtain a platform specific buffer object, which can be
  * handled by tus-js-client.
  */
-function getBlob (str) {
+function getBlob(str) {
   if (isNode) {
     return Buffer.from(str)
   }
@@ -20,7 +20,7 @@ function getBlob (str) {
  * Create a promise and obtain the resolve/reject functions
  * outside of the Promise callback.
  */
-function flatPromise () {
+function flatPromise() {
   let resolveFn
   let rejectFn
   const p = new Promise((resolve, reject) => {
@@ -35,7 +35,7 @@ function flatPromise () {
  * Create a spy-able function which resolves a Promise
  * once it is called.
  */
-function waitableFunction (name = 'func') {
+function waitableFunction(name = 'func') {
   const [promise, resolve] = flatPromise()
   const fn = jasmine.createSpy(name, resolve).and.callThrough()
 
@@ -46,7 +46,7 @@ function waitableFunction (name = 'func') {
 /**
  * Create a Promise that resolves after the specified duration.
  */
-function wait (delay) {
+function wait(delay) {
   return new Promise((resolve) => setTimeout(resolve, delay, 'timed out'))
 }
 
@@ -55,12 +55,12 @@ function wait (delay) {
  * and can be used to assert outgoing requests and respond with mock data.
  */
 class TestHttpStack {
-  constructor () {
+  constructor() {
     this._pendingRequests = []
     this._pendingWaits = []
   }
 
-  createRequest (method, url) {
+  createRequest(method, url) {
     return new TestRequest(method, url, (req) => {
       if (this._pendingWaits.length >= 1) {
         const handler = this._pendingWaits.shift()
@@ -72,7 +72,7 @@ class TestHttpStack {
     })
   }
 
-  nextRequest () {
+  nextRequest() {
     if (this._pendingRequests.length >= 1) {
       return Promise.resolve(this._pendingRequests.shift())
     }
@@ -84,39 +84,38 @@ class TestHttpStack {
 }
 
 class TestRequest {
-  constructor (method, url, onRequestSend) {
+  constructor(method, url, onRequestSend) {
     this.method = method
     this.url = url
     this.requestHeaders = {}
     this.body = null
 
     this._onRequestSend = onRequestSend
-    this._onProgress = () => {};
-
-    [this._requestPromise, this._resolveRequest, this._rejectRequest] = flatPromise()
+    this._onProgress = () => {}
+    ;[this._requestPromise, this._resolveRequest, this._rejectRequest] = flatPromise()
   }
 
-  getMethod () {
+  getMethod() {
     return this.method
   }
 
-  getURL () {
+  getURL() {
     return this.url
   }
 
-  setHeader (header, value) {
+  setHeader(header, value) {
     this.requestHeaders[header] = value
   }
 
-  getHeader (header) {
+  getHeader(header) {
     return this.requestHeaders[header] || null
   }
 
-  setProgressHandler (progressHandler) {
+  setProgressHandler(progressHandler) {
     this._onProgress = progressHandler
   }
 
-  send (body = null) {
+  send(body = null) {
     this.body = body
 
     if (body) {
@@ -128,44 +127,44 @@ class TestRequest {
     return this._requestPromise
   }
 
-  abort () {
+  abort() {
     this._rejectRequest(new Error('request aborted'))
   }
 
-  getUnderlyingObject () {
+  getUnderlyingObject() {
     throw new Error('not implemented')
   }
 
-  respondWith (resData) {
+  respondWith(resData) {
     resData.responseHeaders = resData.responseHeaders || {}
 
     const res = new TestResponse(resData)
     this._resolveRequest(res)
   }
 
-  responseError (err) {
+  responseError(err) {
     this._rejectRequest(err)
   }
 }
 
 class TestResponse {
-  constructor (res) {
+  constructor(res) {
     this._response = res
   }
 
-  getStatus () {
+  getStatus() {
     return this._response.status
   }
 
-  getHeader (header) {
+  getHeader(header) {
     return this._response.responseHeaders[header]
   }
 
-  getBody () {
+  getBody() {
     return this._response.responseText
   }
 
-  getUnderlyingObject () {
+  getUnderlyingObject() {
     throw new Error('not implemented')
   }
 }

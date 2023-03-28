@@ -1,6 +1,6 @@
 'use strict'
 
-module.exports = async function assertUrlStorage (urlStorage) {
+module.exports = async function assertUrlStorage(urlStorage) {
   // In the beginning of the test, the storage should be empty.
   let result = await urlStorage.findAllUploads()
   expect(result).toEqual([])
@@ -24,9 +24,7 @@ module.exports = async function assertUrlStorage (urlStorage) {
 
   result = await urlStorage.findUploadsByFingerprint('fingerprintB')
   sort(result)
-  expect(result).toEqual([
-    { id: 3, urlStorageKey: key3 },
-  ])
+  expect(result).toEqual([{ id: 3, urlStorageKey: key3 }])
 
   // Check that we can retrieve all stored uploads
   result = await urlStorage.findAllUploads()
@@ -42,15 +40,13 @@ module.exports = async function assertUrlStorage (urlStorage) {
   await urlStorage.removeUpload(key3)
 
   result = await urlStorage.findUploadsByFingerprint('fingerprintA')
-  expect(result).toEqual([
-    { id: 1, urlStorageKey: key1 },
-  ])
+  expect(result).toEqual([{ id: 1, urlStorageKey: key1 }])
 
   result = await urlStorage.findUploadsByFingerprint('fingerprintB')
   expect(result).toEqual([])
 }
 
 // Sort the results from the URL storage since the order in not deterministic.
-function sort (result) {
+function sort(result) {
   result.sort((a, b) => a.id - b.id)
 }

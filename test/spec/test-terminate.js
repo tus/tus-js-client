@@ -11,9 +11,9 @@ describe('tus', () => {
       const file = getBlob('hello world')
       const options = {
         httpStack: testStack,
-        endpoint : 'http://tus.io/files/',
+        endpoint: 'http://tus.io/files/',
         chunkSize: 5,
-        onChunkComplete () {
+        onChunkComplete() {
           abortPromise = upload.abort(true)
         },
       }
@@ -28,7 +28,7 @@ describe('tus', () => {
       expect(req.method).toBe('POST')
 
       req.respondWith({
-        status         : 201,
+        status: 201,
         responseHeaders: {
           Location: '/files/foo',
         },
@@ -39,7 +39,7 @@ describe('tus', () => {
       expect(req.method).toBe('PATCH')
 
       req.respondWith({
-        status         : 204,
+        status: 204,
         responseHeaders: {
           'Upload-Offset': 5,
         },
@@ -62,11 +62,11 @@ describe('tus', () => {
       const testStack = new TestHttpStack()
       const file = getBlob('hello world')
       const options = {
-        httpStack  : testStack,
-        endpoint   : 'http://tus.io/files/',
-        chunkSize  : 5,
+        httpStack: testStack,
+        endpoint: 'http://tus.io/files/',
+        chunkSize: 5,
         retryDelays: [10, 10, 10],
-        onChunkComplete () {
+        onChunkComplete() {
           abortPromise = upload.abort(true)
         },
       }
@@ -81,7 +81,7 @@ describe('tus', () => {
       expect(req.method).toBe('POST')
 
       req.respondWith({
-        status         : 201,
+        status: 201,
         responseHeaders: {
           Location: '/files/foo',
         },
@@ -92,7 +92,7 @@ describe('tus', () => {
       expect(req.method).toBe('PATCH')
 
       req.respondWith({
-        status         : 204,
+        status: 204,
         responseHeaders: {
           'Upload-Offset': 5,
         },
@@ -121,7 +121,7 @@ describe('tus', () => {
     it('should stop retrying when all delays are used up', async () => {
       const testStack = new TestHttpStack()
       const options = {
-        httpStack  : testStack,
+        httpStack: testStack,
         retryDelays: [10, 10],
       }
 
@@ -151,22 +151,24 @@ describe('tus', () => {
         status: 500,
       })
 
-      await expectAsync(terminatePromise).toBeRejectedWithError(/tus: unexpected response while terminating upload/)
+      await expectAsync(terminatePromise).toBeRejectedWithError(
+        /tus: unexpected response while terminating upload/
+      )
     })
 
     it('should invoke the request and response Promises', async () => {
       const testStack = new TestHttpStack()
       const options = {
         httpStack: testStack,
-        onBeforeRequest (req) {
-          return new Promise(resolve => {
+        onBeforeRequest(req) {
+          return new Promise((resolve) => {
             expect(req.getURL()).toBe('http://tus.io/uploads/foo')
             expect(req.getMethod()).toBe('DELETE')
             resolve()
           })
         },
-        onAfterResponse (req, res) {
-          return new Promise(resolve => {
+        onAfterResponse(req, res) {
+          return new Promise((resolve) => {
             expect(req.getURL()).toBe('http://tus.io/uploads/foo')
             expect(req.getMethod()).toBe('DELETE')
             expect(res.getStatus()).toBe(204)

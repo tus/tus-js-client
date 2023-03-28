@@ -21,7 +21,7 @@ describe('tus', () => {
       const buffer = Buffer.from('hello world')
       const options = {
         httpStack: new TestHttpStack(),
-        endpoint : '/uploads',
+        endpoint: '/uploads',
         chunkSize: 7,
       }
 
@@ -31,38 +31,42 @@ describe('tus', () => {
     it('should reject streams without specifying the size', async () => {
       const input = new stream.PassThrough()
       const options = {
-        endpoint : '/uploads',
+        endpoint: '/uploads',
         chunkSize: 100,
-        onError  : waitableFunction('onError'),
+        onError: waitableFunction('onError'),
       }
 
       const upload = new tus.Upload(input, options)
       upload.start()
 
       const err = await options.onError.toBeCalled
-      expect(err.message).toBe("tus: cannot automatically derive upload's size from input. Specify it manually using the `uploadSize` option or use the `uploadLengthDeferred` option")
+      expect(err.message).toBe(
+        "tus: cannot automatically derive upload's size from input. Specify it manually using the `uploadSize` option or use the `uploadLengthDeferred` option"
+      )
     })
 
     it('should reject streams without specifying the chunkSize', async () => {
       const input = new stream.PassThrough()
       const options = {
         endpoint: '/uploads',
-        onError : waitableFunction('onError'),
+        onError: waitableFunction('onError'),
       }
 
       const upload = new tus.Upload(input, options)
       upload.start()
 
       const err = await options.onError.toBeCalled
-      expect(err.message).toBe('cannot create source for stream without a finite value for the `chunkSize` option; specify a chunkSize to control the memory consumption')
+      expect(err.message).toBe(
+        'cannot create source for stream without a finite value for the `chunkSize` option; specify a chunkSize to control the memory consumption'
+      )
     })
 
     it('should accept Readable streams', async () => {
       const input = new stream.PassThrough()
       const options = {
-        httpStack : new TestHttpStack(),
-        endpoint  : '/uploads',
-        chunkSize : 7,
+        httpStack: new TestHttpStack(),
+        endpoint: '/uploads',
+        chunkSize: 7,
         uploadSize: 11,
       }
 
@@ -74,9 +78,9 @@ describe('tus', () => {
       // This function returns an object that works like a stream but does not inherit stream.Readable
       const input = intoStream('hello WORLD')
       const options = {
-        httpStack : new TestHttpStack(),
-        endpoint  : '/uploads',
-        chunkSize : 7,
+        httpStack: new TestHttpStack(),
+        endpoint: '/uploads',
+        chunkSize: 7,
         uploadSize: 11,
       }
 
@@ -86,9 +90,9 @@ describe('tus', () => {
     it('should accept Readable streams with deferred size', async () => {
       const input = new stream.PassThrough()
       const options = {
-        httpStack           : new TestHttpStack(),
-        endpoint            : '/uploads',
-        chunkSize           : 7,
+        httpStack: new TestHttpStack(),
+        endpoint: '/uploads',
+        chunkSize: 7,
         uploadLengthDeferred: true,
       }
 
@@ -104,7 +108,7 @@ describe('tus', () => {
 
       const options = {
         httpStack: new TestHttpStack(),
-        endpoint : '/uploads',
+        endpoint: '/uploads',
         chunkSize: 7,
       }
 
@@ -120,11 +124,11 @@ describe('tus', () => {
       const testStack = new TestHttpStack()
 
       const options = {
-        httpStack      : testStack,
+        httpStack: testStack,
         parallelUploads: 2,
-        endpoint       : 'https://tus.io/uploads',
-        onProgress () {},
-        onSuccess      : waitableFunction(),
+        endpoint: 'https://tus.io/uploads',
+        onProgress() {},
+        onSuccess: waitableFunction(),
       }
       spyOn(options, 'onProgress')
 
@@ -139,7 +143,7 @@ describe('tus', () => {
       expect(req.requestHeaders['Upload-Concat']).toBe('partial')
 
       req.respondWith({
-        status         : 201,
+        status: 201,
         responseHeaders: {
           Location: 'https://tus.io/uploads/upload1',
         },
@@ -154,7 +158,7 @@ describe('tus', () => {
       expect(req.body.size).toBe(5)
 
       req.respondWith({
-        status         : 204,
+        status: 204,
         responseHeaders: {
           'Upload-Offset': 5,
         },
@@ -168,7 +172,7 @@ describe('tus', () => {
       expect(req.requestHeaders['Upload-Concat']).toBe('partial')
 
       req.respondWith({
-        status         : 201,
+        status: 201,
         responseHeaders: {
           Location: 'https://tus.io/uploads/upload2',
         },
@@ -183,7 +187,7 @@ describe('tus', () => {
       expect(req.body.size).toBe(6)
 
       req.respondWith({
-        status         : 204,
+        status: 204,
         responseHeaders: {
           'Upload-Offset': 6,
         },
@@ -194,10 +198,12 @@ describe('tus', () => {
       expect(req.method).toBe('POST')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Length']).toBeUndefined()
-      expect(req.requestHeaders['Upload-Concat']).toBe('final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2')
+      expect(req.requestHeaders['Upload-Concat']).toBe(
+        'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2'
+      )
 
       req.respondWith({
-        status         : 201,
+        status: 201,
         responseHeaders: {
           Location: 'https://tus.io/uploads/upload3',
         },
@@ -214,9 +220,9 @@ describe('tus', () => {
       const resErr = new Error('something bad, really!')
       const buffer = Buffer.from('hello world')
       const options = {
-        httpStack  : new TestHttpStack(),
-        endpoint   : '/uploads',
-        onError    : waitableFunction('onError'),
+        httpStack: new TestHttpStack(),
+        endpoint: '/uploads',
+        onError: waitableFunction('onError'),
         retryDelays: null,
       }
 
@@ -235,25 +241,30 @@ describe('tus', () => {
 
     it('should resume an upload from a stored url', async () => {
       const storagePath = temp.path()
-      fs.writeFileSync(storagePath, '{"tus::fingerprinted::1337":{"uploadUrl":"http://tus.io/uploads/resuming"}}')
+      fs.writeFileSync(
+        storagePath,
+        '{"tus::fingerprinted::1337":{"uploadUrl":"http://tus.io/uploads/resuming"}}'
+      )
       const storage = new tus.FileUrlStorage(storagePath)
       const input = Buffer.from('hello world')
       const options = {
-        httpStack : new TestHttpStack(),
-        endpoint  : '/uploads',
-        fingerprint () {},
+        httpStack: new TestHttpStack(),
+        endpoint: '/uploads',
+        fingerprint() {},
         urlStorage: storage,
-        onSuccess : waitableFunction('onSuccess'),
+        onSuccess: waitableFunction('onSuccess'),
       }
       spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
 
       const upload = new tus.Upload(input, options)
 
       const previousUploads = await upload.findPreviousUploads()
-      expect(previousUploads).toEqual([{
-        uploadUrl    : 'http://tus.io/uploads/resuming',
-        urlStorageKey: 'tus::fingerprinted::1337',
-      }])
+      expect(previousUploads).toEqual([
+        {
+          uploadUrl: 'http://tus.io/uploads/resuming',
+          urlStorageKey: 'tus::fingerprinted::1337',
+        },
+      ])
       upload.resumeFromPreviousUpload(previousUploads[0])
 
       upload.start()
@@ -266,7 +277,7 @@ describe('tus', () => {
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
 
       req.respondWith({
-        status         : 204,
+        status: 204,
         responseHeaders: {
           'Upload-Length': 11,
           'Upload-Offset': 3,
@@ -284,7 +295,7 @@ describe('tus', () => {
       expect(req.body.size).toBe(11 - 3)
 
       req.respondWith({
-        status         : 204,
+        status: 204,
         responseHeaders: {
           'Upload-Offset': 11,
         },
@@ -305,9 +316,9 @@ describe('tus', () => {
   describe('#NodeHttpStack', () => {
     it("should allow to pass options to Node's requests", async () => {
       const customAgent = new https.Agent()
-      const stack = (new tus.DefaultHttpStack({
+      const stack = new tus.DefaultHttpStack({
         agent: customAgent,
-      }))
+      })
       const req = stack.createRequest('GET', 'https://tusd.tusdemo.net/')
       await req.send()
       expect(req.getUnderlyingObject().agent).toBe(customAgent)
@@ -339,11 +350,15 @@ describe('tus', () => {
 
       // Error case: start is before previous start
       ret = source.slice(0, 100)
-      await expectAsync(ret).toBeRejectedWithError('cannot slice from position which we already seeked away')
+      await expectAsync(ret).toBeRejectedWithError(
+        'cannot slice from position which we already seeked away'
+      )
 
       // Error case: start is is outside of buffer
       ret = source.slice(50, 100)
-      await expectAsync(ret).toBeRejectedWithError('slice start is outside of buffer (currently not implemented)')
+      await expectAsync(ret).toBeRejectedWithError(
+        'slice start is outside of buffer (currently not implemented)'
+      )
 
       // Read remaining data from stream
       ret = await source.slice(15, 100)
@@ -368,7 +383,7 @@ describe('tus', () => {
   })
 })
 
-async function getBodySize (body) {
+async function getBodySize(body) {
   if (body == null) {
     return 0
   }
@@ -387,7 +402,7 @@ async function getBodySize (body) {
   })
 }
 
-async function expectHelloWorldUpload (input, options) {
+async function expectHelloWorldUpload(input, options) {
   options.httpStack = new TestHttpStack()
   options.onSuccess = waitableFunction('onSuccess')
 
@@ -406,7 +421,7 @@ async function expectHelloWorldUpload (input, options) {
   }
 
   req.respondWith({
-    status         : 201,
+    status: 201,
     responseHeaders: {
       Location: '/uploads/blargh',
     },
@@ -419,7 +434,7 @@ async function expectHelloWorldUpload (input, options) {
   expect(await getBodySize(req.body)).toBe(7)
 
   req.respondWith({
-    status         : 204,
+    status: 204,
     responseHeaders: {
       'Upload-Offset': 7,
     },
@@ -436,7 +451,7 @@ async function expectHelloWorldUpload (input, options) {
 
   expect(await getBodySize(req.body)).toBe(4)
   req.respondWith({
-    status         : 204,
+    status: 204,
     responseHeaders: {
       'Upload-Offset': 11,
     },

@@ -3,14 +3,14 @@
 
 'use strict'
 
-let stopRecording   = null
-let upload          = null
-const recordBtn       = document.querySelector('#record-btn')
-const alertBox        = document.querySelector('#support-alert')
-const progressBox     = document.querySelector('#progress-note')
-const uploadList      = document.querySelector('#upload-list')
-const chunkInput      = document.querySelector('#chunksize')
-const endpointInput   = document.querySelector('#endpoint')
+let stopRecording = null
+let upload = null
+const recordBtn = document.querySelector('#record-btn')
+const alertBox = document.querySelector('#support-alert')
+const progressBox = document.querySelector('#progress-note')
+const uploadList = document.querySelector('#upload-list')
+const chunkInput = document.querySelector('#chunksize')
+const endpointInput = document.querySelector('#endpoint')
 
 if (!tus.isSupported) {
   alertBox.classList.remove('hidden')
@@ -31,7 +31,7 @@ recordBtn.addEventListener('click', (e) => {
   }
 })
 
-function startUpload (file) {
+function startUpload(file) {
   const endpoint = endpointInput.value
   let chunkSize = parseInt(chunkInput.value, 10)
   if (Number.isNaN(chunkSize)) {
@@ -39,16 +39,16 @@ function startUpload (file) {
   }
 
   const options = {
-    resume              : false,
+    resume: false,
     endpoint,
     chunkSize,
-    retryDelays         : [0, 1000, 3000, 5000],
+    retryDelays: [0, 1000, 3000, 5000],
     uploadLengthDeferred: true,
-    metadata            : {
+    metadata: {
       filename: 'webcam.webm',
       filetype: 'video/webm',
     },
-    onError (error) {
+    onError(error) {
       if (error.originalRequest) {
         if (window.confirm(`Failed because: ${error}\nDo you want to retry?`)) {
           upload.start()
@@ -60,10 +60,10 @@ function startUpload (file) {
 
       reset()
     },
-    onProgress (bytesUploaded) {
+    onProgress(bytesUploaded) {
       progressBox.textContent = `Uploaded ${bytesUploaded} bytes so far.`
     },
-    onSuccess () {
+    onSuccess() {
       const listItem = document.createElement('li')
 
       const video = document.createElement('video')
@@ -89,9 +89,10 @@ function startUpload (file) {
   upload.start()
 }
 
-function startStreamUpload () {
-  navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => {
+function startStreamUpload() {
+  navigator.mediaDevices
+    .getUserMedia({ video: true })
+    .then((stream) => {
       const mr = new MediaRecorder(stream)
       const chunks = []
       let done = false
@@ -102,7 +103,7 @@ function startStreamUpload () {
         done = true
         if (onDataAvailable) onDataAvailable(readableRecorder.read())
       }
-      mr.ondataavailable = event => {
+      mr.ondataavailable = (event) => {
         chunks.push(event.data)
         if (onDataAvailable) {
           onDataAvailable(readableRecorder.read())
@@ -113,7 +114,7 @@ function startStreamUpload () {
       mr.start(1000)
 
       const readableRecorder = {
-        read () {
+        read() {
           if (done && chunks.length === 0) {
             return Promise.resolve({ done: true })
           }
@@ -122,14 +123,16 @@ function startStreamUpload () {
             return Promise.resolve({ value: chunks.shift(), done: false })
           }
 
-          return new Promise((resolve) => { onDataAvailable = resolve })
+          return new Promise((resolve) => {
+            onDataAvailable = resolve
+          })
         },
       }
 
       startUpload(readableRecorder)
 
       stopRecording = () => {
-        stream.getTracks().forEach(t => t.stop())
+        stream.getTracks().forEach((t) => t.stop())
         mr.stop()
         stopRecording = null
       }
@@ -137,11 +140,11 @@ function startStreamUpload () {
     .catch(onError)
 }
 
-function reset () {
+function reset() {
   upload = null
 }
 
-function onError (error) {
+function onError(error) {
   console.log(error)
   alert(`An error occurred: ${error}`)
 

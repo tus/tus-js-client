@@ -16,7 +16,7 @@ const uploadLink = document.querySelector('#js-upload-link')
 
 fileInput.addEventListener('click', openFilePicker)
 
-function resetUpload () {
+function resetUpload() {
   if (upload) {
     upload.abort()
     upload = null
@@ -30,51 +30,59 @@ function resetUpload () {
 
 uploadButton.addEventListener('click', toggleUpload)
 
-function openFilePicker () {
+function openFilePicker() {
   resetUpload()
 
   const options = {
     // Camera is a global cordova-specific object used for configuring camera access.
     // See https://cordova.apache.org/docs/en/latest/reference/cordova-plugin-camera/#module_Camera
-    destinationType   : Camera.DestinationType.FILE_URI,
-    sourceType        : Camera.PictureSourceType.PHOTOLIBRARY,
-    encodingType      : Camera.EncodingType.JPEG,
-    mediaType         : Camera.MediaType.PICTURE,
+    destinationType: Camera.DestinationType.FILE_URI,
+    sourceType: Camera.PictureSourceType.PHOTOLIBRARY,
+    encodingType: Camera.EncodingType.JPEG,
+    mediaType: Camera.MediaType.PICTURE,
     // Allow simple editing of image before selection.
-    allowEdit         : true,
+    allowEdit: true,
     // Rotate the image to correct for the orientation of the device during
     // capture to fix orientation quirks on Android
     correctOrientation: true,
   }
 
-  navigator.camera.getPicture(getFileEntry, (error) => {
-    window.alert(`Unable to obtain picture: ${error}`)
-  }, options)
+  navigator.camera.getPicture(
+    getFileEntry,
+    (error) => {
+      window.alert(`Unable to obtain picture: ${error}`)
+    },
+    options
+  )
 }
 
-function getFileEntry (imgUri) {
-  window.resolveLocalFileSystemURL(imgUri, (fileEntry) => {
-    fileEntry.file((fileObj) => {
-      file = fileObj
-      fileLink.textContent = file.name
-    })
-  }, (error) => {
-    window.alert(`Could not create FileEntry: ${error}`)
-  })
+function getFileEntry(imgUri) {
+  window.resolveLocalFileSystemURL(
+    imgUri,
+    (fileEntry) => {
+      fileEntry.file((fileObj) => {
+        file = fileObj
+        fileLink.textContent = file.name
+      })
+    },
+    (error) => {
+      window.alert(`Could not create FileEntry: ${error}`)
+    }
+  )
 }
 
-function toggleUpload () {
+function toggleUpload() {
   if (!upload) {
     if (!file) return
 
     const options = {
-      endpoint   : 'https://tusd.tusdemo.net/files/',
+      endpoint: 'https://tusd.tusdemo.net/files/',
       retryDelays: [0, 1000, 3000, 5000],
-      metadata   : {
+      metadata: {
         filename: file.name,
         filetype: file.type,
       },
-      onError (error) {
+      onError(error) {
         if (error.originalRequest) {
           if (window.confirm(`Failed because: ${error}\nDo you want to retry?`)) {
             upload.start()
@@ -87,13 +95,13 @@ function toggleUpload () {
 
         resetUpload()
       },
-      onProgress (bytesUploaded, bytesTotal) {
+      onProgress(bytesUploaded, bytesTotal) {
         const progress = bytesUploaded / bytesTotal
         const percentage = `${(progress * 100).toFixed(2)}%`
         progressBar.value = progress
         progressText.textContent = percentage
       },
-      onSuccess () {
+      onSuccess() {
         const anchor = document.createElement('a')
         anchor.textContent = `Download ${upload.file.name} (${upload.file.size} bytes)`
         anchor.target = '_blank'

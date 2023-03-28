@@ -13,23 +13,23 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - desc: "Browserstack"
-            suite: "browserstack"
-          - desc: "Puppeteer"
-            suite: "puppeteer"
-          - desc: "Types"
-            suite: "types"
-          - desc: "Node.js 14"
-            suite: "node"
+          - desc: 'Browserstack'
+            suite: 'browserstack'
+          - desc: 'Puppeteer'
+            suite: 'puppeteer'
+          - desc: 'Types'
+            suite: 'types'
+          - desc: 'Node.js 14'
+            suite: 'node'
             node: 14
-          - desc: "Node.js 16"
-            suite: "node"
+          - desc: 'Node.js 16'
+            suite: 'node'
             node: 16
-          - desc: "Node.js 18"
-            suite: "node"
+          - desc: 'Node.js 18'
+            suite: 'node'
             node: 18
     name: ${{ matrix.desc }}
-    steps  : 
+    steps:
       - name: Check out sources
         uses: actions/checkout@v3
         with:
@@ -59,7 +59,6 @@ jobs:
         env:
           BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
           BROWSERSTACK_KEY: ${{ secrets.BROWSERSTACK_KEY }}
-
 # @TODO: port this Travis CI automation to GHA one day:
 # deploy:
 #   provider: npm
