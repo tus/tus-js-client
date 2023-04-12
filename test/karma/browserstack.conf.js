@@ -13,10 +13,9 @@ if ('GITHUB_RUN_ID' in process.env) {
 module.exports = (config) => {
   baseConfig(config)
   config.set({
-
     // global config of your BrowserStack account
     browserStack: {
-      username : process.env.BROWSERSTACK_USERNAME,
+      username: process.env.BROWSERSTACK_USERNAME,
       accessKey: process.env.BROWSERSTACK_KEY,
     },
 
@@ -24,60 +23,57 @@ module.exports = (config) => {
     customLaunchers: {
       // Firefox
       bs_firefox: {
-        base           : 'BrowserStack',
-        browser        : 'firefox',
+        base: 'BrowserStack',
+        browser: 'firefox',
         browser_version: 'latest',
-        os             : 'Windows',
-        os_version     : '10',
+        os: 'Windows',
+        os_version: '10',
       },
       // Chrome
       bs_chrome: {
-        base           : 'BrowserStack',
-        browser        : 'chrome',
+        base: 'BrowserStack',
+        browser: 'chrome',
         browser_version: 'latest',
-        os             : 'Windows',
-        os_version     : '10',
+        os: 'Windows',
+        os_version: '10',
       },
       // Edge
       bs_edge: {
-        base           : 'BrowserStack',
-        browser        : 'edge',
+        base: 'BrowserStack',
+        browser: 'edge',
         browser_version: 'latest',
-        os             : 'Windows',
-        os_version     : '10',
+        os: 'Windows',
+        os_version: '10',
       },
       // Safari
       bs_safari: {
-        base           : 'BrowserStack',
-        browser        : 'safari',
+        base: 'BrowserStack',
+        browser: 'safari',
         browser_version: 'latest',
-        os             : 'OS X',
-        os_version     : 'Monterey',
+        os: 'OS X',
+        os_version: 'Monterey',
       },
       // iOS
       bs_ios: {
-        base       : 'BrowserStack',
-        browser    : 'safari',
-        os         : 'ios',
-        os_version : '15',
-        device     : 'iPhone 13 Mini',
+        base: 'BrowserStack',
+        browser: 'safari',
+        os: 'ios',
+        os_version: '15',
+        device: 'iPhone 13 Mini',
         real_mobile: 'true',
       },
       // Android
       bs_android: {
-        base       : 'BrowserStack',
-        browser    : 'chrome',
-        os         : 'android',
-        os_version : '12.0',
-        device     : 'Google Pixel 6',
+        base: 'BrowserStack',
+        browser: 'chrome',
+        os: 'android',
+        os_version: '12.0',
+        device: 'Google Pixel 6',
         real_mobile: 'true',
       },
     },
 
-    browsers: [
-      'bs_firefox', 'bs_chrome', 'bs_edge', 'bs_safari',
-      'bs_ios', 'bs_android',
-    ],
+    browsers: ['bs_firefox', 'bs_chrome', 'bs_edge', 'bs_safari', 'bs_ios', 'bs_android'],
 
     // test results reporter to use
     // possible values: 'dots', 'progress'

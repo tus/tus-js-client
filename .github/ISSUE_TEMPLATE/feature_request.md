@@ -4,7 +4,6 @@ about: Suggest an idea or improvement
 title: ''
 labels: enhancement
 assignees: ''
-
 ---
 
 **Is your feature request related to a problem? Please describe.**
