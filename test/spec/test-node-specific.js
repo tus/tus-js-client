@@ -8,7 +8,6 @@ const intoStream = require('into-stream')
 const tus = require('../..')
 const assertUrlStorage = require('./helpers/assertUrlStorage')
 const { TestHttpStack, waitableFunction } = require('./helpers/utils')
-const {default: Checksum} = require('../../lib.es5/node/extensions/checksum')
 
 describe('tus', () => {
   describe('#canStoreURLs', () => {
@@ -318,16 +317,16 @@ describe('tus', () => {
 
   describe('#Checksum', () => {
     it('should generate hex digest for a given chunk of file', async () => {
-      const checksum = new Checksum();
+      const checksum = new tus.Checksum()
       const hexDigest = await checksum.getHexDigest(Buffer.from('hello', 'utf8'))
       expect(hexDigest).toBe('2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824')
     })
 
     it('should throw an error when an unsupported algo is provided', () => {
       try {
-        const checksum = new Checksum('new-algo')
+        const checksum = new tus.Checksum('new-algo')
       } catch (err) {
-        expect(err).toContain('unsupported checksumAlgo');
+        expect(err.message).toContain('unsupported checksumAlgo')
       }
     })
   })

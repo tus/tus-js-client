@@ -65,7 +65,7 @@ function startUpload () {
     endpoint,
     chunkSize,
     retryDelays: [0, 1000, 3000, 5000],
-    checksumAlgo: "sha-256",
+    checksumAlgo: "SHA-256",
     parallelUploads,
     metadata   : {
       filename: file.name,

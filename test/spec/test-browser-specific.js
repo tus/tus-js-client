@@ -3,7 +3,6 @@
 const assertUrlStorage = require('./helpers/assertUrlStorage')
 const { TestHttpStack, waitableFunction, wait } = require('./helpers/utils')
 const tus = require('../..')
-const { default: Checksum } = require('../../lib.es5/browser/extensions/checksum')
 
 describe('tus', () => {
   beforeEach(() => {
@@ -782,7 +781,7 @@ describe('tus', () => {
 
   describe('#Checksum', () => {
     it('should generate hex digest for a given chunk of file', async () => {
-      const checksum = new Checksum()
+      const checksum = new tus.Checksum()
       const hexDigest = await checksum.getHexDigest(
         new TextEncoder().encode('hello'),
       )
@@ -793,7 +792,7 @@ describe('tus', () => {
 
     it('should throw an error when an unsupported algo is provided', () => {
       try {
-        const checksum = new Checksum('md5')
+        const checksum = new tus.Checksum('md5')
       } catch (err) {
         expect(err.message).toContain('unsupported checksumAlgo')
       }
