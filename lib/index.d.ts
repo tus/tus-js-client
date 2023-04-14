@@ -126,6 +126,6 @@ export interface HttpResponse {
 
 export class DetailedError extends Error {
   originalRequest: HttpRequest
-  originalResponse: HttpResponse
-  causingError: Error
+  originalResponse: HttpResponse | null
+  causingError: Error | null
 }
