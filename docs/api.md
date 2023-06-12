@@ -366,18 +366,30 @@ An object used as the file reader to retrieve specific parts of the input file. 
 
 ```typescript
 interface FileReader {
+  // `input` is the same object that was passed to the `tus.Upload` constructor and is platform-specific.
+  // `chunkSize` is the user-defined or default value for the `chunkSize` option.
   openFile(input: any, chunkSize: number): Promise<FileSource>
 }
 
 interface FileSource {
-  size: number
+  // `size` is file length in bytes or `null` if no length can be determined because it is a streaming resource.
+  size: number | null
+  // `slice` returns a specific part of the file as requested by the range:
+  // - `start` is treated inclusively and `end` is treated exclusively, just like `Blob#slice` in browsers.
+  // - `start` is always a finite number, but `end` might be `Infinity`.
+  // The returned result includes the requested data and indicates if the file was read completely:
+  // - If data was read and the end was not reached:    `{ value: [data], done: false }`
+  // - If data was read and the end has been reached:   `{ value: [data], done: true }`
+  // - If no data was read because the end was reached: `{ value: null, done: true }`
   slice(start: number, end: number): Promise<SliceResult>
+  // `close` frees all resources that have been allocated by this `FileReader` instance.
   close()
 }
 
 interface SliceResult {
   // Platform-specific data type which must be usable by the HTTP stack as a body.
-  value: any
+  value: any | null
+  // `done` is true if the file has been read fully and future calls to `slice` will not return new data.
   done: boolean
 }
 ```
