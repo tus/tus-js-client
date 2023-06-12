@@ -315,6 +315,11 @@ interface HttpRequest {
     getHeader(header: string);
 
     setProgressHandler((bytesSent: number): void): void;
+    // Send the HTTP request with the provided request body. The value of the request body depends
+    // on the platform and what `fileReader` implementation is used. With the default `fileReader`,
+    // `body` can be
+    // - in browsers: a TypedArray, a DataView a Blob, or null.
+    // - in  Node.js: a Buffer, a ReadableStream, or null.
     send(body: any): Promise<HttpResponse>;
     abort(): Promise<void>;
 
