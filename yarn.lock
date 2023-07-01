@@ -4010,10 +4010,15 @@ jasmine-ajax@^4.0.0:
   resolved "https://registry.yarnpkg.com/jasmine-ajax/-/jasmine-ajax-4.0.0.tgz#7d8ba7e47e3f7e780e155fe9aa563faafa7e1a26"
   integrity sha512-htTxNw38BSHxxmd8RRMejocdPqLalGHU6n3HWFbzp/S8AuTQd1MYjkSH3dYDsbZ7EV1Xqx/b94m3tKaVSVBV2A==
 
-jasmine-core@^4.1.0, jasmine-core@^4.1.1, jasmine-core@^4.6.0:
+jasmine-core@^4.1.0, jasmine-core@^4.6.0:
   version "4.6.0"
   resolved "https://registry.yarnpkg.com/jasmine-core/-/jasmine-core-4.6.0.tgz#6884fc3d5b66bf293e422751eed6d6da217c38f5"
   integrity sha512-O236+gd0ZXS8YAjFx8xKaJ94/erqUliEkJTDedyE7iHvv4ZVqi+q+8acJxu05/WJDKm512EUNn809In37nWlAQ==
+
+jasmine-core@^5.0.1:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/jasmine-core/-/jasmine-core-5.0.1.tgz#ba0a0c8e0088c19f99bbce3c9e22accd4c4da37f"
+  integrity sha512-D4bRej8CplwNtNGyTPD++cafJlZUphzZNV+MSAnbD3er4D0NjL4x9V+mu/SI+5129utnCBen23JwEuBZA9vlpQ==
 
 jasmine@^4.1.0:
   version "4.6.0"
