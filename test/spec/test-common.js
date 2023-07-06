@@ -42,7 +42,6 @@ describe('tus', () => {
           nonlatin: 'słońce',
           number: 100,
         },
-        withCredentials: true,
         onProgress() {},
         onUploadUrlAvailable: waitableFunction('onUploadUrlAvailable'),
         onSuccess: waitableFunction('onSuccess'),
@@ -59,7 +58,6 @@ describe('tus', () => {
       expect(req.requestHeaders.Custom).toBe('blargh')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Length']).toBe(11)
-      // if (isBrowser) expect(req.withCredentials).toBe(true);
       expect(req.requestHeaders['Upload-Metadata']).toBe(
         'foo aGVsbG8=,bar d29ybGQ=,nonlatin c8WCb8WEY2U=,number MTAw'
       )
@@ -82,7 +80,6 @@ describe('tus', () => {
       expect(req.requestHeaders['Upload-Offset']).toBe(0)
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
       expect(req.body.size).toBe(11)
-      // if (isBrowser) expect(req.withCredentials).toBe(true);
 
       req.respondWith({
         status: 204,
