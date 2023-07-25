@@ -71,6 +71,7 @@ function startUpload() {
       filename: file.name,
       filetype: file.type,
     },
+    protocol: 'ietf-draft-01',
     onError(error) {
       if (error.originalRequest) {
         if (window.confirm(`Failed because: ${error}\nDo you want to retry?`)) {
