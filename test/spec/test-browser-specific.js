@@ -658,6 +658,51 @@ describe('tus', () => {
 
         await options.onSuccess.toBeCalled
       })
+
+      fit('should throw an error if the source provides less data than uploadSize', async () => {
+        const reader = makeReader('hello world')
+
+        const testStack = new TestHttpStack()
+        const options = {
+          httpStack: testStack,
+          uploadSize: 100,
+          chunkSize: 100,
+          endpoint: 'http://tus.io/uploads',
+          retryDelays: [],
+          onError: waitableFunction('onError'),
+        }
+
+        const upload = new tus.Upload(reader, options)
+        upload.start()
+        let req = await testStack.nextRequest()
+        expect(req.url).toBe('http://tus.io/uploads')
+        expect(req.method).toBe('POST')
+        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            Location: 'http://tus.io/uploads/foo',
+          },
+        })
+
+        req = await testStack.nextRequest()
+        expect(req.url).toBe('http://tus.io/uploads/foo')
+        expect(req.method).toBe('PATCH')
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            'Upload-Offset': 11,
+          },
+        })
+
+        const err = await options.onError.toBeCalled
+
+        expect(err.message).toBe(
+          'tus: failed to upload chunk at offset 11, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)'
+        )
+      })
     })
 
     describe('resolving of URIs', () => {
