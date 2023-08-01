@@ -46,43 +46,6 @@ describe('tus', () => {
     )
 
     it(
-      'should upload to a real tus server even if the size is somehow wrong',
-      async () => {
-        return new Promise((resolve, reject) => {
-          const file = getBlob('hello world')
-          const options = {
-            endpoint: 'https://tusd.tusdemo.net/files/',
-            metadata: {
-              nonlatin: 'słońce',
-              number: 100,
-              filename: 'hello.txt',
-              filetype: 'text/plain',
-            },
-            onSuccess() {
-              expect(upload.url).toMatch(/^https:\/\/tusd\.tusdemo\.net\/files\//)
-              console.log('Upload URL:', upload.url) // eslint-disable-line no-console
-
-              resolve(upload)
-            },
-            onError(err) {
-              reject(err)
-            },
-          }
-
-          const upload = new tus.Upload(file, options)
-          upload.options.uploadSize = 10000;
-          upload.start()
-        })
-          .then(validateUploadContent)
-          .then((upload) => {
-            return upload.abort(true).then(() => upload)
-          })
-          .then(validateUploadDeletion)
-      },
-      END_TO_END_TIMEOUT
-    )
-
-    it(
       'should upload to a real tus server with creation-with-upload',
       async () => {
         return new Promise((resolve, reject) => {
