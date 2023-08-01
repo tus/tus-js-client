@@ -789,11 +789,7 @@ describe('tus', () => {
         },
       })
 
-      console.log('1')
-
       const err = await options.onError.toBeCalled
-      console.log('2')
-
       expect(err.message).toBe(
         'tus: failed to upload chunk at offset 0, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)'
       )

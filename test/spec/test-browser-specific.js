@@ -659,7 +659,7 @@ describe('tus', () => {
         await options.onSuccess.toBeCalled
       })
 
-      fit('should throw an error if the source provides less data than uploadSize', async () => {
+      it('should throw an error if the source provides less data than uploadSize', async () => {
         const reader = makeReader('hello world')
 
         const testStack = new TestHttpStack()
