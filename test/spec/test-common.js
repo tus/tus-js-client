@@ -763,6 +763,38 @@ describe('tus', () => {
       )
     })
 
+    it('should throw an error if the source provides less data than uploadSize', async () => {
+      const testStack = new TestHttpStack()
+      const file = getBlob('hello world')
+      const options = {
+        httpStack: testStack,
+        uploadSize: 100,
+        endpoint: 'http://tus.io/uploads',
+        retryDelays: [],
+        onError: waitableFunction('onError'),
+      }
+
+      const upload = new tus.Upload(file, options)
+      upload.start()
+
+      const req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads')
+      expect(req.method).toBe('POST')
+      expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          Location: 'http://tus.io/uploads/foo',
+        },
+      })
+
+      const err = await options.onError.toBeCalled
+      expect(err.message).toBe(
+        'tus: failed to upload chunk at offset 0, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)'
+      )
+    })
+
     it('should throw if retryDelays is not an array', () => {
       const file = getBlob('hello world')
       const upload = new tus.Upload(file, {
