@@ -40,8 +40,8 @@ interface UploadOptions {
   overridePatchMethod?: boolean
   headers?: { [key: string]: string }
   addRequestId?: boolean
-  onBeforeRequest?: (req: HttpRequest) => void
-  onAfterResponse?: (req: HttpRequest, res: HttpResponse) => void
+  onBeforeRequest?: (req: HttpRequest) => void | Promise<void>
+  onAfterResponse?: (req: HttpRequest, res: HttpResponse) => void | Promise<void>
 
   chunkSize?: number
   retryDelays?: number[]

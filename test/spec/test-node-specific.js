@@ -28,192 +28,268 @@ describe('tus', () => {
       await expectHelloWorldUpload(buffer, options)
     })
 
-    it('should reject streams without specifying the size', async () => {
-      const input = new stream.PassThrough()
-      const options = {
-        endpoint: '/uploads',
-        chunkSize: 100,
-        onError: waitableFunction('onError'),
-      }
+    describe('uploading from a stream', () => {
+      it('should reject streams without specifying the size', async () => {
+        const input = new stream.PassThrough()
+        const options = {
+          endpoint: '/uploads',
+          chunkSize: 100,
+          onError: waitableFunction('onError'),
+        }
 
-      const upload = new tus.Upload(input, options)
-      upload.start()
+        const upload = new tus.Upload(input, options)
+        upload.start()
 
-      const err = await options.onError.toBeCalled
-      expect(err.message).toBe(
-        "tus: cannot automatically derive upload's size from input. Specify it manually using the `uploadSize` option or use the `uploadLengthDeferred` option"
-      )
-    })
-
-    it('should reject streams without specifying the chunkSize', async () => {
-      const input = new stream.PassThrough()
-      const options = {
-        endpoint: '/uploads',
-        onError: waitableFunction('onError'),
-      }
-
-      const upload = new tus.Upload(input, options)
-      upload.start()
-
-      const err = await options.onError.toBeCalled
-      expect(err.message).toBe(
-        'cannot create source for stream without a finite value for the `chunkSize` option; specify a chunkSize to control the memory consumption'
-      )
-    })
-
-    it('should accept Readable streams', async () => {
-      const input = new stream.PassThrough()
-      const options = {
-        httpStack: new TestHttpStack(),
-        endpoint: '/uploads',
-        chunkSize: 7,
-        uploadSize: 11,
-      }
-
-      input.end('hello WORLD')
-      await expectHelloWorldUpload(input, options)
-    })
-
-    it('should accept stream-like objects', async () => {
-      // This function returns an object that works like a stream but does not inherit stream.Readable
-      const input = intoStream('hello WORLD')
-      const options = {
-        httpStack: new TestHttpStack(),
-        endpoint: '/uploads',
-        chunkSize: 7,
-        uploadSize: 11,
-      }
-
-      await expectHelloWorldUpload(input, options)
-    })
-
-    it('should accept Readable streams with deferred size', async () => {
-      const input = new stream.PassThrough()
-      const options = {
-        httpStack: new TestHttpStack(),
-        endpoint: '/uploads',
-        chunkSize: 7,
-        uploadLengthDeferred: true,
-      }
-
-      input.end('hello WORLD')
-      await expectHelloWorldUpload(input, options)
-    })
-
-    it('should accept fs.ReadStream', async () => {
-      // Create a temporary file
-      const path = temp.path()
-      fs.writeFileSync(path, 'hello world')
-      const file = fs.createReadStream(path)
-
-      const options = {
-        httpStack: new TestHttpStack(),
-        endpoint: '/uploads',
-        chunkSize: 7,
-      }
-
-      await expectHelloWorldUpload(file, options)
-    })
-
-    it('should support parallelUploads and fs.ReadStream', async () => {
-      // Create a temporary file
-      const path = temp.path()
-      fs.writeFileSync(path, 'hello world')
-      const file = fs.createReadStream(path)
-
-      const testStack = new TestHttpStack()
-
-      const options = {
-        httpStack: testStack,
-        parallelUploads: 2,
-        endpoint: 'https://tus.io/uploads',
-        onProgress() {},
-        onSuccess: waitableFunction(),
-      }
-      spyOn(options, 'onProgress')
-
-      const upload = new tus.Upload(file, options)
-      upload.start()
-
-      let req = await testStack.nextRequest()
-      expect(req.url).toBe('https://tus.io/uploads')
-      expect(req.method).toBe('POST')
-      expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Length']).toBe(5)
-      expect(req.requestHeaders['Upload-Concat']).toBe('partial')
-
-      req.respondWith({
-        status: 201,
-        responseHeaders: {
-          Location: 'https://tus.io/uploads/upload1',
-        },
+        const err = await options.onError.toBeCalled
+        expect(err.message).toBe(
+          "tus: cannot automatically derive upload's size from input. Specify it manually using the `uploadSize` option or use the `uploadLengthDeferred` option"
+        )
       })
 
-      req = await testStack.nextRequest()
-      expect(req.url).toBe('https://tus.io/uploads/upload1')
-      expect(req.method).toBe('PATCH')
-      expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Offset']).toBe(0)
-      expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-      expect(req.body.size).toBe(5)
+      it('should reject streams without specifying the chunkSize', async () => {
+        const input = new stream.PassThrough()
+        const options = {
+          endpoint: '/uploads',
+          onError: waitableFunction('onError'),
+        }
 
-      req.respondWith({
-        status: 204,
-        responseHeaders: {
-          'Upload-Offset': 5,
-        },
+        const upload = new tus.Upload(input, options)
+        upload.start()
+
+        const err = await options.onError.toBeCalled
+        expect(err.message).toBe(
+          'cannot create source for stream without a finite value for the `chunkSize` option; specify a chunkSize to control the memory consumption'
+        )
       })
 
-      req = await testStack.nextRequest()
-      expect(req.url).toBe('https://tus.io/uploads')
-      expect(req.method).toBe('POST')
-      expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Length']).toBe(6)
-      expect(req.requestHeaders['Upload-Concat']).toBe('partial')
+      it('should accept Readable streams', async () => {
+        const input = new stream.PassThrough()
+        const options = {
+          httpStack: new TestHttpStack(),
+          endpoint: '/uploads',
+          chunkSize: 7,
+          uploadSize: 11,
+        }
 
-      req.respondWith({
-        status: 201,
-        responseHeaders: {
-          Location: 'https://tus.io/uploads/upload2',
-        },
+        input.end('hello WORLD')
+        await expectHelloWorldUpload(input, options)
       })
 
-      req = await testStack.nextRequest()
-      expect(req.url).toBe('https://tus.io/uploads/upload2')
-      expect(req.method).toBe('PATCH')
-      expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Offset']).toBe(0)
-      expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-      expect(req.body.size).toBe(6)
+      it('should accept stream-like objects', async () => {
+        // This function returns an object that works like a stream but does not inherit stream.Readable
+        const input = intoStream('hello WORLD')
+        const options = {
+          httpStack: new TestHttpStack(),
+          endpoint: '/uploads',
+          chunkSize: 7,
+          uploadSize: 11,
+        }
 
-      req.respondWith({
-        status: 204,
-        responseHeaders: {
-          'Upload-Offset': 6,
-        },
+        await expectHelloWorldUpload(input, options)
       })
 
-      req = await testStack.nextRequest()
-      expect(req.url).toBe('https://tus.io/uploads')
-      expect(req.method).toBe('POST')
-      expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Length']).toBeUndefined()
-      expect(req.requestHeaders['Upload-Concat']).toBe(
-        'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2'
-      )
+      it('should accept Readable streams with deferred size', async () => {
+        const input = new stream.PassThrough()
+        const options = {
+          httpStack: new TestHttpStack(),
+          endpoint: '/uploads',
+          chunkSize: 7,
+          uploadLengthDeferred: true,
+        }
 
-      req.respondWith({
-        status: 201,
-        responseHeaders: {
-          Location: 'https://tus.io/uploads/upload3',
-        },
+        input.end('hello WORLD')
+        await expectHelloWorldUpload(input, options)
       })
 
-      await options.onSuccess.toBeCalled
+      it('should throw an error if the source provides less data than uploadSize', async () => {
+        const input = new stream.PassThrough()
+        input.end('hello world')
 
-      expect(upload.url).toBe('https://tus.io/uploads/upload3')
-      expect(options.onProgress).toHaveBeenCalledWith(5, 11)
-      expect(options.onProgress).toHaveBeenCalledWith(11, 11)
+        const testStack = new TestHttpStack()
+        const options = {
+          httpStack: testStack,
+          uploadSize: 100,
+          chunkSize: 100,
+          endpoint: 'http://tus.io/uploads',
+          retryDelays: [],
+          onError: waitableFunction('onError'),
+        }
+
+        const upload = new tus.Upload(input, options)
+        upload.start()
+
+        const req = await testStack.nextRequest()
+        expect(req.url).toBe('http://tus.io/uploads')
+        expect(req.method).toBe('POST')
+        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            Location: 'http://tus.io/uploads/foo',
+          },
+        })
+
+        const err = await options.onError.toBeCalled
+        expect(err.message).toBe(
+          'tus: failed to upload chunk at offset 0, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)'
+        )
+      })
+    })
+
+    describe('uploading from a fs.ReadStream', () => {
+      it('should accept fs.ReadStream', async () => {
+        // Create a temporary file
+        const path = temp.path()
+        fs.writeFileSync(path, 'hello world')
+        const file = fs.createReadStream(path)
+
+        const options = {
+          httpStack: new TestHttpStack(),
+          endpoint: '/uploads',
+          chunkSize: 7,
+        }
+
+        await expectHelloWorldUpload(file, options)
+      })
+
+      it('should support parallelUploads and fs.ReadStream', async () => {
+        // Create a temporary file
+        const path = temp.path()
+        fs.writeFileSync(path, 'hello world')
+        const file = fs.createReadStream(path)
+
+        const testStack = new TestHttpStack()
+
+        const options = {
+          httpStack: testStack,
+          parallelUploads: 2,
+          endpoint: 'https://tus.io/uploads',
+          onProgress() {},
+          onSuccess: waitableFunction(),
+        }
+        spyOn(options, 'onProgress')
+
+        const upload = new tus.Upload(file, options)
+        upload.start()
+
+        let req = await testStack.nextRequest()
+        expect(req.url).toBe('https://tus.io/uploads')
+        expect(req.method).toBe('POST')
+        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+        expect(req.requestHeaders['Upload-Length']).toBe(5)
+        expect(req.requestHeaders['Upload-Concat']).toBe('partial')
+
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: 'https://tus.io/uploads/upload1',
+          },
+        })
+
+        req = await testStack.nextRequest()
+        expect(req.url).toBe('https://tus.io/uploads/upload1')
+        expect(req.method).toBe('PATCH')
+        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+        expect(req.requestHeaders['Upload-Offset']).toBe(0)
+        expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
+        expect(req.body.size).toBe(5)
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            'Upload-Offset': 5,
+          },
+        })
+
+        req = await testStack.nextRequest()
+        expect(req.url).toBe('https://tus.io/uploads')
+        expect(req.method).toBe('POST')
+        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+        expect(req.requestHeaders['Upload-Length']).toBe(6)
+        expect(req.requestHeaders['Upload-Concat']).toBe('partial')
+
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: 'https://tus.io/uploads/upload2',
+          },
+        })
+
+        req = await testStack.nextRequest()
+        expect(req.url).toBe('https://tus.io/uploads/upload2')
+        expect(req.method).toBe('PATCH')
+        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+        expect(req.requestHeaders['Upload-Offset']).toBe(0)
+        expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
+        expect(req.body.size).toBe(6)
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            'Upload-Offset': 6,
+          },
+        })
+
+        req = await testStack.nextRequest()
+        expect(req.url).toBe('https://tus.io/uploads')
+        expect(req.method).toBe('POST')
+        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+        expect(req.requestHeaders['Upload-Length']).toBeUndefined()
+        expect(req.requestHeaders['Upload-Concat']).toBe(
+          'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2'
+        )
+
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: 'https://tus.io/uploads/upload3',
+          },
+        })
+
+        await options.onSuccess.toBeCalled
+
+        expect(upload.url).toBe('https://tus.io/uploads/upload3')
+        expect(options.onProgress).toHaveBeenCalledWith(5, 11)
+        expect(options.onProgress).toHaveBeenCalledWith(11, 11)
+      })
+
+      it('should throw an error if the source provides less data than uploadSize', async () => {
+        // Create a temporary file
+        const path = temp.path()
+        fs.writeFileSync(path, 'hello world')
+        const file = fs.createReadStream(path)
+
+        const testStack = new TestHttpStack()
+        const options = {
+          httpStack: testStack,
+          uploadSize: 100,
+          chunkSize: 100,
+          endpoint: 'http://tus.io/uploads',
+          retryDelays: [],
+          onError: waitableFunction('onError'),
+        }
+
+        const upload = new tus.Upload(file, options)
+        upload.start()
+
+        const req = await testStack.nextRequest()
+        expect(req.url).toBe('http://tus.io/uploads')
+        expect(req.method).toBe('POST')
+        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            Location: 'http://tus.io/uploads/foo',
+          },
+        })
+
+        const err = await options.onError.toBeCalled
+        expect(err.message).toBe(
+          'tus: failed to upload chunk at offset 0, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)'
+        )
+      })
     })
 
     it('should pass through errors from the request', async () => {
