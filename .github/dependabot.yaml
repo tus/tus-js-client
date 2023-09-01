@@ -4,12 +4,14 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    groups:
+      all:
+        pattern: '*'
 
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: monthly
-
-groups:
-  all:
-    pattern: '*'
+    groups:
+      all:
+        pattern: '*'
