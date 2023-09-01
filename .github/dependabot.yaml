@@ -6,7 +6,7 @@ updates:
       interval: monthly
     groups:
       all:
-        pattern: '*'
+        patterns: '*'
 
   - package-ecosystem: npm
     directory: /
@@ -14,4 +14,4 @@ updates:
       interval: monthly
     groups:
       all:
-        pattern: '*'
+        patterns: '*'
