@@ -13,7 +13,7 @@ describe('tus', () => {
         uploadUrl: 'foo',
       })
       expect(upload.start.bind(upload)).toThrowError(
-        'tus: cannot use the uploadUrl option when parallelUploads is enabled'
+        'tus: cannot use the uploadUrl option when parallelUploads is enabled',
       )
     })
 
@@ -24,7 +24,7 @@ describe('tus', () => {
         parallelUploadBoundaries: [{ start: 0, end: 2 }],
       })
       expect(upload.start.bind(upload)).toThrowError(
-        'tus: cannot use the `parallelUploadBoundaries` option when `parallelUploads` is disabled'
+        'tus: cannot use the `parallelUploadBoundaries` option when `parallelUploads` is disabled',
       )
     })
 
@@ -36,7 +36,7 @@ describe('tus', () => {
         parallelUploadBoundaries: [{ start: 0, end: 2 }],
       })
       expect(upload.start.bind(upload)).toThrowError(
-        'tus: the `parallelUploadBoundaries` must have the same length as the value of `parallelUploads`'
+        'tus: the `parallelUploadBoundaries` must have the same length as the value of `parallelUploads`',
       )
     })
 
@@ -188,7 +188,7 @@ describe('tus', () => {
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Length']).toBeUndefined()
       expect(req.requestHeaders['Upload-Concat']).toBe(
-        'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2'
+        'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2',
       )
       expect(req.requestHeaders['Upload-Metadata']).toBe('foo aGVsbG8=')
 
@@ -307,7 +307,7 @@ describe('tus', () => {
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Length']).toBeUndefined()
       expect(req.requestHeaders['Upload-Concat']).toBe(
-        'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2'
+        'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2',
       )
 
       req.respondWith({
@@ -347,7 +347,7 @@ describe('tus', () => {
 
       const err = await options.onError.toBeCalled
       expect(err.message).toBe(
-        'tus: unexpected response while creating upload, originated from request (method: POST, url: https://tus.io/uploads, response code: 500, response text: , request id: n/a)'
+        'tus: unexpected response while creating upload, originated from request (method: POST, url: https://tus.io/uploads, response code: 500, response text: , request id: n/a)',
       )
       expect(err.originalRequest).toBe(req)
     })
@@ -427,7 +427,7 @@ describe('tus', () => {
       expect(req.url).toBe('https://tus.io/uploads')
       expect(req.method).toBe('POST')
       expect(req.requestHeaders['Upload-Concat']).toBe(
-        'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2'
+        'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2',
       )
 
       req.respondWith({
@@ -561,7 +561,7 @@ describe('tus', () => {
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Length']).toBeUndefined()
       expect(req.requestHeaders['Upload-Concat']).toBe(
-        'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2'
+        'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2',
       )
 
       req.respondWith({

@@ -42,7 +42,7 @@ describe('tus', () => {
           })
           .then(validateUploadDeletion)
       },
-      END_TO_END_TIMEOUT
+      END_TO_END_TIMEOUT,
     )
 
     it(
@@ -73,7 +73,7 @@ describe('tus', () => {
           upload.start()
         }).then(validateUploadContent)
       },
-      END_TO_END_TIMEOUT
+      END_TO_END_TIMEOUT,
     )
   })
 })
