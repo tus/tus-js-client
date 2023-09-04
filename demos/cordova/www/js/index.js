@@ -52,7 +52,7 @@ function openFilePicker() {
     (error) => {
       window.alert(`Unable to obtain picture: ${error}`)
     },
-    options
+    options,
   )
 }
 
@@ -67,7 +67,7 @@ function getFileEntry(imgUri) {
     },
     (error) => {
       window.alert(`Could not create FileEntry: ${error}`)
-    }
+    },
   )
 }
 
