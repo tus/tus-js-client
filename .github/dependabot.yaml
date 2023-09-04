@@ -5,7 +5,10 @@ updates:
     schedule:
       interval: monthly
     groups:
-      all:
+      gha:
+        update-types:
+          - patch
+          - minor
         patterns:
           - '*'
 
@@ -14,6 +17,9 @@ updates:
     schedule:
       interval: monthly
     groups:
-      all:
+      npm:
+        update-types:
+          - patch
+          - minor
         patterns:
           - '*'
