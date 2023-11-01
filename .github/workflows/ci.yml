@@ -34,7 +34,7 @@ jobs:
       - name: Git Clean
         run: git clean -fxd --exclude=node_modules/
       - name: Install Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node || 20 }}
       - name: Install dependencies
