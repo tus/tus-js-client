@@ -62,7 +62,7 @@
     "eslint-plugin-react": "^7.22.0",
     "eslint-plugin-react-hooks": "^4.2.0",
     "exorcist": "^2.0.0",
-    "into-stream": "^6.0.0",
+    "into-stream": "^8.0.1",
     "jasmine": "^5.1.0",
     "jasmine-ajax": "^4.0.0",
     "jasmine-core": "^5.1.1",
