@@ -44,7 +44,7 @@ interface UploadOptions {
   onAfterResponse?: (req: HttpRequest, res: HttpResponse) => void | Promise<void>
 
   chunkSize?: number
-  retryDelays?: number[]
+  retryDelays?: number[] | null
   parallelUploads?: number
   parallelUploadBoundaries?: { start: number; end: number }[] | null
   storeFingerprintForResuming?: boolean
