@@ -4,7 +4,10 @@ const stream = require('stream')
 const temp = require('temp')
 const fs = require('fs')
 const https = require('https')
+const http = require('http')
+const crypto = require('crypto')
 const intoStream = require('into-stream')
+const { once } = require('events')
 const tus = require('../..')
 const assertUrlStorage = require('./helpers/assertUrlStorage')
 const { TestHttpStack, waitableFunction } = require('./helpers/utils')
@@ -399,6 +402,43 @@ describe('tus', () => {
       await req.send()
       expect(req.getUnderlyingObject().agent).toBe(customAgent)
       expect(req.getUnderlyingObject().agent).not.toBe(https.globalAgent)
+    })
+
+    it('should emit progress events when sending a Buffer', async () => {
+      // Start a simple HTTP server on a random port that accepts POST requests.
+      const server = http.createServer((req, res) => {
+        if (req.method === 'POST') {
+          req.on('data', () => {})
+          req.on('end', () => {
+            res.writeHead(200)
+            res.end('Data received')
+          })
+        } else {
+          res.writeHead(404)
+          res.end('Not found')
+        }
+      })
+
+      server.listen(0)
+      await once(server, 'listening')
+      const { port } = server.address()
+
+      const progressEvents = []
+
+      // Send POST request with 20MB of random data
+      const randomData = crypto.randomBytes(20 * 1024 * 1024)
+      const stack = new tus.DefaultHttpStack({})
+      const req = stack.createRequest('POST', `http://localhost:${port}`)
+      req.setProgressHandler((bytesSent) => progressEvents.push(bytesSent))
+      await req.send(randomData)
+
+      server.close()
+
+      // We should have received progress events and at least one event should not be for 0% or 100%.
+      expect(progressEvents.length).toBeGreaterThan(0)
+      expect(
+        progressEvents.some((bytesSent) => bytesSent !== 0 && bytesSent !== randomData.length),
+      ).toBeTrue()
     })
   })
 
