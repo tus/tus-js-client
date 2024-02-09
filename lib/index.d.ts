@@ -51,10 +51,12 @@ interface UploadOptions {
   removeFingerprintOnSuccess?: boolean
   uploadLengthDeferred?: boolean
   uploadDataDuringCreation?: boolean
+  checksumAlgo?: string
 
   urlStorage?: UrlStorage
   fileReader?: FileReader
   httpStack?: HttpStack
+  checksum?: Checksum;
 }
 
 interface UrlStorage {
@@ -128,4 +130,8 @@ export class DetailedError extends Error {
   originalRequest: HttpRequest
   originalResponse: HttpResponse | null
   causingError: Error | null
+}
+
+export interface Checksum {
+  getHexDigest(): string;
 }
