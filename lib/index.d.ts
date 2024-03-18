@@ -2,7 +2,8 @@
 
 export const isSupported: boolean
 export const canStoreURLs: boolean
-export const defaultOptions: UploadOptions
+export const defaultOptions: UploadOptions &
+  Required<Pick<UploadOptions, 'httpStack' | 'fileReader' | 'urlStorage' | 'fingerprint'>>
 
 // TODO: Consider using { read: () => Promise<{ done: boolean; value?: any; }>; } as type
 export class Upload {
@@ -25,7 +26,7 @@ interface UploadOptions {
 
   uploadUrl?: string | null
   metadata?: { [key: string]: string }
-  fingerprint?: (file: File, options?: UploadOptions) => Promise<string>
+  fingerprint?: (file: File, options: UploadOptions) => Promise<string>
   uploadSize?: number | null
 
   onProgress?: ((bytesSent: number, bytesTotal: number) => void) | null
@@ -33,7 +34,7 @@ interface UploadOptions {
   onSuccess?: (() => void) | null
   onError?: ((error: Error | DetailedError) => void) | null
   onShouldRetry?:
-    | ((error: Error | DetailedError, retryAttempt: number, options: UploadOptions) => boolean)
+    | ((error: DetailedError, retryAttempt: number, options: UploadOptions) => boolean)
     | null
   onUploadUrlAvailable?: (() => void) | null
 
@@ -44,7 +45,7 @@ interface UploadOptions {
   onAfterResponse?: (req: HttpRequest, res: HttpResponse) => void | Promise<void>
 
   chunkSize?: number
-  retryDelays?: number[]
+  retryDelays?: number[] | null
   parallelUploads?: number
   parallelUploadBoundaries?: { start: number; end: number }[] | null
   storeFingerprintForResuming?: boolean

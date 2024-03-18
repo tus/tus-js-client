@@ -19,27 +19,24 @@ jobs:
             suite: 'puppeteer'
           - desc: 'Types'
             suite: 'types'
-          - desc: 'Node.js 14'
-            suite: 'node'
-            node: 14
-          - desc: 'Node.js 16'
-            suite: 'node'
-            node: 16
           - desc: 'Node.js 18'
             suite: 'node'
             node: 18
+          - desc: 'Node.js 20'
+            suite: 'node'
+            node: 20
     name: ${{ matrix.desc }}
     steps:
       - name: Check out sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
       - name: Git Clean
         run: git clean -fxd --exclude=node_modules/
       - name: Install Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node || 16 }}
+          node-version: ${{ matrix.node || 20 }}
       - name: Install dependencies
         uses: sergioramos/yarn-actions/install@v6
         with:

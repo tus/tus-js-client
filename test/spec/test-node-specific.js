@@ -4,7 +4,10 @@ const stream = require('stream')
 const temp = require('temp')
 const fs = require('fs')
 const https = require('https')
+const http = require('http')
+const crypto = require('crypto')
 const intoStream = require('into-stream')
+const { once } = require('events')
 const tus = require('../..')
 const assertUrlStorage = require('./helpers/assertUrlStorage')
 const { TestHttpStack, waitableFunction } = require('./helpers/utils')
@@ -42,7 +45,7 @@ describe('tus', () => {
 
         const err = await options.onError.toBeCalled
         expect(err.message).toBe(
-          "tus: cannot automatically derive upload's size from input. Specify it manually using the `uploadSize` option or use the `uploadLengthDeferred` option"
+          "tus: cannot automatically derive upload's size from input. Specify it manually using the `uploadSize` option or use the `uploadLengthDeferred` option",
         )
       })
 
@@ -58,7 +61,7 @@ describe('tus', () => {
 
         const err = await options.onError.toBeCalled
         expect(err.message).toBe(
-          'cannot create source for stream without a finite value for the `chunkSize` option; specify a chunkSize to control the memory consumption'
+          'cannot create source for stream without a finite value for the `chunkSize` option; specify a chunkSize to control the memory consumption',
         )
       })
 
@@ -132,7 +135,7 @@ describe('tus', () => {
 
         const err = await options.onError.toBeCalled
         expect(err.message).toBe(
-          'tus: failed to upload chunk at offset 0, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)'
+          'tus: failed to upload chunk at offset 0, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)',
         )
       })
     })
@@ -237,7 +240,7 @@ describe('tus', () => {
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
         expect(req.requestHeaders['Upload-Length']).toBeUndefined()
         expect(req.requestHeaders['Upload-Concat']).toBe(
-          'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2'
+          'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2',
         )
 
         req.respondWith({
@@ -287,7 +290,7 @@ describe('tus', () => {
 
         const err = await options.onError.toBeCalled
         expect(err.message).toBe(
-          'tus: failed to upload chunk at offset 0, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)'
+          'tus: failed to upload chunk at offset 0, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)',
         )
       })
     })
@@ -319,7 +322,7 @@ describe('tus', () => {
       const storagePath = temp.path()
       fs.writeFileSync(
         storagePath,
-        '{"tus::fingerprinted::1337":{"uploadUrl":"http://tus.io/uploads/resuming"}}'
+        '{"tus::fingerprinted::1337":{"uploadUrl":"http://tus.io/uploads/resuming"}}',
       )
       const storage = new tus.FileUrlStorage(storagePath)
       const input = Buffer.from('hello world')
@@ -400,6 +403,43 @@ describe('tus', () => {
       expect(req.getUnderlyingObject().agent).toBe(customAgent)
       expect(req.getUnderlyingObject().agent).not.toBe(https.globalAgent)
     })
+
+    it('should emit progress events when sending a Buffer', async () => {
+      // Start a simple HTTP server on a random port that accepts POST requests.
+      const server = http.createServer((req, res) => {
+        if (req.method === 'POST') {
+          req.on('data', () => {})
+          req.on('end', () => {
+            res.writeHead(200)
+            res.end('Data received')
+          })
+        } else {
+          res.writeHead(404)
+          res.end('Not found')
+        }
+      })
+
+      server.listen(0)
+      await once(server, 'listening')
+      const { port } = server.address()
+
+      const progressEvents = []
+
+      // Send POST request with 20MB of random data
+      const randomData = crypto.randomBytes(20 * 1024 * 1024)
+      const stack = new tus.DefaultHttpStack({})
+      const req = stack.createRequest('POST', `http://localhost:${port}`)
+      req.setProgressHandler((bytesSent) => progressEvents.push(bytesSent))
+      await req.send(randomData)
+
+      server.close()
+
+      // We should have received progress events and at least one event should not be for 0% or 100%.
+      expect(progressEvents.length).toBeGreaterThan(0)
+      expect(
+        progressEvents.some((bytesSent) => bytesSent !== 0 && bytesSent !== randomData.length),
+      ).toBeTrue()
+    })
   })
 
   describe('#StreamSource', () => {
@@ -427,13 +467,13 @@ describe('tus', () => {
       // Error case: start is before previous start
       ret = source.slice(0, 100)
       await expectAsync(ret).toBeRejectedWithError(
-        'cannot slice from position which we already seeked away'
+        'cannot slice from position which we already seeked away',
       )
 
       // Error case: start is is outside of buffer
       ret = source.slice(50, 100)
       await expectAsync(ret).toBeRejectedWithError(
-        'slice start is outside of buffer (currently not implemented)'
+        'slice start is outside of buffer (currently not implemented)',
       )
 
       // Read remaining data from stream

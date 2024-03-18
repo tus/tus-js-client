@@ -152,7 +152,7 @@ describe('tus', () => {
       })
 
       await expectAsync(terminatePromise).toBeRejectedWithError(
-        /tus: unexpected response while terminating upload/
+        /tus: unexpected response while terminating upload/,
       )
     })
 

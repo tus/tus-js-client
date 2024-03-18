@@ -23,7 +23,7 @@ describe('tus', () => {
       const file = getBlob('hello world')
       const upload = new tus.Upload(file)
       expect(upload.start.bind(upload)).toThrowError(
-        'tus: neither an endpoint or an upload URL is provided'
+        'tus: neither an endpoint or an upload URL is provided',
       )
     })
 
@@ -59,7 +59,7 @@ describe('tus', () => {
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Length']).toBe(11)
       expect(req.requestHeaders['Upload-Metadata']).toBe(
-        'foo aGVsbG8=,bar d29ybGQ=,nonlatin c8WCb8WEY2U=,number MTAw'
+        'foo aGVsbG8=,bar d29ybGQ=,nonlatin c8WCb8WEY2U=,number MTAw',
       )
 
       req.respondWith({
@@ -263,7 +263,7 @@ describe('tus', () => {
       const err = await options.onError.toBeCalled
 
       expect(err.message).toBe(
-        `tus: unexpected response while creating upload, originated from request (method: POST, url: http://tus.io/uploads, response code: 500, response text: server_error, request id: ${reqId})`
+        `tus: unexpected response while creating upload, originated from request (method: POST, url: http://tus.io/uploads, response code: 500, response text: server_error, request id: ${reqId})`,
       )
       expect(err.originalRequest).toBeDefined()
       expect(err.originalResponse).toBeDefined()
@@ -333,7 +333,7 @@ describe('tus', () => {
 
       const err = await options.onError.toBeCalled
       expect(err.message).toBe(
-        'tus: unable to resume upload (new upload cannot be created without an endpoint), originated from request (method: HEAD, url: http://tus.io/uploads/resuming, response code: 404, response text: , request id: n/a)'
+        'tus: unable to resume upload (new upload cannot be created without an endpoint), originated from request (method: HEAD, url: http://tus.io/uploads/resuming, response code: 404, response text: , request id: n/a)',
       )
     })
 
@@ -469,7 +469,7 @@ describe('tus', () => {
 
       expect(upload.url).toBe(null)
       expect(err.message).toBe(
-        'tus: unexpected response while creating upload, originated from request (method: POST, url: http://tus.io/uploads, response code: 500, response text: , request id: n/a)'
+        'tus: unexpected response while creating upload, originated from request (method: POST, url: http://tus.io/uploads, response code: 500, response text: , request id: n/a)',
       )
       expect(err.originalRequest).toBeDefined()
       expect(err.originalResponse).toBeDefined()
@@ -727,8 +727,8 @@ describe('tus', () => {
       await options.onError.toBeCalled
       expect(options.onError).toHaveBeenCalledWith(
         new Error(
-          'tus: upload is currently locked; retry later, originated from request (method: HEAD, url: http://tus.io/files/upload, response code: 423, response text: , request id: n/a)'
-        )
+          'tus: upload is currently locked; retry later, originated from request (method: HEAD, url: http://tus.io/files/upload, response code: 423, response text: , request id: n/a)',
+        ),
       )
     })
 
@@ -758,8 +758,8 @@ describe('tus', () => {
 
       expect(options.onError).toHaveBeenCalledWith(
         new Error(
-          'tus: invalid or missing Location header, originated from request (method: POST, url: http://tus.io/uploads, response code: 201, response text: , request id: n/a)'
-        )
+          'tus: invalid or missing Location header, originated from request (method: POST, url: http://tus.io/uploads, response code: 201, response text: , request id: n/a)',
+        ),
       )
     })
 
@@ -791,7 +791,7 @@ describe('tus', () => {
 
       const err = await options.onError.toBeCalled
       expect(err.message).toBe(
-        'tus: failed to upload chunk at offset 0, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)'
+        'tus: failed to upload chunk at offset 0, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)',
       )
     })
 
@@ -802,7 +802,7 @@ describe('tus', () => {
         retryDelays: 44,
       })
       expect(upload.start.bind(upload)).toThrowError(
-        'tus: the `retryDelays` option must either be an array or null'
+        'tus: the `retryDelays` option must either be an array or null',
       )
     })
 

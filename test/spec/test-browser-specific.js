@@ -15,7 +15,7 @@ describe('tus', () => {
         'tus::fingerprinted::1337',
         JSON.stringify({
           uploadUrl: 'http://tus.io/uploads/resuming',
-        })
+        }),
       )
 
       const testStack = new TestHttpStack()
@@ -700,7 +700,7 @@ describe('tus', () => {
         const err = await options.onError.toBeCalled
 
         expect(err.message).toBe(
-          'tus: failed to upload chunk at offset 11, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)'
+          'tus: failed to upload chunk at offset 11, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)',
         )
       })
     })
@@ -820,8 +820,8 @@ describe('tus', () => {
         await options.onError.toBeCalled
         expect(options.onError).toHaveBeenCalledWith(
           new Error(
-            'tus: cannot fetch `file.uri` as Blob, make sure the uri is correct and accessible. [object Object]'
-          )
+            'tus: cannot fetch `file.uri` as Blob, make sure the uri is correct and accessible. [object Object]',
+          ),
         )
       })
     })

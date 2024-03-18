@@ -4,8 +4,22 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    groups:
+      gha:
+        update-types:
+          - patch
+          - minor
+        patterns:
+          - '*'
 
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: monthly
+    groups:
+      npm:
+        update-types:
+          - patch
+          - minor
+        patterns:
+          - '*'
