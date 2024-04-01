@@ -52,7 +52,7 @@ interface UploadOptions {
   removeFingerprintOnSuccess?: boolean
   uploadLengthDeferred?: boolean
   uploadDataDuringCreation?: boolean
-
+  useIndexedDBForUrlStorage?: boolean
   urlStorage?: UrlStorage
   fileReader?: FileReader
   httpStack?: HttpStack
