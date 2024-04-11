@@ -85,8 +85,7 @@
     "is-stream": "^2.0.0",
     "js-base64": "^3.7.2",
     "lodash.throttle": "^4.1.1",
-    "proper-lockfile": "^4.1.2",
-    "url-parse": "^1.5.7"
+    "proper-lockfile": "^4.1.2"
   },
   "scripts": {
     "build-test-bundle": "mkdir -p dist && browserify test/spec/browser-index.js -t [ babelify --plugins [ @babel/transform-modules-commonjs ] ] -d -o dist/browser-test-bundle.js",
