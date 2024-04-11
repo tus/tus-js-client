@@ -106,5 +106,9 @@
     "fix:formatting": "prettier --write .",
     "lint:formatting": "prettier --check .",
     "fix": "yarn fix:formatting"
+  },
+  "volta": {
+    "node": "20.12.2",
+    "yarn": "1.22.19"
   }
 }
