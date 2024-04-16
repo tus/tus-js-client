@@ -39,6 +39,9 @@
   },
   "homepage": "https://github.com/tus/tus-js-client",
   "devDependencies": {
+    "@babel/core": "^7.24.4",
+    "@babel/eslint-parser": "^7.24.1",
+    "@babel/eslint-plugin": "^7.23.5",
     "axios": "^0.28.0",
     "browserify": "^17.0.0",
     "chokidar-cli": "^3.0.0",
