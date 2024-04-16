@@ -9,6 +9,8 @@
     "skipLibCheck": true,
     "allowJs": true,
     "checkJs": false,
-    "declaration": true
+    "declaration": true,
+    // TODO: Remove this over time
+    "noImplicitAny": false
   }
 }
