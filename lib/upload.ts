@@ -1,13 +1,13 @@
 import { Base64 } from 'js-base64'
 import URL from 'url-parse'
-import DetailedError from './error.js'
+import DetailedError from './error'
 import { log } from './logger'
 import uuid from './uuid'
 
 const PROTOCOL_TUS_V1 = 'tus-v1'
 const PROTOCOL_IETF_DRAFT_03 = 'ietf-draft-03'
 
-const defaultOptions = {
+export const defaultOptions = {
   endpoint: null,
 
   uploadUrl: null,
@@ -44,8 +44,162 @@ const defaultOptions = {
   protocol: PROTOCOL_TUS_V1,
 }
 
-class BaseUpload {
-  constructor(file, options) {
+interface UploadOptions<F, S> {
+  // TODO: Embrace undefined over null
+  endpoint: string | null
+
+  uploadUrl: string | null
+  metadata: { [key: string]: string }
+  fingerprint: (file: F, options: UploadOptions<F, S>) => Promise<string>
+  uploadSize: number | null
+
+  onProgress: ((bytesSent: number, bytesTotal: number) => void) | null
+  onChunkComplete: ((chunkSize: number, bytesAccepted: number, bytesTotal: number) => void) | null
+  onSuccess: (() => void) | null
+  onError: ((error: Error | DetailedError) => void) | null
+  onShouldRetry:
+    | ((error: DetailedError, retryAttempt: number, options: UploadOptions<F, S>) => boolean)
+    | null
+  onUploadUrlAvailable: (() => void) | null
+
+  overridePatchMethod: boolean
+  headers: { [key: string]: string }
+  addRequestId: boolean
+  onBeforeRequest: ((req: HttpRequest<S>) => void | Promise<void>) | null
+  onAfterResponse: ((req: HttpRequest<S>, res: HttpResponse) => void | Promise<void>) | null
+
+  chunkSize: number
+  retryDelays: number[]
+  parallelUploads: number
+  parallelUploadBoundaries: { start: number; end: number }[] | null
+  storeFingerprintForResuming: boolean
+  removeFingerprintOnSuccess: boolean
+  uploadLengthDeferred: boolean
+  uploadDataDuringCreation: boolean
+
+  urlStorage: UrlStorage
+  fileReader: FileReader<F, S>
+  httpStack: HttpStack<S>
+
+  protocol: string
+}
+
+interface UrlStorage {
+  findAllUploads(): Promise<PreviousUpload[]>
+  findUploadsByFingerprint(fingerprint: string): Promise<PreviousUpload[]>
+
+  removeUpload(urlStorageKey: string): Promise<void>
+
+  // Returns the URL storage key, which can be used for removing the upload.
+  addUpload(fingerprint: string, upload: PreviousUpload): Promise<string>
+}
+
+interface PreviousUpload {
+  size: number | null
+  metadata: { [key: string]: string }
+  creationTime: string
+  uploadUrl?: string
+  parallelUploadUrls?: string[]
+}
+
+interface FileReader<F, S> {
+  openFile(input: F, chunkSize: number): Promise<FileSource<S>>
+}
+
+interface FileSource<S> {
+  size: number
+  slice(start: number, end: number): Promise<SliceResult<S>>
+  close(): void
+}
+
+interface SliceResult<S> {
+  // Platform-specific data type which must be usable by the HTTP stack as a body.
+  value: S & { size?: number }
+  done: boolean
+}
+
+interface HttpStack<B> {
+  createRequest(method: string, url: string): HttpRequest<B>
+  getName(): string
+}
+
+export interface HttpRequest<B> {
+  getMethod(): string
+  getURL(): string
+
+  setHeader(header: string, value: string): void
+  getHeader(header: string): string
+
+  setProgressHandler(handler: (bytesSent: number) => void): void
+  send(body?: B): Promise<HttpResponse>
+  abort(): Promise<void>
+
+  // Return an environment specific object, e.g. the XMLHttpRequest object in browsers.
+  getUnderlyingObject(): unknown
+}
+
+export interface HttpResponse {
+  getStatus(): number
+  getHeader(header: string): string
+  getBody(): string
+
+  // Return an environment specific object, e.g. the XMLHttpRequest object in browsers.
+  getUnderlyingObject(): any
+}
+
+class BaseUpload<F, S> {
+  options: UploadOptions<F, S>
+
+  // The storage module used to store URLs
+  _urlStorage: UrlStorage
+
+  // The underlying File/Blob object
+  file: F
+
+  // The URL against which the file will be uploaded
+  url: string | null = null
+
+  // The underlying request object for the current PATCH request
+  _req: HttpRequest<S> | null = null
+
+  // The fingerpinrt for the current file (set after start())
+  _fingerprint: string | null = null
+
+  // The key that the URL storage returned when saving an URL with a fingerprint,
+  _urlStorageKey: string | null = null
+
+  // The offset used in the current PATCH request
+  _offset = 0
+
+  // True if the current PATCH request has been aborted
+  _aborted = false
+
+  // The file's size in bytes
+  _size: number | null = null
+
+  // The Source object which will wrap around the given file and provides us
+  // with a unified interface for getting its size and slice chunks from its
+  // content allowing us to easily handle Files, Blobs, Buffers and Streams.
+  _source: FileSource<S> | null = null
+
+  // The current count of attempts which have been made. Zero indicates none.
+  _retryAttempt = 0
+
+  // The timeout's ID which is used to delay the next retry
+  _retryTimeout: unknown | null = null
+
+  // The offset of the remote upload before the latest attempt was started.
+  _offsetBeforeRetry = 0
+
+  // An array of BaseUpload instances which are used for uploading the different
+  // parts, if the parallelUploads option is used.
+  _parallelUploads?: BaseUpload<F, S>[]
+
+  // An array of upload URLs which are used for uploading the different
+  // parts, if the parallelUploads option is used.
+  _parallelUploadUrls?: string[]
+
+  constructor(file: F, options: UploadOptions<F, S>) {
     // Warn about removed options from previous versions
     if ('resume' in options) {
       // eslint-disable-next-line no-console
@@ -58,56 +212,13 @@ class BaseUpload {
     this.options = options
 
     // Cast chunkSize to integer
+    // TODO: Remove this cast
     this.options.chunkSize = Number(this.options.chunkSize)
 
-    // The storage module used to store URLs
-    this._urlStorage = this.options.urlStorage
-
-    // The underlying File/Blob object
     this.file = file
 
-    // The URL against which the file will be uploaded
-    this.url = null
-
-    // The underlying request object for the current PATCH request
-    this._req = null
-
-    // The fingerpinrt for the current file (set after start())
-    this._fingerprint = null
-
-    // The key that the URL storage returned when saving an URL with a fingerprint,
-    this._urlStorageKey = null
-
-    // The offset used in the current PATCH request
-    this._offset = null
-
-    // True if the current PATCH request has been aborted
-    this._aborted = false
-
-    // The file's size in bytes
-    this._size = null
-
-    // The Source object which will wrap around the given file and provides us
-    // with a unified interface for getting its size and slice chunks from its
-    // content allowing us to easily handle Files, Blobs, Buffers and Streams.
-    this._source = null
-
-    // The current count of attempts which have been made. Zero indicates none.
-    this._retryAttempt = 0
-
-    // The timeout's ID which is used to delay the next retry
-    this._retryTimeout = null
-
-    // The offset of the remote upload before the latest attempt was started.
-    this._offsetBeforeRetry = 0
-
-    // An array of BaseUpload instances which are used for uploading the different
-    // parts, if the parallelUploads option is used.
-    this._parallelUploads = null
-
-    // An array of upload URLs which are used for uploading the different
-    // parts, if the parallelUploads option is used.
-    this._parallelUploadUrls = null
+    // TODO: Remove this property
+    this._urlStorage = options.urlStorage
   }
 
   /**
@@ -120,21 +231,26 @@ class BaseUpload {
    * @param {object} options Optional options for influencing HTTP requests.
    * @return {Promise} The Promise will be resolved/rejected when the requests finish.
    */
-  static terminate(url, options = {}) {
+  static terminate<F, S>(url: string, options: UploadOptions<F, S>): Promise<void> {
     const req = openRequest('DELETE', url, options)
 
-    return sendRequest(req, null, options)
+    return sendRequest(req, undefined, options)
       .then((res) => {
         // A 204 response indicates a successfull request
         if (res.getStatus() === 204) {
           return
         }
 
-        throw new DetailedError('tus: unexpected response while terminating upload', null, req, res)
+        throw new DetailedError(
+          'tus: unexpected response while terminating upload',
+          undefined,
+          req,
+          res,
+        )
       })
       .catch((err) => {
         if (!(err instanceof DetailedError)) {
-          err = new DetailedError('tus: failed to terminate upload', err, req, null)
+          err = new DetailedError('tus: failed to terminate upload', err, req)
         }
 
         if (!shouldRetry(err, 0, options)) {
@@ -298,15 +414,14 @@ class BaseUpload {
 
     // The input file will be split into multiple slices which are uploaded in separate
     // requests. Here we get the start and end position for the slices.
-    const parts =
-      this.options.parallelUploadBoundaries ?? splitSizeIntoParts(this._source.size, partCount)
+    const partsBoundaries =
+      this.options.parallelUploadBoundaries ?? splitSizeIntoParts(this._size, partCount)
 
     // Attach URLs from previous uploads, if available.
-    if (this._parallelUploadUrls) {
-      parts.forEach((part, index) => {
-        part.uploadUrl = this._parallelUploadUrls[index] || null
-      })
-    }
+    const parts = partsBoundaries.map((part, index) => ({
+      ...part,
+      uploadUrl: this._parallelUploadUrls?.[index] || null,
+    }))
 
     // Create an empty list for storing the upload URLs
     this._parallelUploadUrls = new Array(parts.length)
@@ -316,9 +431,10 @@ class BaseUpload {
     const uploads = parts.map((part, index) => {
       let lastPartProgress = 0
 
+      // @ts-expect-error
       return this._source.slice(part.start, part.end).then(
         ({ value }) =>
-          new Promise((resolve, reject) => {
+          new Promise<void>((resolve, reject) => {
             // Merge with the user supplied options but overwrite some values.
             const options = {
               ...this.options,
@@ -351,18 +467,22 @@ class BaseUpload {
               // Wait until every partial upload has an upload URL, so we can add
               // them to the URL storage.
               onUploadUrlAvailable: () => {
+                // @ts-expect-error
                 this._parallelUploadUrls[index] = upload.url
                 // Test if all uploads have received an URL
+                // @ts-expect-error
                 if (this._parallelUploadUrls.filter((u) => Boolean(u)).length === parts.length) {
                   this._saveUploadInUrlStorage()
                 }
               },
             }
 
+            // @ts-expect-error
             const upload = new BaseUpload(value, options)
             upload.start()
 
             // Store the upload in an array, so we can later abort them if necessary.
+            // @ts-expect-error
             this._parallelUploads.push(upload)
           }),
       )
@@ -374,6 +494,7 @@ class BaseUpload {
     Promise.all(uploads)
       .then(() => {
         req = this._openRequest('POST', this.options.endpoint)
+        // @ts-expect-error
         req.setHeader('Upload-Concat', `final;${this._parallelUploadUrls.join(' ')}`)
 
         // Add metadata if values have been added
@@ -382,7 +503,7 @@ class BaseUpload {
           req.setHeader('Upload-Metadata', metadata)
         }
 
-        return this._sendRequest(req, null)
+        return this._sendRequest(req)
       })
       .then((res) => {
         if (!inStatusCategory(res.getStatus(), 200)) {
@@ -465,6 +586,7 @@ class BaseUpload {
 
     // Stop any timeout used for initiating a retry.
     if (this._retryTimeout != null) {
+      // @ts-expect-error What is a timeout type for Node.js and browsers?
       clearTimeout(this._retryTimeout)
       this._retryTimeout = null
     }
@@ -480,7 +602,7 @@ class BaseUpload {
     )
   }
 
-  _emitHttpError(req, res, message, causingErr) {
+  _emitHttpError(req, res, message, causingErr?) {
     this._emitError(new DetailedError(message, causingErr, req, res))
   }
 
@@ -598,7 +720,7 @@ class BaseUpload {
       if (this.options.protocol === PROTOCOL_IETF_DRAFT_03) {
         req.setHeader('Upload-Complete', '?0')
       }
-      promise = this._sendRequest(req, null)
+      promise = this._sendRequest(req)
     }
 
     promise
@@ -624,7 +746,7 @@ class BaseUpload {
         if (this._size === 0) {
           // Nothing to upload and file was successfully created
           this._emitSuccess()
-          this._source.close()
+          if (this._source) this._source.close()
           return
         }
 
@@ -651,7 +773,7 @@ class BaseUpload {
    */
   _resumeUpload() {
     const req = this._openRequest('HEAD', this.url)
-    const promise = this._sendRequest(req, null)
+    const promise = this._sendRequest(req)
 
     promise
       .then((res) => {
@@ -795,10 +917,13 @@ class BaseUpload {
     // The specified chunkSize may be Infinity or the calcluated end position
     // may exceed the file's size. In both cases, we limit the end position to
     // the input's total size for simpler calculations and correctness.
+    // @ts-expect-error
     if ((end === Infinity || end > this._size) && !this.options.uploadLengthDeferred) {
+      // @ts-expect-error
       end = this._size
     }
 
+    // @ts-expect-error
     return this._source.slice(start, end).then(({ value, done }) => {
       const valueSize = value && value.size ? value.size : 0
 
@@ -857,7 +982,7 @@ class BaseUpload {
     if (offset === this._size) {
       // Yay, finally done :)
       this._emitSuccess()
-      this._source.close()
+      if (this._source) this._source.close()
       return
     }
 
@@ -907,7 +1032,7 @@ class BaseUpload {
       return Promise.resolve()
     }
 
-    const storedUpload = {
+    const storedUpload: PreviousUpload = {
       size: this._size,
       metadata: this.options.metadata,
       creationTime: new Date().toString(),
@@ -918,6 +1043,7 @@ class BaseUpload {
       storedUpload.parallelUploadUrls = this._parallelUploadUrls
     } else {
       // ... otherwise we just save the one available URL.
+      // @ts-expect-error
       storedUpload.uploadUrl = this.url
     }
 
@@ -931,7 +1057,7 @@ class BaseUpload {
    *
    * @api private
    */
-  _sendRequest(req, body = null) {
+  _sendRequest(req: HttpRequest<S>, body?: S) {
     return sendRequest(req, body, this.options)
   }
 }
@@ -987,7 +1113,11 @@ function openRequest(method, url, options) {
  *
  * @api private
  */
-async function sendRequest(req, body, options) {
+async function sendRequest<F, S>(
+  req: HttpRequest<S>,
+  body: S | undefined,
+  options: UploadOptions<F, S>,
+): Promise<HttpResponse> {
   if (typeof options.onBeforeRequest === 'function') {
     await options.onBeforeRequest(req)
   }
@@ -1007,7 +1137,7 @@ async function sendRequest(req, body, options) {
  *
  * @api private
  */
-function isOnline() {
+function isOnline(): boolean {
   let online = true
   // Note: We don't reference `window` here because the navigator object also exists
   // in a Web Worker's context.
@@ -1081,7 +1211,7 @@ function resolveUrl(origin, link) {
  */
 function splitSizeIntoParts(totalSize, partCount) {
   const partSize = Math.floor(totalSize / partCount)
-  const parts = []
+  const parts: { start: number; end: number }[] = []
 
   for (let i = 0; i < partCount; i++) {
     parts.push({
@@ -1094,7 +1224,5 @@ function splitSizeIntoParts(totalSize, partCount) {
 
   return parts
 }
-
-BaseUpload.defaultOptions = defaultOptions
 
 export default BaseUpload

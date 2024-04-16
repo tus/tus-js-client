@@ -1,5 +1,11 @@
+import { HttpRequest, HttpResponse } from './upload'
+
 class DetailedError extends Error {
-  constructor(message, causingErr = null, req = null, res = null) {
+  originalRequest?: HttpRequest<unknown>
+  originalResponse?: HttpResponse
+  causingError?: Error
+
+  constructor(message: string, causingErr?: Error, req?: HttpRequest<unknown>, res?: HttpResponse) {
     super(message)
 
     this.originalRequest = req
