@@ -10,7 +10,7 @@
  *
  * @return {string} The generate UUID
  */
-export default function uuid() {
+export default function uuid(): string {
   /* eslint-disable no-bitwise */
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0
