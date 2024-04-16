@@ -1,7 +1,0 @@
-{
-  "compilerOptions": {
-    "lib": ["dom", "esnext"],
-    "noImplicitAny": true,
-    "noEmit": true
-  }
-}

@@ -1,0 +1,14 @@
+{
+  "include": ["lib/**/*"],
+  "exclude": ["lib/index.d.ts", "lib/index.test-d.ts"],
+  "compilerOptions": {
+    "target": "ES2018",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "checkJs": false,
+    "declaration": true
+  }
+}

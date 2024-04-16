@@ -1,6 +1,7 @@
 // This is a test file for ensuring that the type definitions in index.d.ts are
 // working correctly. For more details see:
 // https://github.com/SamVerschueren/tsd
+// TODO: Remove this file
 
 import * as tus from '../'
 import { expectType } from 'tsd'

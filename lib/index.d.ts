@@ -1,4 +1,5 @@
 // Type definitions for tus-js-client
+// TODO: Remove this file
 
 export const isSupported: boolean
 export const canStoreURLs: boolean
