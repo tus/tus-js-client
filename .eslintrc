@@ -25,7 +25,10 @@
         "devDependencies": ["test/**/*.js"]
       }
     ],
-    "import/extensions": ["error", "ignorePackages"]
+    // Disabled for now, because we cannot use the .ts extension.
+    // TODO: Reevaluate this once all source files have been moved to TS
+    "import/extensions": ["off"],
+    "import/no-unresolved": ["off"]
   },
   "overrides": [
     {
