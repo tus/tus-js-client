@@ -6,13 +6,17 @@ import * as https from 'https'
 import { parse } from 'url'
 import { Readable, Transform } from 'stream'
 import throttle from 'lodash.throttle'
+import { HttpProgressHandler, HttpRequest, HttpResponse, HttpStack } from '../upload'
+import { FileSliceTypes } from './index'
 
-export default class NodeHttpStack {
-  constructor(requestOptions = {}) {
+export default class NodeHttpStack implements HttpStack<FileSliceTypes> {
+  private _requestOptions: http.RequestOptions
+
+  constructor(requestOptions: http.RequestOptions = {}) {
     this._requestOptions = requestOptions
   }
 
-  createRequest(method, url) {
+  createRequest(method: string, url: string) {
     return new Request(method, url, this._requestOptions)
   }
 
@@ -21,14 +25,18 @@ export default class NodeHttpStack {
   }
 }
 
-class Request {
-  constructor(method, url, options) {
+class Request implements HttpRequest<FileSliceTypes> {
+  _method: string
+  _url: string
+  _headers: Record<string, string> = {}
+  _request: http.ClientRequest | null = null
+  _progressHandler: HttpProgressHandler = () => {}
+  _requestOptions: http.RequestOptions
+
+  constructor(method: string, url: string, options: http.RequestOptions) {
     this._method = method
     this._url = url
-    this._headers = {}
-    this._request = null
-    this._progressHandler = () => {}
-    this._requestOptions = options || {}
+    this._requestOptions = options
   }
 
   getMethod() {
@@ -39,19 +47,19 @@ class Request {
     return this._url
   }
 
-  setHeader(header, value) {
+  setHeader(header: string, value: string) {
     this._headers[header] = value
   }
 
-  getHeader(header) {
+  getHeader(header: string) {
     return this._headers[header]
   }
 
-  setProgressHandler(progressHandler) {
+  setProgressHandler(progressHandler: HttpProgressHandler) {
     this._progressHandler = progressHandler
   }
 
-  send(body = null) {
+  send(body?: FileSliceTypes): Promise<HttpResponse> {
     return new Promise((resolve, reject) => {
       const options = {
         ...parse(this._url),
@@ -64,7 +72,9 @@ class Request {
         },
       }
 
+      //@ts-expect-error
       if (body && body.size) {
+        //@ts-expect-error
         options.headers['Content-Length'] = body.size
       }
 
@@ -72,8 +82,8 @@ class Request {
       this._request = httpModule.request(options)
       const req = this._request
       req.on('response', (res) => {
-        const resChunks = []
-        res.on('data', (data) => {
+        const resChunks: Buffer[] = []
+        res.on('data', (data: Buffer) => {
           resChunks.push(data)
         })
 
@@ -114,18 +124,28 @@ class Request {
   }
 }
 
-class Response {
-  constructor(res, body) {
+class Response implements HttpResponse {
+  _response: http.IncomingMessage
+  _body: string
+
+  constructor(res: http.IncomingMessage, body: string) {
     this._response = res
     this._body = body
   }
 
   getStatus() {
+    if (this._response.statusCode == undefined) {
+      throw new Error('no status code available yet')
+    }
     return this._response.statusCode
   }
 
-  getHeader(header) {
-    return this._response.headers[header.toLowerCase()]
+  getHeader(header: string) {
+    const values = this._response.headers[header.toLowerCase()]
+    if (Array.isArray(values)) {
+      return values.join(', ')
+    }
+    return values
   }
 
   getBody() {
@@ -141,7 +161,10 @@ class Response {
 // track of the number of bytes which have been piped through it and will
 // invoke the `onprogress` function whenever new number are available.
 class ProgressEmitter extends Transform {
-  constructor(onprogress) {
+  _onprogress: HttpProgressHandler
+  _position = 0
+
+  constructor(onprogress: HttpProgressHandler) {
     super()
 
     // The _onprogress property will be invoked, whenever a chunk is piped
@@ -153,10 +176,9 @@ class ProgressEmitter extends Transform {
       leading: true,
       trailing: false,
     })
-    this._position = 0
   }
 
-  _transform(chunk, encoding, callback) {
+  _transform(chunk: Buffer, encoding: string, callback: (err: Error | null, data: Buffer) => void) {
     this._position += chunk.length
     this._onprogress(this._position)
     callback(null, chunk)

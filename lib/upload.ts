@@ -44,13 +44,14 @@ export const defaultOptions = {
   protocol: PROTOCOL_TUS_V1,
 }
 
-interface UploadOptions<F, S> {
+// TODO: Put this into its own file
+export interface UploadOptions<F, S> {
   // TODO: Embrace undefined over null
   endpoint: string | null
 
   uploadUrl: string | null
   metadata: { [key: string]: string }
-  fingerprint: (file: F, options: UploadOptions<F, S>) => Promise<string>
+  fingerprint: (file: F, options: UploadOptions<F, S>) => Promise<string | null>
   uploadSize: number | null
 
   onProgress: ((bytesSent: number, bytesTotal: number) => void) | null
@@ -84,17 +85,17 @@ interface UploadOptions<F, S> {
   protocol: string
 }
 
-interface UrlStorage {
+export interface UrlStorage {
   findAllUploads(): Promise<PreviousUpload[]>
   findUploadsByFingerprint(fingerprint: string): Promise<PreviousUpload[]>
 
   removeUpload(urlStorageKey: string): Promise<void>
 
   // Returns the URL storage key, which can be used for removing the upload.
-  addUpload(fingerprint: string, upload: PreviousUpload): Promise<string>
+  addUpload(fingerprint: string, upload: PreviousUpload): Promise<string | void>
 }
 
-interface PreviousUpload {
+export interface PreviousUpload {
   size: number | null
   metadata: { [key: string]: string }
   creationTime: string
@@ -102,35 +103,38 @@ interface PreviousUpload {
   parallelUploadUrls?: string[]
 }
 
-interface FileReader<F, S> {
+export interface FileReader<F, S> {
   openFile(input: F, chunkSize: number): Promise<FileSource<S>>
 }
 
-interface FileSource<S> {
-  size: number
+export interface FileSource<S> {
+  size: number | null
   slice(start: number, end: number): Promise<SliceResult<S>>
   close(): void
 }
 
 interface SliceResult<S> {
   // Platform-specific data type which must be usable by the HTTP stack as a body.
+  // TODO: This should be a separate property and be set every time. Otherwise we track the wrong size.
   value: S & { size?: number }
   done: boolean
 }
 
-interface HttpStack<B> {
+export interface HttpStack<B> {
   createRequest(method: string, url: string): HttpRequest<B>
   getName(): string
 }
+
+export type HttpProgressHandler = (bytesSent: number) => void
 
 export interface HttpRequest<B> {
   getMethod(): string
   getURL(): string
 
   setHeader(header: string, value: string): void
-  getHeader(header: string): string
+  getHeader(header: string): string | undefined
 
-  setProgressHandler(handler: (bytesSent: number) => void): void
+  setProgressHandler(handler: HttpProgressHandler): void
   send(body?: B): Promise<HttpResponse>
   abort(): Promise<void>
 
@@ -140,14 +144,14 @@ export interface HttpRequest<B> {
 
 export interface HttpResponse {
   getStatus(): number
-  getHeader(header: string): string
+  getHeader(header: string): string | undefined
   getBody(): string
 
   // Return an environment specific object, e.g. the XMLHttpRequest object in browsers.
   getUnderlyingObject(): any
 }
 
-class BaseUpload<F, S> {
+export default class BaseUpload<F, S> {
   options: UploadOptions<F, S>
 
   // The storage module used to store URLs
@@ -221,61 +225,14 @@ class BaseUpload<F, S> {
     this._urlStorage = options.urlStorage
   }
 
-  /**
-   * Use the Termination extension to delete an upload from the server by sending a DELETE
-   * request to the specified upload URL. This is only possible if the server supports the
-   * Termination extension. If the `options.retryDelays` property is set, the method will
-   * also retry if an error ocurrs.
-   *
-   * @param {String} url The upload's URL which will be terminated.
-   * @param {object} options Optional options for influencing HTTP requests.
-   * @return {Promise} The Promise will be resolved/rejected when the requests finish.
-   */
-  static terminate<F, S>(url: string, options: UploadOptions<F, S>): Promise<void> {
-    const req = openRequest('DELETE', url, options)
-
-    return sendRequest(req, undefined, options)
-      .then((res) => {
-        // A 204 response indicates a successfull request
-        if (res.getStatus() === 204) {
-          return
-        }
-
-        throw new DetailedError(
-          'tus: unexpected response while terminating upload',
-          undefined,
-          req,
-          res,
-        )
-      })
-      .catch((err) => {
-        if (!(err instanceof DetailedError)) {
-          err = new DetailedError('tus: failed to terminate upload', err, req)
-        }
-
-        if (!shouldRetry(err, 0, options)) {
-          throw err
-        }
-
-        // Instead of keeping track of the retry attempts, we remove the first element from the delays
-        // array. If the array is empty, all retry attempts are used up and we will bubble up the error.
-        // We recursively call the terminate function will removing elements from the retryDelays array.
-        const delay = options.retryDelays[0]
-        const remainingDelays = options.retryDelays.slice(1)
-        const newOptions = {
-          ...options,
-          retryDelays: remainingDelays,
-        }
-        return new Promise((resolve) => setTimeout(resolve, delay)).then(() =>
-          BaseUpload.terminate(url, newOptions),
-        )
-      })
-  }
-
   findPreviousUploads() {
-    return this.options
-      .fingerprint(this.file, this.options)
-      .then((fingerprint) => this._urlStorage.findUploadsByFingerprint(fingerprint))
+    return this.options.fingerprint(this.file, this.options).then((fingerprint) => {
+      if (!fingerprint) {
+        return Promise.reject('unable calculate fingerprint for this input file')
+      }
+
+      return this._urlStorage.findUploadsByFingerprint(fingerprint)
+    })
   }
 
   resumeFromPreviousUpload(previousUpload) {
@@ -596,7 +553,7 @@ class BaseUpload<F, S> {
     }
 
     return (
-      BaseUpload.terminate(this.url, this.options)
+      terminate(this.url, this.options)
         // Remove entry from the URL storage since the upload URL is no longer valid.
         .then(() => this._removeFromUrlStorage())
     )
@@ -811,12 +768,18 @@ class BaseUpload<F, S> {
           return
         }
 
-        const offset = parseInt(res.getHeader('Upload-Offset'), 10)
+        const offsetStr = res.getHeader('Upload-Offset')
+        if (offsetStr == undefined) {
+          this._emitHttpError(req, res, 'tus: missing Upload-Offset header')
+          return
+        }
+        const offset = parseInt(offsetStr, 10)
         if (Number.isNaN(offset)) {
-          this._emitHttpError(req, res, 'tus: invalid or missing offset value')
+          this._emitHttpError(req, res, 'tus: invalid Upload-Offset header')
           return
         }
 
+        // @ts-expect-error
         const length = parseInt(res.getHeader('Upload-Length'), 10)
         if (
           Number.isNaN(length) &&
@@ -1048,7 +1011,8 @@ class BaseUpload<F, S> {
     }
 
     return this._urlStorage.addUpload(this._fingerprint, storedUpload).then((urlStorageKey) => {
-      this._urlStorageKey = urlStorageKey
+      // TODO: Handle cases when urlStorageKey is undefined
+      this._urlStorageKey = urlStorageKey || null
     })
   }
 
@@ -1225,4 +1189,53 @@ function splitSizeIntoParts(totalSize, partCount) {
   return parts
 }
 
-export default BaseUpload
+/**
+ * Use the Termination extension to delete an upload from the server by sending a DELETE
+ * request to the specified upload URL. This is only possible if the server supports the
+ * Termination extension. If the `options.retryDelays` property is set, the method will
+ * also retry if an error ocurrs.
+ *
+ * @param {String} url The upload's URL which will be terminated.
+ * @param {object} options Optional options for influencing HTTP requests.
+ * @return {Promise} The Promise will be resolved/rejected when the requests finish.
+ */
+export function terminate<F, S>(url: string, options: UploadOptions<F, S>): Promise<void> {
+  const req = openRequest('DELETE', url, options)
+
+  return sendRequest(req, undefined, options)
+    .then((res) => {
+      // A 204 response indicates a successfull request
+      if (res.getStatus() === 204) {
+        return
+      }
+
+      throw new DetailedError(
+        'tus: unexpected response while terminating upload',
+        undefined,
+        req,
+        res,
+      )
+    })
+    .catch((err) => {
+      if (!(err instanceof DetailedError)) {
+        err = new DetailedError('tus: failed to terminate upload', err, req)
+      }
+
+      if (!shouldRetry(err, 0, options)) {
+        throw err
+      }
+
+      // Instead of keeping track of the retry attempts, we remove the first element from the delays
+      // array. If the array is empty, all retry attempts are used up and we will bubble up the error.
+      // We recursively call the terminate function will removing elements from the retryDelays array.
+      const delay = options.retryDelays[0]
+      const remainingDelays = options.retryDelays.slice(1)
+      const newOptions = {
+        ...options,
+        retryDelays: remainingDelays,
+      }
+      return new Promise((resolve) => setTimeout(resolve, delay)).then(() =>
+        terminate(url, newOptions),
+      )
+    })
+}

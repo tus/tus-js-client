@@ -2,16 +2,19 @@
 import { readFile, writeFile } from 'fs'
 import * as lockfile from 'proper-lockfile'
 import combineErrors from 'combine-errors'
+import { PreviousUpload, UrlStorage } from '../upload'
 
 export const canStoreURLs = true
 
-export class FileUrlStorage {
-  constructor(filePath) {
+export class FileUrlStorage implements UrlStorage {
+  path: string
+
+  constructor(filePath: string) {
     this.path = filePath
   }
 
   findAllUploads() {
-    return new Promise((resolve, reject) => {
+    return new Promise<PreviousUpload[]>((resolve, reject) => {
       this._getItems('tus::', (err, results) => {
         if (err) reject(err)
         else resolve(results)
@@ -20,7 +23,7 @@ export class FileUrlStorage {
   }
 
   findUploadsByFingerprint(fingerprint) {
-    return new Promise((resolve, reject) => {
+    return new Promise<PreviousUpload[]>((resolve, reject) => {
       this._getItems(`tus::${fingerprint}`, (err, results) => {
         if (err) reject(err)
         else resolve(results)
@@ -29,7 +32,7 @@ export class FileUrlStorage {
   }
 
   removeUpload(urlStorageKey) {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       this._removeItem(urlStorageKey, (err) => {
         if (err) reject(err)
         else resolve()
@@ -41,7 +44,7 @@ export class FileUrlStorage {
     const id = Math.round(Math.random() * 1e12)
     const key = `tus::${fingerprint}::${id}`
 
-    return new Promise((resolve, reject) => {
+    return new Promise<string>((resolve, reject) => {
       this._setItem(key, upload, (err) => {
         if (err) reject(err)
         else resolve(key)
@@ -128,12 +131,16 @@ export class FileUrlStorage {
   }
 
   _writeData(data, cb) {
-    const opts = {
-      encoding: 'utf8',
-      mode: 0o660,
-      flag: 'w',
-    }
-    writeFile(this.path, JSON.stringify(data), opts, (err) => cb(err))
+    writeFile(
+      this.path,
+      JSON.stringify(data),
+      {
+        encoding: 'utf8',
+        mode: 0o660,
+        flag: 'w',
+      },
+      (err) => cb(err),
+    )
   }
 
   _getData(cb) {

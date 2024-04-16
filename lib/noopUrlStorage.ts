@@ -1,7 +1,9 @@
 /* eslint no-unused-vars: "off" */
 
-export default class NoopUrlStorage {
-  listAllUploads() {
+import { UrlStorage } from './upload'
+
+export default class NoopUrlStorage implements UrlStorage {
+  findAllUploads() {
     return Promise.resolve([])
   }
 
@@ -14,6 +16,6 @@ export default class NoopUrlStorage {
   }
 
   addUpload(fingerprint, upload) {
-    return Promise.resolve(null)
+    return Promise.resolve()
   }
 }

@@ -1,3 +1,6 @@
+import { Readable } from 'stream'
+import { FileSource } from '../../upload'
+
 /**
  * readChunk reads a chunk with the given size from the given
  * stream. It will wait until enough data is available to satisfy
@@ -7,8 +10,8 @@
  * Note that we rely on the stream behaving as Node.js documents:
  * https://nodejs.org/api/stream.html#readablereadsize
  */
-async function readChunk(stream, size) {
-  return new Promise((resolve, reject) => {
+async function readChunk(stream: Readable, size: number) {
+  return new Promise<Buffer>((resolve, reject) => {
     const onError = (err) => {
       stream.off('readable', onReadable)
       reject(err)
@@ -41,20 +44,22 @@ async function readChunk(stream, size) {
  * Note that it is forbidden to call with startB < startA or startB > endA. In other words,
  * the slice calls cannot seek back and must not skip data from the stream.
  */
-export default class StreamSource {
-  constructor(stream) {
+export default class StreamSource implements FileSource<Buffer> {
+  // Setting the size to null indicates that we have no calculation available
+  // for how much data this stream will emit requiring the user to specify
+  // it manually (see the `uploadSize` option).
+  size = null
+
+  private _stream: Readable
+
+  private _buf = Buffer.alloc(0)
+  private _bufPos = 0
+
+  private _ended = false
+  private _error: Error | null = null
+
+  constructor(stream: Readable) {
     this._stream = stream
-
-    // Setting the size to null indicates that we have no calculation available
-    // for how much data this stream will emit requiring the user to specify
-    // it manually (see the `uploadSize` option).
-    this.size = null
-
-    this._buf = Buffer.alloc(0)
-    this._bufPos = 0
-
-    this._ended = false
-    this._error = null
 
     stream.pause()
     stream.on('end', () => {
@@ -65,7 +70,7 @@ export default class StreamSource {
     })
   }
 
-  async slice(start, end) {
+  async slice(start: number, end: number) {
     // Fail fast if the caller requests a proportion of the data which is not
     // available any more.
     if (start < this._bufPos) {
@@ -80,7 +85,7 @@ export default class StreamSource {
       throw this._error
     }
 
-    let returnBuffer
+    let returnBuffer: Buffer & { size?: number }
     // Always attempt to drain the buffer first, even if this means that we
     // return less data than the caller requested.
     if (start < this._bufPos + this._buf.length) {

@@ -1,6 +1,8 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { createHash } from 'crypto'
+import { UploadOptions } from '../upload'
+import { FileTypes, FileSliceTypes } from './index'
 
 /**
  * Generate a fingerprint for a file which will be used the store the endpoint
@@ -8,7 +10,10 @@ import { createHash } from 'crypto'
  * @param {File} file
  * @param {Object} options
  */
-export default function fingerprint(file, options) {
+export default function fingerprint(
+  file: FileTypes,
+  options: UploadOptions<FileTypes, FileSliceTypes>,
+): Promise<string | null> {
   if (Buffer.isBuffer(file)) {
     // create MD5 hash for buffer type
     const blockSize = 64 * 1024 // 64kb
@@ -20,7 +25,9 @@ export default function fingerprint(file, options) {
 
   if (file instanceof fs.ReadStream && file.path != null) {
     return new Promise((resolve, reject) => {
-      const name = path.resolve(file.path)
+      const name = path.resolve(
+        Buffer.isBuffer(file.path) ? file.path.toString('utf-8') : file.path,
+      )
       fs.stat(file.path, (err, info) => {
         if (err) {
           reject(err)

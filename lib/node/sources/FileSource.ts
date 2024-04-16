@@ -1,6 +1,7 @@
-import { createReadStream, promises as fsPromises } from 'fs'
+import { FileSource as IFileSource } from '../../upload'
+import { createReadStream, promises as fsPromises, ReadStream } from 'fs'
 
-export default async function getFileSource(stream) {
+export default async function getFileSource(stream: ReadStream): Promise<FileSource> {
   const path = stream.path.toString()
   const { size } = await fsPromises.stat(path)
 
@@ -13,30 +14,37 @@ export default async function getFileSource(stream) {
   // Note: `stream.end` is Infinity by default, so we need the check `isFinite`.
   // Note: `stream.end` is treated inclusively, so we need to add 1 here.
   // See the comment in slice() for more context.
+  //@ts-expect-error
   const start = stream.start ?? 0
+  //@ts-expect-error
   const end = Number.isFinite(stream.end) ? stream.end + 1 : size
   const actualSize = end - start
 
   return new FileSource(stream, path, actualSize)
 }
 
-class FileSource {
-  constructor(stream, path, size) {
+class FileSource implements IFileSource<ReadStream> {
+  size: number
+  _stream: ReadStream
+  _path: string
+
+  constructor(stream: ReadStream, path: string, size: number) {
     this._stream = stream
     this._path = path
     this.size = size
   }
 
-  slice(start, end) {
+  slice(start: number, end: number) {
     // The fs.ReadStream might be configured to not read from the beginning,
     // but instead start at a different offset. The start value from the caller
     // does not include the offset, so we need to add this offset to our range later.
     // This happens, for example, if a fs.ReadStream is used with the `parallelUploads`
     // option. First, the ReadStream is sliced into multiple ReadStreams to fit the number
     // of number of `parallelUploads`. Each ReadStream has `start` set.
+    //@ts-expect-error
     const offset = this._stream.start ?? 0
 
-    const stream = createReadStream(this._path, {
+    const stream: ReadStream & { size?: number } = createReadStream(this._path, {
       start: offset + start,
       // The `end` option for createReadStream is treated inclusively
       // (see https://nodejs.org/api/fs.html#fs_fs_createreadstream_path_options).
