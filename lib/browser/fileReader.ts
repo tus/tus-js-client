@@ -1,19 +1,38 @@
 import isReactNative from './isReactNative.js'
 import uriToBlob from './uriToBlob.js'
 
-import FileSource from './sources/FileSource.js'
+import BlobFileSource from './sources/FileSource.js'
 import StreamSource from './sources/StreamSource.js'
+import { FileReader, FileSource } from '../upload.js'
+import { FileSliceTypes, FileTypes, ReactNativeFile } from './index.js'
 
-export default class FileReader {
-  async openFile(input, chunkSize) {
+function isReactNativeFile(
+  input: FileTypes,
+): input is ReactNativeFile {
+  return 'uri' in input && typeof input.uri === 'string'
+}
+
+// TODO: Make sure that we support ArrayBuffers, TypedArrays, DataViews and Blobs
+export default class BrowserFileReader
+  implements FileReader<FileTypes, FileSliceTypes>
+{
+  async openFile(
+    input: FileTypes,
+    chunkSize: number,
+  ): Promise<FileSource<FileSliceTypes>> {
     // In React Native, when user selects a file, instead of a File or Blob,
     // you usually get a file object {} with a uri property that contains
     // a local path to the file. We use XMLHttpRequest to fetch
     // the file blob, before uploading with tus.
-    if (isReactNative() && input && typeof input.uri !== 'undefined') {
+    if (isReactNativeFile(input)) {
+      if (!isReactNative()) {
+        // TODO
+        throw new Error(``)
+      }
+
       try {
         const blob = await uriToBlob(input.uri)
-        return new FileSource(blob)
+        return new BlobFileSource(blob)
       } catch (err) {
         throw new Error(
           `tus: cannot fetch \`file.uri\` as Blob, make sure the uri is correct and accessible. ${err}`,
@@ -21,12 +40,9 @@ export default class FileReader {
       }
     }
 
-    // Since we emulate the Blob type in our tests (not all target browsers
-    // support it), we cannot use `instanceof` for testing whether the input value
-    // can be handled. Instead, we simply check is the slice() function and the
-    // size property are available.
-    if (typeof input.slice === 'function' && typeof input.size !== 'undefined') {
-      return Promise.resolve(new FileSource(input))
+    // File is a subtype of Blob, so we can check for Blob here.
+    if (input instanceof Blob) {
+      return Promise.resolve(new BlobFileSource(input))
     }
 
     if (typeof input.read === 'function') {
@@ -39,7 +55,7 @@ export default class FileReader {
         )
       }
 
-      return Promise.resolve(new StreamSource(input, chunkSize))
+      return Promise.resolve(new StreamSource(input))
     }
 
     return Promise.reject(

@@ -113,7 +113,7 @@ export interface FileSource<S> {
   close(): void
 }
 
-interface SliceResult<S> {
+export interface SliceResult<S> {
   // Platform-specific data type which must be usable by the HTTP stack as a body.
   // TODO: This should be a separate property and be set every time. Otherwise we track the wrong size.
   value: S & { size?: number }

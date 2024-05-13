@@ -1,4 +1,7 @@
-function len(blobOrArray) {
+import { FileSource } from '../../upload'
+import { FileSliceTypes } from '../index'
+
+function len(blobOrArray): number {
   if (blobOrArray === undefined) return 0
   if (blobOrArray.size !== undefined) return blobOrArray.size
   return blobOrArray.length
@@ -26,15 +29,25 @@ function concat(a, b) {
   throw new Error('Unknown data type')
 }
 
-export default class StreamSource {
-  constructor(reader) {
-    this._buffer = undefined
-    this._bufferOffset = 0
+export default class StreamSource implements FileSource<FileSliceTypes> {
+  _reader: ReadableStreamDefaultReader
+  _buffer: Blob | undefined
+  // _bufferOffset defines at which position the content of _buffer (if it is set)
+  // is located in the view of the entire stream. It does not mean at which offset
+  // the content in _buffer begins.
+  _bufferOffset = 0
+  _done = false
+
+  // Setting the size to null indicates that we have no calculation available
+  // for how much data this stream will emit requiring the user to specify
+  // it manually (see the `uploadSize` option).
+  size = null
+
+  constructor(reader: ReadableStreamDefaultReader) {
     this._reader = reader
-    this._done = false
   }
 
-  slice(start, end) {
+  slice(start: number, end: number) {
     if (start < this._bufferOffset) {
       return Promise.reject(new Error("Requested data is before the reader's current offset"))
     }
@@ -42,7 +55,7 @@ export default class StreamSource {
     return this._readUntilEnoughDataOrDone(start, end)
   }
 
-  _readUntilEnoughDataOrDone(start, end) {
+  _readUntilEnoughDataOrDone(start: number, end: number) {
     const hasEnoughData = end <= this._bufferOffset + len(this._buffer)
     if (this._done || hasEnoughData) {
       const value = this._getDataFromBuffer(start, end)
@@ -64,6 +77,10 @@ export default class StreamSource {
   }
 
   _getDataFromBuffer(start, end) {
+    if (this._buffer === undefined) {
+      throw new Error(`cannot _getDataFromBuffer because _buffer is unset`)
+    }
+
     // Remove data from buffer before `start`.
     // Data might be reread from the buffer if an upload fails, so we can only
     // safely delete data when it comes *before* what is currently being read.

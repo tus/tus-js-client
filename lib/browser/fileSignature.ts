@@ -1,13 +1,11 @@
+import { UploadOptions } from '../upload.js'
+import { ReactNativeFile } from './index.js'
 import isReactNative from './isReactNative.js'
 
 // TODO: Differenciate between input types
 
 /**
  * Generate a fingerprint for a file which will be used the store the endpoint
- *
- * @param {File} file
- * @param {Object} options
- * @param {Function} callback
  */
 export default function fingerprint(file, options) {
   if (isReactNative()) {
@@ -19,14 +17,14 @@ export default function fingerprint(file, options) {
   )
 }
 
-function reactNativeFingerprint(file, options) {
+function reactNativeFingerprint<F, S>(file: ReactNativeFile, options: UploadOptions<F, S>): string {
   const exifHash = file.exif ? hashCode(JSON.stringify(file.exif)) : 'noexif'
   return ['tus-rn', file.name || 'noname', file.size || 'nosize', exifHash, options.endpoint].join(
     '/',
   )
 }
 
-function hashCode(str) {
+function hashCode(str: string): number {
   /* eslint-disable no-bitwise */
   // from https://stackoverflow.com/a/8831937/151666
   let hash = 0

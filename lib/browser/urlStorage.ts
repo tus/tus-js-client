@@ -1,3 +1,5 @@
+import { PreviousUpload, UrlStorage } from '../upload'
+
 let hasStorage = false
 try {
   // Note: localStorage does not exist in the Web Worker's context, so we must use window here.
@@ -9,13 +11,14 @@ try {
   // not cause confusion where the entry came from.
   const key = 'tusSupport'
   const originalValue = localStorage.getItem(key)
-  localStorage.setItem(key, originalValue)
+  localStorage.setItem(key, `${originalValue}`)
   if (originalValue === null) localStorage.removeItem(key)
-} catch (e) {
+} catch (e: unknown) {
   // If we try to access localStorage inside a sandboxed iframe, a SecurityError
   // is thrown. When in private mode on iOS Safari, a QuotaExceededError is
   // thrown (see #49)
-  if (e.code === e.SECURITY_ERR || e.code === e.QUOTA_EXCEEDED_ERR) {
+  // TODO: Replace `code` with `name`
+  if (e instanceof DOMException && (e.code === e.SECURITY_ERR || e.code === e.QUOTA_EXCEEDED_ERR)) {
     hasStorage = false
   } else {
     throw e
@@ -24,23 +27,23 @@ try {
 
 export const canStoreURLs = hasStorage
 
-export class WebStorageUrlStorage {
-  findAllUploads() {
+export class WebStorageUrlStorage implements UrlStorage {
+  findAllUploads(): Promise<PreviousUpload[]> {
     const results = this._findEntries('tus::')
     return Promise.resolve(results)
   }
 
-  findUploadsByFingerprint(fingerprint) {
+  findUploadsByFingerprint(fingerprint: string): Promise<PreviousUpload[]> {
     const results = this._findEntries(`tus::${fingerprint}::`)
     return Promise.resolve(results)
   }
 
-  removeUpload(urlStorageKey) {
+  removeUpload(urlStorageKey: string): Promise<void> {
     localStorage.removeItem(urlStorageKey)
     return Promise.resolve()
   }
 
-  addUpload(fingerprint, upload) {
+  addUpload(fingerprint: string, upload: PreviousUpload): Promise<string> {
     const id = Math.round(Math.random() * 1e12)
     const key = `tus::${fingerprint}::${id}`
 
@@ -48,15 +51,25 @@ export class WebStorageUrlStorage {
     return Promise.resolve(key)
   }
 
-  _findEntries(prefix) {
-    const results = []
+  _findEntries(prefix: string): PreviousUpload[] {
+    const results: PreviousUpload[] = []
 
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i)
+      if (key == null) {
+        throw new Error(`didn't find key for item ${i}`)
+      }
+
+      // Ignore entires that are not from tus-js-client
       if (key.indexOf(prefix) !== 0) continue
 
+      const item = localStorage.getItem(key)
+      if (item == null) {
+        throw new Error(`didn't find item for key ${key}`)
+      }
+
       try {
-        const upload = JSON.parse(localStorage.getItem(key))
+        const upload = JSON.parse(item)
         upload.urlStorageKey = key
 
         results.push(upload)
