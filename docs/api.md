@@ -61,7 +61,13 @@ An optional function that will be called each time a `PATCH` has been successful
 
 _Default value:_ `null`
 
-An optional function called when the upload finished successfully.
+An optional function called when the upload finished successfully. The argument will be an instance of the HttpResponse interface as defined for the httpStack option. This can be used to retrieve additional data from the server. For example:
+
+```js
+onSuccess: function (res) {
+    console.log("Status code", res.getStatus())
+}
+```
 
 #### onError
 
