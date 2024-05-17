@@ -6,20 +6,13 @@ import StreamSource from './sources/StreamSource.js'
 import { FileReader, FileSource } from '../upload.js'
 import { FileSliceTypes, FileTypes, ReactNativeFile } from './index.js'
 
-function isReactNativeFile(
-  input: FileTypes,
-): input is ReactNativeFile {
+function isReactNativeFile(input: FileTypes): input is ReactNativeFile {
   return 'uri' in input && typeof input.uri === 'string'
 }
 
 // TODO: Make sure that we support ArrayBuffers, TypedArrays, DataViews and Blobs
-export default class BrowserFileReader
-  implements FileReader<FileTypes, FileSliceTypes>
-{
-  async openFile(
-    input: FileTypes,
-    chunkSize: number,
-  ): Promise<FileSource<FileSliceTypes>> {
+export default class BrowserFileReader implements FileReader<FileTypes, FileSliceTypes> {
+  async openFile(input: FileTypes, chunkSize: number): Promise<FileSource<FileSliceTypes>> {
     // In React Native, when user selects a file, instead of a File or Blob,
     // you usually get a file object {} with a uri property that contains
     // a local path to the file. We use XMLHttpRequest to fetch

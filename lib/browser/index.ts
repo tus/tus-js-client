@@ -1,4 +1,8 @@
-import BaseUpload, { defaultOptions as baseDefaultOptions, terminate, UploadOptions } from '../upload'
+import BaseUpload, {
+  defaultOptions as baseDefaultOptions,
+  terminate,
+  UploadOptions,
+} from '../upload'
 import NoopUrlStorage from '../noopUrlStorage.js'
 import { enableDebugLog } from '../logger'
 import DetailedError from '../error'
