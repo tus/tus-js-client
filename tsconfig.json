@@ -2,6 +2,8 @@
   "include": ["lib/**/*"],
   "compilerOptions": {
     "target": "ES2018",
+    "module": "Node16",
+    "moduleResolution": "Node16",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,

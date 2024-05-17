@@ -1,5 +1,5 @@
-import { FileSource } from '../../upload'
-import { FileSliceTypes } from '../index'
+import { FileSource } from '../../upload.js'
+import { FileSliceTypes } from '../index.js'
 
 function len(blobOrArray): number {
   if (blobOrArray === undefined) return 0

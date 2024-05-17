@@ -1,8 +1,8 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { createHash } from 'crypto'
-import { UploadOptions } from '../upload'
-import { FileTypes, FileSliceTypes } from './index'
+import { UploadOptions } from '../upload.js'
+import { FileTypes, FileSliceTypes } from './index.js'
 
 /**
  * Generate a fingerprint for a file which will be used the store the endpoint

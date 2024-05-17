@@ -1,11 +1,11 @@
 import { ReadStream } from 'fs'
 import isStream from 'is-stream'
 
-import { FileReader as IFileReader } from '../upload'
-import BufferSource from './sources/BufferSource'
-import getFileSource from './sources/FileSource'
-import StreamSource from './sources/StreamSource'
-import { FileSliceTypes, FileTypes } from './index'
+import { FileReader as IFileReader } from '../upload.js'
+import BufferSource from './sources/BufferSource.js'
+import getFileSource from './sources/FileSource.js'
+import StreamSource from './sources/StreamSource.js'
+import { FileSliceTypes, FileTypes } from './index.js'
 
 // TODO: Consider renaming this NodeFileReader
 export default class FileReader implements IFileReader<FileTypes, FileSliceTypes> {

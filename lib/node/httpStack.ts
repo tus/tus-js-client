@@ -6,8 +6,8 @@ import * as https from 'https'
 import { parse } from 'url'
 import { Readable, Transform } from 'stream'
 import throttle from 'lodash.throttle'
-import { HttpProgressHandler, HttpRequest, HttpResponse, HttpStack } from '../upload'
-import { FileSliceTypes } from './index'
+import { HttpProgressHandler, HttpRequest, HttpResponse, HttpStack } from '../upload.js'
+import { FileSliceTypes } from './index.js'
 
 export default class NodeHttpStack implements HttpStack<FileSliceTypes> {
   private _requestOptions: http.RequestOptions

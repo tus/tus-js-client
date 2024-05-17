@@ -1,6 +1,6 @@
 'use strict'
 
-const { TestHttpStack, getBlob } = require('./helpers/utils')
+const { TestHttpStack, getBlob } = require('./helpers/utils.cjs')
 const tus = require('../..')
 
 describe('tus', () => {

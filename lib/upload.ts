@@ -1,8 +1,8 @@
 import { Base64 } from 'js-base64'
 import URL from 'url-parse'
-import DetailedError from './error'
-import { log } from './logger'
-import uuid from './uuid'
+import DetailedError from './error.js'
+import { log } from './logger.js'
+import uuid from './uuid.js'
 
 const PROTOCOL_TUS_V1 = 'tus-v1'
 const PROTOCOL_IETF_DRAFT_03 = 'ietf-draft-03'

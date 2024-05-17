@@ -2,10 +2,10 @@ import BaseUpload, {
   defaultOptions as baseDefaultOptions,
   terminate,
   UploadOptions,
-} from '../upload'
+} from '../upload.js'
 import NoopUrlStorage from '../noopUrlStorage.js'
-import { enableDebugLog } from '../logger'
-import DetailedError from '../error'
+import { enableDebugLog } from '../logger.js'
+import DetailedError from '../error.js'
 
 import { canStoreURLs, WebStorageUrlStorage } from './urlStorage.js'
 import DefaultHttpStack from './httpStack.js'

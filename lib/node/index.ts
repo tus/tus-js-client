@@ -4,16 +4,16 @@ import BaseUpload, {
   UploadOptions,
   defaultOptions as baseDefaultOptions,
   terminate,
-} from '../upload'
-import NoopUrlStorage from '../noopUrlStorage'
-import { enableDebugLog } from '../logger'
-import DetailedError from '../error'
+} from '../upload.js'
+import NoopUrlStorage from '../noopUrlStorage.js'
+import { enableDebugLog } from '../logger.js'
+import DetailedError from '../error.js'
 
-import { FileUrlStorage, canStoreURLs } from './urlStorage'
-import DefaultHttpStack from './httpStack'
-import FileReader from './fileReader'
-import fingerprint from './fileSignature'
-import StreamSource from './sources/StreamSource'
+import { FileUrlStorage, canStoreURLs } from './urlStorage.js'
+import DefaultHttpStack from './httpStack.js'
+import FileReader from './fileReader.js'
+import fingerprint from './fileSignature.js'
+import StreamSource from './sources/StreamSource.js'
 
 const defaultOptions = {
   ...baseDefaultOptions,

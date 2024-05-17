@@ -2,7 +2,7 @@
 import { readFile, writeFile } from 'fs'
 import * as lockfile from 'proper-lockfile'
 import combineErrors from 'combine-errors'
-import { PreviousUpload, UrlStorage } from '../upload'
+import { PreviousUpload, UrlStorage } from '../upload.js'
 
 export const canStoreURLs = true
 

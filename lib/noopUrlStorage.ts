@@ -1,6 +1,6 @@
 /* eslint no-unused-vars: "off" */
 
-import { UrlStorage } from './upload'
+import { UrlStorage } from './upload.js'
 
 export default class NoopUrlStorage implements UrlStorage {
   findAllUploads() {

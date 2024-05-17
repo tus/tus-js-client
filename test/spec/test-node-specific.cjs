@@ -9,8 +9,8 @@ const crypto = require('crypto')
 const intoStream = require('into-stream')
 const { once } = require('events')
 const tus = require('../..')
-const assertUrlStorage = require('./helpers/assertUrlStorage')
-const { TestHttpStack, waitableFunction } = require('./helpers/utils')
+const assertUrlStorage = require('./helpers/assertUrlStorage.cjs')
+const { TestHttpStack, waitableFunction } = require('./helpers/utils.cjs')
 
 describe('tus', () => {
   describe('#canStoreURLs', () => {

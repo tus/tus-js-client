@@ -1,4 +1,4 @@
-import { PreviousUpload, UrlStorage } from '../upload'
+import { PreviousUpload, UrlStorage } from '../upload.js'
 
 let hasStorage = false
 try {

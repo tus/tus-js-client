@@ -1,7 +1,7 @@
 'use strict'
 
 // Karma configuration for testing using BrowserStack
-const baseConfig = require('./base.conf')
+const baseConfig = require('./base.conf.cjs')
 
 // Pass ID from Github Actions to BrowserStack, so that individual
 // runs are grouped together.

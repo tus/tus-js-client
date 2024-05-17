@@ -1,7 +1,7 @@
 'use strict'
 
-const assertUrlStorage = require('./helpers/assertUrlStorage')
-const { TestHttpStack, waitableFunction, wait } = require('./helpers/utils')
+const assertUrlStorage = require('./helpers/assertUrlStorage.cjs')
+const { TestHttpStack, waitableFunction, wait } = require('./helpers/utils.cjs')
 const tus = require('../..')
 
 describe('tus', () => {

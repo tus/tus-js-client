@@ -2,6 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "module": "commonjs",
+    "moduleResolution": null,
     // TODO: Rename to lib.cjs
     "outDir": "lib.es5"
   }

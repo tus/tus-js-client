@@ -1,5 +1,5 @@
 import { Readable } from 'stream'
-import { FileSource } from '../../upload'
+import { FileSource } from '../../upload.js'
 
 /**
  * readChunk reads a chunk with the given size from the given

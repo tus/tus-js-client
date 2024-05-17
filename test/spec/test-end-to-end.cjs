@@ -1,7 +1,7 @@
 'use strict'
 
 const axios = require('axios')
-const { getBlob } = require('./helpers/utils')
+const { getBlob } = require('./helpers/utils.cjs')
 const tus = require('../..')
 
 // Test timeout for end-to-end tests when uploading to real server.
