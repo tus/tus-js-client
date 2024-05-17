@@ -10,7 +10,7 @@ export default function readAsByteArray(chunk: Blob): Promise<Uint8Array> {
     const reader = new FileReader()
     reader.onload = () => {
       if (!(reader.result instanceof ArrayBuffer)) {
-        reject(`invalid result types for readAsArrayBuffer: ${typeof reader.result}`)
+        reject(new Error(`invalid result types for readAsArrayBuffer: ${typeof reader.result}`))
         return
       }
       const value = new Uint8Array(reader.result)

@@ -47,7 +47,9 @@ function waitableFunction(name = 'func') {
  * Create a Promise that resolves after the specified duration.
  */
 function wait(delay) {
-  return new Promise((resolve) => setTimeout(resolve, delay, 'timed out'))
+  return new Promise((resolve) => {
+    setTimeout(resolve, delay, 'timed out')
+  })
 }
 
 /**

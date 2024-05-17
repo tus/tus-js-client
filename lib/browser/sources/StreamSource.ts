@@ -31,11 +31,14 @@ function concat(a, b) {
 
 export default class StreamSource implements FileSource<FileSliceTypes> {
   _reader: ReadableStreamDefaultReader
+
   _buffer: Blob | undefined
+
   // _bufferOffset defines at which position the content of _buffer (if it is set)
   // is located in the view of the entire stream. It does not mean at which offset
   // the content in _buffer begins.
   _bufferOffset = 0
+
   _done = false
 
   // Setting the size to null indicates that we have no calculation available

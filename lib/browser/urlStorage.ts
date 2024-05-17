@@ -11,7 +11,7 @@ try {
   // not cause confusion where the entry came from.
   const key = 'tusSupport'
   const originalValue = localStorage.getItem(key)
-  localStorage.setItem(key, `${originalValue}`)
+  localStorage.setItem(key, String(originalValue))
   if (originalValue === null) localStorage.removeItem(key)
 } catch (e: unknown) {
   // If we try to access localStorage inside a sandboxed iframe, a SecurityError

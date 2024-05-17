@@ -1,7 +1,7 @@
+/* eslint-disable max-classes-per-file */
+
 import { HttpProgressHandler, HttpRequest, HttpResponse, HttpStack } from '../upload'
 
-// TODO: Can we remove this eslint-disable line
-/* eslint-disable max-classes-per-file */
 export default class XHRHttpStack implements HttpStack<Blob> {
   createRequest(method, url) {
     return new XHRRequest(method, url)
@@ -14,8 +14,11 @@ export default class XHRHttpStack implements HttpStack<Blob> {
 
 class XHRRequest implements HttpRequest<Blob> {
   _xhr = new XMLHttpRequest()
+
   _method: string
+
   _url: string
+
   _headers: Record<string, string> = {}
 
   constructor(method: string, url: string) {

@@ -53,9 +53,11 @@ export default class StreamSource implements FileSource<Buffer> {
   private _stream: Readable
 
   private _buf = Buffer.alloc(0)
+
   private _bufPos = 0
 
   private _ended = false
+
   private _error: Error | null = null
 
   constructor(stream: Readable) {

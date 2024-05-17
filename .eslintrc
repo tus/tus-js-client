@@ -1,5 +1,5 @@
 {
-  "extends": ["transloadit", "prettier"],
+  "extends": ["transloadit", "plugin:@typescript-eslint/recommended", "prettier"],
   "env": {
     "es6": true,
     "node": false,
@@ -8,6 +8,7 @@
     "shared-node-browser": true,
     "jasmine": false
   },
+  "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 2020,
     "sourceType": "module",
@@ -32,13 +33,13 @@
   },
   "overrides": [
     {
-      "files": ["lib/browser/**/*.js", "demos/**/*.js"],
+      "files": ["lib/browser/**/*", "demos/**/*"],
       "env": {
         "browser": true
       }
     },
     {
-      "files": ["lib/node/**/*.js"],
+      "files": ["lib/node/**/*"],
       "env": {
         "node": true
       },
@@ -69,7 +70,7 @@
       }
     },
     {
-      "files": ["test/**/*.js", "demos/**/*.js"],
+      "files": ["test/**/*", "demos/**/*"],
       "env": {
         "browser": true,
         "node": true,
@@ -79,7 +80,8 @@
         "sourceType": "script"
       },
       "rules": {
-        "import/extensions": "off"
+        "import/extensions": "off",
+        "@typescript-eslint/no-var-requires": "off"
       }
     }
   ]

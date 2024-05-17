@@ -2,6 +2,7 @@ import { FileSource } from '../../upload'
 
 export default class BufferSource implements FileSource<Buffer> {
   size: number
+
   private _buffer: Buffer
 
   constructor(buffer: Buffer) {

@@ -1,3 +1,5 @@
+import { ReadStream } from 'fs'
+import { Readable } from 'stream'
 import BaseUpload, {
   UploadOptions,
   defaultOptions as baseDefaultOptions,
@@ -12,9 +14,6 @@ import DefaultHttpStack from './httpStack'
 import FileReader from './fileReader'
 import fingerprint from './fileSignature'
 import StreamSource from './sources/StreamSource'
-
-import { ReadStream } from 'fs'
-import { Readable } from 'stream'
 
 const defaultOptions = {
   ...baseDefaultOptions,

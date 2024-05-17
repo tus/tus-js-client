@@ -27,10 +27,15 @@ export default class NodeHttpStack implements HttpStack<FileSliceTypes> {
 
 class Request implements HttpRequest<FileSliceTypes> {
   _method: string
+
   _url: string
+
   _headers: Record<string, string> = {}
+
   _request: http.ClientRequest | null = null
+
   _progressHandler: HttpProgressHandler = () => {}
+
   _requestOptions: http.RequestOptions
 
   constructor(method: string, url: string, options: http.RequestOptions) {
@@ -72,9 +77,9 @@ class Request implements HttpRequest<FileSliceTypes> {
         },
       }
 
-      //@ts-expect-error
+      // @ts-expect-error We still have to type `size` for `body`
       if (body && body.size) {
-        //@ts-expect-error
+        // @ts-expect-error We still have to type `size` for `body`
         options.headers['Content-Length'] = body.size
       }
 
@@ -126,6 +131,7 @@ class Request implements HttpRequest<FileSliceTypes> {
 
 class Response implements HttpResponse {
   _response: http.IncomingMessage
+
   _body: string
 
   constructor(res: http.IncomingMessage, body: string) {
@@ -134,7 +140,7 @@ class Response implements HttpResponse {
   }
 
   getStatus() {
-    if (this._response.statusCode == undefined) {
+    if (this._response.statusCode === undefined) {
       throw new Error('no status code available yet')
     }
     return this._response.statusCode
@@ -162,6 +168,7 @@ class Response implements HttpResponse {
 // invoke the `onprogress` function whenever new number are available.
 class ProgressEmitter extends Transform {
   _onprogress: HttpProgressHandler
+
   _position = 0
 
   constructor(onprogress: HttpProgressHandler) {

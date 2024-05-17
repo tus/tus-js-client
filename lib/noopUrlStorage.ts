@@ -7,15 +7,15 @@ export default class NoopUrlStorage implements UrlStorage {
     return Promise.resolve([])
   }
 
-  findUploadsByFingerprint(fingerprint) {
+  findUploadsByFingerprint() {
     return Promise.resolve([])
   }
 
-  removeUpload(urlStorageKey) {
+  removeUpload() {
     return Promise.resolve()
   }
 
-  addUpload(fingerprint, upload) {
+  addUpload() {
     return Promise.resolve()
   }
 }

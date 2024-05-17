@@ -148,7 +148,7 @@ export interface HttpResponse {
   getBody(): string
 
   // Return an environment specific object, e.g. the XMLHttpRequest object in browsers.
-  getUnderlyingObject(): any
+  getUnderlyingObject(): unknown
 }
 
 export default class BaseUpload<F, S> {
@@ -228,7 +228,7 @@ export default class BaseUpload<F, S> {
   findPreviousUploads() {
     return this.options.fingerprint(this.file, this.options).then((fingerprint) => {
       if (!fingerprint) {
-        return Promise.reject('unable calculate fingerprint for this input file')
+        return Promise.reject(new Error('unable calculate fingerprint for this input file'))
       }
 
       return this._urlStorage.findUploadsByFingerprint(fingerprint)
@@ -388,7 +388,7 @@ export default class BaseUpload<F, S> {
     const uploads = parts.map((part, index) => {
       let lastPartProgress = 0
 
-      // @ts-expect-error
+      // @ts-expect-error We know that `_source` is not null here.
       return this._source.slice(part.start, part.end).then(
         ({ value }) =>
           new Promise<void>((resolve, reject) => {
@@ -424,22 +424,22 @@ export default class BaseUpload<F, S> {
               // Wait until every partial upload has an upload URL, so we can add
               // them to the URL storage.
               onUploadUrlAvailable: () => {
-                // @ts-expect-error
+                // @ts-expect-error We know that _parallelUploadUrls is defined
                 this._parallelUploadUrls[index] = upload.url
                 // Test if all uploads have received an URL
-                // @ts-expect-error
+                // @ts-expect-error We know that _parallelUploadUrls is defined
                 if (this._parallelUploadUrls.filter((u) => Boolean(u)).length === parts.length) {
                   this._saveUploadInUrlStorage()
                 }
               },
             }
 
-            // @ts-expect-error
+            // @ts-expect-error We still have to figure out the size for files
             const upload = new BaseUpload(value, options)
             upload.start()
 
             // Store the upload in an array, so we can later abort them if necessary.
-            // @ts-expect-error
+            // @ts-expect-error We know that _parallelUploadUrls is defined
             this._parallelUploads.push(upload)
           }),
       )
@@ -451,7 +451,7 @@ export default class BaseUpload<F, S> {
     Promise.all(uploads)
       .then(() => {
         req = this._openRequest('POST', this.options.endpoint)
-        // @ts-expect-error
+        // @ts-expect-error We know that _parallelUploadUrls is defined
         req.setHeader('Upload-Concat', `final;${this._parallelUploadUrls.join(' ')}`)
 
         // Add metadata if values have been added
@@ -769,7 +769,7 @@ export default class BaseUpload<F, S> {
         }
 
         const offsetStr = res.getHeader('Upload-Offset')
-        if (offsetStr == undefined) {
+        if (offsetStr === undefined) {
           this._emitHttpError(req, res, 'tus: missing Upload-Offset header')
           return
         }
@@ -779,7 +779,7 @@ export default class BaseUpload<F, S> {
           return
         }
 
-        // @ts-expect-error
+        // @ts-expect-error parseInt also handles undefined as we want it to
         const length = parseInt(res.getHeader('Upload-Length'), 10)
         if (
           Number.isNaN(length) &&
@@ -880,13 +880,13 @@ export default class BaseUpload<F, S> {
     // The specified chunkSize may be Infinity or the calcluated end position
     // may exceed the file's size. In both cases, we limit the end position to
     // the input's total size for simpler calculations and correctness.
-    // @ts-expect-error
+    // @ts-expect-error _size is set here
     if ((end === Infinity || end > this._size) && !this.options.uploadLengthDeferred) {
-      // @ts-expect-error
+      // @ts-expect-error _size is set here
       end = this._size
     }
 
-    // @ts-expect-error
+    // @ts-expect-error _source is set here
     return this._source.slice(start, end).then(({ value, done }) => {
       const valueSize = value && value.size ? value.size : 0
 
@@ -1006,7 +1006,7 @@ export default class BaseUpload<F, S> {
       storedUpload.parallelUploadUrls = this._parallelUploadUrls
     } else {
       // ... otherwise we just save the one available URL.
-      // @ts-expect-error
+      // @ts-expect-error We still have to figure out the null/undefined situation.
       storedUpload.uploadUrl = this.url
     }
 
@@ -1234,8 +1234,8 @@ export function terminate<F, S>(url: string, options: UploadOptions<F, S>): Prom
         ...options,
         retryDelays: remainingDelays,
       }
-      return new Promise((resolve) => setTimeout(resolve, delay)).then(() =>
-        terminate(url, newOptions),
-      )
+      return new Promise((resolve) => {
+        setTimeout(resolve, delay)
+      }).then(() => terminate(url, newOptions))
     })
 }

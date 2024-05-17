@@ -1,5 +1,5 @@
-import { FileSource as IFileSource } from '../../upload'
 import { createReadStream, promises as fsPromises, ReadStream } from 'fs'
+import { FileSource as IFileSource } from '../../upload'
 
 export default async function getFileSource(stream: ReadStream): Promise<FileSource> {
   const path = stream.path.toString()
@@ -14,9 +14,9 @@ export default async function getFileSource(stream: ReadStream): Promise<FileSou
   // Note: `stream.end` is Infinity by default, so we need the check `isFinite`.
   // Note: `stream.end` is treated inclusively, so we need to add 1 here.
   // See the comment in slice() for more context.
-  //@ts-expect-error
+  // @ts-expect-error The types don't know start yet.
   const start = stream.start ?? 0
-  //@ts-expect-error
+  // @ts-expect-error The types don't know end yet.
   const end = Number.isFinite(stream.end) ? stream.end + 1 : size
   const actualSize = end - start
 
@@ -25,7 +25,9 @@ export default async function getFileSource(stream: ReadStream): Promise<FileSou
 
 class FileSource implements IFileSource<ReadStream> {
   size: number
+
   _stream: ReadStream
+
   _path: string
 
   constructor(stream: ReadStream, path: string, size: number) {
@@ -41,7 +43,7 @@ class FileSource implements IFileSource<ReadStream> {
     // This happens, for example, if a fs.ReadStream is used with the `parallelUploads`
     // option. First, the ReadStream is sliced into multiple ReadStreams to fit the number
     // of number of `parallelUploads`. Each ReadStream has `start` set.
-    //@ts-expect-error
+    // @ts-expect-error The types don't know start yet.
     const offset = this._stream.start ?? 0
 
     const stream: ReadStream & { size?: number } = createReadStream(this._path, {

@@ -1,4 +1,4 @@
-import { FileReader, FileSource, SliceResult } from '../../upload.js'
+import { FileSource, SliceResult } from '../../upload.js'
 import { FileSliceTypes } from '../index.js'
 import isCordova from './isCordova.js'
 import readAsByteArray from './readAsByteArray.js'
@@ -6,6 +6,7 @@ import readAsByteArray from './readAsByteArray.js'
 // TODO: Rename file
 export default class BlobFileSource implements FileSource<FileSliceTypes> {
   _file: Blob
+
   size: number
 
   constructor(file: Blob) {
