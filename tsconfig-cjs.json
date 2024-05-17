@@ -4,6 +4,6 @@
     "module": "commonjs",
     "moduleResolution": null,
     // TODO: Rename to lib.cjs
-    "outDir": "lib.es5"
+    "outDir": "lib.es5/"
   }
 }
