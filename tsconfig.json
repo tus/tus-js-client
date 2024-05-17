@@ -1,6 +1,5 @@
 {
   "include": ["lib/**/*"],
-  "exclude": ["lib/index.d.ts", "lib/index.test-d.ts"],
   "compilerOptions": {
     "target": "ES2018",
     "esModuleInterop": true,
