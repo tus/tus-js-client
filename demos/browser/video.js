@@ -127,7 +127,9 @@ function startStreamUpload() {
       startUpload(readableRecorder)
 
       stopRecording = () => {
-        stream.getTracks().forEach((t) => t.stop())
+        for (const t of stream.getTracks()) {
+          t.stop()
+        }
         mr.stop()
         stopRecording = null
       }
