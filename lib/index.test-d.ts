@@ -73,7 +73,11 @@ const _upload2 = new tus.Upload(file, {
 fetch('https://www.example.org')
   .then((response) => response.body)
   .then((rb) => {
-    const reader = rb?.getReader()
+    if (rb == null) {
+      return
+    }
+
+    const reader = rb.getReader()
     return new tus.Upload(reader, {
       endpoint: '',
       uploadLengthDeferred: true,
