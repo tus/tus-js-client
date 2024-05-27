@@ -1,5 +1,3 @@
-'use strict'
-
 let upload = null
 let uploadIsRunning = false
 let file = null

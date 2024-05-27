@@ -4,7 +4,7 @@
 
 import { expectType } from 'tsd'
 import * as tus from '../'
-import { DetailedError } from '../'
+import type { DetailedError } from '../'
 
 expectType<boolean>(tus.isSupported)
 expectType<boolean>(tus.canStoreURLs)
@@ -42,7 +42,7 @@ const upload = new tus.Upload(file, {
     { start: 0, end: 1 },
     { start: 1, end: 11 },
   ],
-  onAfterResponse: function (req: tus.HttpRequest, res: tus.HttpResponse) {
+  onAfterResponse: (req: tus.HttpRequest, res: tus.HttpResponse) => {
     const url = req.getURL()
     const value = res.getHeader('X-My-Header')
     console.log(`Request for ${url} responded with ${value}`)
@@ -73,7 +73,7 @@ const _upload2 = new tus.Upload(file, {
 fetch('https://www.example.org')
   .then((response) => response.body)
   .then((rb) => {
-    const reader = rb!.getReader()
+    const reader = rb?.getReader()
     return new tus.Upload(reader, {
       endpoint: '',
       uploadLengthDeferred: true,

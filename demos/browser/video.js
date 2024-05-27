@@ -1,5 +1,3 @@
-'use strict'
-
 let stopRecording = null
 let upload = null
 const recordBtn = document.querySelector('#record-btn')
@@ -30,9 +28,9 @@ recordBtn.addEventListener('click', (e) => {
 
 function startUpload(file) {
   const endpoint = endpointInput.value
-  let chunkSize = parseInt(chunkInput.value, 10)
+  let chunkSize = Number.parseInt(chunkInput.value, 10)
   if (Number.isNaN(chunkSize)) {
-    chunkSize = Infinity
+    chunkSize = Number.POSITIVE_INFINITY
   }
 
   const options = {

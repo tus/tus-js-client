@@ -1,5 +1,3 @@
-'use strict'
-
 let upload = null
 let uploadIsRunning = false
 const toggleBtn = document.querySelector('#toggle-btn')
@@ -30,7 +28,7 @@ function askToResumeUpload(previousUploads, currentUpload) {
     '\nEnter the corresponding number to resume an upload or press Cancel to start a new upload'
 
   const answer = prompt(text)
-  const index = parseInt(answer, 10)
+  const index = Number.parseInt(answer, 10)
 
   if (!Number.isNaN(index) && previousUploads[index]) {
     currentUpload.resumeFromPreviousUpload(previousUploads[index])
@@ -47,12 +45,12 @@ function startUpload() {
   }
 
   const endpoint = endpointInput.value
-  let chunkSize = parseInt(chunkInput.value, 10)
+  let chunkSize = Number.parseInt(chunkInput.value, 10)
   if (Number.isNaN(chunkSize)) {
-    chunkSize = Infinity
+    chunkSize = Number.POSITIVE_INFINITY
   }
 
-  let parallelUploads = parseInt(parallelInput.value, 10)
+  let parallelUploads = Number.parseInt(parallelInput.value, 10)
   if (Number.isNaN(parallelUploads)) {
     parallelUploads = 1
   }

@@ -1,5 +1,3 @@
-'use strict'
-
 const axios = require('axios')
 const { getBlob } = require('./helpers/utils')
 const tus = require('../..')

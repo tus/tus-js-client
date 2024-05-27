@@ -1,5 +1,3 @@
-'use strict'
-
 const assertUrlStorage = require('./helpers/assertUrlStorage')
 const { TestHttpStack, waitableFunction, wait } = require('./helpers/utils')
 const tus = require('../..')

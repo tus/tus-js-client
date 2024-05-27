@@ -1,5 +1,3 @@
-'use strict'
-
 const isBrowser = typeof window !== 'undefined'
 const isNode = !isBrowser
 
