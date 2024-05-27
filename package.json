@@ -39,8 +39,12 @@
     "./package.json": "./package.json"
   },
   "types": "./lib.esm/browser/index.d.ts",
-  "main": "./lib.es5/browser/index.js",
-  "module": "./lib.esm/browser/index.js",
+  "main": "lib.es5/node/index.js",
+  "module": "lib.esm/node/index.js",
+  "browser": {
+    "./lib.es5/node/index.js": "./lib.es5/browser/index.js",
+    "./lib.esm/node/index.js": "./lib.esm/browser/index.js"
+  },
   "engines": {
     "node": ">=18"
   },
