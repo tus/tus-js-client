@@ -1,8 +1,5 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.7.3/schema.json",
-  "files": {
-    "ignore": ["dist/*", "lib.es5/*", "lib.esm/*"]
-  },
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
@@ -38,6 +35,11 @@
       "quoteStyle": "single",
       "attributePosition": "auto"
     }
+  },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
   },
   "overrides": [
     {
