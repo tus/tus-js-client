@@ -508,8 +508,10 @@ async function getBodySize(body) {
 
   return new Promise((resolve) => {
     body.on('readable', () => {
-      let chunk
-      while ((chunk = body.read()) !== null) {
+      while (true) {
+        const chunk = body.read()
+        if (chunk == null) break
+
         resolve(chunk.length)
       }
     })
