@@ -16,13 +16,18 @@
     "enabled": true,
     "rules": {
       "style": {
-        "noParameterAssign": "off"
+        "noParameterAssign": "off",
+        "noDefaultExport": "warn",
+        "useCollapsedElseIf": "error"
       },
       "suspicious": {
-        "noExplicitAny": "off"
+        "noExplicitAny": "off",
+        "useAwait": "error"
       },
       "correctness": {
-        "noUndeclaredVariables": "error"
+        "noNewSymbol": "error",
+        "noUndeclaredVariables": "error",
+        "noUnusedVariables": "error"
       }
     }
   },
