@@ -4,13 +4,7 @@
   "description": "A pure JavaScript client for the tus resumable upload protocol",
   "main": "lib.es5/node/index.js",
   "module": "lib.esm/node/index.js",
-  "files": [
-    "lib/**/*",
-    "lib.es5/**/*",
-    "lib.esm/**/*",
-    "dist/**/*",
-    "lib/index.d.ts"
-  ],
+  "files": ["lib/**/*", "lib.es5/**/*", "lib.esm/**/*", "dist/**/*", "lib/index.d.ts"],
   "browser": {
     "./lib.es5/node/index.js": "./lib.es5/browser/index.js",
     "./lib.esm/node/index.js": "./lib.esm/browser/index.js",
@@ -24,15 +18,7 @@
     "type": "git",
     "url": "https://github.com/tus/tus-js-client.git"
   },
-  "keywords": [
-    "tus",
-    "resumable",
-    "upload",
-    "protocol",
-    "progress",
-    "file",
-    "browser"
-  ],
+  "keywords": ["tus", "resumable", "upload", "protocol", "progress", "file", "browser"],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/tus/tus-js-client/issues"
@@ -41,26 +27,15 @@
   "devDependencies": {
     "@babel/cli": "^7.0.0",
     "@babel/core": "^7.13.10",
-    "@babel/eslint-parser": "^7.13.10",
-    "@babel/eslint-plugin": "^7.13.10",
     "@babel/helper-get-function-arity": "^7.16.7",
     "@babel/plugin-syntax-jsx": "^7.12.13",
     "@babel/plugin-transform-modules-commonjs": "^7.9.6",
     "@babel/preset-env": "^7.0.0",
+    "@biomejs/biome": "^1.7.3",
     "axios": "^0.28.0",
     "babelify": "^10.0.0",
     "browserify": "^17.0.0",
     "chokidar-cli": "^3.0.0",
-    "eslint": "^7.22.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-config-transloadit": "^2.0.0",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-jest": "^24.3.1",
-    "eslint-plugin-jsx-a11y": "^6.4.1",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^4.3.1",
-    "eslint-plugin-react": "^7.22.0",
-    "eslint-plugin-react-hooks": "^4.2.0",
     "exorcist": "^2.0.0",
     "into-stream": "^6.0.0",
     "jasmine": "^5.1.0",
@@ -104,9 +79,7 @@
     "test-browserstack": "karma start test/karma/browserstack.conf.js",
     "test-node": "jasmine test/spec/node-index.js",
     "test-types": "tsd",
-    "lint": "eslint . --cache && yarn lint:formatting",
-    "fix:formatting": "prettier --write .",
-    "lint:formatting": "prettier --check .",
-    "fix": "yarn fix:formatting"
+    "lint": "biome check .",
+    "fix": "biome check --apply ."
   }
 }

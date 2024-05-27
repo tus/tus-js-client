@@ -1,5 +1,3 @@
-/* eslint-disable max-classes-per-file */
-
 'use strict'
 
 const isBrowser = typeof window !== 'undefined'

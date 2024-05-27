@@ -2,8 +2,8 @@
 // working correctly. For more details see:
 // https://github.com/SamVerschueren/tsd
 
-import * as tus from '../'
 import { expectType } from 'tsd'
+import * as tus from '../'
 import { DetailedError } from '../'
 
 expectType<boolean>(tus.isSupported)
@@ -21,14 +21,14 @@ const upload = new tus.Upload(file, {
   },
   onProgress: (bytesSent: number, bytesTotal: number) => {
     const percentage = ((bytesSent / bytesTotal) * 100).toFixed(2)
-    console.log(bytesSent, bytesTotal, percentage + '%')
+    console.log(bytesSent, bytesTotal, `${percentage}%`)
   },
-  onChunkComplete: (chunkSize: number, bytesAccepted: number) => {},
+  onChunkComplete: (_chunkSize: number, _bytesAccepted: number) => {},
   onSuccess: () => {
     console.log('Download from %s complete', upload.url)
   },
   onError: (error: Error | DetailedError) => {
-    console.log('Failed because: ' + error)
+    console.log(`Failed because: ${error}`)
   },
   headers: { TestHeader: 'TestValue' },
   chunkSize: 100,
@@ -43,8 +43,8 @@ const upload = new tus.Upload(file, {
     { start: 1, end: 11 },
   ],
   onAfterResponse: function (req: tus.HttpRequest, res: tus.HttpResponse) {
-    var url = req.getURL()
-    var value = res.getHeader('X-My-Header')
+    const url = req.getURL()
+    const value = res.getHeader('X-My-Header')
     console.log(`Request for ${url} responded with ${value}`)
   },
 })
@@ -58,7 +58,7 @@ upload.findPreviousUploads().then((uploads: tus.PreviousUpload[]) => {
 upload.abort()
 upload.abort(true).then(() => {})
 
-const upload2 = new tus.Upload(file, {
+const _upload2 = new tus.Upload(file, {
   endpoint: '',
 })
 
