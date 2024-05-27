@@ -20,6 +20,9 @@
       },
       "suspicious": {
         "noExplicitAny": "off"
+      },
+      "correctness": {
+        "noUndeclaredVariables": "error"
       }
     }
   },
@@ -43,7 +46,7 @@
   },
   "overrides": [
     {
-      "include": ["lib/node/*"],
+      "include": ["lib/node/**"],
       "linter": {
         "rules": {
           "style": {
@@ -58,7 +61,7 @@
       }
     },
     {
-      "include": ["test/*"],
+      "include": ["test/**"],
       "javascript": {
         "globals": [
           "jasmine",
@@ -72,6 +75,9 @@
         ]
       }
     },
-    { "include": ["demos/*"], "javascript": { "globals": ["tus", "Camera"] } }
+    {
+      "include": ["demos/browser/**", "demos/cordova/**"],
+      "javascript": { "globals": ["tus", "Camera"] }
+    }
   ]
 }
