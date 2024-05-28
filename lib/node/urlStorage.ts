@@ -1,4 +1,3 @@
-/* eslint no-unused-vars: 0 */
 import { readFile, writeFile } from 'node:fs'
 import combineErrors from 'combine-errors'
 import * as lockfile from 'proper-lockfile'

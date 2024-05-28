@@ -1,5 +1,3 @@
-/* eslint-disable max-classes-per-file */
-
 import type { HttpProgressHandler, HttpRequest, HttpResponse, HttpStack } from '../upload.js'
 
 export default class XHRHttpStack implements HttpStack<Blob> {

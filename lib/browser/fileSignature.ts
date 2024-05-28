@@ -25,7 +25,6 @@ function reactNativeFingerprint<F, S>(file: ReactNativeFile, options: UploadOpti
 }
 
 function hashCode(str: string): number {
-  /* eslint-disable no-bitwise */
   // from https://stackoverflow.com/a/8831937/151666
   let hash = 0
   if (str.length === 0) {

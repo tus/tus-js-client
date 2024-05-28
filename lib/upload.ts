@@ -206,7 +206,6 @@ export default class BaseUpload<F, S> {
   constructor(file: F, options: UploadOptions<F, S>) {
     // Warn about removed options from previous versions
     if ('resume' in options) {
-      // eslint-disable-next-line no-console
       console.log(
         'tus: The `resume` option has been removed in tus-js-client v2. Please use the URL storage API instead.',
       )
@@ -1108,7 +1107,7 @@ function isOnline(): boolean {
   let online = true
   // Note: We don't reference `window` here because the navigator object also exists
   // in a Web Worker's context.
-  // eslint-disable-next-line no-undef
+  // -disable-next-line no-undef
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
     online = false
   }

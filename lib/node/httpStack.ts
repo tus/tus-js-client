@@ -1,4 +1,3 @@
-/* eslint-disable max-classes-per-file, node/no-deprecated-api */
 // The url.parse method is superseeded by the url.URL constructor,
 // but it is still included in Node.js
 import * as http from 'node:http'

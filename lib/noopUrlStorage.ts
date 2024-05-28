@@ -1,21 +1,19 @@
-/* eslint no-unused-vars: "off" */
-
-import type { UrlStorage } from './upload.js'
+import type { PreviousUpload, UrlStorage } from './upload.js'
 
 export default class NoopUrlStorage implements UrlStorage {
   findAllUploads() {
     return Promise.resolve([])
   }
 
-  findUploadsByFingerprint() {
+  findUploadsByFingerprint(_fingerprint: string) {
     return Promise.resolve([])
   }
 
-  removeUpload() {
-    return Promise.resolve(undefined)
+  removeUpload(_urlStorageKey: string) {
+    return Promise.resolve()
   }
 
-  addUpload() {
+  addUpload(_urlStorageKey: string, _upload: PreviousUpload) {
     return Promise.resolve(undefined)
   }
 }
