@@ -1,5 +1,3 @@
-'use strict'
-
 const assertUrlStorage = require('./helpers/assertUrlStorage')
 const { TestHttpStack, waitableFunction, wait } = require('./helpers/utils')
 const tus = require('../..')
@@ -710,7 +708,7 @@ describe('tus', () => {
       // the navigator.product property.
       const isIE = navigator.userAgent.indexOf('Trident/') > 0
       if (isIE) {
-        console.log('Skipping tests for React Native in Internet Explorer') // eslint-disable-line no-console
+        console.log('Skipping tests for React Native in Internet Explorer')
         return
       }
 

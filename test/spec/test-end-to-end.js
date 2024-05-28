@@ -1,5 +1,3 @@
-'use strict'
-
 const axios = require('axios')
 const { getBlob } = require('./helpers/utils')
 const tus = require('../..')
@@ -24,7 +22,7 @@ describe('tus', () => {
             },
             onSuccess() {
               expect(upload.url).toMatch(/^https:\/\/tusd\.tusdemo\.net\/files\//)
-              console.log('Upload URL:', upload.url) // eslint-disable-line no-console
+              console.log('Upload URL:', upload.url)
 
               resolve(upload)
             },
@@ -60,7 +58,7 @@ describe('tus', () => {
             },
             onSuccess() {
               expect(upload.url).toMatch(/^https:\/\/tusd\.tusdemo\.net\/files\//)
-              console.log('Upload URL:', upload.url) // eslint-disable-line no-console
+              console.log('Upload URL:', upload.url)
 
               resolve(upload)
             },

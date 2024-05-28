@@ -1,7 +1,5 @@
 // Karma base configuration
 
-'use strict'
-
 module.exports = (config) => {
   config.set({
     // base path that will be used to resolve all patterns (eg. files, exclude)
@@ -41,6 +39,6 @@ module.exports = (config) => {
 
     // Concurrency level
     // how many browser instances should be started simultaneously
-    concurrency: Infinity,
+    concurrency: Number.POSITIVE_INFINITY,
   })
 }

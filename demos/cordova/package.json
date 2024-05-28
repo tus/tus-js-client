@@ -22,8 +22,6 @@
       "cordova-plugin-file": {},
       "cordova-plugin-whitelist": {}
     },
-    "platforms": [
-      "android"
-    ]
+    "platforms": ["android"]
   }
 }

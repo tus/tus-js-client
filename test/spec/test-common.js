@@ -1,5 +1,3 @@
-'use strict'
-
 const { TestHttpStack, waitableFunction, wait, getBlob } = require('./helpers/utils')
 const tus = require('../..')
 
@@ -1141,7 +1139,7 @@ describe('tus', () => {
 
       spyOn(options, 'onChunkComplete').and.callThrough()
 
-      let upload = new tus.Upload(file, options)
+      const upload = new tus.Upload(file, options)
       upload.start()
 
       let req = await testStack.nextRequest()
