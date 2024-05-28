@@ -41,7 +41,6 @@
     "puppeteer": "^22.3.0",
     "temp": "^0.9.4",
     "throttle": "^1.0.3",
-    "tsd": "0.31.0",
     "typescript": "^5.4.5",
     "uglify-js": "^3.9.2"
   },
@@ -69,7 +68,6 @@
     "test-puppeteer": "karma start test/karma/puppeteer.conf.cjs",
     "test-browserstack": "karma start test/karma/browserstack.conf.cjs",
     "test-node": "jasmine test/spec/node-index.cjs",
-    "test-types": "tsd",
     "lint": "biome check .",
     "fix": "biome check --apply ."
   }
