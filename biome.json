@@ -16,12 +16,12 @@
     "enabled": true,
     "rules": {
       "style": {
-        "noParameterAssign": "off",
+        "noParameterAssign": "warn",
         "noDefaultExport": "warn",
         "useCollapsedElseIf": "error"
       },
       "suspicious": {
-        "noExplicitAny": "off",
+        "noExplicitAny": "warn",
         "useAwait": "error"
       },
       "correctness": {
