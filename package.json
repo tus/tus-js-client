@@ -2,44 +2,14 @@
   "name": "tus-js-client",
   "version": "4.1.0",
   "description": "A pure JavaScript client for the tus resumable upload protocol",
-  "files": ["lib/**/*", "lib.es5/**/*", "lib.esm/**/*", "dist/**/*"],
-  "type": "module",
-  "exports": {
-    ".": {
-      "node": {
-        "module": "./lib.esm/node/index.js",
-        "import": {
-          "types": "./lib.esm/node/index.d.ts",
-          "default": "./lib.esm/node/index.js"
-        },
-        "require": {
-          "types": "./lib.es5/node/index.js",
-          "default": "./lib.es5/node/index.js"
-        },
-        "default": "./lib.esm/node/index.js"
-      },
-      "default": {
-        "module": "./lib.esm/browser/index.js",
-        "import": {
-          "types": "./lib.esm/browser/index.d.ts",
-          "default": "./lib.esm/browser/index.js"
-        },
-        "require": {
-          "types": "./lib.es5/browser/index.js",
-          "default": "./lib.es5/browser/index.js"
-        },
-        "default": "./lib.esm/browser/index.js"
-      }
-    },
-    "./package.json": "./package.json"
-  },
-  "types": "./lib.esm/browser/index.d.ts",
   "main": "lib.es5/node/index.js",
   "module": "lib.esm/node/index.js",
+  "files": ["lib.es5/**/*", "lib.esm/**/*", "dist/**/*"],
   "browser": {
     "./lib.es5/node/index.js": "./lib.es5/browser/index.js",
     "./lib.esm/node/index.js": "./lib.esm/browser/index.js"
   },
+  "types": "./lib.es5/browser/index.d.ts",
   "engines": {
     "node": ">=18"
   },
