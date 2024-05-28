@@ -79,7 +79,6 @@
     "throttle": "^1.0.3",
     "tsd": "0.31.0",
     "typescript": "^5.4.5",
-    "typescript-eslint": "^7.9.0",
     "uglify-js": "^3.9.2"
   },
   "dependencies": {
