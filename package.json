@@ -54,12 +54,6 @@
   },
   "homepage": "https://github.com/tus/tus-js-client",
   "devDependencies": {
-    "@babel/cli": "^7.0.0",
-    "@babel/core": "^7.13.10",
-    "@babel/helper-get-function-arity": "^7.16.7",
-    "@babel/plugin-syntax-jsx": "^7.12.13",
-    "@babel/plugin-transform-modules-commonjs": "^7.9.6",
-    "@babel/preset-env": "^7.0.0",
     "@biomejs/biome": "^1.7.3",
     "axios": "^0.28.0",
     "browserify": "^17.0.0",
