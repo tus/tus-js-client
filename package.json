@@ -2,12 +2,7 @@
   "name": "tus-js-client",
   "version": "4.1.0",
   "description": "A pure JavaScript client for the tus resumable upload protocol",
-  "files": [
-    "lib/**/*",
-    "lib.es5/**/*",
-    "lib.esm/**/*",
-    "dist/**/*"
-  ],
+  "files": ["lib/**/*", "lib.es5/**/*", "lib.esm/**/*", "dist/**/*"],
   "type": "module",
   "exports": {
     ".": {
@@ -52,38 +47,23 @@
     "type": "git",
     "url": "https://github.com/tus/tus-js-client.git"
   },
-  "keywords": [
-    "tus",
-    "resumable",
-    "upload",
-    "protocol",
-    "progress",
-    "file",
-    "browser"
-  ],
+  "keywords": ["tus", "resumable", "upload", "protocol", "progress", "file", "browser"],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/tus/tus-js-client/issues"
   },
   "homepage": "https://github.com/tus/tus-js-client",
   "devDependencies": {
-    "@babel/core": "^7.24.4",
-    "@babel/eslint-parser": "^7.24.1",
-    "@babel/eslint-plugin": "^7.23.5",
+    "@babel/cli": "^7.0.0",
+    "@babel/core": "^7.13.10",
+    "@babel/helper-get-function-arity": "^7.16.7",
+    "@babel/plugin-syntax-jsx": "^7.12.13",
+    "@babel/plugin-transform-modules-commonjs": "^7.9.6",
+    "@babel/preset-env": "^7.0.0",
+    "@biomejs/biome": "^1.7.3",
     "axios": "^0.28.0",
     "browserify": "^17.0.0",
     "chokidar-cli": "^3.0.0",
-    "eslint": "^8.56.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-config-transloadit": "^v3.0.0-0",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-jest": "^24.3.1",
-    "eslint-plugin-jsx-a11y": "^6.4.1",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^6.1.1",
-    "eslint-plugin-react": "^7.22.0",
-    "eslint-plugin-react-hooks": "^4.2.0",
-    "eslint-plugin-transloadit": "^0.2.0",
     "exorcist": "^2.0.0",
     "into-stream": "^6.0.0",
     "jasmine": "^5.1.0",
@@ -94,7 +74,6 @@
     "karma-chrome-launcher": "^3.1.1",
     "karma-jasmine": "^5.1.0",
     "npm-run-all": "^4.1.5",
-    "prettier": "^3.0.3",
     "puppeteer": "^22.3.0",
     "temp": "^0.9.4",
     "throttle": "^1.0.3",
@@ -128,9 +107,7 @@
     "test-browserstack": "karma start test/karma/browserstack.conf.cjs",
     "test-node": "jasmine test/spec/node-index.cjs",
     "test-types": "tsd",
-    "lint": "eslint . --cache && yarn lint:formatting",
-    "fix:formatting": "prettier --write .",
-    "lint:formatting": "prettier --check .",
-    "fix": "yarn fix:formatting"
+    "lint": "biome check .",
+    "fix": "biome check --apply ."
   }
 }

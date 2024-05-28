@@ -1,16 +1,16 @@
+import DetailedError from '../error.js'
+import { enableDebugLog } from '../logger.js'
+import NoopUrlStorage from '../noopUrlStorage.js'
 import BaseUpload, {
   defaultOptions as baseDefaultOptions,
   terminate,
-  UploadOptions,
+  type UploadOptions,
 } from '../upload.js'
-import NoopUrlStorage from '../noopUrlStorage.js'
-import { enableDebugLog } from '../logger.js'
-import DetailedError from '../error.js'
 
-import { canStoreURLs, WebStorageUrlStorage } from './urlStorage.js'
-import DefaultHttpStack from './httpStack.js'
 import BrowserFileReader from './fileReader.js'
 import fingerprint from './fileSignature.js'
+import DefaultHttpStack from './httpStack.js'
+import { WebStorageUrlStorage, canStoreURLs } from './urlStorage.js'
 
 const defaultOptions = {
   ...baseDefaultOptions,

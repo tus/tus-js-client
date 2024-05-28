@@ -1,4 +1,4 @@
-import { HttpRequest, HttpResponse } from './upload.js'
+import type { HttpRequest, HttpResponse } from './upload.js'
 
 class DetailedError extends Error {
   originalRequest?: HttpRequest<unknown>

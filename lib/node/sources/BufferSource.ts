@@ -1,4 +1,4 @@
-import { FileSource } from '../../upload.js'
+import type { FileSource } from '../../upload.js'
 
 export default class BufferSource implements FileSource<Buffer> {
   size: number

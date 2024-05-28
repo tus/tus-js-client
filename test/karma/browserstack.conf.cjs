@@ -1,5 +1,3 @@
-'use strict'
-
 // Karma configuration for testing using BrowserStack
 const baseConfig = require('./base.conf.cjs')
 

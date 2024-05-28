@@ -1,4 +1,4 @@
-import { PreviousUpload, UrlStorage } from '../upload.js'
+import type { PreviousUpload, UrlStorage } from '../upload.js'
 
 let hasStorage = false
 try {
@@ -73,7 +73,7 @@ export class WebStorageUrlStorage implements UrlStorage {
         upload.urlStorageKey = key
 
         results.push(upload)
-      } catch (e) {
+      } catch (_e) {
         // The JSON parse error is intentionally ignored here, so a malformed
         // entry in the storage cannot prevent an upload.
       }

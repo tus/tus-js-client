@@ -1,13 +1,11 @@
-'use strict'
-
-const stream = require('stream')
+const stream = require('node:stream')
 const temp = require('temp')
-const fs = require('fs')
-const https = require('https')
-const http = require('http')
-const crypto = require('crypto')
+const fs = require('node:fs')
+const https = require('node:https')
+const http = require('node:http')
+const crypto = require('node:crypto')
 const intoStream = require('into-stream')
-const { once } = require('events')
+const { once } = require('node:events')
 const tus = require('../..')
 const assertUrlStorage = require('./helpers/assertUrlStorage.cjs')
 const { TestHttpStack, waitableFunction } = require('./helpers/utils.cjs')
@@ -194,7 +192,7 @@ describe('tus', () => {
         expect(req.url).toBe('https://tus.io/uploads/upload1')
         expect(req.method).toBe('PATCH')
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Offset']).toBe(0)
+        expect(req.requestHeaders['Upload-Offset']).toBe('0')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
         expect(req.body.size).toBe(5)
 
@@ -223,7 +221,7 @@ describe('tus', () => {
         expect(req.url).toBe('https://tus.io/uploads/upload2')
         expect(req.method).toBe('PATCH')
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Offset']).toBe(0)
+        expect(req.requestHeaders['Upload-Offset']).toBe('0')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
         expect(req.body.size).toBe(6)
 
@@ -369,7 +367,7 @@ describe('tus', () => {
       expect(req.url).toBe('http://tus.io/uploads/resuming')
       expect(req.method).toBe('PATCH')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Offset']).toBe(3)
+      expect(req.requestHeaders['Upload-Offset']).toBe('3')
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
       expect(req.body.size).toBe(11 - 3)
 
@@ -510,8 +508,10 @@ async function getBodySize(body) {
 
   return new Promise((resolve) => {
     body.on('readable', () => {
-      let chunk
-      while ((chunk = body.read()) !== null) {
+      while (true) {
+        const chunk = body.read()
+        if (chunk == null) break
+
         resolve(chunk.length)
       }
     })
@@ -546,7 +546,7 @@ async function expectHelloWorldUpload(input, options) {
   req = await options.httpStack.nextRequest()
   expect(req.url).toBe('/uploads/blargh')
   expect(req.method).toBe('PATCH')
-  expect(req.requestHeaders['Upload-Offset']).toBe(0)
+  expect(req.requestHeaders['Upload-Offset']).toBe('0')
   expect(await getBodySize(req.body)).toBe(7)
 
   req.respondWith({
@@ -559,7 +559,7 @@ async function expectHelloWorldUpload(input, options) {
   req = await options.httpStack.nextRequest()
   expect(req.url).toBe('/uploads/blargh')
   expect(req.method).toBe('PATCH')
-  expect(req.requestHeaders['Upload-Offset']).toBe(7)
+  expect(req.requestHeaders['Upload-Offset']).toBe('7')
 
   if (options.uploadLengthDeferred) {
     expect(req.requestHeaders['Upload-Length']).toBe(11)

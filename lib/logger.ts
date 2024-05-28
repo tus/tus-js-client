@@ -1,5 +1,3 @@
-/* eslint no-console: "off" */
-
 let isEnabled = false
 
 export function enableDebugLog(): void {

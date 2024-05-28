@@ -1,6 +1,6 @@
 /* eslint no-unused-vars: "off" */
 
-import { UrlStorage } from './upload.js'
+import type { UrlStorage } from './upload.js'
 
 export default class NoopUrlStorage implements UrlStorage {
   findAllUploads() {
@@ -12,10 +12,10 @@ export default class NoopUrlStorage implements UrlStorage {
   }
 
   removeUpload() {
-    return Promise.resolve()
+    return Promise.resolve(undefined)
   }
 
   addUpload() {
-    return Promise.resolve()
+    return Promise.resolve(undefined)
   }
 }

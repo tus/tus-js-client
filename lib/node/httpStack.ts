@@ -1,13 +1,13 @@
 /* eslint-disable max-classes-per-file, node/no-deprecated-api */
 // The url.parse method is superseeded by the url.URL constructor,
 // but it is still included in Node.js
-import * as http from 'http'
-import * as https from 'https'
-import { parse } from 'url'
-import { Readable, Transform } from 'stream'
+import * as http from 'node:http'
+import * as https from 'node:https'
+import { Readable, Transform } from 'node:stream'
+import { parse } from 'node:url'
 import throttle from 'lodash.throttle'
-import { HttpProgressHandler, HttpRequest, HttpResponse, HttpStack } from '../upload.js'
-import { FileSliceTypes } from './index.js'
+import type { HttpProgressHandler, HttpRequest, HttpResponse, HttpStack } from '../upload.js'
+import type { FileSliceTypes } from './index.js'
 
 export default class NodeHttpStack implements HttpStack<FileSliceTypes> {
   private _requestOptions: http.RequestOptions
@@ -78,7 +78,7 @@ class Request implements HttpRequest<FileSliceTypes> {
       }
 
       // @ts-expect-error We still have to type `size` for `body`
-      if (body && body.size) {
+      if (body?.size) {
         // @ts-expect-error We still have to type `size` for `body`
         options.headers['Content-Length'] = body.size
       }
@@ -185,7 +185,11 @@ class ProgressEmitter extends Transform {
     })
   }
 
-  _transform(chunk: Buffer, encoding: string, callback: (err: Error | null, data: Buffer) => void) {
+  _transform(
+    chunk: Buffer,
+    _encoding: string,
+    callback: (err: Error | null, data: Buffer) => void,
+  ) {
     this._position += chunk.length
     this._onprogress(this._position)
     callback(null, chunk)

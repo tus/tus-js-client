@@ -1,10 +1,10 @@
 import isReactNative from './isReactNative.js'
 import uriToBlob from './uriToBlob.js'
 
+import type { FileReader, FileSource } from '../upload.js'
+import type { FileSliceTypes, FileTypes, ReactNativeFile } from './index.js'
 import BlobFileSource from './sources/FileSource.js'
 import StreamSource from './sources/StreamSource.js'
-import { FileReader, FileSource } from '../upload.js'
-import { FileSliceTypes, FileTypes, ReactNativeFile } from './index.js'
 
 function isReactNativeFile(input: FileTypes): input is ReactNativeFile {
   return 'uri' in input && typeof input.uri === 'string'
@@ -20,7 +20,7 @@ export default class BrowserFileReader implements FileReader<FileTypes, FileSlic
     if (isReactNativeFile(input)) {
       if (!isReactNative()) {
         // TODO
-        throw new Error(``)
+        throw new Error('')
       }
 
       try {

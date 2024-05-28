@@ -28,7 +28,7 @@ export const defaultOptions = {
   onAfterResponse: null,
   onShouldRetry: defaultOnShouldRetry,
 
-  chunkSize: Infinity,
+  chunkSize: Number.POSITIVE_INFINITY,
   retryDelays: [0, 1000, 3000, 5000],
   parallelUploads: 1,
   parallelUploadBoundaries: null,
@@ -92,7 +92,7 @@ export interface UrlStorage {
   removeUpload(urlStorageKey: string): Promise<void>
 
   // Returns the URL storage key, which can be used for removing the upload.
-  addUpload(fingerprint: string, upload: PreviousUpload): Promise<string | void>
+  addUpload(fingerprint: string, upload: PreviousUpload): Promise<string | undefined>
 }
 
 export interface PreviousUpload {
@@ -445,7 +445,7 @@ export default class BaseUpload<F, S> {
       )
     })
 
-    let req
+    let req: HttpRequest<S>
     // Wait until all partial uploads are finished and we can send the POST request for
     // creating the final upload.
     Promise.all(uploads)
@@ -529,9 +529,9 @@ export default class BaseUpload<F, S> {
   abort(shouldTerminate) {
     // Stop any parallel partial uploads, that have been started in _startParallelUploads.
     if (this._parallelUploads != null) {
-      this._parallelUploads.forEach((upload) => {
+      for (const upload of this._parallelUploads) {
         upload.abort(shouldTerminate)
-      })
+      }
     }
 
     // Stop any current running request.
@@ -669,7 +669,7 @@ export default class BaseUpload<F, S> {
       req.setHeader('Upload-Metadata', metadata)
     }
 
-    let promise
+    let promise: Promise<HttpResponse>
     if (this.options.uploadDataDuringCreation && !this.options.uploadLengthDeferred) {
       this._offset = 0
       promise = this._addChunkToRequest(req)
@@ -773,14 +773,14 @@ export default class BaseUpload<F, S> {
           this._emitHttpError(req, res, 'tus: missing Upload-Offset header')
           return
         }
-        const offset = parseInt(offsetStr, 10)
+        const offset = Number.parseInt(offsetStr, 10)
         if (Number.isNaN(offset)) {
           this._emitHttpError(req, res, 'tus: invalid Upload-Offset header')
           return
         }
 
         // @ts-expect-error parseInt also handles undefined as we want it to
-        const length = parseInt(res.getHeader('Upload-Length'), 10)
+        const length = Number.parseInt(res.getHeader('Upload-Length'), 10)
         if (
           Number.isNaN(length) &&
           !this.options.uploadLengthDeferred &&
@@ -827,7 +827,7 @@ export default class BaseUpload<F, S> {
       return
     }
 
-    let req
+    let req: HttpRequest<S>
 
     // Some browser and servers may not support the PATCH method. For those
     // cases, you can tell tus-js-client to use a POST request with the
@@ -839,7 +839,7 @@ export default class BaseUpload<F, S> {
       req = this._openRequest('PATCH', this.url)
     }
 
-    req.setHeader('Upload-Offset', this._offset)
+    req.setHeader('Upload-Offset', `${this._offset}`)
     const promise = this._addChunkToRequest(req)
 
     promise
@@ -880,15 +880,18 @@ export default class BaseUpload<F, S> {
     // The specified chunkSize may be Infinity or the calcluated end position
     // may exceed the file's size. In both cases, we limit the end position to
     // the input's total size for simpler calculations and correctness.
-    // @ts-expect-error _size is set here
-    if ((end === Infinity || end > this._size) && !this.options.uploadLengthDeferred) {
+    if (
+      // @ts-expect-error _size is set here
+      (end === Number.POSITIVE_INFINITY || end > this._size) &&
+      !this.options.uploadLengthDeferred
+    ) {
       // @ts-expect-error _size is set here
       end = this._size
     }
 
     // @ts-expect-error _source is set here
     return this._source.slice(start, end).then(({ value, done }) => {
-      const valueSize = value && value.size ? value.size : 0
+      const valueSize = value?.size ? value.size : 0
 
       // If the upload length is deferred, the upload size was not specified during
       // upload creation. So, if the file reader is done reading, we know the total
@@ -931,7 +934,7 @@ export default class BaseUpload<F, S> {
    * @api private
    */
   _handleUploadResponse(req, res) {
-    const offset = parseInt(res.getHeader('Upload-Offset'), 10)
+    const offset = Number.parseInt(res.getHeader('Upload-Offset'), 10)
     if (Number.isNaN(offset)) {
       this._emitHttpError(req, res, 'tus: invalid or missing offset value')
       return
@@ -1059,9 +1062,9 @@ function openRequest(method, url, options) {
   }
   const headers = options.headers || {}
 
-  Object.entries(headers).forEach(([name, value]) => {
+  for (const [name, value] of Object.entries(headers)) {
     req.setHeader(name, value)
-  })
+  }
 
   if (options.addRequestId) {
     const requestId = uuid()

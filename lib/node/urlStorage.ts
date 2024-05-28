@@ -1,8 +1,8 @@
 /* eslint no-unused-vars: 0 */
-import { readFile, writeFile } from 'fs'
-import * as lockfile from 'proper-lockfile'
+import { readFile, writeFile } from 'node:fs'
 import combineErrors from 'combine-errors'
-import { PreviousUpload, UrlStorage } from '../upload.js'
+import * as lockfile from 'proper-lockfile'
+import type { PreviousUpload, UrlStorage } from '../upload.js'
 
 export const canStoreURLs = true
 

@@ -61,7 +61,7 @@ describe('tus', () => {
       expect(req.url).toBe('http://tus.io/uploads/resuming')
       expect(req.method).toBe('PATCH')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Offset']).toBe(3)
+      expect(req.requestHeaders['Upload-Offset']).toBe('3')
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
       expect(req.body.size).toBe(11 - 3)
 
@@ -198,7 +198,7 @@ describe('tus', () => {
         expect(req.url).toBe('http://tus.io/uploads/storedUrl')
         expect(req.method).toBe('PATCH')
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Offset']).toBe(3)
+        expect(req.requestHeaders['Upload-Offset']).toBe('3')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
         expect(req.body.size).toBe(11 - 3)
 
@@ -305,7 +305,7 @@ describe('tus', () => {
         req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads/blargh')
         expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Upload-Offset']).toBe(0)
+        expect(req.requestHeaders['Upload-Offset']).toBe('0')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
         expect(req.body.length).toBe(11)
 
@@ -322,7 +322,7 @@ describe('tus', () => {
         req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads/blargh')
         expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Upload-Offset']).toBe(11)
+        expect(req.requestHeaders['Upload-Offset']).toBe('11')
         expect(req.requestHeaders['Upload-Length']).toBe(11)
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
         expect(req.body).toBe(null)
@@ -383,7 +383,7 @@ describe('tus', () => {
         req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads/blargh')
         expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Upload-Offset']).toBe(0)
+        expect(req.requestHeaders['Upload-Offset']).toBe('0')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
         expect(req.body.length).toBe(6)
 
@@ -401,7 +401,7 @@ describe('tus', () => {
         expect(req.url).toBe('http://tus.io/uploads/blargh')
         expect(req.method).toBe('PATCH')
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Offset']).toBe(6)
+        expect(req.requestHeaders['Upload-Offset']).toBe('6')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
         expect(req.body.length).toBe(5)
 
@@ -415,7 +415,7 @@ describe('tus', () => {
         req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads/blargh')
         expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Upload-Offset']).toBe(11)
+        expect(req.requestHeaders['Upload-Offset']).toBe('11')
         expect(req.requestHeaders['Upload-Length']).toBe(11)
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
         expect(req.body).toBe(null)
@@ -780,7 +780,7 @@ describe('tus', () => {
         expect(req.url).toBe('http://tus.io/uploads/blargh')
         expect(req.method).toBe('PATCH')
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Offset']).toBe(0)
+        expect(req.requestHeaders['Upload-Offset']).toBe('0')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
         expect(req.body.size).toBe(11)
 

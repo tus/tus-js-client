@@ -1,8 +1,8 @@
-import * as fs from 'fs'
-import * as path from 'path'
-import { createHash } from 'crypto'
-import { UploadOptions } from '../upload.js'
-import { FileTypes, FileSliceTypes } from './index.js'
+import { createHash } from 'node:crypto'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
+import type { UploadOptions } from '../upload.js'
+import type { FileSliceTypes, FileTypes } from './index.js'
 
 /**
  * Generate a fingerprint for a file which will be used the store the endpoint

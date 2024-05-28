@@ -1,5 +1,5 @@
-import { FileSource } from '../../upload.js'
-import { FileSliceTypes } from '../index.js'
+import type { FileSource } from '../../upload.js'
+import type { FileSliceTypes } from '../index.js'
 
 function len(blobOrArray): number {
   if (blobOrArray === undefined) return 0
@@ -81,7 +81,7 @@ export default class StreamSource implements FileSource<FileSliceTypes> {
 
   _getDataFromBuffer(start, end) {
     if (this._buffer === undefined) {
-      throw new Error(`cannot _getDataFromBuffer because _buffer is unset`)
+      throw new Error('cannot _getDataFromBuffer because _buffer is unset')
     }
 
     // Remove data from buffer before `start`.
