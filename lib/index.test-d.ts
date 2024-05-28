@@ -28,7 +28,7 @@ const upload = new tus.Upload(file, {
     console.log('Download from %s complete', upload.url)
   },
   onError: (error: Error | DetailedError) => {
-    console.log(`Failed because: ${error}`)
+    console.error(`Failed because: ${error}`)
   },
   headers: { TestHeader: 'TestValue' },
   chunkSize: 100,
