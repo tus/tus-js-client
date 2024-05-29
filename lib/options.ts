@@ -18,13 +18,16 @@ export interface ReactNativeFile {
 }
 
 export type UploadInput =
+  // Blob, File, ReadableStreamDefaultReader are available in browsers and Node.js
   | Blob
   | File
   // TODO: Should we keep the Pick<> here?
   | Pick<ReadableStreamDefaultReader, 'read'>
+  // Buffer, stream.Readable, fs.ReadStream are available in Node.js
   | Buffer
   | Readable
   | ReadStream
+  // ReactNativeFile is intended for React Native apps
   | ReactNativeFile
 
 export interface UploadOptions {

@@ -1,13 +1,9 @@
-import isReactNative from './isReactNative.js'
+import { isReactNativeFile, isReactNativePlatform } from './isReactNative.js'
 import uriToBlob from './uriToBlob.js'
 
 import type { FileReader, FileSource, ReactNativeFile, UploadInput } from '../options.js'
 import BlobFileSource from './sources/FileSource.js'
 import StreamSource from './sources/StreamSource.js'
-
-function isReactNativeFile(input: UploadInput): input is ReactNativeFile {
-  return 'uri' in input && typeof input.uri === 'string'
-}
 
 function isWebStream(input: UploadInput): input is Pick<ReadableStreamDefaultReader, 'read'> {
   return 'read' in input && typeof input.read === 'function'
@@ -21,7 +17,7 @@ export default class BrowserFileReader implements FileReader {
     // a local path to the file. We use XMLHttpRequest to fetch
     // the file blob, before uploading with tus.
     if (isReactNativeFile(input)) {
-      if (!isReactNative()) {
+      if (!isReactNativePlatform()) {
         // TODO
         throw new Error('')
       }

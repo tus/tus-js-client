@@ -1,21 +1,22 @@
 import type { ReactNativeFile, UploadInput, UploadOptions } from '../options.js'
-import isReactNative from './isReactNative.js'
-
-// TODO: Differenciate between input types
+import { isReactNativeFile, isReactNativePlatform } from './isReactNative.js'
 
 /**
  * Generate a fingerprint for a file which will be used the store the endpoint
  */
 export default function fingerprint(file: UploadInput, options: UploadOptions) {
-  if (isReactNative()) {
-    //@ts-expect-error TODO: We have to check the input type here
+  if (isReactNativePlatform() && isReactNativeFile(file)) {
     return Promise.resolve(reactNativeFingerprint(file, options))
   }
 
-  return Promise.resolve(
-    //@ts-expect-error TODO: We have to check the input type here
-    ['tus-br', file.name, file.type, file.size, file.lastModified, options.endpoint].join('-'),
-  )
+  if (file instanceof Blob) {
+    return Promise.resolve(
+      //@ts-expect-error TODO: We have to check the input type here
+      ['tus-br', file.name, file.type, file.size, file.lastModified, options.endpoint].join('-'),
+    )
+  }
+
+  return Promise.resolve(null)
 }
 
 function reactNativeFingerprint(file: ReactNativeFile, options: UploadOptions): string {
