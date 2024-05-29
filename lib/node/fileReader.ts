@@ -1,7 +1,7 @@
 import { ReadStream } from 'node:fs'
 import isStream from 'is-stream'
 
-import type { FileReader as IFileReader } from '../upload.js'
+import type { FileReader as IFileReader } from '../options.js'
 import type { FileSliceTypes, FileTypes } from './index.js'
 import BufferSource from './sources/BufferSource.js'
 import getFileSource from './sources/FileSource.js'

@@ -1,11 +1,8 @@
 import DetailedError from '../error.js'
 import { enableDebugLog } from '../logger.js'
 import NoopUrlStorage from '../noopUrlStorage.js'
-import BaseUpload, {
-  defaultOptions as baseDefaultOptions,
-  terminate,
-  type UploadOptions,
-} from '../upload.js'
+import type { UploadOptions } from '../options.js'
+import BaseUpload, { terminate, defaultOptions as baseDefaultOptions } from '../upload.js'
 
 import BrowserFileReader from './fileReader.js'
 import fingerprint from './fileSignature.js'

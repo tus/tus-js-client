@@ -1,7 +1,7 @@
 import isReactNative from './isReactNative.js'
 import uriToBlob from './uriToBlob.js'
 
-import type { FileReader, FileSource } from '../upload.js'
+import type { FileReader, FileSource } from '../options.js'
 import type { FileSliceTypes, FileTypes, ReactNativeFile } from './index.js'
 import BlobFileSource from './sources/FileSource.js'
 import StreamSource from './sources/StreamSource.js'

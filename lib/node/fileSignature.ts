@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import type { UploadOptions } from '../upload.js'
+import type { UploadOptions } from '../options.js'
 import type { FileSliceTypes, FileTypes } from './index.js'
 
 /**

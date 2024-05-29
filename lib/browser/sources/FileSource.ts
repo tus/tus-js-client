@@ -1,4 +1,4 @@
-import type { FileSource, SliceResult } from '../../upload.js'
+import type { FileSource, SliceResult } from '../../options.js'
 import type { FileSliceTypes } from '../index.js'
 import isCordova from './isCordova.js'
 import readAsByteArray from './readAsByteArray.js'

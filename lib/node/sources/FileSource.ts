@@ -1,5 +1,5 @@
 import { type ReadStream, createReadStream, promises as fsPromises } from 'node:fs'
-import type { FileSource as IFileSource } from '../../upload.js'
+import type { FileSource as IFileSource } from '../../options.js'
 
 export default async function getFileSource(stream: ReadStream): Promise<FileSource> {
   const path = stream.path.toString()

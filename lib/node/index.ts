@@ -3,11 +3,8 @@ import type { Readable } from 'node:stream'
 import DetailedError from '../error.js'
 import { enableDebugLog } from '../logger.js'
 import NoopUrlStorage from '../noopUrlStorage.js'
-import BaseUpload, {
-  type UploadOptions,
-  defaultOptions as baseDefaultOptions,
-  terminate,
-} from '../upload.js'
+import type { UploadOptions } from '../options.js'
+import BaseUpload, { terminate, defaultOptions as baseDefaultOptions } from '../upload.js'
 
 import FileReader from './fileReader.js'
 import fingerprint from './fileSignature.js'

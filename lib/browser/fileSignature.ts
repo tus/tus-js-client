@@ -1,4 +1,4 @@
-import type { UploadOptions } from '../upload.js'
+import type { UploadOptions } from '../options.js'
 import type { ReactNativeFile } from './index.js'
 import isReactNative from './isReactNative.js'
 

@@ -1,4 +1,4 @@
-import type { PreviousUpload, UrlStorage } from '../upload.js'
+import type { PreviousUpload, UrlStorage } from '../options.js'
 
 let hasStorage = false
 try {

@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'node:fs'
 import combineErrors from 'combine-errors'
 import * as lockfile from 'proper-lockfile'
-import type { PreviousUpload, UrlStorage } from '../upload.js'
+import type { PreviousUpload, UrlStorage } from '../options.js'
 
 export const canStoreURLs = true
 

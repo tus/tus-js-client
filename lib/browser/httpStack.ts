@@ -1,4 +1,4 @@
-import type { HttpProgressHandler, HttpRequest, HttpResponse, HttpStack } from '../upload.js'
+import type { HttpProgressHandler, HttpRequest, HttpResponse, HttpStack } from '../options.js'
 
 export default class XHRHttpStack implements HttpStack<Blob> {
   createRequest(method, url) {

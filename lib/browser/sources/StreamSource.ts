@@ -1,4 +1,4 @@
-import type { FileSource } from '../../upload.js'
+import type { FileSource } from '../../options.js'
 import type { FileSliceTypes } from '../index.js'
 
 function len(blobOrArray): number {
