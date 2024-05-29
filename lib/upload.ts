@@ -90,7 +90,7 @@ export default class BaseUpload<F, S> {
   _retryAttempt = 0
 
   // The timeout's ID which is used to delay the next retry
-  _retryTimeout: unknown | null = null
+  _retryTimeout: ReturnType<typeof setTimeout> | null = null
 
   // The offset of the remote upload before the latest attempt was started.
   _offsetBeforeRetry = 0
@@ -442,7 +442,6 @@ export default class BaseUpload<F, S> {
 
     // Stop any timeout used for initiating a retry.
     if (this._retryTimeout != null) {
-      // @ts-expect-error What is a timeout type for Node.js and browsers?
       clearTimeout(this._retryTimeout)
       this._retryTimeout = null
     }
