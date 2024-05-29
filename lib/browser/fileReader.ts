@@ -1,18 +1,21 @@
 import isReactNative from './isReactNative.js'
 import uriToBlob from './uriToBlob.js'
 
-import type { FileReader, FileSource } from '../options.js'
-import type { FileSliceTypes, FileTypes, ReactNativeFile } from './index.js'
+import type { FileReader, FileSource, ReactNativeFile, UploadInput } from '../options.js'
 import BlobFileSource from './sources/FileSource.js'
 import StreamSource from './sources/StreamSource.js'
 
-function isReactNativeFile(input: FileTypes): input is ReactNativeFile {
+function isReactNativeFile(input: UploadInput): input is ReactNativeFile {
   return 'uri' in input && typeof input.uri === 'string'
 }
 
+function isWebStream(input: UploadInput): input is Pick<ReadableStreamDefaultReader, 'read'> {
+  return 'read' in input && typeof input.read === 'function'
+}
+
 // TODO: Make sure that we support ArrayBuffers, TypedArrays, DataViews and Blobs
-export default class BrowserFileReader implements FileReader<FileTypes, FileSliceTypes> {
-  async openFile(input: FileTypes, chunkSize: number): Promise<FileSource<FileSliceTypes>> {
+export default class BrowserFileReader implements FileReader {
+  async openFile(input: UploadInput, chunkSize: number): Promise<FileSource> {
     // In React Native, when user selects a file, instead of a File or Blob,
     // you usually get a file object {} with a uri property that contains
     // a local path to the file. We use XMLHttpRequest to fetch
@@ -38,7 +41,7 @@ export default class BrowserFileReader implements FileReader<FileTypes, FileSlic
       return Promise.resolve(new BlobFileSource(input))
     }
 
-    if (typeof input.read === 'function') {
+    if (isWebStream(input)) {
       chunkSize = Number(chunkSize)
       if (!Number.isFinite(chunkSize)) {
         return Promise.reject(

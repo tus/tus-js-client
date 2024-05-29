@@ -1,16 +1,14 @@
 import { ReadStream } from 'node:fs'
 import isStream from 'is-stream'
 
-import type { FileReader as IFileReader } from '../options.js'
-import type { FileSliceTypes, FileTypes } from './index.js'
+import type { FileReader, UploadInput } from '../options.js'
 import BufferSource from './sources/BufferSource.js'
 import getFileSource from './sources/FileSource.js'
 import StreamSource from './sources/StreamSource.js'
 
-// TODO: Consider renaming this NodeFileReader
-export default class FileReader implements IFileReader<FileTypes, FileSliceTypes> {
+export default class NodeFileReader implements FileReader {
   // TODO: Use async here and less Promise.resolve
-  openFile(input: FileTypes, chunkSize: number) {
+  openFile(input: UploadInput, chunkSize: number) {
     if (Buffer.isBuffer(input)) {
       return Promise.resolve(new BufferSource(input))
     }

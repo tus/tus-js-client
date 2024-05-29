@@ -3,10 +3,10 @@ import type { Readable } from 'node:stream'
 import DetailedError from '../error.js'
 import { enableDebugLog } from '../logger.js'
 import NoopUrlStorage from '../noopUrlStorage.js'
-import type { UploadOptions } from '../options.js'
+import type { UploadInput, UploadOptions } from '../options.js'
 import BaseUpload, { terminate, defaultOptions as baseDefaultOptions } from '../upload.js'
 
-import FileReader from './fileReader.js'
+import NodeFileReader from './fileReader.js'
 import fingerprint from './fileSignature.js'
 import DefaultHttpStack from './httpStack.js'
 import StreamSource from './sources/StreamSource.js'
@@ -15,7 +15,7 @@ import { FileUrlStorage, canStoreURLs } from './urlStorage.js'
 const defaultOptions = {
   ...baseDefaultOptions,
   httpStack: new DefaultHttpStack(),
-  fileReader: new FileReader(),
+  fileReader: new NodeFileReader(),
   urlStorage: new NoopUrlStorage(),
   fingerprint,
 }
@@ -23,13 +23,13 @@ const defaultOptions = {
 export type FileTypes = Buffer | Readable | ReadStream
 export type FileSliceTypes = Buffer | ReadStream
 
-class Upload extends BaseUpload<FileTypes, FileSliceTypes> {
-  constructor(file: FileTypes, options: Partial<UploadOptions<FileTypes, FileSliceTypes>> = {}) {
+class Upload extends BaseUpload {
+  constructor(file: UploadInput, options: Partial<UploadOptions> = {}) {
     const allOpts = { ...defaultOptions, ...options }
     super(file, allOpts)
   }
 
-  static terminate(url: string, options: Partial<UploadOptions<FileTypes, FileSliceTypes>> = {}) {
+  static terminate(url: string, options: Partial<UploadOptions> = {}) {
     const allOpts = { ...defaultOptions, ...options }
     return terminate(url, allOpts)
   }

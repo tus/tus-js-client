@@ -9,6 +9,7 @@ import {
   PROTOCOL_IETF_DRAFT_03,
   PROTOCOL_TUS_V1,
   type PreviousUpload,
+  type UploadInput,
   type UploadOptions,
   type UrlStorage,
 } from './options.js'
@@ -51,20 +52,20 @@ export const defaultOptions = {
   protocol: PROTOCOL_TUS_V1,
 }
 
-export default class BaseUpload<F, S> {
-  options: UploadOptions<F, S>
+export default class BaseUpload {
+  options: UploadOptions
 
   // The storage module used to store URLs
   _urlStorage: UrlStorage
 
   // The underlying File/Blob object
-  file: F
+  file: UploadInput
 
   // The URL against which the file will be uploaded
   url: string | null = null
 
   // The underlying request object for the current PATCH request
-  _req: HttpRequest<S> | null = null
+  _req: HttpRequest | null = null
 
   // The fingerpinrt for the current file (set after start())
   _fingerprint: string | null = null
@@ -84,7 +85,7 @@ export default class BaseUpload<F, S> {
   // The Source object which will wrap around the given file and provides us
   // with a unified interface for getting its size and slice chunks from its
   // content allowing us to easily handle Files, Blobs, Buffers and Streams.
-  _source: FileSource<S> | null = null
+  _source: FileSource | null = null
 
   // The current count of attempts which have been made. Zero indicates none.
   _retryAttempt = 0
@@ -97,13 +98,13 @@ export default class BaseUpload<F, S> {
 
   // An array of BaseUpload instances which are used for uploading the different
   // parts, if the parallelUploads option is used.
-  _parallelUploads?: BaseUpload<F, S>[]
+  _parallelUploads?: BaseUpload[]
 
   // An array of upload URLs which are used for uploading the different
   // parts, if the parallelUploads option is used.
   _parallelUploadUrls?: string[]
 
-  constructor(file: F, options: UploadOptions<F, S>) {
+  constructor(file: UploadInput, options: UploadOptions) {
     // Warn about removed options from previous versions
     if ('resume' in options) {
       console.log(
@@ -344,7 +345,7 @@ export default class BaseUpload<F, S> {
       )
     })
 
-    let req: HttpRequest<S>
+    let req: HttpRequest
     // Wait until all partial uploads are finished and we can send the POST request for
     // creating the final upload.
     Promise.all(uploads)
@@ -725,7 +726,7 @@ export default class BaseUpload<F, S> {
       return
     }
 
-    let req: HttpRequest<S>
+    let req: HttpRequest
 
     // Some browser and servers may not support the PATCH method. For those
     // cases, you can tell tus-js-client to use a POST request with the
@@ -922,7 +923,7 @@ export default class BaseUpload<F, S> {
    *
    * @api private
    */
-  _sendRequest(req: HttpRequest<S>, body?: S) {
+  _sendRequest(req: HttpRequest, body?: unknown) {
     return sendRequest(req, body, this.options)
   }
 }
@@ -978,10 +979,10 @@ function openRequest(method, url, options) {
  *
  * @api private
  */
-async function sendRequest<F, S>(
-  req: HttpRequest<S>,
-  body: S | undefined,
-  options: UploadOptions<F, S>,
+async function sendRequest(
+  req: HttpRequest,
+  body: unknown | undefined,
+  options: UploadOptions,
 ): Promise<HttpResponse> {
   if (typeof options.onBeforeRequest === 'function') {
     await options.onBeforeRequest(req)
@@ -1100,7 +1101,7 @@ function splitSizeIntoParts(totalSize, partCount) {
  * @param {object} options Optional options for influencing HTTP requests.
  * @return {Promise} The Promise will be resolved/rejected when the requests finish.
  */
-export function terminate<F, S>(url: string, options: UploadOptions<F, S>): Promise<void> {
+export function terminate(url: string, options: UploadOptions): Promise<void> {
   const req = openRequest('DELETE', url, options)
 
   return sendRequest(req, undefined, options)

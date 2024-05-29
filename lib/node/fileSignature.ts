@@ -1,8 +1,7 @@
 import { createHash } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import type { UploadOptions } from '../options.js'
-import type { FileSliceTypes, FileTypes } from './index.js'
+import type { UploadInput, UploadOptions } from '../options.js'
 
 /**
  * Generate a fingerprint for a file which will be used the store the endpoint
@@ -11,8 +10,8 @@ import type { FileSliceTypes, FileTypes } from './index.js'
  * @param {Object} options
  */
 export default function fingerprint(
-  file: FileTypes,
-  options: UploadOptions<FileTypes, FileSliceTypes>,
+  file: UploadInput,
+  options: UploadOptions,
 ): Promise<string | null> {
   if (Buffer.isBuffer(file)) {
     // create MD5 hash for buffer type

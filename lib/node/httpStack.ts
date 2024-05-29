@@ -8,7 +8,7 @@ import throttle from 'lodash.throttle'
 import type { HttpProgressHandler, HttpRequest, HttpResponse, HttpStack } from '../options.js'
 import type { FileSliceTypes } from './index.js'
 
-export default class NodeHttpStack implements HttpStack<FileSliceTypes> {
+export default class NodeHttpStack implements HttpStack {
   private _requestOptions: http.RequestOptions
 
   constructor(requestOptions: http.RequestOptions = {}) {
@@ -24,7 +24,7 @@ export default class NodeHttpStack implements HttpStack<FileSliceTypes> {
   }
 }
 
-class Request implements HttpRequest<FileSliceTypes> {
+class Request implements HttpRequest {
   _method: string
 
   _url: string

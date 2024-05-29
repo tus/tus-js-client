@@ -1,15 +1,39 @@
+import type { ReadStream } from 'node:fs'
+import type { Readable } from 'node:stream'
 import type DetailedError from './error.js'
 
 export const PROTOCOL_TUS_V1 = 'tus-v1'
 export const PROTOCOL_IETF_DRAFT_03 = 'ietf-draft-03'
 
-export interface UploadOptions<F, S> {
+// ReactNativeFile describes the structure that is returned from the
+// Expo image picker (see https://docs.expo.dev/versions/latest/sdk/imagepicker/)
+// TODO: Should these properties be fileName and fileSize instead?
+// TODO: What about other file pickers without Expo?
+// TODO: Should this be renamed to Expo?
+export interface ReactNativeFile {
+  uri: string
+  name?: string
+  size?: string
+  exif?: Record<string, unknown>
+}
+
+export type UploadInput =
+  | Blob
+  | File
+  // TODO: Should we keep the Pick<> here?
+  | Pick<ReadableStreamDefaultReader, 'read'>
+  | Buffer
+  | Readable
+  | ReadStream
+  | ReactNativeFile
+
+export interface UploadOptions {
   // TODO: Embrace undefined over null
   endpoint: string | null
 
   uploadUrl: string | null
   metadata: { [key: string]: string }
-  fingerprint: (file: F, options: UploadOptions<F, S>) => Promise<string | null>
+  fingerprint: (file: UploadInput, options: UploadOptions) => Promise<string | null>
   uploadSize: number | null
 
   onProgress: ((bytesSent: number, bytesTotal: number) => void) | null
@@ -17,15 +41,15 @@ export interface UploadOptions<F, S> {
   onSuccess: (() => void) | null
   onError: ((error: Error | DetailedError) => void) | null
   onShouldRetry:
-    | ((error: DetailedError, retryAttempt: number, options: UploadOptions<F, S>) => boolean)
+    | ((error: DetailedError, retryAttempt: number, options: UploadOptions) => boolean)
     | null
   onUploadUrlAvailable: (() => void) | null
 
   overridePatchMethod: boolean
   headers: { [key: string]: string }
   addRequestId: boolean
-  onBeforeRequest: ((req: HttpRequest<S>) => void | Promise<void>) | null
-  onAfterResponse: ((req: HttpRequest<S>, res: HttpResponse) => void | Promise<void>) | null
+  onBeforeRequest: ((req: HttpRequest) => void | Promise<void>) | null
+  onAfterResponse: ((req: HttpRequest, res: HttpResponse) => void | Promise<void>) | null
 
   chunkSize: number
   retryDelays: number[]
@@ -37,8 +61,8 @@ export interface UploadOptions<F, S> {
   uploadDataDuringCreation: boolean
 
   urlStorage: UrlStorage
-  fileReader: FileReader<F, S>
-  httpStack: HttpStack<S>
+  fileReader: FileReader
+  httpStack: HttpStack
 
   protocol: string
 }
@@ -61,31 +85,31 @@ export interface PreviousUpload {
   parallelUploadUrls?: string[]
 }
 
-export interface FileReader<F, S> {
-  openFile(input: F, chunkSize: number): Promise<FileSource<S>>
+export interface FileReader {
+  openFile(input: UploadInput, chunkSize: number): Promise<FileSource>
 }
 
-export interface FileSource<S> {
+export interface FileSource {
   size: number | null
-  slice(start: number, end: number): Promise<SliceResult<S>>
+  slice(start: number, end: number): Promise<SliceResult>
   close(): void
 }
 
-export interface SliceResult<S> {
+export interface SliceResult {
   // Platform-specific data type which must be usable by the HTTP stack as a body.
   // TODO: This should be a separate property and be set every time. Otherwise we track the wrong size.
-  value: S & { size?: number }
+  value: unknown & { size?: number }
   done: boolean
 }
 
-export interface HttpStack<B> {
-  createRequest(method: string, url: string): HttpRequest<B>
+export interface HttpStack {
+  createRequest(method: string, url: string): HttpRequest
   getName(): string
 }
 
 export type HttpProgressHandler = (bytesSent: number) => void
 
-export interface HttpRequest<B> {
+export interface HttpRequest {
   getMethod(): string
   getURL(): string
 
@@ -93,7 +117,8 @@ export interface HttpRequest<B> {
   getHeader(header: string): string | undefined
 
   setProgressHandler(handler: HttpProgressHandler): void
-  send(body?: B): Promise<HttpResponse>
+  // TODO: Should this be something like { value: unknown, size: number }?
+  send(body?: unknown): Promise<HttpResponse>
   abort(): Promise<void>
 
   // Return an environment specific object, e.g. the XMLHttpRequest object in browsers.

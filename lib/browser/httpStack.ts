@@ -1,6 +1,6 @@
 import type { HttpProgressHandler, HttpRequest, HttpResponse, HttpStack } from '../options.js'
 
-export default class XHRHttpStack implements HttpStack<Blob> {
+export default class XHRHttpStack implements HttpStack {
   createRequest(method, url) {
     return new XHRRequest(method, url)
   }
@@ -10,7 +10,7 @@ export default class XHRHttpStack implements HttpStack<Blob> {
   }
 }
 
-class XHRRequest implements HttpRequest<Blob> {
+class XHRRequest implements HttpRequest {
   _xhr = new XMLHttpRequest()
 
   _method: string
@@ -58,6 +58,7 @@ class XHRRequest implements HttpRequest<Blob> {
     }
   }
 
+  // TODO: Validate the type of body
   send(body?: Blob): Promise<XHRResponse> {
     return new Promise((resolve, reject) => {
       this._xhr.onload = () => {

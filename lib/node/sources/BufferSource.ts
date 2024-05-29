@@ -1,6 +1,6 @@
 import type { FileSource } from '../../options.js'
 
-export default class BufferSource implements FileSource<Buffer> {
+export default class BufferSource implements FileSource {
   size: number
 
   private _buffer: Buffer

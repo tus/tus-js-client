@@ -1,5 +1,4 @@
 import type { FileSource } from '../../options.js'
-import type { FileSliceTypes } from '../index.js'
 
 function len(blobOrArray): number {
   if (blobOrArray === undefined) return 0
@@ -29,8 +28,8 @@ function concat(a, b) {
   throw new Error('Unknown data type')
 }
 
-export default class StreamSource implements FileSource<FileSliceTypes> {
-  _reader: ReadableStreamDefaultReader
+export default class StreamSource implements FileSource {
+  _reader: Pick<ReadableStreamDefaultReader, 'read'>
 
   _buffer: Blob | undefined
 
@@ -46,7 +45,7 @@ export default class StreamSource implements FileSource<FileSliceTypes> {
   // it manually (see the `uploadSize` option).
   size = null
 
-  constructor(reader: ReadableStreamDefaultReader) {
+  constructor(reader: Pick<ReadableStreamDefaultReader, 'read'>) {
     this._reader = reader
   }
 
@@ -102,8 +101,8 @@ export default class StreamSource implements FileSource<FileSliceTypes> {
   }
 
   close() {
-    if (this._reader.cancel) {
-      this._reader.cancel()
-    }
+    // TODO: We should not call cancel
+    //@ts-expect-error cancel is not defined since we only pick `read`
+    if (this._reader.cancel) this._reader.cancel()
   }
 }

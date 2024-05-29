@@ -23,7 +23,7 @@ export default async function getFileSource(stream: ReadStream): Promise<FileSou
   return new FileSource(stream, path, actualSize)
 }
 
-class FileSource implements IFileSource<ReadStream> {
+class FileSource implements IFileSource {
   size: number
 
   _stream: ReadStream

@@ -1,10 +1,9 @@
 import type { FileSource, SliceResult } from '../../options.js'
-import type { FileSliceTypes } from '../index.js'
 import isCordova from './isCordova.js'
 import readAsByteArray from './readAsByteArray.js'
 
 // TODO: Rename file
-export default class BlobFileSource implements FileSource<FileSliceTypes> {
+export default class BlobFileSource implements FileSource {
   _file: Blob
 
   size: number
@@ -14,13 +13,14 @@ export default class BlobFileSource implements FileSource<FileSliceTypes> {
     this.size = file.size
   }
 
-  async slice(start: number, end: number): Promise<SliceResult<FileSliceTypes>> {
-    let value: FileSliceTypes
+  async slice(start: number, end: number): Promise<SliceResult> {
+    let value: any
     // In Apache Cordova applications, a File must be resolved using
     // FileReader instances, see
     // https://cordova.apache.org/docs/en/8.x/reference/cordova-plugin-file/index.html#read-a-file
     if (isCordova()) {
       value = await readAsByteArray(this._file.slice(start, end))
+      value.size = value.length
     } else {
       value = this._file.slice(start, end)
     }

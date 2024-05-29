@@ -1,7 +1,7 @@
 import DetailedError from '../error.js'
 import { enableDebugLog } from '../logger.js'
 import NoopUrlStorage from '../noopUrlStorage.js'
-import type { UploadOptions } from '../options.js'
+import type { UploadInput, UploadOptions } from '../options.js'
 import BaseUpload, { terminate, defaultOptions as baseDefaultOptions } from '../upload.js'
 
 import BrowserFileReader from './fileReader.js'
@@ -17,27 +17,13 @@ const defaultOptions = {
   fingerprint,
 }
 
-// ReactNativeFile describes the structure that is returned from the
-// Expo image picker (see https://docs.expo.dev/versions/latest/sdk/imagepicker/)
-// TODO: Should these properties be fileName and fileSize instead?
-// TODO: What about other file pickers without Expo?
-export interface ReactNativeFile {
-  uri: string
-  name?: string
-  size?: string
-  exif?: Record<string, unknown>
-}
-
-export type FileTypes = ReactNativeFile | Blob | ReadableStreamDefaultReader
-export type FileSliceTypes = Blob | Uint8Array
-
-class Upload extends BaseUpload<FileTypes, FileSliceTypes> {
-  constructor(file: FileTypes, options: Partial<UploadOptions<FileTypes, FileSliceTypes>> = {}) {
+class Upload extends BaseUpload {
+  constructor(file: UploadInput, options: Partial<UploadOptions> = {}) {
     const allOpts = { ...defaultOptions, ...options }
     super(file, allOpts)
   }
 
-  static terminate(url: string, options: Partial<UploadOptions<FileTypes, FileSliceTypes>> = {}) {
+  static terminate(url: string, options: Partial<UploadOptions> = {}) {
     const allOpts = { ...defaultOptions, ...options }
     return terminate(url, allOpts)
   }

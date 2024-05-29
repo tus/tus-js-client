@@ -1,13 +1,13 @@
 import type { HttpRequest, HttpResponse } from './options.js'
 
 class DetailedError extends Error {
-  originalRequest?: HttpRequest<unknown>
+  originalRequest?: HttpRequest
 
   originalResponse?: HttpResponse
 
   causingError?: Error
 
-  constructor(message: string, causingErr?: Error, req?: HttpRequest<unknown>, res?: HttpResponse) {
+  constructor(message: string, causingErr?: Error, req?: HttpRequest, res?: HttpResponse) {
     super(message)
 
     this.originalRequest = req
