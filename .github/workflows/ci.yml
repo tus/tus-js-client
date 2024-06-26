@@ -17,8 +17,6 @@ jobs:
             suite: 'browserstack'
           - desc: 'Puppeteer'
             suite: 'puppeteer'
-          - desc: 'Types'
-            suite: 'types'
           - desc: 'Node.js 18'
             suite: 'node'
             node: 18
