@@ -92,7 +92,7 @@ describe('tus', () => {
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Length']).toBe(5)
       expect(req.requestHeaders['Upload-Concat']).toBe('partial')
-      expect(req.requestHeaders['Upload-Metadata']).toBeUndefined()
+      expect(req.requestHeaders['Upload-Metadata']).toBe('foo aGVsbG8=')
 
       req.respondWith({
         status: 201,
@@ -108,7 +108,7 @@ describe('tus', () => {
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Length']).toBe(6)
       expect(req.requestHeaders['Upload-Concat']).toBe('partial')
-      expect(req.requestHeaders['Upload-Metadata']).toBeUndefined()
+      expect(req.requestHeaders['Upload-Metadata']).toBe('foo aGVsbG8=')
 
       req.respondWith({
         status: 201,
