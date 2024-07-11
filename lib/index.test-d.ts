@@ -19,6 +19,9 @@ const upload = new tus.Upload(file, {
   metadata: {
     filename: 'foo.txt',
   },
+  partialMetadata: {
+    userId: "foo123bar",
+  },
   onProgress: (bytesSent: number, bytesTotal: number) => {
     const percentage = ((bytesSent / bytesTotal) * 100).toFixed(2)
     console.log(bytesSent, bytesTotal, `${percentage}%`)
