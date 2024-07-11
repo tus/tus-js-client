@@ -156,6 +156,18 @@ metadata: {
 }
 ```
 
+#### partialMetadata
+
+_Default value:_ `{}`
+
+An object with string values used as additional meta data for partial uploads which will be passed along to the server when creating a new partial upload. This is separate from the metadata option above, which is not passed along for partial uploads. Can be used for filenames, file types etc, for example:
+
+```js
+partialMetadata: {
+    userId: "1234567"
+}
+```
+
 #### uploadUrl
 
 _Default value:_ `null`
