@@ -26,6 +26,7 @@ interface UploadOptions {
 
   uploadUrl?: string | null
   metadata?: { [key: string]: string }
+  partialMetadata?: { [key: string]: string }
   fingerprint?: (file: File, options: UploadOptions) => Promise<string>
   uploadSize?: number | null
 
