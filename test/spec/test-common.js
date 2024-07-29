@@ -1,6 +1,6 @@
 'use strict'
 
-const { TestHttpStack, waitableFunction, wait, getBlob } = require('./helpers/utils')
+const { TestHttpStack, waitableFunction, wait, getBlob, TestResponse } = require('./helpers/utils')
 const tus = require('../..')
 
 // Uncomment to enable debug log from tus-js-client
@@ -308,6 +308,31 @@ describe('tus', () => {
       await options.onSuccess.toBeCalled
       expect(options.onBeforeRequest).toHaveBeenCalled()
       expect(options.onAfterResponse).toHaveBeenCalled()
+    })
+
+    it('should invoke the onSuccess callback with event payload', async () => {
+      const testStack = new TestHttpStack()
+      const file = getBlob('hello world')
+      const options = {
+        httpStack: testStack,
+        uploadUrl: 'http://tus.io/uploads/foo',
+        onSuccess: waitableFunction('onSuccess'),
+      }
+
+      const upload = new tus.Upload(file, options)
+      upload.start()
+
+      const req = await testStack.nextRequest()
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': 11,
+          'Upload-Length': 11,
+        },
+      })
+
+      const payload = await options.onSuccess.toBeCalled
+      expect(payload.lastResponse).toBeInstanceOf(TestResponse)
     })
 
     it('should throw an error if resuming fails and no endpoint is provided', async () => {
