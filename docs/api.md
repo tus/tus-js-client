@@ -67,8 +67,9 @@ The argument will be an object with information about the completed upload. Its 
 
 ```js
 onSuccess: function (payload) {
-	const { lastResponse } = payload;
-    console.log("Status code", lastResponse.getStatus())
+	  const { lastResponse } = payload
+	  // Server can include details in the Upload-Info header, for example.
+    console.log("Important information", lastResponse.getHeader('Upload-Info'))
 }
 ```
 
