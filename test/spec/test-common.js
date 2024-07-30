@@ -328,11 +328,13 @@ describe('tus', () => {
         responseHeaders: {
           'Upload-Offset': 11,
           'Upload-Length': 11,
+          'Custom-Header': 'hello',
         },
       })
 
-      const payload = await options.onSuccess.toBeCalled
-      expect(payload.lastResponse).toBeInstanceOf(TestResponse)
+      const { lastResponse } = await options.onSuccess.toBeCalled
+      expect(lastResponse).toBeInstanceOf(TestResponse)
+      expect(lastResponse.getHeader('Custom-Header')).toBe('hello')
     })
 
     it('should throw an error if resuming fails and no endpoint is provided', async () => {
