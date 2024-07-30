@@ -1,8 +1,4 @@
-/* eslint-disable no-console */
-
-'use strict'
-
-const fs = require('fs')
+const fs = require('node:fs')
 const tus = require('../..')
 
 const path = `${__dirname}/../../README.md`

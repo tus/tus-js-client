@@ -1,5 +1,3 @@
-'use strict'
-
 const { TestHttpStack, getBlob } = require('./helpers/utils')
 const tus = require('../..')
 

@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 
-'use strict'
-
-const fs = require('fs')
-const path = require('path')
+const fs = require('node:fs')
+const path = require('node:path')
 
 const rootDir = path.join(__dirname, '..', '..')
 const tusJsPath = path.join(rootDir, '..', '..', 'dist', 'tus.js')

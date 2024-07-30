@@ -1,13 +1,11 @@
-'use strict'
-
-const stream = require('stream')
+const stream = require('node:stream')
 const temp = require('temp')
-const fs = require('fs')
-const https = require('https')
-const http = require('http')
-const crypto = require('crypto')
+const fs = require('node:fs')
+const https = require('node:https')
+const http = require('node:http')
+const crypto = require('node:crypto')
 const intoStream = require('into-stream')
-const { once } = require('events')
+const { once } = require('node:events')
 const tus = require('../..')
 const assertUrlStorage = require('./helpers/assertUrlStorage')
 const { TestHttpStack, waitableFunction } = require('./helpers/utils')
@@ -510,8 +508,10 @@ async function getBodySize(body) {
 
   return new Promise((resolve) => {
     body.on('readable', () => {
-      let chunk
-      while ((chunk = body.read()) !== null) {
+      while (true) {
+        const chunk = body.read()
+        if (chunk == null) break
+
         resolve(chunk.length)
       }
     })

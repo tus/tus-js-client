@@ -1,0 +1,88 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.7.3/schema.json",
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 100,
+    "attributePosition": "auto"
+  },
+  "organizeImports": {
+    "enabled": true
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "style": {
+        "noParameterAssign": "warn",
+        "noDefaultExport": "warn",
+        "useCollapsedElseIf": "error"
+      },
+      "suspicious": {
+        "noExplicitAny": "warn",
+        "useAwait": "error"
+      },
+      "correctness": {
+        "noNewSymbol": "error",
+        "noUndeclaredVariables": "error",
+        "noUnusedVariables": "error"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "jsxQuoteStyle": "double",
+      "quoteProperties": "asNeeded",
+      "trailingComma": "all",
+      "semicolons": "asNeeded",
+      "arrowParentheses": "always",
+      "bracketSpacing": true,
+      "bracketSameLine": false,
+      "quoteStyle": "single",
+      "attributePosition": "auto"
+    }
+  },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "overrides": [
+    {
+      "include": ["lib/node/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": ["__filename", "__dirname", "exports", "module", "require"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "include": ["test/**"],
+      "javascript": {
+        "globals": [
+          "jasmine",
+          "describe",
+          "expect",
+          "expectAsync",
+          "beforeEach",
+          "afterEach",
+          "it",
+          "spyOn"
+        ]
+      }
+    },
+    {
+      "include": ["demos/browser/**", "demos/cordova/**"],
+      "javascript": { "globals": ["tus", "Camera"] }
+    }
+  ]
+}
