@@ -106,7 +106,7 @@ export interface HttpRequest {
   getURL(): string
 
   setHeader(header: string, value: string): void
-  getHeader(header: string): string
+  getHeader(header: string): string | undefined
 
   setProgressHandler(handler: (bytesSent: number) => void): void
   send(body: any): Promise<HttpResponse>
@@ -118,7 +118,7 @@ export interface HttpRequest {
 
 export interface HttpResponse {
   getStatus(): number
-  getHeader(header: string): string
+  getHeader(header: string): string | undefined
   getBody(): string
 
   // Return an environment specific object, e.g. the XMLHttpRequest object in browsers.
