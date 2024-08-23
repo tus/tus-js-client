@@ -322,7 +322,7 @@ interface HttpRequest {
     getURL(): string;
 
     setHeader(header: string, value: string);
-    getHeader(header: string);
+    getHeader(header: string): string | undefined;
 
     setProgressHandler((bytesSent: number): void): void;
     // Send the HTTP request with the provided request body. The value of the request body depends
@@ -339,7 +339,7 @@ interface HttpRequest {
 
 interface HttpResponse {
     getStatus(): number;
-    getHeader(header: string): string;
+    getHeader(header: string): string | undefined;
     getBody(): string;
 
     // Return an environment specific object, e.g. the XMLHttpRequest object in browsers.
