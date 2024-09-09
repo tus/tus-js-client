@@ -63,6 +63,16 @@ _Default value:_ `null`
 
 An optional function called when the upload finished successfully.
 
+The argument will be an object with information about the completed upload. Its `lastResponse` property contains lastly received [`HttpResponse`](#httpstack), which can be used to retrieve additional data from the server. Be aware that this is usually a response to a `PATCH` request, but it might also be a response for a `POST` request (if `uploadDataDuringCreation` is enabled or an empty file is uploaded) or `HEAD` request (if an already completed upload is resumed).
+
+```js
+onSuccess: function (payload) {
+	  const { lastResponse } = payload
+	  // Server can include details in the Upload-Info header, for example.
+    console.log("Important information", lastResponse.getHeader('Upload-Info'))
+}
+```
+
 #### onError
 
 _Default value:_ `null`
@@ -324,7 +334,7 @@ interface HttpRequest {
     getURL(): string;
 
     setHeader(header: string, value: string);
-    getHeader(header: string);
+    getHeader(header: string): string | undefined;
 
     setProgressHandler((bytesSent: number): void): void;
     // Send the HTTP request with the provided request body. The value of the request body depends
@@ -341,7 +351,7 @@ interface HttpRequest {
 
 interface HttpResponse {
     getStatus(): number;
-    getHeader(header: string): string;
+    getHeader(header: string): string | undefined;
     getBody(): string;
 
     // Return an environment specific object, e.g. the XMLHttpRequest object in browsers.
