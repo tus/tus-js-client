@@ -145,7 +145,7 @@ describe('tus', () => {
         fs.writeFileSync(path, 'hello world')
         const file = fs.createReadStream(path)
 
-      const options = {
+        const options = {
           httpStack: new TestHttpStack(),
           endpoint: '/uploads',
           chunkSize: 7,
