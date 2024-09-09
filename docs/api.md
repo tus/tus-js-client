@@ -166,6 +166,18 @@ metadata: {
 }
 ```
 
+#### metadataForPartialUploads
+
+_Default value:_ `{}`
+
+An object with string values used as additional meta data for partial uploads. When parallel uploads are enabled via `parallelUploads`, tus-js-client creates multiple partial uploads. The values from `metadata` are not passed to these partial uploads but only passed to the final upload, which is the concatentation of the partial uploads. In contrast, the values from `metadataForPartialUploads` are only passed to the partial uploads and not the final upload. This option has no effect if parallel uploads are not enabled. Can be used to associate partial uploads to a user, for example:
+
+```js
+metadataForPartialUploads: {
+    userId: "1234567"
+}
+```
+
 #### uploadUrl
 
 _Default value:_ `null`
@@ -234,7 +246,7 @@ X-Request-ID: fe51f777-f23e-4ed9-97d7-2785cc69f961
 
 _Default value:_ `1`
 
-A number indicating how many parts should be uploaded in parallel. If this number is not `1`, the input file will be split into multiple parts, where each part is uploaded individually in parallel. The value of `parallelUploads` determines the number of parts. Using `parallelUploadBoundaries` the size of each part can be changed. After all parts have been uploaded, the [`concatenation` extension](https://tus.io/protocols/resumable-upload.html#concatenation) will be used to concatenate all the parts together on the server-side, so the tus server must support this extension. This option should not be used if the input file is a streaming resource.
+A number indicating how many parts should be uploaded in parallel. If this number is not `1`, the input file will be split into multiple parts, where each part is uploaded individually in parallel. The value of `parallelUploads` determines the number of parts. Using `parallelUploadBoundaries` the size of each part can be changed. After all parts have been uploaded, the [`concatenation` extension](https://tus.io/protocols/resumable-upload.html#concatenation) will be used to concatenate all the parts together on the server-side, so the tus server must support this extension. This option should not be used if the input file is a streaming resource. By default, the values from `metadata` are not passed to the partial uploads and only used for the final upload where the parts are concatenated together again. The `metadataForPartialUploads` option can be used to set meta data specifically for partial uploads.
 
 The idea behind this option is that you can use multiple HTTP requests in parallel to better utilize the full capacity of the network connection to the tus server. If you want to use it, please evaluate it under real world situations to see if it actually improves your upload performance. In common browser session, we were not able to find a performance improve for the average user.
 
