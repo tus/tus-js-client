@@ -848,7 +848,7 @@ export default class BaseUpload {
       // upload size and can tell the tus server.
       if (this.options.uploadLengthDeferred && done) {
         this._size = this._offset + valueSize
-        req.setHeader('Upload-Length', this._size)
+        req.setHeader('Upload-Length', `${this._size}`)
       }
 
       // The specified uploadSize might not match the actual amount of data that a source
