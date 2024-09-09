@@ -204,7 +204,7 @@ describe('tus', () => {
       expect(options.onProgress).toHaveBeenCalledWith(11, 11)
       expect(testUrlStorage.removeUpload).toHaveBeenCalled()
     })
-    it('should add partialMetadata option to Upload-Metadata', async () => {
+    it('should add metadataForPartialUploads option to Upload-Metadata', async () => {
       const testStack = new TestHttpStack()
 
       const testUrlStorage = {
@@ -239,7 +239,7 @@ describe('tus', () => {
         metadata: {
           foo: 'hello',
         },
-        partialMetadata: {
+        metadataForPartialUploads: {
           bar: 'baz',
         },
         onProgress() {},
