@@ -27,8 +27,9 @@ const upload = new tus.Upload(file, {
     console.log(bytesSent, bytesTotal, `${percentage}%`)
   },
   onChunkComplete: (_chunkSize: number, _bytesAccepted: number) => {},
-  onSuccess: () => {
+  onSuccess: (payload: tus.OnSuccessPayload) => {
     console.log('Download from %s complete', upload.url)
+    console.log('Response header', payload.lastResponse.getHeader('X-Info'))
   },
   onError: (error: Error | DetailedError) => {
     console.error(`Failed because: ${error}`)

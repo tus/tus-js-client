@@ -32,7 +32,7 @@ interface UploadOptions {
 
   onProgress?: ((bytesSent: number, bytesTotal: number) => void) | null
   onChunkComplete?: ((chunkSize: number, bytesAccepted: number, bytesTotal: number) => void) | null
-  onSuccess?: (() => void) | null
+  onSuccess?: ((payload: OnSuccessPayload) => void) | null
   onError?: ((error: Error | DetailedError) => void) | null
   onShouldRetry?:
     | ((error: DetailedError, retryAttempt: number, options: UploadOptions) => boolean)
@@ -57,6 +57,10 @@ interface UploadOptions {
   urlStorage?: UrlStorage
   fileReader?: FileReader
   httpStack?: HttpStack
+}
+
+interface OnSuccessPayload {
+  lastResponse: HttpResponse
 }
 
 interface UrlStorage {
