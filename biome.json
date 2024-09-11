@@ -18,7 +18,8 @@
       "style": {
         "noParameterAssign": "warn",
         "noDefaultExport": "warn",
-        "useCollapsedElseIf": "error"
+        "useCollapsedElseIf": "error",
+        "useNodejsImportProtocol": "off"
       },
       "suspicious": {
         "noExplicitAny": "warn",

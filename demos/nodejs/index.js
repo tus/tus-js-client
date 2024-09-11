@@ -1,4 +1,4 @@
-const fs = require('node:fs')
+const fs = require('fs')
 const tus = require('../..')
 
 const path = `${__dirname}/../../README.md`
