@@ -389,6 +389,8 @@ interface ListEntry {
   metadata: object
   creationTime: string
   urlStorageKey: string
+  uploadUrl: string | null
+  parallelUploadUrls: string[] | null
 }
 ```
 
@@ -504,7 +506,7 @@ tus.Upload.terminate(url)
 
 ## tus.Upload#findPreviousUploads()
 
-Query the URL storage using the input file's fingerprint to retrieve a list of uploads for the input file, which have previously been started by the user. If you want to resume one of this uploads, pass the corresponding object to `tus.Upload#resumeFromPreviousUpload` before calling `tus.Upload#start`.
+Query the URL storage using the input file's fingerprint to retrieve a list of uploads for the input file, which have previously been started by the user. If you want to resume one of these uploads, pass the corresponding object to `tus.Upload#resumeFromPreviousUpload` before calling `tus.Upload#start`.
 
 The function returns a `Promise`, which resolves to a list with following structure:
 
@@ -513,9 +515,11 @@ findPreviousUploads(): Promise<Array<PreviousUpload>>;
 
 interface PreviousUpload {
     size: number | null;
-    metadata: object
+    metadata: object;
     creationTime: string;
     urlStorageKey: string;
+    uploadUrl: string | null;
+    parallelUploadUrls: string[] | null;
 }
 ```
 
