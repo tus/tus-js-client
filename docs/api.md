@@ -333,10 +333,17 @@ interface HttpRequest {
     getMethod(): string;
     getURL(): string;
 
+    // Set a header from this request.
     setHeader(header: string, value: string);
+
+    // Retrieve a header value from this request.
+    // Note: In browser environments this method can only return headers explicitly set by
+    // tus-js-client or users through the above `setHeader` method. It cannot return headers that are
+    // implicitly added by the browser (e.g. Content-Length) due to a security related API limitation.
     getHeader(header: string): string | undefined;
 
     setProgressHandler((bytesSent: number): void): void;
+
     // Send the HTTP request with the provided request body. The value of the request body depends
     // on the platform and what `fileReader` implementation is used. With the default `fileReader`,
     // `body` can be
