@@ -77,6 +77,9 @@ interface PreviousUpload {
   size: number | null
   metadata: { [key: string]: string }
   creationTime: string
+  urlStorageKey: string
+  uploadUrl: string | null
+  parallelUploadUrls: string[] | null
 }
 
 interface FileReader {

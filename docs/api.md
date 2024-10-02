@@ -333,10 +333,17 @@ interface HttpRequest {
     getMethod(): string;
     getURL(): string;
 
+    // Set a header from this request.
     setHeader(header: string, value: string);
+
+    // Retrieve a header value from this request.
+    // Note: In browser environments this method can only return headers explicitly set by
+    // tus-js-client or users through the above `setHeader` method. It cannot return headers that are
+    // implicitly added by the browser (e.g. Content-Length) due to a security related API limitation.
     getHeader(header: string): string | undefined;
 
     setProgressHandler((bytesSent: number): void): void;
+
     // Send the HTTP request with the provided request body. The value of the request body depends
     // on the platform and what `fileReader` implementation is used. With the default `fileReader`,
     // `body` can be
@@ -382,6 +389,8 @@ interface ListEntry {
   metadata: object
   creationTime: string
   urlStorageKey: string
+  uploadUrl: string | null
+  parallelUploadUrls: string[] | null
 }
 ```
 
@@ -435,7 +444,7 @@ Depending on the platform, the `file` argument must be an instance of the follow
 
 - inside browser: `File`, `Blob`, or [`Reader`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader)
 - inside Node.js: `Buffer` or `Readable` stream
-- inside Cordova: `File` object from a `FileEntry` (see [demo](demos/cordova/www/js/index.js))
+- inside Cordova: `File` object from a `FileEntry` (see [demo](/demos/cordova/www/js/index.js))
 - inside React Native: Object with uri property: `{ uri: 'file:///...', ... }` (see [installation notes](/docs/installation.md#react-native-support) and [demo](/demos/reactnative/App.js))
 
 The `options` argument will be merged deeply with `tus.defaultOptions`. See its documentation for more details.
@@ -498,7 +507,7 @@ tus.Upload.terminate(url)
 
 ## tus.Upload#findPreviousUploads()
 
-Query the URL storage using the input file's fingerprint to retrieve a list of uploads for the input file, which have previously been started by the user. If you want to resume one of this uploads, pass the corresponding object to `tus.Upload#resumeFromPreviousUpload` before calling `tus.Upload#start`.
+Query the URL storage using the input file's fingerprint to retrieve a list of uploads for the input file, which have previously been started by the user. If you want to resume one of these uploads, pass the corresponding object to `tus.Upload#resumeFromPreviousUpload` before calling `tus.Upload#start`.
 
 The function returns a `Promise`, which resolves to a list with following structure:
 
@@ -507,9 +516,11 @@ findPreviousUploads(): Promise<Array<PreviousUpload>>;
 
 interface PreviousUpload {
     size: number | null;
-    metadata: object
+    metadata: object;
     creationTime: string;
     urlStorageKey: string;
+    uploadUrl: string | null;
+    parallelUploadUrls: string[] | null;
 }
 ```
 
