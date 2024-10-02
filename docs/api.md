@@ -445,6 +445,7 @@ Depending on the platform, the `file` argument must be an instance of the follow
 - inside browser: `File`, `Blob`, or [`Reader`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader)
 - inside Node.js: `Buffer` or `Readable` stream
 - inside Cordova: `File` object from a `FileEntry` (see [demo](/demos/cordova/www/js/index.js))
+- inside React Native: Object with uri property: `{ uri: 'file:///...', ... }` (see [installation notes](/docs/installation.md#react-native-support) and [demo](/demos/reactnative/App.js))
 
 The `options` argument will be merged deeply with `tus.defaultOptions`. See its documentation for more details.
 
