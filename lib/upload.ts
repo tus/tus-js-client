@@ -50,7 +50,7 @@ export const defaultOptions = {
   httpStack: null,
 
   protocol: PROTOCOL_TUS_V1,
-}
+} 
 
 export default class BaseUpload {
   options: UploadOptions
@@ -269,6 +269,11 @@ export default class BaseUpload {
         ? this._parallelUploadUrls.length
         : this.options.parallelUploads
 
+    if (this._size === null) {
+      this._emitError(new Error('tus: Expected _size to be set'))
+      return
+    }
+
     // The input file will be split into multiple slices which are uploaded in separate
     // requests. Here we get the start and end position for the slices.
     const partsBoundaries =
@@ -316,9 +321,13 @@ export default class BaseUpload {
               onError: reject,
               // Based in the progress for this partial upload, calculate the progress
               // for the entire final upload.
-              onProgress: (newPartProgress) => {
+              onProgress: (newPartProgress: number) => {
                 totalProgress = totalProgress - lastPartProgress + newPartProgress
                 lastPartProgress = newPartProgress
+                if (totalSize === null) {
+                  this._emitError(new Error('tus: Expected totalSize to be set'))
+                  return
+                }
                 this._emitProgress(totalProgress, totalSize)
               },
               // Wait until every partial upload has an upload URL, so we can add
@@ -350,6 +359,10 @@ export default class BaseUpload {
     // creating the final upload.
     Promise.all(uploads)
       .then(() => {
+        if (this.options.endpoint === null) {
+          this._emitError(new Error('tus: Expected options.endpoint to be set'))
+          return
+        }
         req = this._openRequest('POST', this.options.endpoint)
         // @ts-expect-error We know that _parallelUploadUrls is defined
         req.setHeader('Upload-Concat', `final;${this._parallelUploadUrls.join(' ')}`)
@@ -363,6 +376,10 @@ export default class BaseUpload {
         return this._sendRequest(req)
       })
       .then((res) => {
+        if (res === undefined) {
+          this._emitError(new Error('tus: Expected res to be defined'))
+          return
+        }
         if (!inStatusCategory(res.getStatus(), 200)) {
           this._emitHttpError(req, res, 'tus: unexpected response while creating upload')
           return
@@ -371,6 +388,11 @@ export default class BaseUpload {
         const location = res.getHeader('Location')
         if (location == null) {
           this._emitHttpError(req, res, 'tus: invalid or missing Location header')
+          return
+        }
+
+        if (this.options.endpoint === null) {
+          this._emitError(new Error('tus: Expeced endpoint to be defined.'))
           return
         }
 
@@ -520,7 +542,7 @@ export default class BaseUpload {
    * @param {number} bytesTotal Total number of bytes to be sent to the server.
    * @api private
    */
-  _emitProgress(bytesSent, bytesTotal) {
+  _emitProgress(bytesSent: number, bytesTotal: number): void {
     if (typeof this.options.onProgress === 'function') {
       this.options.onProgress(bytesSent, bytesTotal)
     }
@@ -535,7 +557,7 @@ export default class BaseUpload {
    * @param {number} bytesTotal Total number of bytes to be sent to the server.
    * @api private
    */
-  _emitChunkComplete(chunkSize, bytesAccepted, bytesTotal) {
+  _emitChunkComplete(chunkSize: number, bytesAccepted: number, bytesTotal: number): void {
     if (typeof this.options.onChunkComplete === 'function') {
       this.options.onChunkComplete(chunkSize, bytesAccepted, bytesTotal)
     }
@@ -557,9 +579,12 @@ export default class BaseUpload {
     const req = this._openRequest('POST', this.options.endpoint)
 
     if (this.options.uploadLengthDeferred) {
-      req.setHeader('Upload-Defer-Length', 1)
+      req.setHeader('Upload-Defer-Length', '1')
     } else {
-      req.setHeader('Upload-Length', this._size)
+      if (this._size === null) {
+        this._emitError(new Error('tus: expected _size to be set'))
+      }
+      req.setHeader('Upload-Length', `${this._size}`)
     }
 
     // Add metadata if values have been added
@@ -568,7 +593,7 @@ export default class BaseUpload {
       req.setHeader('Upload-Metadata', metadata)
     }
 
-    let promise: Promise<HttpResponse>
+    let promise: Promise<HttpResponse | undefined>
     if (this.options.uploadDataDuringCreation && !this.options.uploadLengthDeferred) {
       this._offset = 0
       promise = this._addChunkToRequest(req)
@@ -581,6 +606,11 @@ export default class BaseUpload {
 
     promise
       .then((res) => {
+        if (res === undefined) {
+          this._emitError(new Error('tus: Expected res to be set'))
+          return
+        }
+
         if (!inStatusCategory(res.getStatus(), 200)) {
           this._emitHttpError(req, res, 'tus: unexpected response while creating upload')
           return
@@ -589,6 +619,11 @@ export default class BaseUpload {
         const location = res.getHeader('Location')
         if (location == null) {
           this._emitHttpError(req, res, 'tus: invalid or missing Location header')
+          return
+        }
+
+        if (this.options.endpoint === null) {
+          this._emitError(new Error('tus: Expected options.endpoint to be set'))
           return
         }
 
@@ -628,6 +663,10 @@ export default class BaseUpload {
    * @api private
    */
   _resumeUpload() {
+    if (this.url === null) {
+      this._emitError(new Error('tus: Expected url to be set'))
+      return
+    }
     const req = this._openRequest('HEAD', this.url)
     const promise = this._sendRequest(req)
 
@@ -728,6 +767,10 @@ export default class BaseUpload {
 
     let req: HttpRequest
 
+    if (this.url === null) {
+      this._emitError(new Error('tus: Expected url to be set'))
+      return
+    }
     // Some browser and servers may not support the PATCH method. For those
     // cases, you can tell tus-js-client to use a POST request with the
     // X-HTTP-Method-Override header for simulating a PATCH request.
@@ -743,6 +786,10 @@ export default class BaseUpload {
 
     promise
       .then((res) => {
+        if (res === undefined) {
+          this._emitError(new Error('tus: Expected res to be defined'))
+          return
+        }
         if (!inStatusCategory(res.getStatus(), 200)) {
           this._emitHttpError(req, res, 'tus: unexpected response while uploading chunk')
           return
@@ -771,6 +818,10 @@ export default class BaseUpload {
     let end = this._offset + this.options.chunkSize
 
     req.setProgressHandler((bytesSent) => {
+      if (this._size === null) {
+        this._emitError(new Error('tus: Expected _size to be set'))
+        return
+      }
       this._emitProgress(start + bytesSent, this._size)
     })
 
@@ -821,6 +872,10 @@ export default class BaseUpload {
       if (this.options.protocol === PROTOCOL_IETF_DRAFT_03) {
         req.setHeader('Upload-Complete', done ? '?1' : '?0')
       }
+      if (this._size === null) {
+        this._emitError(new Error('tus: Expected _size to be set'))
+        return
+      }
       this._emitProgress(this._offset, this._size)
       return this._sendRequest(req, value)
     })
@@ -839,6 +894,10 @@ export default class BaseUpload {
       return
     }
 
+    if (this._size === null) {
+      this._emitError(new Error('tus: Expected _size to be set'))
+      return
+    }
     this._emitProgress(offset, this._size)
     this._emitChunkComplete(offset - this._offset, offset, this._size)
 
@@ -859,7 +918,7 @@ export default class BaseUpload {
    *
    * @api private
    */
-  _openRequest(method, url) {
+  _openRequest(method: string, url: string) {
     const req = openRequest(method, url, this.options)
     this._req = req
     return req
@@ -928,7 +987,7 @@ export default class BaseUpload {
   }
 }
 
-function encodeMetadata(metadata) {
+function encodeMetadata(metadata: Record<string, string>) {
   return Object.entries(metadata)
     .map(([key, value]) => `${key} ${Base64.encode(String(value))}`)
     .join(',')
@@ -940,7 +999,7 @@ function encodeMetadata(metadata) {
  *
  * @api private
  */
-function inStatusCategory(status, category) {
+function inStatusCategory(status: number, category: 100 | 200 | 300 | 400 | 500): boolean {
   return status >= category && status < category + 100
 }
 
@@ -951,7 +1010,7 @@ function inStatusCategory(status, category) {
  *
  * @api private
  */
-function openRequest(method, url, options) {
+function openRequest(method: string, url: string, options: UploadOptions) {
   const req = options.httpStack.createRequest(method, url)
 
   if (options.protocol === PROTOCOL_IETF_DRAFT_03) {
@@ -1023,7 +1082,7 @@ function isOnline(): boolean {
  *
  * @api private
  */
-function shouldRetry(err, retryAttempt, options) {
+function shouldRetry(err: Error | DetailedError, retryAttempt: number, options: UploadOptions) {
   // We only attempt a retry if
   // - retryDelays option is set
   // - we didn't exceed the maxium number of retries, yet, and
@@ -1034,7 +1093,7 @@ function shouldRetry(err, retryAttempt, options) {
   if (
     options.retryDelays == null ||
     retryAttempt >= options.retryDelays.length ||
-    err.originalRequest == null
+    ('originalRequest' in err && err.originalRequest == null)
   ) {
     return false
   }
@@ -1051,7 +1110,7 @@ function shouldRetry(err, retryAttempt, options) {
  * @param {DetailedError} err
  * @returns {boolean}
  */
-function defaultOnShouldRetry(err) {
+function defaultOnShouldRetry(err: DetailedError): boolean {
   const status = err.originalResponse ? err.originalResponse.getStatus() : 0
   return (!inStatusCategory(status, 400) || status === 409 || status === 423) && isOnline()
 }
@@ -1062,9 +1121,11 @@ function defaultOnShouldRetry(err) {
  * header with the value /upload/abc, the resolved URL will be:
  * http://example.com/upload/abc
  */
-function resolveUrl(origin, link) {
+function resolveUrl(origin: string, link: string): string {
   return new URL(link, origin).toString()
 }
+
+type Part = { start: number; end: number }
 
 /**
  * Calculate the start and end positions for the parts if an upload
@@ -1072,12 +1133,12 @@ function resolveUrl(origin, link) {
  *
  * @param {number} totalSize The byte size of the upload, which will be split.
  * @param {number} partCount The number in how many parts the upload will be split.
- * @return {object[]}
+ * @return {Part[]}
  * @api private
  */
-function splitSizeIntoParts(totalSize, partCount) {
+function splitSizeIntoParts(totalSize: number, partCount: number): Part[] {
   const partSize = Math.floor(totalSize / partCount)
-  const parts: { start: number; end: number }[] = []
+  const parts: Part[] = []
 
   for (let i = 0; i < partCount; i++) {
     parts.push({
