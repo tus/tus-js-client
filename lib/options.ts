@@ -67,7 +67,7 @@ export interface UploadOptions {
   fileReader: FileReader
   httpStack: HttpStack
 
-  protocol: string
+  protocol: typeof PROTOCOL_TUS_V1 | typeof PROTOCOL_IETF_DRAFT_03
 }
 
 export interface UrlStorage {
