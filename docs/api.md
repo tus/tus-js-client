@@ -434,7 +434,7 @@ interface SliceResult {
 
 _Default value:_ `'tus-v1'`
 
-tus-js-client uses the [tus v1.0.0 upload protocol](https://tus.io/protocols/resumable-upload) by default. It also includes experimental support for [the draft of Resumable Uploads For HTTP](https://datatracker.ietf.org/doc/draft-ietf-httpbis-resumable-upload/) developed in the HTTP working group of the IETF. By setting the `protocol` option to `'ietf-draft-03'`, tus-js-client will use the protocol as defined in the draft version 03. Please be aware that this feature is experimental and that this option might change in breaking ways in non-major releases.
+tus-js-client uses the [tus v1.0.0 upload protocol](https://tus.io/protocols/resumable-upload) by default. It also includes experimental support for [the draft of Resumable Uploads For HTTP](https://datatracker.ietf.org/doc/draft-ietf-httpbis-resumable-upload/) developed in the HTTP working group of the IETF. By setting the `protocol` option to `'ietf-draft-03'` or `'ietf-draft-05'`, tus-js-client will use the protocol as defined in the draft version 03 or 05 respectively. Please be aware that this feature is experimental and that this option might change in breaking ways in non-major releases.
 
 ## tus.Upload(file, options)
 
