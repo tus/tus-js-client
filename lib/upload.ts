@@ -49,7 +49,7 @@ export const defaultOptions = {
   fileReader: null,
   httpStack: null,
 
-  protocol: PROTOCOL_TUS_V1,
+  protocol: PROTOCOL_TUS_V1 as UploadOptions['protocol'],
 }
 
 export default class BaseUpload {
