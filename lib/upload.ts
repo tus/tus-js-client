@@ -539,10 +539,10 @@ export default class BaseUpload {
    * data may not have been accepted by the server yet.
    *
    * @param {number} bytesSent  Number of bytes sent to the server.
-   * @param {number} bytesTotal Total number of bytes to be sent to the server.
+   * @param {number|null} bytesTotal Total number of bytes to be sent to the server.
    * @api private
    */
-  _emitProgress(bytesSent: number, bytesTotal: number): void {
+  _emitProgress(bytesSent: number, bytesTotal: number | null): void {
     if (typeof this.options.onProgress === 'function') {
       this.options.onProgress(bytesSent, bytesTotal)
     }
@@ -554,10 +554,10 @@ export default class BaseUpload {
    * @param {number} chunkSize  Size of the chunk that was accepted by the server.
    * @param {number} bytesAccepted Total number of bytes that have been
    *                                accepted by the server.
-   * @param {number} bytesTotal Total number of bytes to be sent to the server.
+   * @param {number|null} bytesTotal Total number of bytes to be sent to the server.
    * @api private
    */
-  _emitChunkComplete(chunkSize: number, bytesAccepted: number, bytesTotal: number): void {
+  _emitChunkComplete(chunkSize: number, bytesAccepted: number, bytesTotal: number | null): void {
     if (typeof this.options.onChunkComplete === 'function') {
       this.options.onChunkComplete(chunkSize, bytesAccepted, bytesTotal)
     }
@@ -818,10 +818,6 @@ export default class BaseUpload {
     let end = this._offset + this.options.chunkSize
 
     req.setProgressHandler((bytesSent) => {
-      if (this._size === null) {
-        this._emitError(new Error('tus: Expected _size to be set'))
-        return
-      }
       this._emitProgress(start + bytesSent, this._size)
     })
 
@@ -872,10 +868,6 @@ export default class BaseUpload {
       if (this.options.protocol === PROTOCOL_IETF_DRAFT_03) {
         req.setHeader('Upload-Complete', done ? '?1' : '?0')
       }
-      if (this._size === null) {
-        this._emitError(new Error('tus: Expected _size to be set'))
-        return
-      }
       this._emitProgress(this._offset, this._size)
       return this._sendRequest(req, value)
     })
@@ -894,10 +886,6 @@ export default class BaseUpload {
       return
     }
 
-    if (this._size === null) {
-      this._emitError(new Error('tus: Expected _size to be set'))
-      return
-    }
     this._emitProgress(offset, this._size)
     this._emitChunkComplete(offset - this._offset, offset, this._size)
 

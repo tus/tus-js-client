@@ -39,8 +39,10 @@ export interface UploadOptions {
   fingerprint: (file: UploadInput, options: UploadOptions) => Promise<string | null>
   uploadSize: number | null
 
-  onProgress: ((bytesSent: number, bytesTotal: number) => void) | null
-  onChunkComplete: ((chunkSize: number, bytesAccepted: number, bytesTotal: number) => void) | null
+  onProgress: ((bytesSent: number, bytesTotal: number | null) => void) | null
+  onChunkComplete:
+    | ((chunkSize: number, bytesAccepted: number, bytesTotal: number | null) => void)
+    | null
   onSuccess: (() => void) | null
   onError: ((error: Error | DetailedError) => void) | null
   onShouldRetry:
