@@ -178,7 +178,7 @@ describe('tus', () => {
         expect(req.url).toBe('https://tus.io/uploads')
         expect(req.method).toBe('POST')
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Length']).toBe(5)
+        expect(req.requestHeaders['Upload-Length']).toBe('5')
         expect(req.requestHeaders['Upload-Concat']).toBe('partial')
 
         req.respondWith({
@@ -207,7 +207,7 @@ describe('tus', () => {
         expect(req.url).toBe('https://tus.io/uploads')
         expect(req.method).toBe('POST')
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Length']).toBe(6)
+        expect(req.requestHeaders['Upload-Length']).toBe('6')
         expect(req.requestHeaders['Upload-Concat']).toBe('partial')
 
         req.respondWith({
@@ -530,9 +530,9 @@ async function expectHelloWorldUpload(input, options) {
   expect(req.method).toBe('POST')
   if (options.uploadLengthDeferred) {
     expect(req.requestHeaders['Upload-Length']).toBe(undefined)
-    expect(req.requestHeaders['Upload-Defer-Length']).toBe(1)
+    expect(req.requestHeaders['Upload-Defer-Length']).toBe('1')
   } else {
-    expect(req.requestHeaders['Upload-Length']).toBe(11)
+    expect(req.requestHeaders['Upload-Length']).toBe('11')
     expect(req.requestHeaders['Upload-Defer-Length']).toBe(undefined)
   }
 
@@ -562,7 +562,7 @@ async function expectHelloWorldUpload(input, options) {
   expect(req.requestHeaders['Upload-Offset']).toBe('7')
 
   if (options.uploadLengthDeferred) {
-    expect(req.requestHeaders['Upload-Length']).toBe(11)
+    expect(req.requestHeaders['Upload-Length']).toBe('11')
   }
 
   expect(await getBodySize(req.body)).toBe(4)

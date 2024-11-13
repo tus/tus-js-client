@@ -1,8 +1,8 @@
 import type { FileSource } from '../../options.js'
 
-function len(blobOrArray): number {
+function len(blobOrArray: StreamSource['_buffer']): number {
   if (blobOrArray === undefined) return 0
-  if (blobOrArray.size !== undefined) return blobOrArray.size
+  if (blobOrArray instanceof Blob) return blobOrArray.size
   return blobOrArray.length
 }
 
@@ -10,28 +10,26 @@ function len(blobOrArray): number {
   Typed arrays and blobs don't have a concat method.
   This function helps StreamSource accumulate data to reach chunkSize.
 */
-function concat(a, b) {
-  if (a.concat) {
-    // Is `a` an Array?
-    return a.concat(b)
+function concat<T extends StreamSource['_buffer']>(a: T, b: T): T {
+  if (Array.isArray(a) && Array.isArray(b)) {
+    return a.concat(b) as T
   }
-  if (a instanceof Blob) {
-    return new Blob([a, b], { type: a.type })
+  if (a instanceof Blob && b instanceof Blob) {
+    return new Blob([a, b], { type: a.type }) as T
   }
-  if (a.set) {
-    // Is `a` a typed array?
-    const c = new a.constructor(a.length + b.length)
+  if (a instanceof Uint8Array && b instanceof Uint8Array) {
+    const c = new Uint8Array(a.length + b.length)
     c.set(a)
     c.set(b, a.length)
-    return c
+    return c as T
   }
   throw new Error('Unknown data type')
 }
 
 export default class StreamSource implements FileSource {
-  _reader: Pick<ReadableStreamDefaultReader, 'read'>
+  _reader: Pick<ReadableStreamDefaultReader<StreamSource['_buffer']>, 'read'>
 
-  _buffer: Blob | undefined
+  _buffer: Blob | Uint8Array | number[] | undefined
 
   // _bufferOffset defines at which position the content of _buffer (if it is set)
   // is located in the view of the entire stream. It does not mean at which offset

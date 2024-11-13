@@ -57,7 +57,7 @@ describe('tus', () => {
       expect(req.method).toBe('POST')
       expect(req.requestHeaders.Custom).toBe('blargh')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Length']).toBe(11)
+      expect(req.requestHeaders['Upload-Length']).toBe('11')
       expect(req.requestHeaders['Upload-Metadata']).toBe(
         'foo aGVsbG8=,bar d29ybGQ=,nonlatin c8WCb8WEY2U=,number MTAw',
       )
@@ -119,7 +119,7 @@ describe('tus', () => {
       expect(req.url).toBe('http://tus.io/uploads')
       expect(req.method).toBe('POST')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Length']).toBe(11)
+      expect(req.requestHeaders['Upload-Length']).toBe('11')
 
       // The upload URL should be cleared when tus-js.client tries to create a new upload.
       expect(upload.url).toBe(null)
@@ -147,7 +147,7 @@ describe('tus', () => {
       expect(req.url).toBe('http://tus.io/uploads')
       expect(req.method).toBe('POST')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Length']).toBe(11)
+      expect(req.requestHeaders['Upload-Length']).toBe('11')
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
       expect(req.body.size).toBe(11)
 
@@ -191,7 +191,7 @@ describe('tus', () => {
       expect(req.url).toBe('http://tus.io/uploads')
       expect(req.method).toBe('POST')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Length']).toBe(11)
+      expect(req.requestHeaders['Upload-Length']).toBe('11')
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
       expect(req.body.size).toBe(6)
 
@@ -394,7 +394,7 @@ describe('tus', () => {
       expect(req.url).toBe('http://tus.io/uploads')
       expect(req.method).toBe('POST')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Length']).toBe(11)
+      expect(req.requestHeaders['Upload-Length']).toBe('11')
 
       req.respondWith({
         status: 201,
@@ -492,7 +492,7 @@ describe('tus', () => {
       expect(req.url).toBe('http://tus.io/uploads')
       expect(req.method).toBe('POST')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Length']).toBe(0)
+      expect(req.requestHeaders['Upload-Length']).toBe('0')
 
       req.respondWith({
         status: 201,

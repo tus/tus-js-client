@@ -92,7 +92,7 @@ describe('tus', () => {
       expect(req.method).toBe('POST')
       expect(req.requestHeaders.Custom).toBe('blargh')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Length']).toBe(5)
+      expect(req.requestHeaders['Upload-Length']).toBe('5')
       expect(req.requestHeaders['Upload-Concat']).toBe('partial')
       expect(req.requestHeaders['Upload-Metadata']).toBeUndefined()
 
@@ -108,7 +108,7 @@ describe('tus', () => {
       expect(req.method).toBe('POST')
       expect(req.requestHeaders.Custom).toBe('blargh')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Length']).toBe(6)
+      expect(req.requestHeaders['Upload-Length']).toBe('6')
       expect(req.requestHeaders['Upload-Concat']).toBe('partial')
       expect(req.requestHeaders['Upload-Metadata']).toBeUndefined()
 
@@ -230,7 +230,7 @@ describe('tus', () => {
       expect(req.url).toBe('https://tus.io/uploads')
       expect(req.method).toBe('POST')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Length']).toBe(1)
+      expect(req.requestHeaders['Upload-Length']).toBe('1')
       expect(req.requestHeaders['Upload-Concat']).toBe('partial')
 
       req.respondWith({
@@ -244,7 +244,7 @@ describe('tus', () => {
       expect(req.url).toBe('https://tus.io/uploads')
       expect(req.method).toBe('POST')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Length']).toBe(10)
+      expect(req.requestHeaders['Upload-Length']).toBe('10')
       expect(req.requestHeaders['Upload-Concat']).toBe('partial')
 
       req.respondWith({
@@ -339,7 +339,7 @@ describe('tus', () => {
       expect(req.url).toBe('https://tus.io/uploads')
       expect(req.method).toBe('POST')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Length']).toBe(5)
+      expect(req.requestHeaders['Upload-Length']).toBe('5')
 
       req.respondWith({
         status: 500,
@@ -464,7 +464,7 @@ describe('tus', () => {
       expect(req.url).toBe('https://tus.io/uploads')
       expect(req.method).toBe('POST')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Length']).toBe(5)
+      expect(req.requestHeaders['Upload-Length']).toBe('5')
       expect(req.requestHeaders['Upload-Concat']).toBe('partial')
       expect(req.requestHeaders['Upload-Metadata']).toBeUndefined()
 
@@ -479,7 +479,7 @@ describe('tus', () => {
       expect(req.url).toBe('https://tus.io/uploads')
       expect(req.method).toBe('POST')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Length']).toBe(6)
+      expect(req.requestHeaders['Upload-Length']).toBe('6')
       expect(req.requestHeaders['Upload-Concat']).toBe('partial')
       expect(req.requestHeaders['Upload-Metadata']).toBeUndefined()
 
