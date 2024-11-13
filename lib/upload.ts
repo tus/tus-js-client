@@ -1090,10 +1090,11 @@ function shouldRetry(err: Error | DetailedError, retryAttempt: number, options: 
   // - the error is server error (i.e. not a status 4xx except a 409 or 423) or
   // a onShouldRetry is specified and returns true
   // - the browser does not indicate that we are offline
+  const isNetworkError = 'originalRequest' in err && err.originalRequest != null
   if (
     options.retryDelays == null ||
     retryAttempt >= options.retryDelays.length ||
-    ('originalRequest' in err && err.originalRequest == null)
+    !isNetworkError
   ) {
     return false
   }
