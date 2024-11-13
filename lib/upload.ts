@@ -50,7 +50,7 @@ export const defaultOptions = {
   httpStack: null,
 
   protocol: PROTOCOL_TUS_V1,
-} 
+}
 
 export default class BaseUpload {
   options: UploadOptions
