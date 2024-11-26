@@ -1,5 +1,3 @@
-'use strict'
-
 const stream = require('stream')
 const temp = require('temp')
 const fs = require('fs')
@@ -180,7 +178,7 @@ describe('tus', () => {
         expect(req.url).toBe('https://tus.io/uploads')
         expect(req.method).toBe('POST')
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Length']).toBe(5)
+        expect(req.requestHeaders['Upload-Length']).toBe('5')
         expect(req.requestHeaders['Upload-Concat']).toBe('partial')
 
         req.respondWith({
@@ -194,7 +192,7 @@ describe('tus', () => {
         expect(req.url).toBe('https://tus.io/uploads/upload1')
         expect(req.method).toBe('PATCH')
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Offset']).toBe(0)
+        expect(req.requestHeaders['Upload-Offset']).toBe('0')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
         expect(req.body.size).toBe(5)
 
@@ -209,7 +207,7 @@ describe('tus', () => {
         expect(req.url).toBe('https://tus.io/uploads')
         expect(req.method).toBe('POST')
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Length']).toBe(6)
+        expect(req.requestHeaders['Upload-Length']).toBe('6')
         expect(req.requestHeaders['Upload-Concat']).toBe('partial')
 
         req.respondWith({
@@ -223,7 +221,7 @@ describe('tus', () => {
         expect(req.url).toBe('https://tus.io/uploads/upload2')
         expect(req.method).toBe('PATCH')
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Offset']).toBe(0)
+        expect(req.requestHeaders['Upload-Offset']).toBe('0')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
         expect(req.body.size).toBe(6)
 
@@ -369,7 +367,7 @@ describe('tus', () => {
       expect(req.url).toBe('http://tus.io/uploads/resuming')
       expect(req.method).toBe('PATCH')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Offset']).toBe(3)
+      expect(req.requestHeaders['Upload-Offset']).toBe('3')
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
       expect(req.body.size).toBe(11 - 3)
 
@@ -510,8 +508,10 @@ async function getBodySize(body) {
 
   return new Promise((resolve) => {
     body.on('readable', () => {
-      let chunk
-      while ((chunk = body.read()) !== null) {
+      while (true) {
+        const chunk = body.read()
+        if (chunk == null) break
+
         resolve(chunk.length)
       }
     })
@@ -530,9 +530,9 @@ async function expectHelloWorldUpload(input, options) {
   expect(req.method).toBe('POST')
   if (options.uploadLengthDeferred) {
     expect(req.requestHeaders['Upload-Length']).toBe(undefined)
-    expect(req.requestHeaders['Upload-Defer-Length']).toBe(1)
+    expect(req.requestHeaders['Upload-Defer-Length']).toBe('1')
   } else {
-    expect(req.requestHeaders['Upload-Length']).toBe(11)
+    expect(req.requestHeaders['Upload-Length']).toBe('11')
     expect(req.requestHeaders['Upload-Defer-Length']).toBe(undefined)
   }
 
@@ -546,7 +546,7 @@ async function expectHelloWorldUpload(input, options) {
   req = await options.httpStack.nextRequest()
   expect(req.url).toBe('/uploads/blargh')
   expect(req.method).toBe('PATCH')
-  expect(req.requestHeaders['Upload-Offset']).toBe(0)
+  expect(req.requestHeaders['Upload-Offset']).toBe('0')
   expect(await getBodySize(req.body)).toBe(7)
 
   req.respondWith({
@@ -559,10 +559,10 @@ async function expectHelloWorldUpload(input, options) {
   req = await options.httpStack.nextRequest()
   expect(req.url).toBe('/uploads/blargh')
   expect(req.method).toBe('PATCH')
-  expect(req.requestHeaders['Upload-Offset']).toBe(7)
+  expect(req.requestHeaders['Upload-Offset']).toBe('7')
 
   if (options.uploadLengthDeferred) {
-    expect(req.requestHeaders['Upload-Length']).toBe(11)
+    expect(req.requestHeaders['Upload-Length']).toBe('11')
   }
 
   expect(await getBodySize(req.body)).toBe(4)

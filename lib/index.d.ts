@@ -26,12 +26,13 @@ interface UploadOptions {
 
   uploadUrl?: string | null
   metadata?: { [key: string]: string }
+  metadataForPartialUploads?: { [key: string]: string }
   fingerprint?: (file: File, options: UploadOptions) => Promise<string>
   uploadSize?: number | null
 
   onProgress?: ((bytesSent: number, bytesTotal: number) => void) | null
   onChunkComplete?: ((chunkSize: number, bytesAccepted: number, bytesTotal: number) => void) | null
-  onSuccess?: (() => void) | null
+  onSuccess?: ((payload: OnSuccessPayload) => void) | null
   onError?: ((error: Error | DetailedError) => void) | null
   onShouldRetry?:
     | ((error: DetailedError, retryAttempt: number, options: UploadOptions) => boolean)
@@ -58,6 +59,10 @@ interface UploadOptions {
   httpStack?: HttpStack
 }
 
+interface OnSuccessPayload {
+  lastResponse: HttpResponse
+}
+
 interface UrlStorage {
   findAllUploads(): Promise<PreviousUpload[]>
   findUploadsByFingerprint(fingerprint: string): Promise<PreviousUpload[]>
@@ -72,6 +77,9 @@ interface PreviousUpload {
   size: number | null
   metadata: { [key: string]: string }
   creationTime: string
+  urlStorageKey: string
+  uploadUrl: string | null
+  parallelUploadUrls: string[] | null
 }
 
 interface FileReader {
@@ -106,7 +114,7 @@ export interface HttpRequest {
   getURL(): string
 
   setHeader(header: string, value: string): void
-  getHeader(header: string): string
+  getHeader(header: string): string | undefined
 
   setProgressHandler(handler: (bytesSent: number) => void): void
   send(body: any): Promise<HttpResponse>
@@ -118,7 +126,7 @@ export interface HttpRequest {
 
 export interface HttpResponse {
   getStatus(): number
-  getHeader(header: string): string
+  getHeader(header: string): string | undefined
   getBody(): string
 
   // Return an environment specific object, e.g. the XMLHttpRequest object in browsers.

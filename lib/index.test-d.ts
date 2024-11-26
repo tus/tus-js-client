@@ -2,9 +2,9 @@
 // working correctly. For more details see:
 // https://github.com/SamVerschueren/tsd
 
-import * as tus from '../'
 import { expectType } from 'tsd'
-import { DetailedError } from '../'
+import * as tus from '../'
+import type { DetailedError } from '../'
 
 expectType<boolean>(tus.isSupported)
 expectType<boolean>(tus.canStoreURLs)
@@ -19,16 +19,20 @@ const upload = new tus.Upload(file, {
   metadata: {
     filename: 'foo.txt',
   },
+  metadataForPartialUploads: {
+    userId: 'foo123bar',
+  },
   onProgress: (bytesSent: number, bytesTotal: number) => {
     const percentage = ((bytesSent / bytesTotal) * 100).toFixed(2)
-    console.log(bytesSent, bytesTotal, percentage + '%')
+    console.log(bytesSent, bytesTotal, `${percentage}%`)
   },
-  onChunkComplete: (chunkSize: number, bytesAccepted: number) => {},
-  onSuccess: () => {
+  onChunkComplete: (_chunkSize: number, _bytesAccepted: number) => {},
+  onSuccess: (payload: tus.OnSuccessPayload) => {
     console.log('Download from %s complete', upload.url)
+    console.log('Response header', payload.lastResponse.getHeader('X-Info'))
   },
   onError: (error: Error | DetailedError) => {
-    console.log('Failed because: ' + error)
+    console.error(`Failed because: ${error}`)
   },
   headers: { TestHeader: 'TestValue' },
   chunkSize: 100,
@@ -42,9 +46,9 @@ const upload = new tus.Upload(file, {
     { start: 0, end: 1 },
     { start: 1, end: 11 },
   ],
-  onAfterResponse: function (req: tus.HttpRequest, res: tus.HttpResponse) {
-    var url = req.getURL()
-    var value = res.getHeader('X-My-Header')
+  onAfterResponse: (req: tus.HttpRequest, res: tus.HttpResponse) => {
+    const url = req.getURL()
+    const value = res.getHeader('X-My-Header')
     console.log(`Request for ${url} responded with ${value}`)
   },
 })
@@ -58,7 +62,7 @@ upload.findPreviousUploads().then((uploads: tus.PreviousUpload[]) => {
 upload.abort()
 upload.abort(true).then(() => {})
 
-const upload2 = new tus.Upload(file, {
+const _upload2 = new tus.Upload(file, {
   endpoint: '',
 })
 
@@ -73,7 +77,11 @@ const upload2 = new tus.Upload(file, {
 fetch('https://www.example.org')
   .then((response) => response.body)
   .then((rb) => {
-    const reader = rb!.getReader()
+    if (rb == null) {
+      return
+    }
+
+    const reader = rb.getReader()
     return new tus.Upload(reader, {
       endpoint: '',
       uploadLengthDeferred: true,
