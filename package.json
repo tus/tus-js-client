@@ -32,7 +32,7 @@
     "@babel/plugin-transform-modules-commonjs": "^7.9.6",
     "@babel/preset-env": "^7.0.0",
     "@biomejs/biome": "^1.7.3",
-    "axios": "^0.28.0",
+    "axios": "^0.29.0",
     "babelify": "^10.0.0",
     "browserify": "^17.0.0",
     "chokidar-cli": "^3.0.0",
@@ -50,7 +50,7 @@
     "regenerator-runtime": "^0.14.0",
     "temp": "^0.9.4",
     "throttle": "^1.0.3",
-    "tsd": "0.31.0",
+    "tsd": "0.31.2",
     "uglify-js": "^3.9.2"
   },
   "dependencies": {
