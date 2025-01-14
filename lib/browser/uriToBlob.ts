@@ -3,7 +3,7 @@
  * React Native to retrieve a file (identified by a file://
  * URI) as a blob.
  */
-export default function uriToBlob(uri: string): Promise<Blob> {
+export function uriToBlob(uri: string): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     xhr.responseType = 'blob'

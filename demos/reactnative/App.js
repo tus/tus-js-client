@@ -17,6 +17,7 @@ const styles = StyleSheet.create({
   },
 })
 
+// biome-ignore lint/style/noDefaultExport: React Native uses default exports
 export default class App extends React.Component {
   constructor() {
     super()

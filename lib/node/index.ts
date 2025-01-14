@@ -1,15 +1,15 @@
 import type { ReadStream } from 'node:fs'
 import type { Readable } from 'node:stream'
-import DetailedError from '../error.js'
+import { DetailedError } from '../error.js'
 import { enableDebugLog } from '../logger.js'
-import NoopUrlStorage from '../noopUrlStorage.js'
+import { NoopUrlStorage } from '../noopUrlStorage.js'
 import type { UploadInput, UploadOptions } from '../options.js'
-import BaseUpload, { terminate, defaultOptions as baseDefaultOptions } from '../upload.js'
+import { BaseUpload, defaultOptions as baseDefaultOptions, terminate } from '../upload.js'
 
-import NodeFileReader from './fileReader.js'
-import fingerprint from './fileSignature.js'
-import DefaultHttpStack from './httpStack.js'
-import StreamFileSource from './sources/StreamFileSource.js'
+import { NodeFileReader } from './fileReader.js'
+import { fingerprint } from './fileSignature.js'
+import { NodeHttpStack as DefaultHttpStack } from './httpStack.js'
+import { StreamFileSource } from './sources/StreamFileSource.js'
 import { FileUrlStorage, canStoreURLs } from './urlStorage.js'
 
 const defaultOptions = {
@@ -49,5 +49,6 @@ export {
   enableDebugLog,
   DefaultHttpStack,
   DetailedError,
+  // TODO: Remove `as`
   StreamFileSource as StreamSource,
 }

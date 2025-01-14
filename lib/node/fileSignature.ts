@@ -3,16 +3,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import type { UploadInput, UploadOptions } from '../options.js'
 
-/**
- * Generate a fingerprint for a file which will be used the store the endpoint
- *
- * @param {File} file
- * @param {Object} options
- */
-export default function fingerprint(
-  file: UploadInput,
-  options: UploadOptions,
-): Promise<string | null> {
+export function fingerprint(file: UploadInput, options: UploadOptions): Promise<string | null> {
   if (Buffer.isBuffer(file)) {
     // create MD5 hash for buffer type
     const blockSize = 64 * 1024 // 64kb

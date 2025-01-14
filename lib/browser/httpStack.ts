@@ -1,6 +1,6 @@
 import type { HttpProgressHandler, HttpRequest, HttpResponse, HttpStack } from '../options.js'
 
-export default class XHRHttpStack implements HttpStack {
+export class XHRHttpStack implements HttpStack {
   createRequest(method, url) {
     return new XHRRequest(method, url)
   }

@@ -1,8 +1,8 @@
 import type { FileSource, SliceResult } from '../../options.js'
-import isCordova from './isCordova.js'
-import readAsByteArray from './readAsByteArray.js'
+import { isCordova } from './isCordova.js'
+import { readAsByteArray } from './readAsByteArray.js'
 
-export default class BlobFileSource implements FileSource {
+export class BlobFileSource implements FileSource {
   _file: Blob
 
   size: number

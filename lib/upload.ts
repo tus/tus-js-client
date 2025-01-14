@@ -1,6 +1,6 @@
 import { Base64 } from 'js-base64'
 import URL from 'url-parse'
-import DetailedError from './error.js'
+import { DetailedError } from './error.js'
 import { log } from './logger.js'
 import {
   type FileSource,
@@ -14,7 +14,7 @@ import {
   type UploadOptions,
   type UrlStorage,
 } from './options.js'
-import uuid from './uuid.js'
+import { uuid } from './uuid.js'
 
 export const defaultOptions = {
   endpoint: null,
@@ -54,7 +54,7 @@ export const defaultOptions = {
   protocol: PROTOCOL_TUS_V1 as UploadOptions['protocol'],
 }
 
-export default class BaseUpload {
+export class BaseUpload {
   options: UploadOptions
 
   // The storage module used to store URLs
