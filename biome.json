@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.7.3/schema.json",
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
@@ -36,7 +36,7 @@
     "formatter": {
       "jsxQuoteStyle": "double",
       "quoteProperties": "asNeeded",
-      "trailingComma": "all",
+      "trailingCommas": "all",
       "semicolons": "asNeeded",
       "arrowParentheses": "always",
       "bracketSpacing": true,
