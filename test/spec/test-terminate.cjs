@@ -1,0 +1,197 @@
+'use strict'
+
+const { TestHttpStack, getBlob } = require('./helpers/utils.cjs')
+const tus = require('../..')
+
+describe('tus', () => {
+  describe('terminate upload', () => {
+    it('should terminate upload when abort is called with true', async () => {
+      let abortPromise
+      const testStack = new TestHttpStack()
+      const file = getBlob('hello world')
+      const options = {
+        httpStack: testStack,
+        endpoint: 'http://tus.io/files/',
+        chunkSize: 5,
+        onChunkComplete() {
+          abortPromise = upload.abort(true)
+        },
+      }
+
+      spyOn(options, 'onChunkComplete').and.callThrough()
+
+      const upload = new tus.Upload(file, options)
+      upload.start()
+
+      let req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/files/')
+      expect(req.method).toBe('POST')
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: '/files/foo',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/files/foo')
+      expect(req.method).toBe('PATCH')
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': 5,
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/files/foo')
+      expect(req.method).toBe('DELETE')
+
+      req.respondWith({
+        status: 204,
+      })
+
+      expect(options.onChunkComplete).toHaveBeenCalled()
+      await abortPromise
+    })
+
+    it('should retry terminate when an error is returned on first try', async () => {
+      let abortPromise
+      const testStack = new TestHttpStack()
+      const file = getBlob('hello world')
+      const options = {
+        httpStack: testStack,
+        endpoint: 'http://tus.io/files/',
+        chunkSize: 5,
+        retryDelays: [10, 10, 10],
+        onChunkComplete() {
+          abortPromise = upload.abort(true)
+        },
+      }
+
+      spyOn(options, 'onChunkComplete').and.callThrough()
+
+      const upload = new tus.Upload(file, options)
+      upload.start()
+
+      let req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/files/')
+      expect(req.method).toBe('POST')
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: '/files/foo',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/files/foo')
+      expect(req.method).toBe('PATCH')
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': 5,
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/files/foo')
+      expect(req.method).toBe('DELETE')
+
+      req.respondWith({
+        status: 423,
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/files/foo')
+      expect(req.method).toBe('DELETE')
+
+      req.respondWith({
+        status: 204,
+      })
+
+      await abortPromise
+      expect(options.onChunkComplete).toHaveBeenCalled()
+    })
+
+    it('should stop retrying when all delays are used up', async () => {
+      const testStack = new TestHttpStack()
+      const options = {
+        httpStack: testStack,
+        retryDelays: [10, 10],
+      }
+
+      const terminatePromise = tus.Upload.terminate('http://tus.io/files/foo', options)
+
+      let req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/files/foo')
+      expect(req.method).toBe('DELETE')
+
+      req.respondWith({
+        status: 500,
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/files/foo')
+      expect(req.method).toBe('DELETE')
+
+      req.respondWith({
+        status: 500,
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/files/foo')
+      expect(req.method).toBe('DELETE')
+
+      req.respondWith({
+        status: 500,
+      })
+
+      await expectAsync(terminatePromise).toBeRejectedWithError(
+        /tus: unexpected response while terminating upload/,
+      )
+    })
+
+    it('should invoke the request and response Promises', async () => {
+      const testStack = new TestHttpStack()
+      const options = {
+        httpStack: testStack,
+        onBeforeRequest(req) {
+          return new Promise((resolve) => {
+            expect(req.getURL()).toBe('http://tus.io/uploads/foo')
+            expect(req.getMethod()).toBe('DELETE')
+            resolve()
+          })
+        },
+        onAfterResponse(req, res) {
+          return new Promise((resolve) => {
+            expect(req.getURL()).toBe('http://tus.io/uploads/foo')
+            expect(req.getMethod()).toBe('DELETE')
+            expect(res.getStatus()).toBe(204)
+            resolve()
+          })
+        },
+      }
+      spyOn(options, 'onBeforeRequest')
+      spyOn(options, 'onAfterResponse')
+
+      const terminatePromise = tus.Upload.terminate('http://tus.io/uploads/foo', options)
+
+      const req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/foo')
+      expect(req.method).toBe('DELETE')
+
+      req.respondWith({
+        status: 204,
+      })
+
+      await expectAsync(terminatePromise).toBeResolved()
+      expect(options.onBeforeRequest).toHaveBeenCalled()
+      expect(options.onAfterResponse).toHaveBeenCalled()
+    })
+  })
+})

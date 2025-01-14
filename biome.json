@@ -84,6 +84,10 @@
     {
       "include": ["demos/browser/**", "demos/cordova/**"],
       "javascript": { "globals": ["tus", "Camera"] }
+    },
+    {
+      "include": ["tsconfig*.json"],
+      "json": { "parser": { "allowComments": true } }
     }
   ]
 }
