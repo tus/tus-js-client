@@ -70,6 +70,6 @@
     "test-browserstack": "karma start test/karma/browserstack.conf.cjs",
     "test-node": "jasmine test/spec/node-index.cjs",
     "lint": "biome check .",
-    "fix": "biome check --apply ."
+    "fix": "biome check --write ."
   }
 }
