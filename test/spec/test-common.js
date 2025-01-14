@@ -1322,5 +1322,112 @@ describe('tus', () => {
       expect(options.onError).not.toHaveBeenCalled()
       expect(options.onSuccess).toHaveBeenCalled()
     })
+
+    it('should send upload length on the next request when server length is deferred and we know the total size', async () => {
+      const testStack = new TestHttpStack()
+      const file = getBlob('hello world')
+      const options = {
+        httpStack: testStack,
+        endpoint: 'http://tus.io/uploads',
+        uploadUrl: 'http://tus.io/uploads/resuming',
+        chunkSize: 4,
+      }
+
+      const upload = new tus.Upload(file, options)
+      upload.start()
+
+      let req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/resuming')
+      expect(req.method).toBe('HEAD')
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Defer-Length': 1,
+          'Upload-Offset': 5,
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/resuming')
+      expect(req.method).toBe('PATCH')
+      expect(req.requestHeaders['Upload-Offset']).toBe('5')
+      expect(req.requestHeaders['Upload-Length']).toBe('11')
+      expect(req.body.size).toBe(4)
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': 9,
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/resuming')
+      expect(req.method).toBe('PATCH')
+      expect(req.requestHeaders['Upload-Offset']).toBe('9')
+      expect(req.requestHeaders['Upload-Length']).toBe(undefined)
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': 11,
+        },
+      })
+    })
+
+    it('should send upload length at the end when server length is deferred and the file is a stream', async () => {
+      const testStack = new TestHttpStack()
+      const file = getBlob('hello world')
+      const options = {
+        httpStack: testStack,
+        uploadLengthDeferred: true,
+        endpoint: 'http://tus.io/uploads',
+        uploadUrl: 'http://tus.io/uploads/resuming',
+        chunkSize: 4,
+      }
+
+      const upload = new tus.Upload(file, options)
+      upload.start()
+
+      let req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/resuming')
+      expect(req.method).toBe('HEAD')
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Defer-Length': 1,
+          'Upload-Offset': 5,
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/resuming')
+      expect(req.method).toBe('PATCH')
+      expect(req.requestHeaders['Upload-Offset']).toBe('5')
+      expect(req.requestHeaders['Upload-Length']).toBe(undefined)
+      expect(req.body.size).toBe(4)
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': 9,
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/resuming')
+      expect(req.method).toBe('PATCH')
+      expect(req.requestHeaders['Upload-Offset']).toBe('9')
+      expect(req.requestHeaders['Upload-Length']).toBe('11')
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': 11,
+        },
+      })
+    })
   })
 })
