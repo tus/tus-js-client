@@ -1,10 +1,16 @@
 {
   "name": "tus-js-client",
-  "version": "4.2.3",
+  "version": "4.3.0",
   "description": "A pure JavaScript client for the tus resumable upload protocol",
   "main": "lib.es5/node/index.js",
   "module": "lib.esm/node/index.js",
-  "files": ["lib/**/*", "lib.es5/**/*", "lib.esm/**/*", "dist/**/*", "lib/index.d.ts"],
+  "files": [
+    "lib/**/*",
+    "lib.es5/**/*",
+    "lib.esm/**/*",
+    "dist/**/*",
+    "lib/index.d.ts"
+  ],
   "browser": {
     "./lib.es5/node/index.js": "./lib.es5/browser/index.js",
     "./lib.esm/node/index.js": "./lib.esm/browser/index.js",
@@ -18,7 +24,15 @@
     "type": "git",
     "url": "https://github.com/tus/tus-js-client.git"
   },
-  "keywords": ["tus", "resumable", "upload", "protocol", "progress", "file", "browser"],
+  "keywords": [
+    "tus",
+    "resumable",
+    "upload",
+    "protocol",
+    "progress",
+    "file",
+    "browser"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/tus/tus-js-client/issues"
