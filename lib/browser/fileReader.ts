@@ -18,8 +18,7 @@ export default class BrowserFileReader implements FileReader {
     // the file blob, before uploading with tus.
     if (isReactNativeFile(input)) {
       if (!isReactNativePlatform()) {
-        // TODO
-        throw new Error('')
+        throw new Error('tus: file objects with `uri` property is only supported in React Native')
       }
 
       try {
