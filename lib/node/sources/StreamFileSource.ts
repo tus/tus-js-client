@@ -21,7 +21,7 @@ async function readChunk(stream: Readable, size: number) {
       // TODO: Node requires size to be less than 1GB. Add a validation for that
       const chunk = stream.read(size)
 
-      if (chunk !== null) {
+      if (chunk != null) {
         stream.off('error', onError)
         stream.off('readable', onReadable)
 

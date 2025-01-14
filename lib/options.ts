@@ -32,36 +32,31 @@ export type UploadInput =
   | ReactNativeFile
 
 export interface UploadOptions {
-  // TODO: Embrace undefined over null
-  endpoint: string | null
+  endpoint?: string
 
-  uploadUrl: string | null
+  uploadUrl?: string
   metadata: { [key: string]: string }
   metadataForPartialUploads: UploadOptions['metadata']
   fingerprint: (file: UploadInput, options: UploadOptions) => Promise<string | null>
-  uploadSize: number | null
+  uploadSize?: number
 
-  onProgress: ((bytesSent: number, bytesTotal: number | null) => void) | null
-  onChunkComplete:
-    | ((chunkSize: number, bytesAccepted: number, bytesTotal: number | null) => void)
-    | null
-  onSuccess: ((payload: OnSuccessPayload) => void) | null
-  onError: ((error: Error | DetailedError) => void) | null
-  onShouldRetry:
-    | ((error: DetailedError, retryAttempt: number, options: UploadOptions) => boolean)
-    | null
-  onUploadUrlAvailable: (() => void) | null
+  onProgress?: (bytesSent: number, bytesTotal: number | null) => void
+  onChunkComplete?: (chunkSize: number, bytesAccepted: number, bytesTotal: number | null) => void
+  onSuccess?: (payload: OnSuccessPayload) => void
+  onError?: (error: Error | DetailedError) => void
+  onShouldRetry?: (error: DetailedError, retryAttempt: number, options: UploadOptions) => boolean
+  onUploadUrlAvailable?: () => void
 
   overridePatchMethod: boolean
   headers: { [key: string]: string }
   addRequestId: boolean
-  onBeforeRequest: ((req: HttpRequest) => void | Promise<void>) | null
-  onAfterResponse: ((req: HttpRequest, res: HttpResponse) => void | Promise<void>) | null
+  onBeforeRequest?: (req: HttpRequest) => void | Promise<void>
+  onAfterResponse?: (req: HttpRequest, res: HttpResponse) => void | Promise<void>
 
   chunkSize: number
   retryDelays: number[]
   parallelUploads: number
-  parallelUploadBoundaries: { start: number; end: number }[] | null
+  parallelUploadBoundaries?: { start: number; end: number }[]
   storeFingerprintForResuming: boolean
   removeFingerprintOnSuccess: boolean
   uploadLengthDeferred: boolean

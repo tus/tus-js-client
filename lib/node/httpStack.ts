@@ -119,7 +119,7 @@ class Request implements HttpRequest {
   }
 
   abort() {
-    if (this._request !== null) this._request.abort()
+    if (this._request != null) this._request.abort()
     return Promise.resolve()
   }
 
