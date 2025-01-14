@@ -16,7 +16,7 @@
     "enabled": true,
     "rules": {
       "style": {
-        "noParameterAssign": "warn",
+        "noParameterAssign": "off",
         "noDefaultExport": "error",
         "useCollapsedElseIf": "error",
         "useNodejsImportProtocol": "off"
