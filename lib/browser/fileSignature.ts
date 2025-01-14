@@ -4,7 +4,7 @@ import { isReactNativeFile, isReactNativePlatform } from './isReactNative.js'
 /**
  * Generate a fingerprint for a file which will be used the store the endpoint
  */
-export default function fingerprint(file: UploadInput, options: UploadOptions) {
+export function fingerprint(file: UploadInput, options: UploadOptions) {
   if (isReactNativePlatform() && isReactNativeFile(file)) {
     return Promise.resolve(reactNativeFingerprint(file, options))
   }

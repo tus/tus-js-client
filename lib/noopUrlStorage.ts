@@ -1,6 +1,6 @@
 import type { PreviousUpload, UrlStorage } from './options.js'
 
-export default class NoopUrlStorage implements UrlStorage {
+export class NoopUrlStorage implements UrlStorage {
   findAllUploads() {
     return Promise.resolve([])
   }

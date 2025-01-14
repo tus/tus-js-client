@@ -26,7 +26,7 @@ function concat<T extends StreamFileSource['_buffer']>(a: T, b: T): T {
   throw new Error('Unknown data type')
 }
 
-export default class StreamFileSource implements FileSource {
+export class StreamFileSource implements FileSource {
   _reader: Pick<ReadableStreamDefaultReader<StreamFileSource['_buffer']>, 'read'>
 
   _buffer: Blob | Uint8Array | number[] | undefined

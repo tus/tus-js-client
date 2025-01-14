@@ -1,16 +1,16 @@
 import { isReactNativeFile, isReactNativePlatform } from './isReactNative.js'
-import uriToBlob from './uriToBlob.js'
+import { uriToBlob } from './uriToBlob.js'
 
 import type { FileReader, FileSource, UploadInput } from '../options.js'
-import BlobFileSource from './sources/BlobFileSource.js'
-import StreamFileSource from './sources/StreamFileSource.js'
+import { BlobFileSource } from './sources/BlobFileSource.js'
+import { StreamFileSource } from './sources/StreamFileSource.js'
 
 function isWebStream(input: UploadInput): input is Pick<ReadableStreamDefaultReader, 'read'> {
   return 'read' in input && typeof input.read === 'function'
 }
 
 // TODO: Make sure that we support ArrayBuffers, TypedArrays, DataViews and Blobs
-export default class BrowserFileReader implements FileReader {
+export class BrowserFileReader implements FileReader {
   async openFile(input: UploadInput, chunkSize: number): Promise<FileSource> {
     // In React Native, when user selects a file, instead of a File or Blob,
     // you usually get a file object {} with a uri property that contains

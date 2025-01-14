@@ -1,6 +1,6 @@
 import type { ReadStream } from 'node:fs'
 import type { Readable } from 'node:stream'
-import type DetailedError from './error.js'
+import type { DetailedError } from './error.js'
 
 export const PROTOCOL_TUS_V1 = 'tus-v1'
 export const PROTOCOL_IETF_DRAFT_03 = 'ietf-draft-03'

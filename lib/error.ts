@@ -1,6 +1,6 @@
 import type { HttpRequest, HttpResponse } from './options.js'
 
-class DetailedError extends Error {
+export class DetailedError extends Error {
   originalRequest?: HttpRequest
 
   originalResponse?: HttpResponse
@@ -29,5 +29,3 @@ class DetailedError extends Error {
     this.message = message
   }
 }
-
-export default DetailedError

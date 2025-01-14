@@ -1,7 +1,7 @@
 import { type ReadStream, createReadStream, promises as fsPromises } from 'fs'
 import type { FileSource } from '../../options.js'
 
-export default async function getFileSource(stream: ReadStream): Promise<NodeFileSource> {
+export async function getFileSource(stream: ReadStream): Promise<NodeFileSource> {
   const path = stream.path.toString()
   const { size } = await fsPromises.stat(path)
 
@@ -23,7 +23,7 @@ export default async function getFileSource(stream: ReadStream): Promise<NodeFil
   return new NodeFileSource(stream, path, actualSize)
 }
 
-class NodeFileSource implements FileSource {
+export class NodeFileSource implements FileSource {
   size: number
 
   _stream: ReadStream
