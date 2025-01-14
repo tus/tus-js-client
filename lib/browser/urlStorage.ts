@@ -12,7 +12,7 @@ try {
   const key = 'tusSupport'
   const originalValue = localStorage.getItem(key)
   localStorage.setItem(key, String(originalValue))
-  if (originalValue === null) localStorage.removeItem(key)
+  if (originalValue == null) localStorage.removeItem(key)
 } catch (e: unknown) {
   // If we try to access localStorage inside a sandboxed iframe, a SecurityError
   // is thrown. When in private mode on iOS Safari, a QuotaExceededError is

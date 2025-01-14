@@ -17,39 +17,39 @@ import {
 import { uuid } from './uuid.js'
 
 export const defaultOptions = {
-  endpoint: null,
+  endpoint: undefined,
 
-  uploadUrl: null,
+  uploadUrl: undefined,
   metadata: {},
   metadataForPartialUploads: {},
-  fingerprint: null,
-  uploadSize: null,
+  fingerprint: undefined,
+  uploadSize: undefined,
 
-  onProgress: null,
-  onChunkComplete: null,
-  onSuccess: null,
-  onError: null,
-  onUploadUrlAvailable: null,
+  onProgress: undefined,
+  onChunkComplete: undefined,
+  onSuccess: undefined,
+  onError: undefined,
+  onUploadUrlAvailable: undefined,
 
   overridePatchMethod: false,
   headers: {},
   addRequestId: false,
-  onBeforeRequest: null,
-  onAfterResponse: null,
+  onBeforeRequest: undefined,
+  onAfterResponse: undefined,
   onShouldRetry: defaultOnShouldRetry,
 
   chunkSize: Number.POSITIVE_INFINITY,
   retryDelays: [0, 1000, 3000, 5000],
   parallelUploads: 1,
-  parallelUploadBoundaries: null,
+  parallelUploadBoundaries: undefined,
   storeFingerprintForResuming: true,
   removeFingerprintOnSuccess: false,
   uploadLengthDeferred: false,
   uploadDataDuringCreation: false,
 
-  urlStorage: null,
-  fileReader: null,
-  httpStack: null,
+  urlStorage: undefined,
+  fileReader: undefined,
+  httpStack: undefined,
 
   protocol: PROTOCOL_TUS_V1 as UploadOptions['protocol'],
 }
@@ -67,13 +67,13 @@ export class BaseUpload {
   url: string | null = null
 
   // The underlying request object for the current PATCH request
-  _req: HttpRequest | null = null
+  _req?: HttpRequest
 
   // The fingerpinrt for the current file (set after start())
   _fingerprint: string | null = null
 
   // The key that the URL storage returned when saving an URL with a fingerprint,
-  _urlStorageKey: string | null = null
+  _urlStorageKey?: string
 
   // The offset used in the current PATCH request
   _offset = 0
@@ -87,13 +87,13 @@ export class BaseUpload {
   // The Source object which will wrap around the given file and provides us
   // with a unified interface for getting its size and slice chunks from its
   // content allowing us to easily handle Files, Blobs, Buffers and Streams.
-  _source: FileSource | null = null
+  _source?: FileSource
 
   // The current count of attempts which have been made. Zero indicates none.
   _retryAttempt = 0
 
   // The timeout's ID which is used to delay the next retry
-  _retryTimeout: ReturnType<typeof setTimeout> | null = null
+  _retryTimeout?: ReturnType<typeof setTimeout>
 
   // The offset of the remote upload before the latest attempt was started.
   _offsetBeforeRetry = 0
@@ -275,7 +275,7 @@ export class BaseUpload {
         ? this._parallelUploadUrls.length
         : this.options.parallelUploads
 
-    if (this._size === null) {
+    if (this._size == null) {
       this._emitError(new Error('tus: Expected _size to be set'))
       return
     }
@@ -330,7 +330,7 @@ export class BaseUpload {
               onProgress: (newPartProgress: number) => {
                 totalProgress = totalProgress - lastPartProgress + newPartProgress
                 lastPartProgress = newPartProgress
-                if (totalSize === null) {
+                if (totalSize == null) {
                   this._emitError(new Error('tus: Expected totalSize to be set'))
                   return
                 }
@@ -365,7 +365,7 @@ export class BaseUpload {
     // creating the final upload.
     Promise.all(uploads)
       .then(() => {
-        if (this.options.endpoint === null) {
+        if (this.options.endpoint == null) {
           this._emitError(new Error('tus: Expected options.endpoint to be set'))
           return
         }
@@ -397,7 +397,7 @@ export class BaseUpload {
           return
         }
 
-        if (this.options.endpoint === null) {
+        if (this.options.endpoint == null) {
           this._emitError(new Error('tus: Expeced endpoint to be defined.'))
           return
         }
@@ -463,7 +463,7 @@ export class BaseUpload {
     }
 
     // Stop any current running request.
-    if (this._req !== null) {
+    if (this._req != null) {
       this._req.abort()
       // Note: We do not close the file source here, so the user can resume in the future.
     }
@@ -472,7 +472,7 @@ export class BaseUpload {
     // Stop any timeout used for initiating a retry.
     if (this._retryTimeout != null) {
       clearTimeout(this._retryTimeout)
-      this._retryTimeout = null
+      this._retryTimeout = undefined
     }
 
     if (!shouldTerminate || this.url == null) {
@@ -588,7 +588,7 @@ export class BaseUpload {
     if (this.options.uploadLengthDeferred) {
       req.setHeader('Upload-Defer-Length', '1')
     } else {
-      if (this._size === null) {
+      if (this._size == null) {
         this._emitError(new Error('tus: expected _size to be set'))
       }
       req.setHeader('Upload-Length', `${this._size}`)
@@ -632,7 +632,7 @@ export class BaseUpload {
           return
         }
 
-        if (this.options.endpoint === null) {
+        if (this.options.endpoint == null) {
           this._emitError(new Error('tus: Expected options.endpoint to be set'))
           return
         }
@@ -673,7 +673,7 @@ export class BaseUpload {
    * @api private
    */
   _resumeUpload() {
-    if (this.url === null) {
+    if (this.url == null) {
       this._emitError(new Error('tus: Expected url to be set'))
       return
     }
@@ -777,7 +777,7 @@ export class BaseUpload {
 
     let req: HttpRequest
 
-    if (this.url === null) {
+    if (this.url == null) {
       this._emitError(new Error('tus: Expected url to be set'))
       return
     }
@@ -875,7 +875,7 @@ export class BaseUpload {
         )
       }
 
-      if (value === null) {
+      if (value == null) {
         return this._sendRequest(req)
       }
 
@@ -940,7 +940,7 @@ export class BaseUpload {
     this._urlStorage.removeUpload(this._urlStorageKey).catch((err) => {
       this._emitError(err)
     })
-    this._urlStorageKey = null
+    this._urlStorageKey = undefined
   }
 
   /**
@@ -956,7 +956,7 @@ export class BaseUpload {
     if (
       !this.options.storeFingerprintForResuming ||
       !this._fingerprint ||
-      this._urlStorageKey !== null
+      this._urlStorageKey != null
     ) {
       return Promise.resolve()
     }
@@ -977,8 +977,8 @@ export class BaseUpload {
     }
 
     return this._urlStorage.addUpload(this._fingerprint, storedUpload).then((urlStorageKey) => {
-      // TODO: Handle cases when urlStorageKey is undefined
-      this._urlStorageKey = urlStorageKey || null
+      // TODO: Emit a waring if urlStorageKey is undefined. Should we even allow this?
+      this._urlStorageKey = urlStorageKey
     })
   }
 
