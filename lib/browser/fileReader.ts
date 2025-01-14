@@ -1,9 +1,9 @@
 import { isReactNativeFile, isReactNativePlatform } from './isReactNative.js'
 import uriToBlob from './uriToBlob.js'
 
-import type { FileReader, FileSource, ReactNativeFile, UploadInput } from '../options.js'
-import BlobFileSource from './sources/FileSource.js'
-import StreamSource from './sources/StreamSource.js'
+import type { FileReader, FileSource, UploadInput } from '../options.js'
+import BlobFileSource from './sources/BlobFileSource.js'
+import StreamFileSource from './sources/StreamFileSource.js'
 
 function isWebStream(input: UploadInput): input is Pick<ReadableStreamDefaultReader, 'read'> {
   return 'read' in input && typeof input.read === 'function'
@@ -46,7 +46,7 @@ export default class BrowserFileReader implements FileReader {
         )
       }
 
-      return Promise.resolve(new StreamSource(input))
+      return Promise.resolve(new StreamFileSource(input))
     }
 
     return Promise.reject(

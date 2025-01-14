@@ -2,9 +2,9 @@ import { ReadStream } from 'fs'
 import isStream from 'is-stream'
 
 import type { FileReader, UploadInput } from '../options.js'
-import BufferSource from './sources/BufferSource.js'
-import getFileSource from './sources/FileSource.js'
-import StreamSource from './sources/StreamSource.js'
+import BufferSource from './sources/BufferFileSource.js'
+import getFileSource from './sources/NodeFileSource.js'
+import StreamFileSource from './sources/StreamFileSource.js'
 
 export default class NodeFileReader implements FileReader {
   // TODO: Use async here and less Promise.resolve
@@ -26,7 +26,7 @@ export default class NodeFileReader implements FileReader {
           ),
         )
       }
-      return Promise.resolve(new StreamSource(input))
+      return Promise.resolve(new StreamFileSource(input))
     }
 
     return Promise.reject(

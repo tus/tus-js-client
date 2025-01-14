@@ -44,7 +44,7 @@ async function readChunk(stream: Readable, size: number) {
  * Note that it is forbidden to call with startB < startA or startB > endA. In other words,
  * the slice calls cannot seek back and must not skip data from the stream.
  */
-export default class StreamSource implements FileSource {
+export default class StreamFileSource implements FileSource {
   // Setting the size to null indicates that we have no calculation available
   // for how much data this stream will emit requiring the user to specify
   // it manually (see the `uploadSize` option).

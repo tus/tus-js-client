@@ -2,7 +2,6 @@ import type { FileSource, SliceResult } from '../../options.js'
 import isCordova from './isCordova.js'
 import readAsByteArray from './readAsByteArray.js'
 
-// TODO: Rename file
 export default class BlobFileSource implements FileSource {
   _file: Blob
 

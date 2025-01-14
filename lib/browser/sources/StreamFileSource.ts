@@ -1,6 +1,6 @@
 import type { FileSource } from '../../options.js'
 
-function len(blobOrArray: StreamSource['_buffer']): number {
+function len(blobOrArray: StreamFileSource['_buffer']): number {
   if (blobOrArray === undefined) return 0
   if (blobOrArray instanceof Blob) return blobOrArray.size
   return blobOrArray.length
@@ -10,7 +10,7 @@ function len(blobOrArray: StreamSource['_buffer']): number {
   Typed arrays and blobs don't have a concat method.
   This function helps StreamSource accumulate data to reach chunkSize.
 */
-function concat<T extends StreamSource['_buffer']>(a: T, b: T): T {
+function concat<T extends StreamFileSource['_buffer']>(a: T, b: T): T {
   if (Array.isArray(a) && Array.isArray(b)) {
     return a.concat(b) as T
   }
@@ -26,8 +26,8 @@ function concat<T extends StreamSource['_buffer']>(a: T, b: T): T {
   throw new Error('Unknown data type')
 }
 
-export default class StreamSource implements FileSource {
-  _reader: Pick<ReadableStreamDefaultReader<StreamSource['_buffer']>, 'read'>
+export default class StreamFileSource implements FileSource {
+  _reader: Pick<ReadableStreamDefaultReader<StreamFileSource['_buffer']>, 'read'>
 
   _buffer: Blob | Uint8Array | number[] | undefined
 

@@ -9,7 +9,7 @@ import BaseUpload, { terminate, defaultOptions as baseDefaultOptions } from '../
 import NodeFileReader from './fileReader.js'
 import fingerprint from './fileSignature.js'
 import DefaultHttpStack from './httpStack.js'
-import StreamSource from './sources/StreamSource.js'
+import StreamFileSource from './sources/StreamFileSource.js'
 import { FileUrlStorage, canStoreURLs } from './urlStorage.js'
 
 const defaultOptions = {
@@ -52,5 +52,5 @@ export {
   enableDebugLog,
   DefaultHttpStack,
   DetailedError,
-  StreamSource,
+  StreamFileSource as StreamSource,
 }
