@@ -1,4 +1,4 @@
-import { ReadStream } from 'node:fs'
+import { ReadStream } from 'fs'
 import isStream from 'is-stream'
 
 import type { FileReader, UploadInput } from '../options.js'

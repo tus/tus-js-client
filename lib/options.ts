@@ -4,6 +4,7 @@ import type DetailedError from './error.js'
 
 export const PROTOCOL_TUS_V1 = 'tus-v1'
 export const PROTOCOL_IETF_DRAFT_03 = 'ietf-draft-03'
+export const PROTOCOL_IETF_DRAFT_05 = 'ietf-draft-05'
 
 // ReactNativeFile describes the structure that is returned from the
 // Expo image picker (see https://docs.expo.dev/versions/latest/sdk/imagepicker/)
@@ -36,6 +37,7 @@ export interface UploadOptions {
 
   uploadUrl: string | null
   metadata: { [key: string]: string }
+  metadataForPartialUploads: UploadOptions['metadata']
   fingerprint: (file: UploadInput, options: UploadOptions) => Promise<string | null>
   uploadSize: number | null
 
@@ -43,7 +45,7 @@ export interface UploadOptions {
   onChunkComplete:
     | ((chunkSize: number, bytesAccepted: number, bytesTotal: number | null) => void)
     | null
-  onSuccess: (() => void) | null
+  onSuccess: ((payload: OnSuccessPayload) => void) | null
   onError: ((error: Error | DetailedError) => void) | null
   onShouldRetry:
     | ((error: DetailedError, retryAttempt: number, options: UploadOptions) => boolean)
@@ -69,7 +71,11 @@ export interface UploadOptions {
   fileReader: FileReader
   httpStack: HttpStack
 
-  protocol: typeof PROTOCOL_TUS_V1 | typeof PROTOCOL_IETF_DRAFT_03
+  protocol: typeof PROTOCOL_TUS_V1 | typeof PROTOCOL_IETF_DRAFT_03 | typeof PROTOCOL_IETF_DRAFT_05
+}
+
+export interface OnSuccessPayload {
+  lastResponse: HttpResponse
 }
 
 export interface UrlStorage {

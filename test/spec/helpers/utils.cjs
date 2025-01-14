@@ -169,6 +169,7 @@ class TestResponse {
 
 module.exports = {
   TestHttpStack,
+  TestResponse,
   waitableFunction,
   wait,
   getBlob,

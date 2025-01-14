@@ -78,6 +78,9 @@ describe('tus', () => {
         metadata: {
           foo: 'hello',
         },
+        metadataForPartialUploads: {
+          test: 'world',
+        },
         onProgress() {},
         onSuccess: waitableFunction(),
         fingerprint: () => Promise.resolve('fingerprinted'),
@@ -94,7 +97,7 @@ describe('tus', () => {
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Length']).toBe('5')
       expect(req.requestHeaders['Upload-Concat']).toBe('partial')
-      expect(req.requestHeaders['Upload-Metadata']).toBeUndefined()
+      expect(req.requestHeaders['Upload-Metadata']).toBe('test d29ybGQ=') // world
 
       req.respondWith({
         status: 201,
@@ -110,7 +113,7 @@ describe('tus', () => {
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Length']).toBe('6')
       expect(req.requestHeaders['Upload-Concat']).toBe('partial')
-      expect(req.requestHeaders['Upload-Metadata']).toBeUndefined()
+      expect(req.requestHeaders['Upload-Metadata']).toBe('test d29ybGQ=') // world
 
       req.respondWith({
         status: 201,
@@ -190,7 +193,7 @@ describe('tus', () => {
       expect(req.requestHeaders['Upload-Concat']).toBe(
         'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2',
       )
-      expect(req.requestHeaders['Upload-Metadata']).toBe('foo aGVsbG8=')
+      expect(req.requestHeaders['Upload-Metadata']).toBe('foo aGVsbG8=') // hello
 
       req.respondWith({
         status: 201,

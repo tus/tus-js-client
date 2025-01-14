@@ -7,6 +7,7 @@ import {
   type HttpRequest,
   type HttpResponse,
   PROTOCOL_IETF_DRAFT_03,
+  PROTOCOL_IETF_DRAFT_05,
   PROTOCOL_TUS_V1,
   type PreviousUpload,
   type UploadInput,
@@ -20,6 +21,7 @@ export const defaultOptions = {
 
   uploadUrl: null,
   metadata: {},
+  metadataForPartialUploads: {},
   fingerprint: null,
   uploadSize: null,
 
@@ -149,7 +151,11 @@ export default class BaseUpload {
       return
     }
 
-    if (![PROTOCOL_TUS_V1, PROTOCOL_IETF_DRAFT_03].includes(this.options.protocol)) {
+    if (
+      ![PROTOCOL_TUS_V1, PROTOCOL_IETF_DRAFT_03, PROTOCOL_IETF_DRAFT_05].includes(
+        this.options.protocol,
+      )
+    ) {
       this._emitError(new Error(`tus: unsupported protocol ${this.options.protocol}`))
       return
     }
@@ -310,7 +316,7 @@ export default class BaseUpload {
               parallelUploads: 1,
               // Reset this option as we are not doing a parallel upload.
               parallelUploadBoundaries: null,
-              metadata: {},
+              metadata: this.options.metadataForPartialUploads,
               // Add the header to indicate the this is a partial upload.
               headers: {
                 ...this.options.headers,
@@ -399,7 +405,7 @@ export default class BaseUpload {
         this.url = resolveUrl(this.options.endpoint, location)
         log(`Created upload at ${this.url}`)
 
-        this._emitSuccess()
+        this._emitSuccess(res)
       })
       .catch((err) => {
         this._emitError(err)
@@ -520,9 +526,10 @@ export default class BaseUpload {
   /**
    * Publishes notification if the upload has been successfully completed.
    *
+   * @param {object} lastResponse Last HTTP response.
    * @api private
    */
-  _emitSuccess() {
+  _emitSuccess(lastResponse) {
     if (this.options.removeFingerprintOnSuccess) {
       // Remove stored fingerprint and corresponding endpoint. This causes
       // new uploads of the same file to be treated as a different file.
@@ -530,7 +537,7 @@ export default class BaseUpload {
     }
 
     if (typeof this.options.onSuccess === 'function') {
-      this.options.onSuccess()
+      this.options.onSuccess({ lastResponse })
     }
   }
 
@@ -598,7 +605,10 @@ export default class BaseUpload {
       this._offset = 0
       promise = this._addChunkToRequest(req)
     } else {
-      if (this.options.protocol === PROTOCOL_IETF_DRAFT_03) {
+      if (
+        this.options.protocol === PROTOCOL_IETF_DRAFT_03 ||
+        this.options.protocol === PROTOCOL_IETF_DRAFT_05
+      ) {
         req.setHeader('Upload-Complete', '?0')
       }
       promise = this._sendRequest(req)
@@ -636,7 +646,7 @@ export default class BaseUpload {
 
         if (this._size === 0) {
           // Nothing to upload and file was successfully created
-          this._emitSuccess()
+          this._emitSuccess(res)
           if (this._source) this._source.close()
           return
         }
@@ -737,7 +747,7 @@ export default class BaseUpload {
           // data to the server
           if (offset === length) {
             this._emitProgress(length, length)
-            this._emitSuccess()
+            this._emitSuccess(res)
             return
           }
 
@@ -821,7 +831,11 @@ export default class BaseUpload {
       this._emitProgress(start + bytesSent, this._size)
     })
 
-    req.setHeader('Content-Type', 'application/offset+octet-stream')
+    if (this.options.protocol === PROTOCOL_TUS_V1) {
+      req.setHeader('Content-Type', 'application/offset+octet-stream')
+    } else if (this.options.protocol === PROTOCOL_IETF_DRAFT_05) {
+      req.setHeader('Content-Type', 'application/partial-upload')
+    }
 
     // The specified chunkSize may be Infinity or the calcluated end position
     // may exceed the file's size. In both cases, we limit the end position to
@@ -865,7 +879,10 @@ export default class BaseUpload {
         return this._sendRequest(req)
       }
 
-      if (this.options.protocol === PROTOCOL_IETF_DRAFT_03) {
+      if (
+        this.options.protocol === PROTOCOL_IETF_DRAFT_03 ||
+        this.options.protocol === PROTOCOL_IETF_DRAFT_05
+      ) {
         req.setHeader('Upload-Complete', done ? '?1' : '?0')
       }
       this._emitProgress(this._offset, this._size)
@@ -893,7 +910,7 @@ export default class BaseUpload {
 
     if (offset === this._size) {
       // Yay, finally done :)
-      this._emitSuccess()
+      this._emitSuccess(res)
       if (this._source) this._source.close()
       return
     }
@@ -1003,6 +1020,8 @@ function openRequest(method: string, url: string, options: UploadOptions) {
 
   if (options.protocol === PROTOCOL_IETF_DRAFT_03) {
     req.setHeader('Upload-Draft-Interop-Version', '5')
+  } else if (options.protocol === PROTOCOL_IETF_DRAFT_05) {
+    req.setHeader('Upload-Draft-Interop-Version', '6')
   } else {
     req.setHeader('Tus-Resumable', '1.0.0')
   }

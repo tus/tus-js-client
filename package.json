@@ -1,6 +1,6 @@
 {
   "name": "tus-js-client",
-  "version": "4.1.0",
+  "version": "4.2.3",
   "description": "A pure JavaScript client for the tus resumable upload protocol",
   "main": "lib.cjs/node/index.js",
   "module": "lib.esm/node/index.js",
