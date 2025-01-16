@@ -35,12 +35,6 @@ const isSupported =
   typeof Blob === 'function' &&
   typeof Blob.prototype.slice === 'function'
 
-export {
-  Upload,
-  canStoreURLs,
-  defaultOptions,
-  isSupported,
-  enableDebugLog,
-  DefaultHttpStack,
-  DetailedError,
-}
+// Note: The exported interface must be the same as in lib/node/index.ts.
+// Any changes should be reflected in both files.
+export { Upload, defaultOptions, isSupported, canStoreURLs, enableDebugLog, DetailedError }

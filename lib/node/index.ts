@@ -9,8 +9,7 @@ import { BaseUpload, defaultOptions as baseDefaultOptions, terminate } from '../
 import { NodeFileReader } from './fileReader.js'
 import { fingerprint } from './fileSignature.js'
 import { NodeHttpStack as DefaultHttpStack } from './httpStack.js'
-import { StreamFileSource } from './sources/StreamFileSource.js'
-import { FileUrlStorage, canStoreURLs } from './urlStorage.js'
+import { canStoreURLs } from './urlStorage.js'
 
 const defaultOptions = {
   ...baseDefaultOptions,
@@ -39,16 +38,6 @@ class Upload extends BaseUpload {
 // tus-js-client not to function.
 const isSupported = true
 
-export {
-  Upload,
-  defaultOptions,
-  isSupported,
-  // Make FileUrlStorage module available as it will not be set by default.
-  FileUrlStorage,
-  canStoreURLs,
-  enableDebugLog,
-  DefaultHttpStack,
-  DetailedError,
-  // TODO: Remove `as`
-  StreamFileSource as StreamSource,
-}
+// Note: The exported interface must be the same as in lib/browser/index.ts.
+// Any changes should be reflected in both files.
+export { Upload, defaultOptions, isSupported, canStoreURLs, enableDebugLog, DetailedError }
