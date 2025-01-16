@@ -1,22 +1,22 @@
-const stream = require('stream')
-const temp = require('temp')
-const fs = require('fs')
-const https = require('https')
-const http = require('http')
-const crypto = require('crypto')
-const intoStream = require('into-stream')
-const { once } = require('events')
-const tus = require('tus-js-client')
-const { StreamFileSource } = require('tus-js-client/node/sources/StreamFileSource')
-const { FileUrlStorage } = require('tus-js-client/node/FileUrlStorage')
-const { NodeHttpStack } = require('tus-js-client/node/NodeHttpStack')
-const assertUrlStorage = require('./helpers/assertUrlStorage.cjs')
-const { TestHttpStack, waitableFunction } = require('./helpers/utils.cjs')
+import crypto from 'crypto'
+import { once } from 'events'
+import fs from 'fs'
+import http from 'http'
+import https from 'https'
+import stream from 'stream'
+import intoStream from 'into-stream'
+import temp from 'temp'
+import { Upload, canStoreURLs } from 'tus-js-client'
+import { FileUrlStorage } from 'tus-js-client/node/FileUrlStorage'
+import { NodeHttpStack } from 'tus-js-client/node/NodeHttpStack'
+import { StreamFileSource } from 'tus-js-client/node/sources/StreamFileSource'
+import { assertUrlStorage } from './helpers/assertUrlStorage.js'
+import { TestHttpStack, waitableFunction } from './helpers/utils.js'
 
 describe('tus', () => {
   describe('#canStoreURLs', () => {
     it('should be true', () => {
-      expect(tus.canStoreURLs).toBe(true)
+      expect(canStoreURLs).toBe(true)
     })
   })
 
@@ -41,7 +41,7 @@ describe('tus', () => {
           onError: waitableFunction('onError'),
         }
 
-        const upload = new tus.Upload(input, options)
+        const upload = new Upload(input, options)
         upload.start()
 
         const err = await options.onError.toBeCalled
@@ -57,7 +57,7 @@ describe('tus', () => {
           onError: waitableFunction('onError'),
         }
 
-        const upload = new tus.Upload(input, options)
+        const upload = new Upload(input, options)
         upload.start()
 
         const err = await options.onError.toBeCalled
@@ -119,7 +119,7 @@ describe('tus', () => {
           onError: waitableFunction('onError'),
         }
 
-        const upload = new tus.Upload(input, options)
+        const upload = new Upload(input, options)
         upload.start()
 
         const req = await testStack.nextRequest()
@@ -174,7 +174,7 @@ describe('tus', () => {
         }
         spyOn(options, 'onProgress')
 
-        const upload = new tus.Upload(file, options)
+        const upload = new Upload(file, options)
         upload.start()
 
         let req = await testStack.nextRequest()
@@ -274,7 +274,7 @@ describe('tus', () => {
           onError: waitableFunction('onError'),
         }
 
-        const upload = new tus.Upload(file, options)
+        const upload = new Upload(file, options)
         upload.start()
 
         const req = await testStack.nextRequest()
@@ -306,7 +306,7 @@ describe('tus', () => {
         retryDelays: null,
       }
 
-      const upload = new tus.Upload(buffer, options)
+      const upload = new Upload(buffer, options)
       upload.start()
 
       const req = await options.httpStack.nextRequest()
@@ -336,7 +336,7 @@ describe('tus', () => {
       }
       spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
 
-      const upload = new tus.Upload(input, options)
+      const upload = new Upload(input, options)
 
       const previousUploads = await upload.findPreviousUploads()
       expect(previousUploads).toEqual([
@@ -525,7 +525,7 @@ async function expectHelloWorldUpload(input, options) {
   options.httpStack = new TestHttpStack()
   options.onSuccess = waitableFunction('onSuccess')
 
-  const upload = new tus.Upload(input, options)
+  const upload = new Upload(input, options)
   upload.start()
 
   let req = await options.httpStack.nextRequest()

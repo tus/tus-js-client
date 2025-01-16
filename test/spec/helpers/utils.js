@@ -5,7 +5,7 @@ const isNode = !isBrowser
  * Obtain a platform specific buffer object, which can be
  * handled by tus-js-client.
  */
-function getBlob(str) {
+export function getBlob(str) {
   if (isNode) {
     return Buffer.from(str)
   }
@@ -31,7 +31,7 @@ function flatPromise() {
  * Create a spy-able function which resolves a Promise
  * once it is called.
  */
-function waitableFunction(name = 'func') {
+export function waitableFunction(name = 'func') {
   const [promise, resolve] = flatPromise()
   const fn = jasmine.createSpy(name, resolve).and.callThrough()
 
@@ -42,7 +42,7 @@ function waitableFunction(name = 'func') {
 /**
  * Create a Promise that resolves after the specified duration.
  */
-function wait(delay) {
+export function wait(delay) {
   return new Promise((resolve) => {
     setTimeout(resolve, delay, 'timed out')
   })
@@ -52,7 +52,7 @@ function wait(delay) {
  * TestHttpStack implements the HTTP stack interface for tus-js-client
  * and can be used to assert outgoing requests and respond with mock data.
  */
-class TestHttpStack {
+export class TestHttpStack {
   constructor() {
     this._pendingRequests = []
     this._pendingWaits = []
@@ -81,7 +81,7 @@ class TestHttpStack {
   }
 }
 
-class TestRequest {
+export class TestRequest {
   constructor(method, url, onRequestSend) {
     this.method = method
     this.url = url
@@ -145,7 +145,7 @@ class TestRequest {
   }
 }
 
-class TestResponse {
+export class TestResponse {
   constructor(res) {
     this._response = res
   }
@@ -165,12 +165,4 @@ class TestResponse {
   getUnderlyingObject() {
     throw new Error('not implemented')
   }
-}
-
-module.exports = {
-  TestHttpStack,
-  TestResponse,
-  waitableFunction,
-  wait,
-  getBlob,
 }

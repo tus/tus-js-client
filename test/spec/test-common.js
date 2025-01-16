@@ -1,13 +1,5 @@
-'use strict'
-
-const {
-  TestHttpStack,
-  waitableFunction,
-  wait,
-  getBlob,
-  TestResponse,
-} = require('./helpers/utils.cjs')
-const tus = require('tus-js-client')
+import { Upload, isSupported } from 'tus-js-client'
+import { TestHttpStack, TestResponse, getBlob, wait, waitableFunction } from './helpers/utils.js'
 
 // Uncomment to enable debug log from tus-js-client
 // tus.enableDebugLog();
@@ -15,19 +7,19 @@ const tus = require('tus-js-client')
 describe('tus', () => {
   describe('#isSupported', () => {
     it('should be true', () => {
-      expect(tus.isSupported).toBe(true)
+      expect(isSupported).toBe(true)
     })
   })
 
   describe('#Upload', () => {
     it('should throw if no error handler is available', () => {
-      const upload = new tus.Upload(null)
+      const upload = new Upload(null)
       expect(upload.start.bind(upload)).toThrowError('tus: no file or stream to upload provided')
     })
 
     it('should throw if no endpoint and upload URL is provided', () => {
       const file = getBlob('hello world')
-      const upload = new tus.Upload(file)
+      const upload = new Upload(file)
       expect(upload.start.bind(upload)).toThrowError(
         'tus: neither an endpoint or an upload URL is provided',
       )
@@ -54,7 +46,7 @@ describe('tus', () => {
       }
       spyOn(options, 'onProgress')
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       let req = await testStack.nextRequest()
@@ -109,7 +101,7 @@ describe('tus', () => {
         uploadUrl: 'http://tus.io/uploads/resuming',
       }
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       let req = await testStack.nextRequest()
@@ -146,7 +138,7 @@ describe('tus', () => {
       spyOn(options, 'onProgress')
       spyOn(options, 'onChunkComplete')
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       const req = await testStack.nextRequest()
@@ -190,7 +182,7 @@ describe('tus', () => {
       spyOn(options, 'onProgress')
       spyOn(options, 'onChunkComplete')
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       let req = await testStack.nextRequest()
@@ -250,7 +242,7 @@ describe('tus', () => {
         onError: waitableFunction('onError'),
       }
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       const req = await testStack.nextRequest()
@@ -296,7 +288,7 @@ describe('tus', () => {
       spyOn(options, 'onBeforeRequest')
       spyOn(options, 'onAfterResponse')
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       const req = await testStack.nextRequest()
@@ -325,7 +317,7 @@ describe('tus', () => {
         onSuccess: waitableFunction('onSuccess'),
       }
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       const req = await testStack.nextRequest()
@@ -352,7 +344,7 @@ describe('tus', () => {
         onError: waitableFunction('onError'),
       }
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       const req = await testStack.nextRequest()
@@ -378,7 +370,7 @@ describe('tus', () => {
         endpoint: 'http://tus.io:1080/files/',
       }
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       let req = await testStack.nextRequest()
@@ -420,7 +412,7 @@ describe('tus', () => {
       spyOn(options, 'onProgress')
       spyOn(options, 'onChunkComplete')
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       let req = await testStack.nextRequest()
@@ -484,7 +476,7 @@ describe('tus', () => {
         onError: waitableFunction('onError'),
       }
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       const req = await testStack.nextRequest()
@@ -518,7 +510,7 @@ describe('tus', () => {
         onSuccess: waitableFunction('onSuccess'),
       }
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       const req = await testStack.nextRequest()
@@ -550,7 +542,7 @@ describe('tus', () => {
       }
       spyOn(options, 'onProgress')
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       const req = await testStack.nextRequest()
@@ -587,7 +579,7 @@ describe('tus', () => {
       spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
       spyOn(options, 'onProgress')
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       expect(options.fingerprint).toHaveBeenCalled()
@@ -638,7 +630,7 @@ describe('tus', () => {
         onError() {},
       }
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       let req = await testStack.nextRequest()
@@ -704,7 +696,7 @@ describe('tus', () => {
         overridePatchMethod: true,
       }
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       let req = await testStack.nextRequest()
@@ -746,7 +738,7 @@ describe('tus', () => {
         retryDelays: null,
       }
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       const req = await testStack.nextRequest()
@@ -775,7 +767,7 @@ describe('tus', () => {
         retryDelays: null,
       }
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       const req = await testStack.nextRequest()
@@ -807,7 +799,7 @@ describe('tus', () => {
         onError: waitableFunction('onError'),
       }
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       const req = await testStack.nextRequest()
@@ -830,7 +822,7 @@ describe('tus', () => {
 
     it('should throw if retryDelays is not an array', () => {
       const file = getBlob('hello world')
-      const upload = new tus.Upload(file, {
+      const upload = new Upload(file, {
         endpoint: 'http://endpoint/',
         retryDelays: 44,
       })
@@ -851,7 +843,7 @@ describe('tus', () => {
         onSuccess: waitableFunction('onSuccess'),
       }
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       let req = await testStack.nextRequest()
@@ -942,9 +934,9 @@ describe('tus', () => {
       }
 
       spyOn(options, 'onShouldRetry').and.callThrough()
-      spyOn(tus.Upload.prototype, '_emitError').and.callThrough()
+      spyOn(Upload.prototype, '_emitError').and.callThrough()
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       let req = await testStack.nextRequest()
@@ -1041,7 +1033,7 @@ describe('tus', () => {
         onShouldRetry: () => false,
       }
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       const req = await testStack.nextRequest()
@@ -1074,7 +1066,7 @@ describe('tus', () => {
       spyOn(options, 'onSuccess')
       spyOn(options, 'onError')
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       spyOn(upload, '_createUpload')
       upload.start()
 
@@ -1100,7 +1092,7 @@ describe('tus', () => {
       }
       spyOn(options, 'onSuccess')
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       let req = await testStack.nextRequest()
@@ -1140,7 +1132,7 @@ describe('tus', () => {
 
       spyOn(options, 'onError')
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       const req = await testStack.nextRequest()
@@ -1174,7 +1166,7 @@ describe('tus', () => {
 
       spyOn(options, 'onChunkComplete').and.callThrough()
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       let req = await testStack.nextRequest()
@@ -1216,7 +1208,7 @@ describe('tus', () => {
 
       spyOn(options, 'onError').and.callThrough()
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       const req = await testStack.nextRequest()
@@ -1250,7 +1242,7 @@ describe('tus', () => {
       }
       spyOn(options, 'onError')
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       let req = await testStack.nextRequest()
