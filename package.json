@@ -31,19 +31,34 @@
       }
     },
     "./node/sources/StreamFileSource": {
-      "types": "./lib.esm/node/sources/StreamFileSource.d.ts",
-      "import": "./lib.esm/node/sources/StreamFileSource.js",
-      "require": "./lib.cjs/node/sources/StreamFileSource.js"
+      "import": {
+        "types": "./lib.esm/node/sources/StreamFileSource.d.ts",
+        "default": "./lib.esm/node/sources/StreamFileSource.js"
+      },
+      "require": {
+        "types": "./lib.cjs/node/sources/StreamFileSource.d.ts",
+        "default": "./lib.cjs/node/sources/StreamFileSource.js"
+      }
     },
     "./node/FileUrlStorage": {
-      "types": "./lib.esm/node/FileUrlStorage.d.ts",
-      "import": "./lib.esm/node/FileUrlStorage.js",
-      "require": "./lib.cjs/node/FileUrlStorage.js"
+      "import": {
+        "types": "./lib.esm/node/FileUrlStorage.d.ts",
+        "default": "./lib.esm/node/FileUrlStorage.js"
+      },
+      "require": {
+        "types": "./lib.cjs/node/FileUrlStorage.d.ts",
+        "default": "./lib.cjs/node/FileUrlStorage.js"
+      }
     },
     "./node/NodeHttpStack": {
-      "types": "./lib.esm/node/NodeHttpStack.d.ts",
-      "import": "./lib.esm/node/NodeHttpStack.js",
-      "require": "./lib.cjs/node/NodeHttpStack.js"
+      "import": {
+        "types": "./lib.esm/node/NodeHttpStack.d.ts",
+        "default": "./lib.esm/node/NodeHttpStack.js"
+      },
+      "require": {
+        "types": "./lib.cjs/node/NodeHttpStack.d.ts",
+        "default": "./lib.cjs/node/NodeHttpStack.js"
+      }
     }
   },
   "files": ["lib.cjs/**/*", "lib.esm/**/*", "dist/**/*"],
