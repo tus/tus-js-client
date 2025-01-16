@@ -1,7 +1,7 @@
 'use strict'
 
 const { TestHttpStack, getBlob } = require('./helpers/utils.cjs')
-const tus = require('../..')
+const tus = require('tus-js-client')
 
 describe('tus', () => {
   describe('terminate upload', () => {

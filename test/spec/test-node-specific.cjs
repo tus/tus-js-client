@@ -6,7 +6,10 @@ const http = require('http')
 const crypto = require('crypto')
 const intoStream = require('into-stream')
 const { once } = require('events')
-const tus = require('../..')
+const tus = require('tus-js-client')
+const { StreamFileSource } = require('tus-js-client/node/sources/StreamFileSource')
+const { FileUrlStorage } = require('tus-js-client/node/FileUrlStorage')
+const { NodeHttpStack } = require('tus-js-client/node/NodeHttpStack')
 const assertUrlStorage = require('./helpers/assertUrlStorage.cjs')
 const { TestHttpStack, waitableFunction } = require('./helpers/utils.cjs')
 
@@ -322,7 +325,7 @@ describe('tus', () => {
         storagePath,
         '{"tus::fingerprinted::1337":{"uploadUrl":"http://tus.io/uploads/resuming"}}',
       )
-      const storage = new tus.FileUrlStorage(storagePath)
+      const storage = new FileUrlStorage(storagePath)
       const input = Buffer.from('hello world')
       const options = {
         httpStack: new TestHttpStack(),
@@ -385,7 +388,7 @@ describe('tus', () => {
   describe('#FileUrlStorage', () => {
     it('should allow storing and retrieving uploads', async () => {
       const storagePath = temp.path()
-      const storage = new tus.FileUrlStorage(storagePath)
+      const storage = new FileUrlStorage(storagePath)
       await assertUrlStorage(storage)
     })
   })
@@ -393,7 +396,7 @@ describe('tus', () => {
   describe('#NodeHttpStack', () => {
     it("should allow to pass options to Node's requests", async () => {
       const customAgent = new https.Agent()
-      const stack = new tus.DefaultHttpStack({
+      const stack = new NodeHttpStack({
         agent: customAgent,
       })
       const req = stack.createRequest('GET', 'https://tusd.tusdemo.net/')
@@ -425,7 +428,7 @@ describe('tus', () => {
 
       // Send POST request with 20MB of random data
       const randomData = crypto.randomBytes(20 * 1024 * 1024)
-      const stack = new tus.DefaultHttpStack({})
+      const stack = new NodeHttpStack({})
       const req = stack.createRequest('POST', `http://localhost:${port}`)
       req.setProgressHandler((bytesSent) => progressEvents.push(bytesSent))
       await req.send(randomData)
@@ -440,12 +443,12 @@ describe('tus', () => {
     })
   })
 
-  describe('#StreamSource', () => {
+  describe('#StreamFileSource', () => {
     it('should slice at different ranges', async () => {
       const input = stream.Readable.from(Buffer.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), {
         objectMode: false,
       })
-      const source = new tus.StreamSource(input)
+      const source = new StreamFileSource(input)
 
       // Read all data from stream
       let ret = await source.slice(0, 10)
@@ -489,7 +492,7 @@ describe('tus', () => {
       // Null as an element in the array causes the stream to emit an error when trying
       // to read. This error should be passed to the caller.
       const input = stream.Readable.from([null])
-      const source = new tus.StreamSource(input)
+      const source = new StreamFileSource(input)
 
       const ret = source.slice(0, 10)
       await expectAsync(ret).toBeRejected({ code: 'ERR_STREAM_NULL_VALUES' })

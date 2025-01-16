@@ -1,6 +1,6 @@
 const axios = require('axios')
 const { getBlob } = require('./helpers/utils.cjs')
-const tus = require('../..')
+const tus = require('tus-js-client')
 
 // Test timeout for end-to-end tests when uploading to real server.
 const END_TO_END_TIMEOUT = 20 * 1000

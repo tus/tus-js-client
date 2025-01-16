@@ -7,7 +7,7 @@ const {
   getBlob,
   TestResponse,
 } = require('./helpers/utils.cjs')
-const tus = require('../..')
+const tus = require('tus-js-client')
 
 // Uncomment to enable debug log from tus-js-client
 // tus.enableDebugLog();

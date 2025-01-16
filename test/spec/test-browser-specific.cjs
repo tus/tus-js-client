@@ -2,7 +2,7 @@
 
 const assertUrlStorage = require('./helpers/assertUrlStorage.cjs')
 const { TestHttpStack, waitableFunction, wait } = require('./helpers/utils.cjs')
-const tus = require('../..')
+const tus = require('tus-js-client')
 
 describe('tus', () => {
   beforeEach(() => {
