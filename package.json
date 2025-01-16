@@ -2,14 +2,36 @@
   "name": "tus-js-client",
   "version": "4.3.0",
   "description": "A pure JavaScript client for the tus resumable upload protocol",
-  "main": "lib.cjs/node/index.js",
-  "module": "lib.esm/node/index.js",
-  "files": ["lib.cjs/**/*", "lib.esm/**/*", "dist/**/*"],
-  "browser": {
-    "./lib.cjs/node/index.js": "./lib.cjs/browser/index.js",
-    "./lib.esm/node/index.js": "./lib.esm/browser/index.js"
-  },
+  "type": "module",
+  "main": "lib.cjs/browser/index.js",
   "types": "./lib.cjs/browser/index.d.ts",
+  "module": "lib.esm/browser/index.js",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "node": {
+        "import": {
+          "types": "./lib.esm/node/index.d.ts",
+          "default": "./lib.esm/node/index.js"
+        },
+        "require": {
+          "types": "./lib.cjs/node/index.d.ts",
+          "default": "./lib.cjs/node/index.js"
+        }
+      },
+      "default": {
+        "import": {
+          "types": "./lib.esm/browser/index.d.ts",
+          "default": "./lib.esm/browser/index.js"
+        },
+        "require": {
+          "types": "./lib.cjs/browser/index.d.ts",
+          "default": "./lib.cjs/browser/index.js"
+        }
+      }
+    }
+  },
+  "files": ["lib.cjs/**/*", "lib.esm/**/*", "dist/**/*"],
   "engines": {
     "node": ">=18"
   },
