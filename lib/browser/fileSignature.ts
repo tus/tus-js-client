@@ -1,5 +1,5 @@
 import type { ReactNativeFile, UploadInput, UploadOptions } from '../options.js'
-import { isReactNativeFile, isReactNativePlatform } from './isReactNative.js'
+import { isReactNativeFile, isReactNativePlatform } from '../reactnative/isReactNative.js'
 
 /**
  * Generate a fingerprint for a file which will be used the store the endpoint

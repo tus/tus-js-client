@@ -1,6 +1,6 @@
+import { isCordova } from '../../cordova/isCordova.js'
+import { readAsByteArray } from '../../cordova/readAsByteArray.js'
 import type { FileSource, SliceResult } from '../../options.js'
-import { isCordova } from './isCordova.js'
-import { readAsByteArray } from './readAsByteArray.js'
 
 export class BlobFileSource implements FileSource {
   _file: Blob
