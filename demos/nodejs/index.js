@@ -1,8 +1,8 @@
-const fs = require('fs')
-const tus = require('../..')
+import { createReadStream } from 'fs'
+import { Upload } from 'tus-js-client'
 
-const path = `${__dirname}/../../README.md`
-const file = fs.createReadStream(path)
+const path = `${import.meta.dirname}/../../README.md`
+const file = createReadStream(path)
 
 const options = {
   endpoint: 'https://tusd.tusdemo.net/files/',
@@ -24,5 +24,5 @@ const options = {
   },
 }
 
-const upload = new tus.Upload(file, options)
+const upload = new Upload(file, options)
 upload.start()
