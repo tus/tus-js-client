@@ -28,7 +28,8 @@
       "correctness": {
         "noNewSymbol": "error",
         "noUndeclaredVariables": "error",
-        "noUnusedVariables": "error"
+        "noUnusedVariables": "error",
+        "noUnusedImports": "error"
       }
     }
   },
