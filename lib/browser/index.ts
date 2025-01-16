@@ -1,12 +1,12 @@
-import { DetailedError } from '../error.js'
+import { DetailedError } from '../DetailedError.js'
+import { NoopUrlStorage } from '../NoopUrlStorage.js'
 import { enableDebugLog } from '../logger.js'
-import { NoopUrlStorage } from '../noopUrlStorage.js'
 import type { UploadInput, UploadOptions } from '../options.js'
 import { BaseUpload, defaultOptions as baseDefaultOptions, terminate } from '../upload.js'
 
-import { BrowserFileReader } from './fileReader.js'
+import { BrowserFileReader } from './BrowserFileReader.js'
+import { XHRHttpStack as DefaultHttpStack } from './XHRHttpStack.js'
 import { fingerprint } from './fileSignature.js'
-import { XHRHttpStack as DefaultHttpStack } from './httpStack.js'
 import { WebStorageUrlStorage, canStoreURLs } from './urlStorage.js'
 
 const defaultOptions = {

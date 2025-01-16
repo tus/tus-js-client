@@ -1,6 +1,6 @@
 import { Base64 } from 'js-base64'
 import URL from 'url-parse'
-import { DetailedError } from './error.js'
+import { DetailedError } from './DetailedError.js'
 import { log } from './logger.js'
 import {
   type FileSource,

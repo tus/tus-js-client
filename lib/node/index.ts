@@ -1,15 +1,15 @@
 import type { ReadStream } from 'node:fs'
 import type { Readable } from 'node:stream'
-import { DetailedError } from '../error.js'
+import { DetailedError } from '../DetailedError.js'
+import { NoopUrlStorage } from '../NoopUrlStorage.js'
 import { enableDebugLog } from '../logger.js'
-import { NoopUrlStorage } from '../noopUrlStorage.js'
 import type { UploadInput, UploadOptions } from '../options.js'
 import { BaseUpload, defaultOptions as baseDefaultOptions, terminate } from '../upload.js'
 
-import { NodeFileReader } from './fileReader.js'
+import { canStoreURLs } from './FileUrlStorage.js'
+import { NodeFileReader } from './NodeFileReader.js'
+import { NodeHttpStack as DefaultHttpStack } from './NodeHttpStack.js'
 import { fingerprint } from './fileSignature.js'
-import { NodeHttpStack as DefaultHttpStack } from './httpStack.js'
-import { canStoreURLs } from './urlStorage.js'
 
 const defaultOptions = {
   ...baseDefaultOptions,
