@@ -9,6 +9,7 @@
     "strict": true,
     "skipLibCheck": true,
     "allowJs": false,
+    "sourceMap": true,
     // TODO: Remove this over time
     "noImplicitAny": false
   }
