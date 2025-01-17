@@ -1,4 +1,4 @@
-module.exports = async function assertUrlStorage(urlStorage) {
+export async function assertUrlStorage(urlStorage) {
   // In the beginning of the test, the storage should be empty.
   let result = await urlStorage.findAllUploads()
   expect(result).toEqual([])

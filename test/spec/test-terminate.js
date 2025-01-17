@@ -1,7 +1,5 @@
-'use strict'
-
-const { TestHttpStack, getBlob } = require('./helpers/utils.cjs')
-const tus = require('../..')
+import { Upload } from 'tus-js-client'
+import { TestHttpStack, getBlob } from './helpers/utils.js'
 
 describe('tus', () => {
   describe('terminate upload', () => {
@@ -20,7 +18,7 @@ describe('tus', () => {
 
       spyOn(options, 'onChunkComplete').and.callThrough()
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       let req = await testStack.nextRequest()
@@ -73,7 +71,7 @@ describe('tus', () => {
 
       spyOn(options, 'onChunkComplete').and.callThrough()
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
       upload.start()
 
       let req = await testStack.nextRequest()
@@ -125,7 +123,7 @@ describe('tus', () => {
         retryDelays: [10, 10],
       }
 
-      const terminatePromise = tus.Upload.terminate('http://tus.io/files/foo', options)
+      const terminatePromise = Upload.terminate('http://tus.io/files/foo', options)
 
       let req = await testStack.nextRequest()
       expect(req.url).toBe('http://tus.io/files/foo')
@@ -179,7 +177,7 @@ describe('tus', () => {
       spyOn(options, 'onBeforeRequest')
       spyOn(options, 'onAfterResponse')
 
-      const terminatePromise = tus.Upload.terminate('http://tus.io/uploads/foo', options)
+      const terminatePromise = Upload.terminate('http://tus.io/uploads/foo', options)
 
       const req = await testStack.nextRequest()
       expect(req.url).toBe('http://tus.io/uploads/foo')

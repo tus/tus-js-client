@@ -1,8 +1,6 @@
-'use strict'
-
-const assertUrlStorage = require('./helpers/assertUrlStorage.cjs')
-const { TestHttpStack, waitableFunction, wait } = require('./helpers/utils.cjs')
-const tus = require('../..')
+import { Upload, defaultOptions } from 'tus-js-client'
+import { assertUrlStorage } from './helpers/assertUrlStorage.js'
+import { TestHttpStack, wait, waitableFunction } from './helpers/utils.js'
 
 describe('tus', () => {
   beforeEach(() => {
@@ -29,7 +27,7 @@ describe('tus', () => {
       spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
       spyOn(options, 'onProgress')
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
 
       const previousUploads = await upload.findPreviousUploads()
       expect(previousUploads).toEqual([
@@ -89,7 +87,7 @@ describe('tus', () => {
         spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
         options.onSuccess = waitableFunction('onSuccess')
 
-        const upload = new tus.Upload(file, options)
+        const upload = new Upload(file, options)
         upload.start()
 
         expect(options.fingerprint).toHaveBeenCalled()
@@ -166,7 +164,7 @@ describe('tus', () => {
         }
         spyOn(options2, 'fingerprint').and.resolveTo('fingerprinted')
 
-        const upload = new tus.Upload(file, options2)
+        const upload = new Upload(file, options2)
         upload.start()
 
         expect(options2.fingerprint).toHaveBeenCalled()
@@ -226,7 +224,7 @@ describe('tus', () => {
       }
       spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
 
       upload.resumeFromPreviousUpload({
         uploadUrl: 'http://tus.io/uploads/resuming',
@@ -284,7 +282,7 @@ describe('tus', () => {
         }
         spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
 
-        const upload = new tus.Upload(reader, options)
+        const upload = new Upload(reader, options)
         upload.start()
 
         expect(options.fingerprint).toHaveBeenCalledWith(reader, upload.options)
@@ -362,7 +360,7 @@ describe('tus', () => {
         }
         spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
 
-        const upload = new tus.Upload(reader, options)
+        const upload = new Upload(reader, options)
         upload.start()
 
         expect(options.fingerprint).toHaveBeenCalledWith(reader, upload.options)
@@ -445,7 +443,7 @@ describe('tus', () => {
           uploadLengthDeferred: true,
         }
 
-        const upload = new tus.Upload(reader, options)
+        const upload = new Upload(reader, options)
         upload.start()
 
         let req = await testStack.nextRequest()
@@ -506,7 +504,7 @@ describe('tus', () => {
           uploadLengthDeferred: true,
         }
 
-        const upload = new tus.Upload(reader, options)
+        const upload = new Upload(reader, options)
         upload.start()
 
         let req = await testStack.nextRequest()
@@ -578,7 +576,7 @@ describe('tus', () => {
           uploadLengthDeferred: true,
         }
 
-        const upload = new tus.Upload(reader, options)
+        const upload = new Upload(reader, options)
         upload.start()
 
         let req = await testStack.nextRequest()
@@ -672,7 +670,7 @@ describe('tus', () => {
           onError: waitableFunction('onError'),
         }
 
-        const upload = new tus.Upload(reader, options)
+        const upload = new Upload(reader, options)
         upload.start()
         let req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads')
@@ -744,7 +742,7 @@ describe('tus', () => {
           onSuccess: waitableFunction('onSuccess'),
         }
 
-        const upload = new tus.Upload(file, options)
+        const upload = new Upload(file, options)
         upload.start()
 
         // Wait a short interval to make sure that the XHR has been sent.
@@ -804,7 +802,7 @@ describe('tus', () => {
           onError: waitableFunction('onError'),
         }
 
-        const upload = new tus.Upload(file, options)
+        const upload = new Upload(file, options)
         upload.start()
 
         // Wait a short interval to make sure that the XHR has been sent.
@@ -829,7 +827,7 @@ describe('tus', () => {
 
   describe('#LocalStorageUrlStorage', () => {
     it('should allow storing and retrieving uploads', async () => {
-      await assertUrlStorage(tus.defaultOptions.urlStorage)
+      await assertUrlStorage(defaultOptions.urlStorage)
     })
   })
 })

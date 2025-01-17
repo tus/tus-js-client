@@ -1,4 +1,4 @@
-import type { ReactNativeFile } from '../options'
+import type { ReactNativeFile } from '../options.js'
 
 export function isReactNativePlatform() {
   return (

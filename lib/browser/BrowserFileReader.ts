@@ -1,5 +1,5 @@
-import { isReactNativeFile, isReactNativePlatform } from './isReactNative.js'
-import { uriToBlob } from './uriToBlob.js'
+import { isReactNativeFile, isReactNativePlatform } from '../reactnative/isReactNative.js'
+import { uriToBlob } from '../reactnative/uriToBlob.js'
 
 import type { FileReader, FileSource, UploadInput } from '../options.js'
 import { BlobFileSource } from './sources/BlobFileSource.js'

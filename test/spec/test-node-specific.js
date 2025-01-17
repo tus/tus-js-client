@@ -1,19 +1,22 @@
-const stream = require('stream')
-const temp = require('temp')
-const fs = require('fs')
-const https = require('https')
-const http = require('http')
-const crypto = require('crypto')
-const intoStream = require('into-stream')
-const { once } = require('events')
-const tus = require('../..')
-const assertUrlStorage = require('./helpers/assertUrlStorage.cjs')
-const { TestHttpStack, waitableFunction } = require('./helpers/utils.cjs')
+import crypto from 'crypto'
+import { once } from 'events'
+import fs from 'fs'
+import http from 'http'
+import https from 'https'
+import stream from 'stream'
+import intoStream from 'into-stream'
+import temp from 'temp'
+import { Upload, canStoreURLs } from 'tus-js-client'
+import { FileUrlStorage } from 'tus-js-client/node/FileUrlStorage'
+import { NodeHttpStack } from 'tus-js-client/node/NodeHttpStack'
+import { StreamFileSource } from 'tus-js-client/node/sources/StreamFileSource'
+import { assertUrlStorage } from './helpers/assertUrlStorage.js'
+import { TestHttpStack, waitableFunction } from './helpers/utils.js'
 
 describe('tus', () => {
   describe('#canStoreURLs', () => {
     it('should be true', () => {
-      expect(tus.canStoreURLs).toBe(true)
+      expect(canStoreURLs).toBe(true)
     })
   })
 
@@ -38,7 +41,7 @@ describe('tus', () => {
           onError: waitableFunction('onError'),
         }
 
-        const upload = new tus.Upload(input, options)
+        const upload = new Upload(input, options)
         upload.start()
 
         const err = await options.onError.toBeCalled
@@ -54,7 +57,7 @@ describe('tus', () => {
           onError: waitableFunction('onError'),
         }
 
-        const upload = new tus.Upload(input, options)
+        const upload = new Upload(input, options)
         upload.start()
 
         const err = await options.onError.toBeCalled
@@ -116,7 +119,7 @@ describe('tus', () => {
           onError: waitableFunction('onError'),
         }
 
-        const upload = new tus.Upload(input, options)
+        const upload = new Upload(input, options)
         upload.start()
 
         const req = await testStack.nextRequest()
@@ -171,7 +174,7 @@ describe('tus', () => {
         }
         spyOn(options, 'onProgress')
 
-        const upload = new tus.Upload(file, options)
+        const upload = new Upload(file, options)
         upload.start()
 
         let req = await testStack.nextRequest()
@@ -271,7 +274,7 @@ describe('tus', () => {
           onError: waitableFunction('onError'),
         }
 
-        const upload = new tus.Upload(file, options)
+        const upload = new Upload(file, options)
         upload.start()
 
         const req = await testStack.nextRequest()
@@ -303,7 +306,7 @@ describe('tus', () => {
         retryDelays: null,
       }
 
-      const upload = new tus.Upload(buffer, options)
+      const upload = new Upload(buffer, options)
       upload.start()
 
       const req = await options.httpStack.nextRequest()
@@ -322,7 +325,7 @@ describe('tus', () => {
         storagePath,
         '{"tus::fingerprinted::1337":{"uploadUrl":"http://tus.io/uploads/resuming"}}',
       )
-      const storage = new tus.FileUrlStorage(storagePath)
+      const storage = new FileUrlStorage(storagePath)
       const input = Buffer.from('hello world')
       const options = {
         httpStack: new TestHttpStack(),
@@ -333,7 +336,7 @@ describe('tus', () => {
       }
       spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
 
-      const upload = new tus.Upload(input, options)
+      const upload = new Upload(input, options)
 
       const previousUploads = await upload.findPreviousUploads()
       expect(previousUploads).toEqual([
@@ -385,7 +388,7 @@ describe('tus', () => {
   describe('#FileUrlStorage', () => {
     it('should allow storing and retrieving uploads', async () => {
       const storagePath = temp.path()
-      const storage = new tus.FileUrlStorage(storagePath)
+      const storage = new FileUrlStorage(storagePath)
       await assertUrlStorage(storage)
     })
   })
@@ -393,7 +396,7 @@ describe('tus', () => {
   describe('#NodeHttpStack', () => {
     it("should allow to pass options to Node's requests", async () => {
       const customAgent = new https.Agent()
-      const stack = new tus.DefaultHttpStack({
+      const stack = new NodeHttpStack({
         agent: customAgent,
       })
       const req = stack.createRequest('GET', 'https://tusd.tusdemo.net/')
@@ -425,7 +428,7 @@ describe('tus', () => {
 
       // Send POST request with 20MB of random data
       const randomData = crypto.randomBytes(20 * 1024 * 1024)
-      const stack = new tus.DefaultHttpStack({})
+      const stack = new NodeHttpStack({})
       const req = stack.createRequest('POST', `http://localhost:${port}`)
       req.setProgressHandler((bytesSent) => progressEvents.push(bytesSent))
       await req.send(randomData)
@@ -440,12 +443,12 @@ describe('tus', () => {
     })
   })
 
-  describe('#StreamSource', () => {
+  describe('#StreamFileSource', () => {
     it('should slice at different ranges', async () => {
       const input = stream.Readable.from(Buffer.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), {
         objectMode: false,
       })
-      const source = new tus.StreamSource(input)
+      const source = new StreamFileSource(input)
 
       // Read all data from stream
       let ret = await source.slice(0, 10)
@@ -489,7 +492,7 @@ describe('tus', () => {
       // Null as an element in the array causes the stream to emit an error when trying
       // to read. This error should be passed to the caller.
       const input = stream.Readable.from([null])
-      const source = new tus.StreamSource(input)
+      const source = new StreamFileSource(input)
 
       const ret = source.slice(0, 10)
       await expectAsync(ret).toBeRejected({ code: 'ERR_STREAM_NULL_VALUES' })
@@ -522,7 +525,7 @@ async function expectHelloWorldUpload(input, options) {
   options.httpStack = new TestHttpStack()
   options.onSuccess = waitableFunction('onSuccess')
 
-  const upload = new tus.Upload(input, options)
+  const upload = new Upload(input, options)
   upload.start()
 
   let req = await options.httpStack.nextRequest()
