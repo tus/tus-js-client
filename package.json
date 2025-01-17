@@ -61,7 +61,7 @@
       }
     }
   },
-  "files": ["lib.cjs/**/*", "lib.esm/**/*", "dist/**/*"],
+  "files": ["lib.cjs/", "lib.esm/", "dist/", "node"],
   "engines": {
     "node": ">=18"
   },
@@ -109,6 +109,7 @@
   },
   "scripts": {
     "clean": "rm -rf dist lib.cjs lib.esm",
+    "build-exports": "node scripts/setup-exports.js",
     "build-test-bundle": "mkdir -p dist && rollup test/spec/browser-index.js --format iife --sourcemap --plugin node-resolve --plugin commonjs --file dist/browser-test-bundle.js",
     "build-bundle": "mkdir -p dist && rollup lib/browser/index.ts --format umd --name tus --plugin typescript --plugin node-resolve --plugin commonjs --file ./dist/tus.js --sourcemap --sourcemapFile ./dist/tus.js.map",
     "build-minify": "uglifyjs ./dist/tus.js -o ./dist/tus.min.js --compress --mangle --source-map \"content='./dist/tus.js.map',url='tus.min.js.map'\"",
