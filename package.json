@@ -59,9 +59,19 @@
         "types": "./lib.cjs/node/NodeHttpStack.d.ts",
         "default": "./lib.cjs/node/NodeHttpStack.js"
       }
+    },
+    "./browser/FetchHttpStack": {
+      "import": {
+        "types": "./lib.esm/browser/FetchHttpStack.d.ts",
+        "default": "./lib.esm/browser/FetchHttpStack.js"
+      },
+      "require": {
+        "types": "./lib.cjs/browser/FetchHttpStack.d.ts",
+        "default": "./lib.cjs/browser/FetchHttpStack.js"
+      }
     }
   },
-  "files": ["lib.cjs/", "lib.esm/", "dist/", "node"],
+  "files": ["lib.cjs/", "lib.esm/", "dist/", "node", "browser"],
   "engines": {
     "node": ">=18"
   },
