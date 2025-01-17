@@ -4,7 +4,12 @@ import { mkdir, readFile, writeFile } from 'fs/promises'
 /**
  * Each entry is a "subpackage" that users should be able to import as `tus-js-client/${entry}`.
  */
-const EXPORTS = ['node/sources/StreamFileSource', 'node/FileUrlStorage', 'node/NodeHttpStack']
+const EXPORTS = [
+  'node/sources/StreamFileSource',
+  'node/FileUrlStorage',
+  'node/NodeHttpStack',
+  'browser/FetchHttpStack',
+]
 
 const root = path.join(import.meta.dirname, '..')
 
