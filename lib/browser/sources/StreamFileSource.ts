@@ -1,4 +1,4 @@
-import type { FileSource } from '../../options.js'
+import type { FileSource, SliceResult } from '../../options.js'
 
 function len(blobOrArray: StreamFileSource['_buffer']): number {
   if (blobOrArray === undefined) return 0
@@ -11,9 +11,6 @@ function len(blobOrArray: StreamFileSource['_buffer']): number {
   This function helps StreamSource accumulate data to reach chunkSize.
 */
 function concat<T extends StreamFileSource['_buffer']>(a: T, b: T): T {
-  if (Array.isArray(a) && Array.isArray(b)) {
-    return a.concat(b) as T
-  }
   if (a instanceof Blob && b instanceof Blob) {
     return new Blob([a, b], { type: a.type }) as T
   }
@@ -29,7 +26,7 @@ function concat<T extends StreamFileSource['_buffer']>(a: T, b: T): T {
 export class StreamFileSource implements FileSource {
   private _reader: Pick<ReadableStreamDefaultReader<StreamFileSource['_buffer']>, 'read'>
 
-  private _buffer: Blob | Uint8Array | number[] | undefined
+  private _buffer: Blob | Uint8Array | undefined
 
   // _bufferOffset defines at which position the content of _buffer (if it is set)
   // is located in the view of the entire stream. It does not mean at which offset
@@ -47,7 +44,7 @@ export class StreamFileSource implements FileSource {
     this._reader = reader
   }
 
-  slice(start: number, end: number) {
+  slice(start: number, end: number): Promise<SliceResult> {
     if (start < this._bufferOffset) {
       return Promise.reject(new Error("Requested data is before the reader's current offset"))
     }
@@ -55,12 +52,17 @@ export class StreamFileSource implements FileSource {
     return this._readUntilEnoughDataOrDone(start, end)
   }
 
-  private _readUntilEnoughDataOrDone(start: number, end: number) {
+  private _readUntilEnoughDataOrDone(start: number, end: number): Promise<SliceResult> {
     const hasEnoughData = end <= this._bufferOffset + len(this._buffer)
     if (this._done || hasEnoughData) {
       const value = this._getDataFromBuffer(start, end)
-      const done = value == null ? this._done : false
-      return Promise.resolve({ value, done })
+      if (value === null) {
+        return Promise.resolve({ value: null, size: null, done: true })
+      }
+
+      const size = value instanceof Blob ? value.size : value.length
+      const done = this._done
+      return Promise.resolve({ value, size, done })
     }
 
     return this._reader.read().then(({ value, done }) => {
@@ -76,7 +78,7 @@ export class StreamFileSource implements FileSource {
     })
   }
 
-  private _getDataFromBuffer(start, end) {
+  private _getDataFromBuffer(start: number, end: number) {
     if (this._buffer === undefined) {
       throw new Error('cannot _getDataFromBuffer because _buffer is unset')
     }

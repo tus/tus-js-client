@@ -89,6 +89,7 @@ export interface PreviousUpload {
   creationTime: string
   uploadUrl?: string
   parallelUploadUrls?: string[]
+  urlStorageKey: string
 }
 
 export interface FileReader {
@@ -101,12 +102,20 @@ export interface FileSource {
   close(): void
 }
 
-export interface SliceResult {
-  // Platform-specific data type which must be usable by the HTTP stack as a body.
-  // TODO: This should be a separate property and be set every time. Otherwise we track the wrong size.
-  value: unknown & { size?: number }
-  done: boolean
-}
+export type SliceResult =
+  | {
+      done: true
+      value: null
+      size: null
+    }
+  | {
+      done: boolean
+      // Platform-specific data type which must be usable by the HTTP stack as a body.
+      // TODO: Consider making this a Uint8Array (and optionally a web stream).
+      // This would make typing easier, but then we force file data to be read into memory.
+      value: NonNullable<unknown>
+      size: number
+    }
 
 export interface HttpStack {
   createRequest(method: string, url: string): HttpRequest

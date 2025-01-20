@@ -12,7 +12,7 @@ import type { FileSource } from '../../options.js'
  */
 async function readChunk(stream: Readable, size: number) {
   return new Promise<Buffer>((resolve, reject) => {
-    const onError = (err) => {
+    const onError = (err: Error) => {
       stream.off('readable', onReadable)
       reject(err)
     }
@@ -44,6 +44,8 @@ async function readChunk(stream: Readable, size: number) {
  * Note that it is forbidden to call with startB < startA or startB > endA. In other words,
  * the slice calls cannot seek back and must not skip data from the stream.
  */
+// TODO: Consider converting the node stream in a web stream. Then we can share the stream
+// handling between browsers and node.js.
 export class StreamFileSource implements FileSource {
   // Setting the size to null indicates that we have no calculation available
   // for how much data this stream will emit requiring the user to specify
@@ -101,8 +103,8 @@ export class StreamFileSource implements FileSource {
 
     // If the stream has ended already, read calls would not finish, so return early here.
     if (this._ended) {
-      returnBuffer.size = returnBuffer.length
-      return { value: returnBuffer, done: true }
+      const size = returnBuffer.length
+      return { value: returnBuffer, size, done: true }
     }
 
     // If we could not satisfy the slice request from the buffer only, read more data from
@@ -120,8 +122,8 @@ export class StreamFileSource implements FileSource {
     this._buf = returnBuffer
     this._bufPos = start
 
-    returnBuffer.size = returnBuffer.length
-    return { value: returnBuffer, done: this._ended }
+    const size = returnBuffer.length
+    return { value: returnBuffer, size, done: this._ended }
   }
 
   close() {

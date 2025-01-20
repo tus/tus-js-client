@@ -32,6 +32,8 @@ export class BrowserFileReader implements FileReader {
     }
 
     // File is a subtype of Blob, so we can check for Blob here.
+    // TODO: Consider turning Blobs, Buffers, and Uint8Arrays into a single type.
+    // Potentially handling it in the same way as in Node.js
     if (input instanceof Blob) {
       return Promise.resolve(new BlobFileSource(input))
     }

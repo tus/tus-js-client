@@ -13,19 +13,22 @@ export class BlobFileSource implements FileSource {
   }
 
   async slice(start: number, end: number): Promise<SliceResult> {
-    let value: any
     // In Apache Cordova applications, a File must be resolved using
     // FileReader instances, see
     // https://cordova.apache.org/docs/en/8.x/reference/cordova-plugin-file/index.html#read-a-file
     if (isCordova()) {
-      value = await readAsByteArray(this._file.slice(start, end))
-      value.size = value.length
-    } else {
-      value = this._file.slice(start, end)
+      const value = await readAsByteArray(this._file.slice(start, end))
+      const size = value.length
+      const done = end >= this.size
+
+      return Promise.resolve({ value, size, done })
     }
 
+    const value = this._file.slice(start, end)
+    const size = value.size
     const done = end >= this.size
-    return Promise.resolve({ value, done })
+
+    return Promise.resolve({ value, size, done })
   }
 
   close() {

@@ -50,8 +50,8 @@ describe('tus', () => {
       req.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Length': 11,
-          'Upload-Offset': 3,
+          'Upload-Length': '11',
+          'Upload-Offset': '3',
         },
       })
 
@@ -61,12 +61,12 @@ describe('tus', () => {
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Offset']).toBe('3')
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-      expect(req.body.size).toBe(11 - 3)
+      expect(req.bodySize).toBe(11 - 3)
 
       req.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Offset': 11,
+          'Upload-Offset': '11',
         },
       })
 
@@ -115,7 +115,7 @@ describe('tus', () => {
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 11,
+            'Upload-Offset': '11',
           },
         })
 
@@ -177,8 +177,8 @@ describe('tus', () => {
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Length': 11,
-            'Upload-Offset': 3,
+            'Upload-Length': '11',
+            'Upload-Offset': '3',
           },
         })
 
@@ -198,12 +198,12 @@ describe('tus', () => {
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
         expect(req.requestHeaders['Upload-Offset']).toBe('3')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-        expect(req.body.size).toBe(11 - 3)
+        expect(req.bodySize).toBe(11 - 3)
 
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 11,
+            'Upload-Offset': '11',
           },
         })
 
@@ -249,13 +249,13 @@ describe('tus', () => {
     describe('uploading data from a Reader', () => {
       function makeReader(content, readSize = content.length) {
         const reader = {
-          value: content.split(''),
+          value: new TextEncoder().encode(content),
           read() {
             let value
             let done = false
             if (this.value.length > 0) {
-              value = this.value.slice(0, readSize)
-              this.value = this.value.slice(readSize)
+              value = this.value.subarray(0, readSize)
+              this.value = this.value.subarray(readSize)
             } else {
               done = true
             }
@@ -304,33 +304,19 @@ describe('tus', () => {
         expect(req.url).toBe('http://tus.io/uploads/blargh')
         expect(req.method).toBe('PATCH')
         expect(req.requestHeaders['Upload-Offset']).toBe('0')
+        expect(req.requestHeaders['Upload-Length']).toBe('11')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-        expect(req.body.length).toBe(11)
+        expect(req.bodySize).toBe(11)
 
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 11,
+            'Upload-Offset': '11',
           },
         })
 
         await options.onProgress.toBeCalled
-        expect(options.onProgress).toHaveBeenCalledWith(11, null)
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/uploads/blargh')
-        expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Upload-Offset']).toBe('11')
-        expect(req.requestHeaders['Upload-Length']).toBe('11')
-        expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-        expect(req.body).toBe(null)
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 11,
-          },
-        })
+        expect(options.onProgress).toHaveBeenCalledWith(0, 11)
 
         await options.onSuccess.toBeCalled
         expect(upload.url).toBe('http://tus.io/uploads/blargh')
@@ -383,12 +369,12 @@ describe('tus', () => {
         expect(req.method).toBe('PATCH')
         expect(req.requestHeaders['Upload-Offset']).toBe('0')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-        expect(req.body.length).toBe(6)
+        expect(req.bodySize).toBe(6)
 
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 6,
+            'Upload-Offset': '6',
           },
         })
 
@@ -400,28 +386,14 @@ describe('tus', () => {
         expect(req.method).toBe('PATCH')
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
         expect(req.requestHeaders['Upload-Offset']).toBe('6')
-        expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-        expect(req.body.length).toBe(5)
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 11,
-          },
-        })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/uploads/blargh')
-        expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Upload-Offset']).toBe('11')
         expect(req.requestHeaders['Upload-Length']).toBe('11')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-        expect(req.body).toBe(null)
+        expect(req.bodySize).toBe(5)
 
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 11,
+            'Upload-Offset': '11',
           },
         })
 
@@ -472,7 +444,7 @@ describe('tus', () => {
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 11,
+            'Upload-Offset': '11',
           },
         })
 
@@ -484,7 +456,7 @@ describe('tus', () => {
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 11,
+            'Upload-Offset': '11',
           },
         })
 
@@ -533,7 +505,7 @@ describe('tus', () => {
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 0,
+            'Upload-Offset': '0',
           },
         })
 
@@ -544,7 +516,7 @@ describe('tus', () => {
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 11,
+            'Upload-Offset': '11',
           },
         })
 
@@ -556,7 +528,7 @@ describe('tus', () => {
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 11,
+            'Upload-Offset': '11',
           },
         })
 
@@ -597,7 +569,7 @@ describe('tus', () => {
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 6,
+            'Upload-Offset': '6',
           },
         })
 
@@ -616,7 +588,7 @@ describe('tus', () => {
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 6,
+            'Upload-Offset': '6',
           },
         })
 
@@ -627,7 +599,7 @@ describe('tus', () => {
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 12,
+            'Upload-Offset': '12',
           },
         })
 
@@ -638,7 +610,7 @@ describe('tus', () => {
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 18,
+            'Upload-Offset': '18',
           },
         })
 
@@ -650,7 +622,7 @@ describe('tus', () => {
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 18,
+            'Upload-Offset': '18',
           },
         })
 
@@ -672,7 +644,7 @@ describe('tus', () => {
 
         const upload = new Upload(reader, options)
         upload.start()
-        let req = await testStack.nextRequest()
+        const req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads')
         expect(req.method).toBe('POST')
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
@@ -684,21 +656,9 @@ describe('tus', () => {
           },
         })
 
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/uploads/foo')
-        expect(req.method).toBe('PATCH')
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 11,
-          },
-        })
-
         const err = await options.onError.toBeCalled
-
         expect(err.message).toBe(
-          'tus: failed to upload chunk at offset 11, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)',
+          'tus: failed to upload chunk at offset 0, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)',
         )
       })
     })
@@ -756,8 +716,8 @@ describe('tus', () => {
         req.respondWith({
           status: 200,
           responseHeaders: {
-            'Upload-Length': 11,
-            'Upload-Offset': 3,
+            'Upload-Length': '11',
+            'Upload-Offset': '3',
           },
           response: new Blob('hello world'.split('')),
         })
@@ -780,12 +740,12 @@ describe('tus', () => {
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
         expect(req.requestHeaders['Upload-Offset']).toBe('0')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-        expect(req.body.size).toBe(11)
+        expect(req.bodySize).toBe(11)
 
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 11,
+            'Upload-Offset': '11',
           },
         })
 

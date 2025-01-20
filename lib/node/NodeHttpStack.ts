@@ -2,7 +2,7 @@
 // but it is still included in Node.js
 import * as http from 'http'
 import * as https from 'https'
-import { Readable, Transform } from 'stream'
+import { Readable, Transform, type Writable } from 'stream'
 import { parse } from 'url'
 import throttle from 'lodash.throttle'
 import type { HttpProgressHandler, HttpRequest, HttpResponse, HttpStack } from '../options.js'
@@ -204,7 +204,11 @@ class ProgressEmitter extends Transform {
 // buffer is empty, as indicated by the emitted `drain` event.
 // See https://nodejs.org/docs/latest/api/stream.html#buffering for more details
 // on the buffering behavior of streams.
-const writeBufferToStreamWithProgress = (stream, source, onprogress) => {
+function writeBufferToStreamWithProgress(
+  stream: Writable,
+  source: Uint8Array,
+  onprogress: HttpProgressHandler,
+) {
   onprogress = throttle(onprogress, 100, {
     leading: true,
     trailing: false,

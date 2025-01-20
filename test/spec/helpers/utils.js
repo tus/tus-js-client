@@ -87,6 +87,7 @@ export class TestRequest {
     this.url = url
     this.requestHeaders = {}
     this.body = null
+    this.bodySize = null
 
     this._onRequestSend = onRequestSend
     this._onProgress = () => {}
@@ -113,12 +114,14 @@ export class TestRequest {
     this._onProgress = progressHandler
   }
 
-  send(body = null) {
+  async send(body = null) {
     this.body = body
 
     if (body) {
+      this.bodySize = await getBodySize(body)
+
       this._onProgress(0)
-      this._onProgress(body.length || body.size || 0)
+      this._onProgress(this.bodySize)
     }
 
     this._onRequestSend(this)
@@ -143,6 +146,31 @@ export class TestRequest {
   responseError(err) {
     this._rejectRequest(err)
   }
+}
+
+async function getBodySize(body) {
+  if (body == null) {
+    return null
+  }
+
+  if (body.size != null) {
+    return body.size
+  }
+
+  if (body.length != null) {
+    return body.length
+  }
+
+  return new Promise((resolve) => {
+    body.on('readable', () => {
+      while (true) {
+        const chunk = body.read()
+        if (chunk == null) break
+
+        resolve(chunk.length)
+      }
+    })
+  })
 }
 
 export class TestResponse {

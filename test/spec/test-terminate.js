@@ -39,7 +39,7 @@ describe('tus', () => {
       req.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Offset': 5,
+          'Upload-Offset': '5',
         },
       })
 
@@ -92,7 +92,7 @@ describe('tus', () => {
       req.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Offset': 5,
+          'Upload-Offset': '5',
         },
       })
 

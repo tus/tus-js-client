@@ -1,6 +1,5 @@
-import { readFile, writeFile } from 'fs'
-import combineErrors from 'combine-errors'
-import * as lockfile from 'proper-lockfile'
+import { readFile, writeFile } from 'fs/promises'
+import { lock } from 'proper-lockfile'
 import type { PreviousUpload, UrlStorage } from '../options.js'
 
 export const canStoreURLs = true
@@ -12,98 +11,62 @@ export class FileUrlStorage implements UrlStorage {
     this.path = filePath
   }
 
-  findAllUploads() {
-    return new Promise<PreviousUpload[]>((resolve, reject) => {
-      this._getItems('tus::', (err, results) => {
-        if (err) reject(err)
-        else resolve(results)
-      })
-    })
+  async findAllUploads(): Promise<PreviousUpload[]> {
+    return await this._getItems('tus::')
   }
 
-  findUploadsByFingerprint(fingerprint) {
-    return new Promise<PreviousUpload[]>((resolve, reject) => {
-      this._getItems(`tus::${fingerprint}`, (err, results) => {
-        if (err) reject(err)
-        else resolve(results)
-      })
-    })
+  async findUploadsByFingerprint(fingerprint: string): Promise<PreviousUpload[]> {
+    return await this._getItems(`tus::${fingerprint}`)
   }
 
-  removeUpload(urlStorageKey) {
-    return new Promise<void>((resolve, reject) => {
-      this._removeItem(urlStorageKey, (err) => {
-        if (err) reject(err)
-        else resolve()
-      })
-    })
+  async removeUpload(urlStorageKey: string): Promise<void> {
+    await this._removeItem(urlStorageKey)
   }
 
-  addUpload(fingerprint, upload) {
+  async addUpload(fingerprint: string, upload: PreviousUpload): Promise<string> {
     const id = Math.round(Math.random() * 1e12)
     const key = `tus::${fingerprint}::${id}`
 
-    return new Promise<string>((resolve, reject) => {
-      this._setItem(key, upload, (err) => {
-        if (err) reject(err)
-        else resolve(key)
-      })
-    })
+    await this._setItem(key, upload)
+    return key
   }
 
-  private _setItem(key, value, cb) {
-    lockfile
-      .lock(this.path, this._lockfileOptions())
-      .then((release) => {
-        cb = this._releaseAndCb(release, cb)
-        this._getData((err, data) => {
-          if (err) {
-            cb(err)
-            return
-          }
+  private async _setItem(key: string, value: unknown) {
+    const release = await lock(this.path, this._lockfileOptions())
 
-          data[key] = value
-          this._writeData(data, (err2) => cb(err2))
-        })
-      })
-      .catch(cb)
+    try {
+      const data = await this._getData()
+      data[key] = value
+      await this._writeData(data)
+    } finally {
+      await release()
+    }
   }
 
-  private _getItems(prefix, cb) {
-    this._getData((err, data) => {
-      if (err) {
-        cb(err)
-        return
-      }
+  private async _getItems(prefix: string) {
+    const data = await this._getData()
 
-      const results = Object.keys(data)
-        .filter((key) => key.startsWith(prefix))
-        .map((key) => {
-          const obj = data[key]
-          obj.urlStorageKey = key
-          return obj
-        })
+    const results = Object.keys(data)
+      .filter((key) => key.startsWith(prefix))
+      .map((key) => {
+        const obj = data[key]
+        obj.urlStorageKey = key
+        return obj
+      })
 
-      cb(null, results)
-    })
+    return results
   }
 
-  private _removeItem(key, cb) {
-    lockfile
-      .lock(this.path, this._lockfileOptions())
-      .then((release) => {
-        cb = this._releaseAndCb(release, cb)
-        this._getData((err, data) => {
-          if (err) {
-            cb(err)
-            return
-          }
+  private async _removeItem(key: string) {
+    const release = await lock(this.path, this._lockfileOptions())
 
-          delete data[key]
-          this._writeData(data, (err2) => cb(err2))
-        })
-      })
-      .catch(cb)
+    try {
+      const data = await this._getData()
+      delete data[key]
+      await this._writeData(data)
+    } finally {
+      await release()
+    }
   }
 
   private _lockfileOptions() {
@@ -116,48 +79,26 @@ export class FileUrlStorage implements UrlStorage {
     }
   }
 
-  private _releaseAndCb(release, cb) {
-    return (err) => {
-      if (err) {
-        release()
-          .then(() => cb(err))
-          .catch((releaseErr) => cb(combineErrors([err, releaseErr])))
-        return
-      }
-
-      release().then(cb).catch(cb)
-    }
-  }
-
-  private _writeData(data, cb) {
-    writeFile(
-      this.path,
-      JSON.stringify(data),
-      {
-        encoding: 'utf8',
-        mode: 0o660,
-        flag: 'w',
-      },
-      (err) => cb(err),
-    )
-  }
-
-  private _getData(cb) {
-    readFile(this.path, 'utf8', (err, data) => {
-      if (err) {
-        // return empty data if file does not exist
-        if (err.code === 'ENOENT') cb(null, {})
-        else cb(err)
-        return
-      }
-
-      try {
-        data = !data.trim().length ? {} : JSON.parse(data)
-      } catch (error) {
-        cb(error)
-        return
-      }
-      cb(null, data)
+  private async _writeData(data: unknown): Promise<void> {
+    await writeFile(this.path, JSON.stringify(data), {
+      encoding: 'utf8',
+      mode: 0o660,
+      flag: 'w',
     })
+  }
+
+  private async _getData() {
+    let data = ''
+    try {
+      data = await readFile(this.path, 'utf8')
+    } catch (err) {
+      // return empty data if file does not exist
+      if (err != null && typeof err === 'object' && 'code' in err && err.code === 'ENOENT')
+        return {}
+    }
+
+    data = data.trim()
+
+    return data.length === 0 ? {} : JSON.parse(data)
   }
 }
