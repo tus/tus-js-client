@@ -1,7 +1,7 @@
 import type { HttpProgressHandler, HttpRequest, HttpResponse, HttpStack } from '../options.js'
 
 export class XHRHttpStack implements HttpStack {
-  createRequest(method, url) {
+  createRequest(method: string, url: string): HttpRequest {
     return new XHRRequest(method, url)
   }
 
@@ -39,7 +39,7 @@ class XHRRequest implements HttpRequest {
     this._headers[header] = value
   }
 
-  getHeader(header: string) {
+  getHeader(header: string): string {
     return this._headers[header]
   }
 
@@ -59,7 +59,7 @@ class XHRRequest implements HttpRequest {
   }
 
   // TODO: Validate the type of body
-  send(body?: Blob): Promise<XHRResponse> {
+  send(body?: Blob): Promise<HttpResponse> {
     return new Promise((resolve, reject) => {
       this._xhr.onload = () => {
         resolve(new XHRResponse(this._xhr))

@@ -11,10 +11,10 @@ export class BufferFileSource implements FileSource {
   }
 
   slice(start: number, end: number) {
-    const value: Buffer & { size?: number } = this._buffer.slice(start, end)
-    value.size = value.length
+    const value: Buffer = this._buffer.slice(start, end)
+    const size = value.length
     const done = end >= this.size
-    return Promise.resolve({ value, done })
+    return Promise.resolve({ value, size, done })
   }
 
   close() {}

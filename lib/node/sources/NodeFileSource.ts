@@ -56,9 +56,9 @@ export class NodeFileSource implements FileSource {
       end: offset + end - 1,
       autoClose: true,
     })
-    stream.size = Math.min(end - start, this.size)
-    const done = stream.size >= this.size
-    return Promise.resolve({ value: stream, done })
+    const size = Math.min(end - start, this.size)
+    const done = size >= this.size
+    return Promise.resolve({ value: stream, size, done })
   }
 
   close() {

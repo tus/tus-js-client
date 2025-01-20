@@ -11,7 +11,7 @@ describe('tus', () => {
         uploadUrl: 'foo',
       })
       expect(upload.start.bind(upload)).toThrowError(
-        'tus: cannot use the uploadUrl option when parallelUploads is enabled',
+        'tus: cannot use the `uploadUrl` option when parallelUploads is enabled',
       )
     })
 
@@ -131,12 +131,12 @@ describe('tus', () => {
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Offset']).toBe('0')
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-      expect(req.body.size).toBe(5)
+      expect(req.bodySize).toBe(5)
 
       req.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Offset': 5,
+          'Upload-Offset': '5',
         },
       })
 
@@ -147,7 +147,7 @@ describe('tus', () => {
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Offset']).toBe('0')
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-      expect(req.body.size).toBe(6)
+      expect(req.bodySize).toBe(6)
 
       // Return an error to ensure that the individual partial upload is properly retried.
       req.respondWith({
@@ -161,8 +161,8 @@ describe('tus', () => {
       req.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Length': 11,
-          'Upload-Offset': 0,
+          'Upload-Length': '11',
+          'Upload-Offset': '0',
         },
       })
 
@@ -173,12 +173,12 @@ describe('tus', () => {
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Offset']).toBe('0')
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-      expect(req.body.size).toBe(6)
+      expect(req.bodySize).toBe(6)
 
       req.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Offset': 6,
+          'Upload-Offset': '6',
         },
       })
 
@@ -262,12 +262,12 @@ describe('tus', () => {
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Offset']).toBe('0')
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-      expect(req.body.size).toBe(1)
+      expect(req.bodySize).toBe(1)
 
       req.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Offset': 1,
+          'Upload-Offset': '1',
         },
       })
 
@@ -277,13 +277,13 @@ describe('tus', () => {
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Offset']).toBe('0')
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-      expect(req.body.size).toBe(10)
+      expect(req.bodySize).toBe(10)
 
       req.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Length': 11,
-          'Upload-Offset': 0,
+          'Upload-Length': '11',
+          'Upload-Offset': '0',
         },
       })
 
@@ -293,12 +293,12 @@ describe('tus', () => {
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req.requestHeaders['Upload-Offset']).toBe('0')
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-      expect(req.body.size).toBe(10)
+      expect(req.bodySize).toBe(10)
 
       req.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Offset': 10,
+          'Upload-Offset': '10',
         },
       })
 
@@ -383,8 +383,8 @@ describe('tus', () => {
       req.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Length': 5,
-          'Upload-Offset': 2,
+          'Upload-Length': '5',
+          'Upload-Offset': '2',
         },
       })
 
@@ -395,32 +395,32 @@ describe('tus', () => {
       req.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Length': 6,
-          'Upload-Offset': 0,
+          'Upload-Length': '6',
+          'Upload-Offset': '0',
         },
       })
 
       req = await testStack.nextRequest()
       expect(req.url).toBe('https://tus.io/uploads/upload1')
       expect(req.method).toBe('PATCH')
-      expect(req.body.size).toBe(3)
+      expect(req.bodySize).toBe(3)
 
       req.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Offset': 5,
+          'Upload-Offset': '5',
         },
       })
 
       req = await testStack.nextRequest()
       expect(req.url).toBe('https://tus.io/uploads/upload2')
       expect(req.method).toBe('PATCH')
-      expect(req.body.size).toBe(6)
+      expect(req.bodySize).toBe(6)
 
       req.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Offset': 6,
+          'Upload-Offset': '6',
         },
       })
 
@@ -497,7 +497,7 @@ describe('tus', () => {
       expect(req1.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req1.requestHeaders['Upload-Offset']).toBe('0')
       expect(req1.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-      expect(req1.body.size).toBe(5)
+      expect(req1.bodySize).toBe(5)
 
       const req2 = await testStack.nextRequest()
       expect(req2.url).toBe('https://tus.io/uploads/upload2')
@@ -505,21 +505,21 @@ describe('tus', () => {
       expect(req2.requestHeaders['Tus-Resumable']).toBe('1.0.0')
       expect(req2.requestHeaders['Upload-Offset']).toBe('0')
       expect(req2.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-      expect(req2.body.size).toBe(6)
+      expect(req2.bodySize).toBe(6)
 
       upload.abort()
 
       req1.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Offset': 5,
+          'Upload-Offset': '5',
         },
       })
 
       req2.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Offset': 6,
+          'Upload-Offset': '6',
         },
       })
 
@@ -539,8 +539,8 @@ describe('tus', () => {
       req.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Length': 5,
-          'Upload-Offset': 5,
+          'Upload-Length': '5',
+          'Upload-Offset': '5',
         },
       })
 
@@ -551,8 +551,8 @@ describe('tus', () => {
       req.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Length': 6,
-          'Upload-Offset': 6,
+          'Upload-Length': '6',
+          'Upload-Offset': '6',
         },
       })
 
