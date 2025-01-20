@@ -27,16 +27,16 @@ function concat<T extends StreamFileSource['_buffer']>(a: T, b: T): T {
 }
 
 export class StreamFileSource implements FileSource {
-  _reader: Pick<ReadableStreamDefaultReader<StreamFileSource['_buffer']>, 'read'>
+  private _reader: Pick<ReadableStreamDefaultReader<StreamFileSource['_buffer']>, 'read'>
 
-  _buffer: Blob | Uint8Array | number[] | undefined
+  private _buffer: Blob | Uint8Array | number[] | undefined
 
   // _bufferOffset defines at which position the content of _buffer (if it is set)
   // is located in the view of the entire stream. It does not mean at which offset
   // the content in _buffer begins.
-  _bufferOffset = 0
+  private _bufferOffset = 0
 
-  _done = false
+  private _done = false
 
   // Setting the size to null indicates that we have no calculation available
   // for how much data this stream will emit requiring the user to specify
@@ -55,7 +55,7 @@ export class StreamFileSource implements FileSource {
     return this._readUntilEnoughDataOrDone(start, end)
   }
 
-  _readUntilEnoughDataOrDone(start: number, end: number) {
+  private _readUntilEnoughDataOrDone(start: number, end: number) {
     const hasEnoughData = end <= this._bufferOffset + len(this._buffer)
     if (this._done || hasEnoughData) {
       const value = this._getDataFromBuffer(start, end)
@@ -76,7 +76,7 @@ export class StreamFileSource implements FileSource {
     })
   }
 
-  _getDataFromBuffer(start, end) {
+  private _getDataFromBuffer(start, end) {
     if (this._buffer === undefined) {
       throw new Error('cannot _getDataFromBuffer because _buffer is unset')
     }

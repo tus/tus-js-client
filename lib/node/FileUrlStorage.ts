@@ -51,7 +51,7 @@ export class FileUrlStorage implements UrlStorage {
     })
   }
 
-  _setItem(key, value, cb) {
+  private _setItem(key, value, cb) {
     lockfile
       .lock(this.path, this._lockfileOptions())
       .then((release) => {
@@ -69,7 +69,7 @@ export class FileUrlStorage implements UrlStorage {
       .catch(cb)
   }
 
-  _getItems(prefix, cb) {
+  private _getItems(prefix, cb) {
     this._getData((err, data) => {
       if (err) {
         cb(err)
@@ -88,7 +88,7 @@ export class FileUrlStorage implements UrlStorage {
     })
   }
 
-  _removeItem(key, cb) {
+  private _removeItem(key, cb) {
     lockfile
       .lock(this.path, this._lockfileOptions())
       .then((release) => {
@@ -106,7 +106,7 @@ export class FileUrlStorage implements UrlStorage {
       .catch(cb)
   }
 
-  _lockfileOptions() {
+  private _lockfileOptions() {
     return {
       realpath: false,
       retries: {
@@ -116,7 +116,7 @@ export class FileUrlStorage implements UrlStorage {
     }
   }
 
-  _releaseAndCb(release, cb) {
+  private _releaseAndCb(release, cb) {
     return (err) => {
       if (err) {
         release()
@@ -129,7 +129,7 @@ export class FileUrlStorage implements UrlStorage {
     }
   }
 
-  _writeData(data, cb) {
+  private _writeData(data, cb) {
     writeFile(
       this.path,
       JSON.stringify(data),
@@ -142,7 +142,7 @@ export class FileUrlStorage implements UrlStorage {
     )
   }
 
-  _getData(cb) {
+  private _getData(cb) {
     readFile(this.path, 'utf8', (err, data) => {
       if (err) {
         // return empty data if file does not exist

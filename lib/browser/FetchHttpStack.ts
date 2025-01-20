@@ -12,10 +12,10 @@ export class FetchHttpStack implements HttpStack {
 }
 
 class FetchRequest implements HttpRequest {
-  _method: string
-  _url: string
-  _headers: Record<string, string> = {}
-  _controller = new AbortController()
+  private _method: string
+  private _url: string
+  private _headers: Record<string, string> = {}
+  private _controller = new AbortController()
 
   constructor(method: string, url: string) {
     this._method = method
@@ -66,8 +66,8 @@ class FetchRequest implements HttpRequest {
 }
 
 class FetchResponse implements HttpResponse {
-  _res: Response
-  _body: string
+  private _res: Response
+  private _body: string
 
   constructor(res: Response, body: string) {
     this._res = res

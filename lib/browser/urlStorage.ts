@@ -51,7 +51,7 @@ export class WebStorageUrlStorage implements UrlStorage {
     return Promise.resolve(key)
   }
 
-  _findEntries(prefix: string): PreviousUpload[] {
+  private _findEntries(prefix: string): PreviousUpload[] {
     const results: PreviousUpload[] = []
 
     for (let i = 0; i < localStorage.length; i++) {

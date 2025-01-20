@@ -11,13 +11,13 @@ export class XHRHttpStack implements HttpStack {
 }
 
 class XHRRequest implements HttpRequest {
-  _xhr = new XMLHttpRequest()
+  private _xhr = new XMLHttpRequest()
 
-  _method: string
+  private _method: string
 
-  _url: string
+  private _url: string
 
-  _headers: Record<string, string> = {}
+  private _headers: Record<string, string> = {}
 
   constructor(method: string, url: string) {
     this._xhr.open(method, url, true)
@@ -84,7 +84,7 @@ class XHRRequest implements HttpRequest {
 }
 
 class XHRResponse implements HttpResponse {
-  _xhr: XMLHttpRequest
+  private _xhr: XMLHttpRequest
 
   constructor(xhr: XMLHttpRequest) {
     this._xhr = xhr

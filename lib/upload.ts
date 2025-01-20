@@ -60,7 +60,7 @@ export class BaseUpload {
   options: UploadOptions
 
   // The storage module used to store URLs
-  _urlStorage: UrlStorage
+  private _urlStorage: UrlStorage
 
   // The underlying File/Blob object
   file: UploadInput
@@ -69,44 +69,44 @@ export class BaseUpload {
   url: string | null = null
 
   // The underlying request object for the current PATCH request
-  _req?: HttpRequest
+  private _req?: HttpRequest
 
   // The fingerpinrt for the current file (set after start())
-  _fingerprint: string | null = null
+  private _fingerprint: string | null = null
 
   // The key that the URL storage returned when saving an URL with a fingerprint,
-  _urlStorageKey?: string
+  private _urlStorageKey?: string
 
   // The offset used in the current PATCH request
-  _offset = 0
+  private _offset = 0
 
   // True if the current PATCH request has been aborted
-  _aborted = false
+  private _aborted = false
 
   // The file's size in bytes
-  _size: number | null = null
+  private _size: number | null = null
 
   // The Source object which will wrap around the given file and provides us
   // with a unified interface for getting its size and slice chunks from its
   // content allowing us to easily handle Files, Blobs, Buffers and Streams.
-  _source?: FileSource
+  private _source?: FileSource
 
   // The current count of attempts which have been made. Zero indicates none.
-  _retryAttempt = 0
+  private _retryAttempt = 0
 
   // The timeout's ID which is used to delay the next retry
-  _retryTimeout?: ReturnType<typeof setTimeout>
+  private _retryTimeout?: ReturnType<typeof setTimeout>
 
   // The offset of the remote upload before the latest attempt was started.
-  _offsetBeforeRetry = 0
+  private _offsetBeforeRetry = 0
 
   // An array of BaseUpload instances which are used for uploading the different
   // parts, if the parallelUploads option is used.
-  _parallelUploads?: BaseUpload[]
+  private _parallelUploads?: BaseUpload[]
 
   // An array of upload URLs which are used for uploading the different
   // parts, if the parallelUploads option is used.
-  _parallelUploadUrls?: string[]
+  private _parallelUploadUrls?: string[]
 
   constructor(file: UploadInput, options: UploadOptions) {
     // Warn about removed options from previous versions
@@ -267,7 +267,7 @@ export class BaseUpload {
    *
    * @api private
    */
-  _startParallelUpload() {
+  private _startParallelUpload() {
     const totalSize = this._size
     let totalProgress = 0
     this._parallelUploads = []
@@ -420,7 +420,7 @@ export class BaseUpload {
    *
    * @api private
    */
-  _startSingleUpload() {
+  private _startSingleUpload() {
     // Reset the aborted flag when the upload is started or else the
     // _performUpload will stop before sending a request if the upload has been
     // aborted previously.
@@ -488,11 +488,11 @@ export class BaseUpload {
     )
   }
 
-  _emitHttpError(req, res, message, causingErr?) {
+  private _emitHttpError(req, res, message, causingErr?) {
     this._emitError(new DetailedError(message, causingErr, req, res))
   }
 
-  _emitError(err) {
+  private _emitError(err) {
     // Do not emit errors, e.g. from aborted HTTP requests, if the upload has been stopped.
     if (this._aborted) return
 
@@ -531,7 +531,7 @@ export class BaseUpload {
    * @param {object} lastResponse Last HTTP response.
    * @api private
    */
-  _emitSuccess(lastResponse) {
+  private _emitSuccess(lastResponse) {
     if (this.options.removeFingerprintOnSuccess) {
       // Remove stored fingerprint and corresponding endpoint. This causes
       // new uploads of the same file to be treated as a different file.
@@ -551,7 +551,7 @@ export class BaseUpload {
    * @param {number|null} bytesTotal Total number of bytes to be sent to the server.
    * @api private
    */
-  _emitProgress(bytesSent: number, bytesTotal: number | null): void {
+  private _emitProgress(bytesSent: number, bytesTotal: number | null): void {
     if (typeof this.options.onProgress === 'function') {
       this.options.onProgress(bytesSent, bytesTotal)
     }
@@ -566,7 +566,11 @@ export class BaseUpload {
    * @param {number|null} bytesTotal Total number of bytes to be sent to the server.
    * @api private
    */
-  _emitChunkComplete(chunkSize: number, bytesAccepted: number, bytesTotal: number | null): void {
+  private _emitChunkComplete(
+    chunkSize: number,
+    bytesAccepted: number,
+    bytesTotal: number | null,
+  ): void {
     if (typeof this.options.onChunkComplete === 'function') {
       this.options.onChunkComplete(chunkSize, bytesAccepted, bytesTotal)
     }
@@ -579,7 +583,7 @@ export class BaseUpload {
    *
    * @api private
    */
-  _createUpload() {
+  private _createUpload() {
     if (!this.options.endpoint) {
       this._emitError(new Error('tus: unable to create upload because no endpoint is provided'))
       return
@@ -667,14 +671,14 @@ export class BaseUpload {
       })
   }
 
-  /*
+  /**
    * Try to resume an existing upload. First a HEAD request will be sent
    * to retrieve the offset. If the request fails a new upload will be
    * created. In the case of a successful response the file will be uploaded.
    *
    * @api private
    */
-  _resumeUpload() {
+  private _resumeUpload() {
     if (this.url == null) {
       this._emitError(new Error('tus: Expected url to be set'))
       return
@@ -769,7 +773,7 @@ export class BaseUpload {
    *
    * @api private
    */
-  _performUpload() {
+  private _performUpload() {
     // If the upload has been aborted, we will not send the next PATCH request.
     // This is important if the abort method was called during a callback, such
     // as onChunkComplete or onProgress.
@@ -825,7 +829,7 @@ export class BaseUpload {
    *
    * @api private
    */
-  _addChunkToRequest(req) {
+  private _addChunkToRequest(req) {
     const start = this._offset
     let end = this._offset + this.options.chunkSize
 
@@ -898,7 +902,7 @@ export class BaseUpload {
    *
    * @api private
    */
-  _handleUploadResponse(req, res) {
+  private _handleUploadResponse(req, res) {
     const offset = Number.parseInt(res.getHeader('Upload-Offset'), 10)
     if (Number.isNaN(offset)) {
       this._emitHttpError(req, res, 'tus: invalid or missing offset value')
@@ -925,7 +929,7 @@ export class BaseUpload {
    *
    * @api private
    */
-  _openRequest(method: string, url: string) {
+  private _openRequest(method: string, url: string) {
     const req = openRequest(method, url, this.options)
     this._req = req
     return req
@@ -936,7 +940,7 @@ export class BaseUpload {
    *
    * @api private
    */
-  _removeFromUrlStorage() {
+  private _removeFromUrlStorage() {
     if (!this._urlStorageKey) return
 
     this._urlStorage.removeUpload(this._urlStorageKey).catch((err) => {
@@ -950,7 +954,7 @@ export class BaseUpload {
    *
    * @api private
    */
-  _saveUploadInUrlStorage() {
+  private _saveUploadInUrlStorage() {
     // We do not store the upload URL
     // - if it was disabled in the option, or
     // - if no fingerprint was calculated for the input (i.e. a stream), or

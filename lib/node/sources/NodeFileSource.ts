@@ -26,9 +26,9 @@ export async function getFileSource(stream: ReadStream): Promise<NodeFileSource>
 export class NodeFileSource implements FileSource {
   size: number
 
-  _stream: ReadStream
+  private _stream: ReadStream
 
-  _path: string
+  private _path: string
 
   constructor(stream: ReadStream, path: string, size: number) {
     this._stream = stream

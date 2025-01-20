@@ -25,17 +25,17 @@ export class NodeHttpStack implements HttpStack {
 }
 
 class Request implements HttpRequest {
-  _method: string
+  private _method: string
 
-  _url: string
+  private _url: string
 
-  _headers: Record<string, string> = {}
+  private _headers: Record<string, string> = {}
 
-  _request: http.ClientRequest | null = null
+  private _request: http.ClientRequest | null = null
 
-  _progressHandler: HttpProgressHandler = () => {}
+  private _progressHandler: HttpProgressHandler = () => {}
 
-  _requestOptions: http.RequestOptions
+  private _requestOptions: http.RequestOptions
 
   constructor(method: string, url: string, options: http.RequestOptions) {
     this._method = method
@@ -129,9 +129,9 @@ class Request implements HttpRequest {
 }
 
 class Response implements HttpResponse {
-  _response: http.IncomingMessage
+  private _response: http.IncomingMessage
 
-  _body: string
+  private _body: string
 
   constructor(res: http.IncomingMessage, body: string) {
     this._response = res
@@ -166,9 +166,9 @@ class Response implements HttpResponse {
 // track of the number of bytes which have been piped through it and will
 // invoke the `onprogress` function whenever new number are available.
 class ProgressEmitter extends Transform {
-  _onprogress: HttpProgressHandler
+  private _onprogress: HttpProgressHandler
 
-  _position = 0
+  private _position = 0
 
   constructor(onprogress: HttpProgressHandler) {
     super()

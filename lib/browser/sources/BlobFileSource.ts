@@ -3,7 +3,7 @@ import { readAsByteArray } from '../../cordova/readAsByteArray.js'
 import type { FileSource, SliceResult } from '../../options.js'
 
 export class BlobFileSource implements FileSource {
-  _file: Blob
+  private _file: Blob
 
   size: number
 
