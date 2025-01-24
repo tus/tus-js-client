@@ -157,7 +157,8 @@ describe('tus', () => {
         await expectHelloWorldUpload(file, options)
       })
 
-      it('should support parallelUploads and fs.ReadStream', async () => {
+      it('should support parallelUploads', async () => {
+        // TODO: The ordering of requests is no longer deterministic, so we need to update this test
         // Create a temporary file
         const path = temp.path()
         fs.writeFileSync(path, 'hello world')
