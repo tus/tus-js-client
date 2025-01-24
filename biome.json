@@ -22,7 +22,7 @@
         "useNodejsImportProtocol": "off"
       },
       "suspicious": {
-        "noExplicitAny": "warn",
+        "noExplicitAny": "error",
         "useAwait": "error"
       },
       "correctness": {
