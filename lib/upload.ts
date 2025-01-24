@@ -14,7 +14,6 @@ import {
   type PreviousUpload,
   type UploadInput,
   type UploadOptions,
-  type UrlStorage,
 } from './options.js'
 import { uuid } from './uuid.js'
 
@@ -58,9 +57,6 @@ export const defaultOptions = {
 
 export class BaseUpload {
   options: UploadOptions
-
-  // The storage module used to store URLs
-  private _urlStorage: UrlStorage
 
   // The underlying File/Blob object
   file: UploadInput
@@ -124,9 +120,6 @@ export class BaseUpload {
     this.options.chunkSize = Number(this.options.chunkSize)
 
     this.file = file
-
-    // TODO: Remove this property
-    this._urlStorage = options.urlStorage
   }
 
   findPreviousUploads(): Promise<PreviousUpload[]> {
@@ -135,7 +128,7 @@ export class BaseUpload {
         return Promise.reject(new Error('unable calculate fingerprint for this input file'))
       }
 
-      return this._urlStorage.findUploadsByFingerprint(fingerprint)
+      return this.options.urlStorage.findUploadsByFingerprint(fingerprint)
     })
   }
 
@@ -974,7 +967,7 @@ export class BaseUpload {
   private _removeFromUrlStorage(): void {
     if (!this._urlStorageKey) return
 
-    this._urlStorage.removeUpload(this._urlStorageKey).catch((err) => {
+    this.options.urlStorage.removeUpload(this._urlStorageKey).catch((err) => {
       this._emitError(err)
     })
     this._urlStorageKey = undefined
@@ -1014,10 +1007,12 @@ export class BaseUpload {
       storedUpload.uploadUrl = this.url
     }
 
-    return this._urlStorage.addUpload(this._fingerprint, storedUpload).then((urlStorageKey) => {
-      // TODO: Emit a waring if urlStorageKey is undefined. Should we even allow this?
-      this._urlStorageKey = urlStorageKey
-    })
+    return this.options.urlStorage
+      .addUpload(this._fingerprint, storedUpload)
+      .then((urlStorageKey) => {
+        // TODO: Emit a waring if urlStorageKey is undefined. Should we even allow this?
+        this._urlStorageKey = urlStorageKey
+      })
   }
 
   /**
