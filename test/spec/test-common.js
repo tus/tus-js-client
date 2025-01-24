@@ -1013,15 +1013,18 @@ describe('tus', () => {
 
       expect(options.onShouldRetry).toHaveBeenCalled()
       const args1 = options.onShouldRetry.calls.argsFor(0)
-      expect(args1[0].message).toEqual('tus: unexpected response while creating upload, originated from request (method: POST, url: http://tus.io/files/, response code: 500, response text: , request id: n/a)')
+      expect(args1[0].message).toEqual(
+        'tus: unexpected response while creating upload, originated from request (method: POST, url: http://tus.io/files/, response code: 500, response text: , request id: n/a)',
+      )
       expect(args1[1]).toEqual(0)
       expect(args1[2]).toEqual(upload.options)
 
       const args2 = options.onShouldRetry.calls.argsFor(1)
-      expect(args2[0].message).toEqual('tus: unexpected response while uploading chunk, originated from request (method: PATCH, url: http://tus.io/files/foo, response code: 423, response text: , request id: n/a)')
+      expect(args2[0].message).toEqual(
+        'tus: unexpected response while uploading chunk, originated from request (method: PATCH, url: http://tus.io/files/foo, response code: 423, response text: , request id: n/a)',
+      )
       expect(args2[1]).toEqual(1)
       expect(args2[2]).toEqual(upload.options)
-
     })
 
     // This tests ensures that tus-js-client correctly aborts if the
