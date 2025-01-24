@@ -71,7 +71,7 @@
       }
     }
   },
-  "files": ["lib.cjs/", "lib.esm/", "dist/", "node", "browser"],
+  "files": ["lib/", "lib.cjs/", "lib.esm/", "dist/", "node/", "browser/"],
   "engines": {
     "node": ">=18"
   },
