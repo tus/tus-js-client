@@ -45,7 +45,7 @@ export interface UploadOptions {
   onSuccess?: (payload: OnSuccessPayload) => void
   onError?: (error: Error | DetailedError) => void
   onShouldRetry?: (error: DetailedError, retryAttempt: number, options: UploadOptions) => boolean
-  onUploadUrlAvailable?: () => void
+  onUploadUrlAvailable?: () => void | Promise<void>
 
   overridePatchMethod: boolean
   headers: { [key: string]: string }

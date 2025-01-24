@@ -122,14 +122,13 @@ export class BaseUpload {
     this.file = file
   }
 
-  findPreviousUploads(): Promise<PreviousUpload[]> {
-    return this.options.fingerprint(this.file, this.options).then((fingerprint) => {
-      if (!fingerprint) {
-        return Promise.reject(new Error('unable calculate fingerprint for this input file'))
-      }
+  async findPreviousUploads(): Promise<PreviousUpload[]> {
+    const fingerprint = await this.options.fingerprint(this.file, this.options)
+    if (!fingerprint) {
+      throw new Error('tus: unable to calculate fingerprint for this input file')
+    }
 
-      return this.options.urlStorage.findUploadsByFingerprint(fingerprint)
-    })
+    return await this.options.urlStorage.findUploadsByFingerprint(fingerprint)
   }
 
   resumeFromPreviousUpload(previousUpload: PreviousUpload): void {
@@ -211,61 +210,60 @@ export class BaseUpload {
       }
     }
 
-    this.options
-      .fingerprint(file, this.options)
-      .then((fingerprint) => {
-        if (fingerprint == null) {
-          log(
-            'No fingerprint was calculated meaning that the upload cannot be stored in the URL storage.',
+    const prepare = async () => {
+      this._fingerprint = await this.options.fingerprint(file, this.options)
+      if (this._fingerprint == null) {
+        log(
+          'No fingerprint was calculated meaning that the upload cannot be stored in the URL storage.',
+        )
+      } else {
+        log(`Calculated fingerprint: ${this._fingerprint}`)
+      }
+
+      if (this._source == null) {
+        this._source = await this.options.fileReader.openFile(file, this.options.chunkSize)
+      }
+
+      // First, we look at the uploadLengthDeferred option.
+      // Next, we check if the caller has supplied a manual upload size.
+      // Finally, we try to use the calculated size from the source object.
+      if (this.options.uploadLengthDeferred) {
+        this._size = null
+      } else if (this.options.uploadSize != null) {
+        this._size = Number(this.options.uploadSize)
+        if (Number.isNaN(this._size)) {
+          this._emitError(new Error('tus: cannot convert `uploadSize` option into a number'))
+          return
+        }
+      } else {
+        this._size = this._source.size
+        if (this._size == null) {
+          this._emitError(
+            new Error(
+              "tus: cannot automatically derive upload's size from input. Specify it manually using the `uploadSize` option or use the `uploadLengthDeferred` option",
+            ),
           )
-        } else {
-          log(`Calculated fingerprint: ${fingerprint}`)
+          return
         }
+      }
 
-        this._fingerprint = fingerprint
+      // If the upload was configured to use multiple requests or if we resume from
+      // an upload which used multiple requests, we start a parallel upload.
+      if (this.options.parallelUploads > 1 || this._parallelUploadUrls != null) {
+        await this._startParallelUpload()
+      } else {
+        await this._startSingleUpload()
+      }
+    }
 
-        if (this._source) {
-          return this._source
-        }
-        return this.options.fileReader.openFile(file, this.options.chunkSize)
-      })
-      .then((source) => {
-        this._source = source
-
-        // First, we look at the uploadLengthDeferred option.
-        // Next, we check if the caller has supplied a manual upload size.
-        // Finally, we try to use the calculated size from the source object.
-        if (this.options.uploadLengthDeferred) {
-          this._size = null
-        } else if (this.options.uploadSize != null) {
-          this._size = Number(this.options.uploadSize)
-          if (Number.isNaN(this._size)) {
-            this._emitError(new Error('tus: cannot convert `uploadSize` option into a number'))
-            return
-          }
-        } else {
-          this._size = this._source.size
-          if (this._size == null) {
-            this._emitError(
-              new Error(
-                "tus: cannot automatically derive upload's size from input. Specify it manually using the `uploadSize` option or use the `uploadLengthDeferred` option",
-              ),
-            )
-            return
-          }
-        }
-
-        // If the upload was configured to use multiple requests or if we resume from
-        // an upload which used multiple requests, we start a parallel upload.
-        if (this.options.parallelUploads > 1 || this._parallelUploadUrls != null) {
-          this._startParallelUpload()
-        } else {
-          this._startSingleUpload()
-        }
-      })
-      .catch((err) => {
-        this._emitError(err)
-      })
+    // Note: `start` does not return a Promise or await the preparation on purpose.
+    // Its supposed to return immediately and start the upload in the background.
+    // TODO: Currently the submethods handle errors locally using emitError etc.
+    // We should consider letting these error bubble up and then decide here, in
+    // one location, on how to handle them.
+    prepare().catch((err) => {
+      this._emitError(err)
+    })
   }
 
   /**
@@ -274,7 +272,7 @@ export class BaseUpload {
    *
    * @api private
    */
-  private _startParallelUpload(): void {
+  private async _startParallelUpload(): Promise<void> {
     const totalSize = this._size
     let totalProgress = 0
     this._parallelUploads = []
@@ -305,125 +303,120 @@ export class BaseUpload {
 
     // Generate a promise for each slice that will be resolve if the respective
     // upload is completed.
-    const uploads = parts.map((part, index) => {
+    const uploads = parts.map(async (part, index) => {
       let lastPartProgress = 0
 
       // @ts-expect-error We know that `_source` is not null here.
-      return this._source.slice(part.start, part.end).then(
-        ({ value }) =>
-          new Promise<void>((resolve, reject) => {
-            // Merge with the user supplied options but overwrite some values.
-            const options = {
-              ...this.options,
-              // If available, the partial upload should be resumed from a previous URL.
-              uploadUrl: part.uploadUrl || null,
-              // We take manually care of resuming for partial uploads, so they should
-              // not be stored in the URL storage.
-              storeFingerprintForResuming: false,
-              removeFingerprintOnSuccess: false,
-              // Reset the parallelUploads option to not cause recursion.
-              parallelUploads: 1,
-              // Reset this option as we are not doing a parallel upload.
-              parallelUploadBoundaries: null,
-              metadata: this.options.metadataForPartialUploads,
-              // Add the header to indicate the this is a partial upload.
-              headers: {
-                ...this.options.headers,
-                'Upload-Concat': 'partial',
-              },
-              // Reject or resolve the promise if the upload errors or completes.
-              onSuccess: resolve,
-              onError: reject,
-              // Based in the progress for this partial upload, calculate the progress
-              // for the entire final upload.
-              onProgress: (newPartProgress: number) => {
-                totalProgress = totalProgress - lastPartProgress + newPartProgress
-                lastPartProgress = newPartProgress
-                if (totalSize == null) {
-                  this._emitError(new Error('tus: Expected totalSize to be set'))
-                  return
-                }
-                this._emitProgress(totalProgress, totalSize)
-              },
-              // Wait until every partial upload has an upload URL, so we can add
-              // them to the URL storage.
-              onUploadUrlAvailable: () => {
-                // @ts-expect-error We know that _parallelUploadUrls is defined
-                this._parallelUploadUrls[index] = upload.url
-                // Test if all uploads have received an URL
-                // @ts-expect-error We know that _parallelUploadUrls is defined
-                if (this._parallelUploadUrls.filter((u) => Boolean(u)).length === parts.length) {
-                  this._saveUploadInUrlStorage()
-                }
-              },
+      const { value } = await this._source.slice(part.start, part.end)
+
+      return new Promise<void>((resolve, reject) => {
+        // Merge with the user supplied options but overwrite some values.
+        const options = {
+          ...this.options,
+          // If available, the partial upload should be resumed from a previous URL.
+          uploadUrl: part.uploadUrl || null,
+          // We take manually care of resuming for partial uploads, so they should
+          // not be stored in the URL storage.
+          storeFingerprintForResuming: false,
+          removeFingerprintOnSuccess: false,
+          // Reset the parallelUploads option to not cause recursion.
+          parallelUploads: 1,
+          // Reset this option as we are not doing a parallel upload.
+          parallelUploadBoundaries: null,
+          metadata: this.options.metadataForPartialUploads,
+          // Add the header to indicate the this is a partial upload.
+          headers: {
+            ...this.options.headers,
+            'Upload-Concat': 'partial',
+          },
+          // Reject or resolve the promise if the upload errors or completes.
+          onSuccess: resolve,
+          onError: reject,
+          // Based in the progress for this partial upload, calculate the progress
+          // for the entire final upload.
+          onProgress: (newPartProgress: number) => {
+            totalProgress = totalProgress - lastPartProgress + newPartProgress
+            lastPartProgress = newPartProgress
+            if (totalSize == null) {
+              throw new Error('tus: Expected totalSize to be set')
             }
-
-            if (value == null) {
-              reject('tus: no value returned while slicing file for parallel uploads')
-              return
-            }
-
-            // @ts-expect-error `value` is unknown and not an UploadInput
-            const upload = new BaseUpload(value, options)
-            upload.start()
-
-            // Store the upload in an array, so we can later abort them if necessary.
+            this._emitProgress(totalProgress, totalSize)
+          },
+          // Wait until every partial upload has an upload URL, so we can add
+          // them to the URL storage.
+          onUploadUrlAvailable: async () => {
             // @ts-expect-error We know that _parallelUploadUrls is defined
-            this._parallelUploads.push(upload)
-          }),
-      )
+            this._parallelUploadUrls[index] = upload.url
+            // Test if all uploads have received an URL
+            // @ts-expect-error We know that _parallelUploadUrls is defined
+            if (this._parallelUploadUrls.filter((u) => Boolean(u)).length === parts.length) {
+              await this._saveUploadInUrlStorage()
+            }
+          },
+        }
+
+        if (value == null) {
+          reject(new Error('tus: no value returned while slicing file for parallel uploads'))
+          return
+        }
+
+        // @ts-expect-error `value` is unknown and not an UploadInput
+        const upload = new BaseUpload(value, options)
+        upload.start()
+
+        // Store the upload in an array, so we can later abort them if necessary.
+        // @ts-expect-error We know that _parallelUploadUrls is defined
+        this._parallelUploads.push(upload)
+      })
     })
 
-    let req: HttpRequest
-    // Wait until all partial uploads are finished and we can send the POST request for
-    // creating the final upload.
-    Promise.all(uploads)
-      .then(() => {
-        if (this.options.endpoint == null) {
-          this._emitError(new Error('tus: Expected options.endpoint to be set'))
-          return
-        }
-        req = this._openRequest('POST', this.options.endpoint)
-        // @ts-expect-error We know that _parallelUploadUrls is defined
-        req.setHeader('Upload-Concat', `final;${this._parallelUploadUrls.join(' ')}`)
+    try {
+      // Wait until all partial uploads are finished and we can send the POST request for
+      // creating the final upload.
+      await Promise.all(uploads)
 
-        // Add metadata if values have been added
-        const metadata = encodeMetadata(this.options.metadata)
-        if (metadata !== '') {
-          req.setHeader('Upload-Metadata', metadata)
-        }
+      if (this.options.endpoint == null) {
+        this._emitError(new Error('tus: Expected options.endpoint to be set'))
+        return
+      }
+      const req = this._openRequest('POST', this.options.endpoint)
+      req.setHeader('Upload-Concat', `final;${this._parallelUploadUrls.join(' ')}`)
 
-        return this._sendRequest(req)
-      })
-      .then((res) => {
-        if (res === undefined) {
-          this._emitError(new Error('tus: Expected res to be defined'))
-          return
-        }
-        if (!inStatusCategory(res.getStatus(), 200)) {
-          this._emitHttpError(req, res, 'tus: unexpected response while creating upload')
-          return
-        }
+      // Add metadata if values have been added
+      const metadata = encodeMetadata(this.options.metadata)
+      if (metadata !== '') {
+        req.setHeader('Upload-Metadata', metadata)
+      }
 
-        const location = res.getHeader('Location')
-        if (location == null) {
-          this._emitHttpError(req, res, 'tus: invalid or missing Location header')
-          return
-        }
+      const res = await this._sendRequest(req)
 
-        if (this.options.endpoint == null) {
-          this._emitError(new Error('tus: Expeced endpoint to be defined.'))
-          return
-        }
+      if (!inStatusCategory(res.getStatus(), 200)) {
+        this._emitHttpError(req, res, 'tus: unexpected response while creating upload')
+        return
+      }
 
-        this.url = resolveUrl(this.options.endpoint, location)
-        log(`Created upload at ${this.url}`)
+      const location = res.getHeader('Location')
+      if (location == null) {
+        this._emitHttpError(req, res, 'tus: invalid or missing Location header')
+        return
+      }
 
-        this._emitSuccess(res)
-      })
-      .catch((err) => {
-        this._emitError(err)
-      })
+      if (this.options.endpoint == null) {
+        this._emitError(new Error('tus: Expeced endpoint to be defined.'))
+        return
+      }
+
+      this.url = resolveUrl(this.options.endpoint, location)
+      log(`Created upload at ${this.url}`)
+
+      await this._emitSuccess(res)
+    } catch (err) {
+      if (!(err instanceof Error)) {
+        throw new Error(`tus: value thrown that is not an error: ${err}`)
+      }
+
+      this._emitError(err)
+    }
   }
 
   /**
@@ -432,7 +425,7 @@ export class BaseUpload {
    *
    * @api private
    */
-  private _startSingleUpload(): void {
+  private async _startSingleUpload(): Promise<void> {
     // Reset the aborted flag when the upload is started or else the
     // _performUpload will stop before sending a request if the upload has been
     // aborted previously.
@@ -441,21 +434,19 @@ export class BaseUpload {
     // The upload had been started previously and we should reuse this URL.
     if (this.url != null) {
       log(`Resuming upload from previous URL: ${this.url}`)
-      this._resumeUpload()
-      return
+      return await this._resumeUpload()
     }
 
     // A URL has manually been specified, so we try to resume
     if (this.options.uploadUrl != null) {
       log(`Resuming upload from provided URL: ${this.options.uploadUrl}`)
       this.url = this.options.uploadUrl
-      this._resumeUpload()
-      return
+      return await this._resumeUpload()
     }
 
     // An upload has not started for the file yet, so we start a new one
     log('Creating a new upload')
-    this._createUpload()
+    return await this._createUpload()
   }
 
   /**
@@ -468,20 +459,22 @@ export class BaseUpload {
    * @param {boolean} shouldTerminate True if the upload should be deleted from the server.
    * @return {Promise} The Promise will be resolved/rejected when the requests finish.
    */
-  abort(shouldTerminate = false): Promise<void> {
+  async abort(shouldTerminate = false): Promise<void> {
+    // Set the aborted flag before any `await`s, so no new requests are started.
+    this._aborted = true
+
     // Stop any parallel partial uploads, that have been started in _startParallelUploads.
     if (this._parallelUploads != null) {
       for (const upload of this._parallelUploads) {
-        upload.abort(shouldTerminate)
+        await upload.abort(shouldTerminate)
       }
     }
 
     // Stop any current running request.
     if (this._req != null) {
-      this._req.abort()
+      await this._req.abort()
       // Note: We do not close the file source here, so the user can resume in the future.
     }
-    this._aborted = true
 
     // Stop any timeout used for initiating a retry.
     if (this._retryTimeout != null) {
@@ -489,15 +482,11 @@ export class BaseUpload {
       this._retryTimeout = undefined
     }
 
-    if (!shouldTerminate || this.url == null) {
-      return Promise.resolve()
+    if (shouldTerminate && this.url != null) {
+      await terminate(this.url, this.options)
+      // Remove entry from the URL storage since the upload URL is no longer valid.
+      await this._removeFromUrlStorage()
     }
-
-    return (
-      terminate(this.url, this.options)
-        // Remove entry from the URL storage since the upload URL is no longer valid.
-        .then(() => this._removeFromUrlStorage())
-    )
   }
 
   private _emitHttpError(
@@ -548,11 +537,11 @@ export class BaseUpload {
    * @param {object} lastResponse Last HTTP response.
    * @api private
    */
-  private _emitSuccess(lastResponse: HttpResponse): void {
+  private async _emitSuccess(lastResponse: HttpResponse): Promise<void> {
     if (this.options.removeFingerprintOnSuccess) {
       // Remove stored fingerprint and corresponding endpoint. This causes
       // new uploads of the same file to be treated as a different file.
-      this._removeFromUrlStorage()
+      await this._removeFromUrlStorage()
     }
 
     if (typeof this.options.onSuccess === 'function') {
@@ -600,7 +589,7 @@ export class BaseUpload {
    *
    * @api private
    */
-  private _createUpload(): void {
+  private async _createUpload(): Promise<void> {
     if (!this.options.endpoint) {
       this._emitError(new Error('tus: unable to create upload because no endpoint is provided'))
       return
@@ -623,69 +612,71 @@ export class BaseUpload {
       req.setHeader('Upload-Metadata', metadata)
     }
 
-    let promise: Promise<HttpResponse | undefined>
-    if (this.options.uploadDataDuringCreation && !this.options.uploadLengthDeferred) {
-      this._offset = 0
-      promise = this._addChunkToRequest(req)
-    } else {
-      if (
-        this.options.protocol === PROTOCOL_IETF_DRAFT_03 ||
-        this.options.protocol === PROTOCOL_IETF_DRAFT_05
-      ) {
-        req.setHeader('Upload-Complete', '?0')
+    try {
+      let res: HttpResponse
+      if (this.options.uploadDataDuringCreation && !this.options.uploadLengthDeferred) {
+        this._offset = 0
+        res = await this._addChunkToRequest(req)
+      } else {
+        if (
+          this.options.protocol === PROTOCOL_IETF_DRAFT_03 ||
+          this.options.protocol === PROTOCOL_IETF_DRAFT_05
+        ) {
+          req.setHeader('Upload-Complete', '?0')
+        }
+        res = await this._sendRequest(req)
       }
-      promise = this._sendRequest(req)
+
+      // if (res === undefined) {
+      //   this._emitError(new Error('tus: Expected res to be set'))
+      //   return
+      // }
+
+      if (!inStatusCategory(res.getStatus(), 200)) {
+        this._emitHttpError(req, res, 'tus: unexpected response while creating upload')
+        return
+      }
+
+      const location = res.getHeader('Location')
+      if (location == null) {
+        this._emitHttpError(req, res, 'tus: invalid or missing Location header')
+        return
+      }
+
+      if (this.options.endpoint == null) {
+        this._emitError(new Error('tus: Expected options.endpoint to be set'))
+        return
+      }
+
+      this.url = resolveUrl(this.options.endpoint, location)
+      log(`Created upload at ${this.url}`)
+
+      if (typeof this.options.onUploadUrlAvailable === 'function') {
+        await this.options.onUploadUrlAvailable()
+      }
+
+      if (this._size === 0) {
+        // Nothing to upload and file was successfully created
+        await this._emitSuccess(res)
+        if (this._source) this._source.close()
+        return
+      }
+
+      await this._saveUploadInUrlStorage()
+
+      if (this.options.uploadDataDuringCreation) {
+        await this._handleUploadResponse(req, res)
+      } else {
+        this._offset = 0
+        await this._performUpload()
+      }
+    } catch (err) {
+      if (!(err instanceof Error)) {
+        throw new Error(`tus: value thrown that is not an error: ${err}`)
+      }
+
+      this._emitHttpError(req, undefined, 'tus: failed to create upload', err)
     }
-
-    promise
-      .then((res) => {
-        if (res === undefined) {
-          this._emitError(new Error('tus: Expected res to be set'))
-          return
-        }
-
-        if (!inStatusCategory(res.getStatus(), 200)) {
-          this._emitHttpError(req, res, 'tus: unexpected response while creating upload')
-          return
-        }
-
-        const location = res.getHeader('Location')
-        if (location == null) {
-          this._emitHttpError(req, res, 'tus: invalid or missing Location header')
-          return
-        }
-
-        if (this.options.endpoint == null) {
-          this._emitError(new Error('tus: Expected options.endpoint to be set'))
-          return
-        }
-
-        this.url = resolveUrl(this.options.endpoint, location)
-        log(`Created upload at ${this.url}`)
-
-        if (typeof this.options.onUploadUrlAvailable === 'function') {
-          this.options.onUploadUrlAvailable()
-        }
-
-        if (this._size === 0) {
-          // Nothing to upload and file was successfully created
-          this._emitSuccess(res)
-          if (this._source) this._source.close()
-          return
-        }
-
-        this._saveUploadInUrlStorage().then(() => {
-          if (this.options.uploadDataDuringCreation) {
-            this._handleUploadResponse(req, res)
-          } else {
-            this._offset = 0
-            this._performUpload()
-          }
-        })
-      })
-      .catch((err) => {
-        this._emitHttpError(req, undefined, 'tus: failed to create upload', err)
-      })
   }
 
   /**
@@ -695,93 +686,94 @@ export class BaseUpload {
    *
    * @api private
    */
-  private _resumeUpload(): void {
-    ;('_resumeUpload')
+  private async _resumeUpload(): Promise<void> {
     if (this.url == null) {
       this._emitError(new Error('tus: Expected url to be set'))
       return
     }
     const req = this._openRequest('HEAD', this.url)
-    const promise = this._sendRequest(req)
 
-    promise
-      .then((res) => {
-        const status = res.getStatus()
-        if (!inStatusCategory(status, 200)) {
-          // If the upload is locked (indicated by the 423 Locked status code), we
-          // emit an error instead of directly starting a new upload. This way the
-          // retry logic can catch the error and will retry the upload. An upload
-          // is usually locked for a short period of time and will be available
-          // afterwards.
-          if (status === 423) {
-            this._emitHttpError(req, res, 'tus: upload is currently locked; retry later')
-            return
-          }
+    try {
+      const res = await this._sendRequest(req)
 
-          if (inStatusCategory(status, 400)) {
-            // Remove stored fingerprint and corresponding endpoint,
-            // on client errors since the file can not be found
-            this._removeFromUrlStorage()
-          }
-
-          if (!this.options.endpoint) {
-            // Don't attempt to create a new upload if no endpoint is provided.
-            this._emitHttpError(
-              req,
-              res,
-              'tus: unable to resume upload (new upload cannot be created without an endpoint)',
-            )
-            return
-          }
-
-          // Try to create a new upload
-          this.url = null
-          this._createUpload()
+      const status = res.getStatus()
+      if (!inStatusCategory(status, 200)) {
+        // If the upload is locked (indicated by the 423 Locked status code), we
+        // emit an error instead of directly starting a new upload. This way the
+        // retry logic can catch the error and will retry the upload. An upload
+        // is usually locked for a short period of time and will be available
+        // afterwards.
+        if (status === 423) {
+          this._emitHttpError(req, res, 'tus: upload is currently locked; retry later')
           return
         }
 
-        const offsetStr = res.getHeader('Upload-Offset')
-        if (offsetStr === undefined) {
-          this._emitHttpError(req, res, 'tus: missing Upload-Offset header')
-          return
-        }
-        const offset = Number.parseInt(offsetStr, 10)
-        if (Number.isNaN(offset)) {
-          this._emitHttpError(req, res, 'tus: invalid Upload-Offset header')
-          return
+        if (inStatusCategory(status, 400)) {
+          // Remove stored fingerprint and corresponding endpoint,
+          // on client errors since the file can not be found
+          await this._removeFromUrlStorage()
         }
 
-        // @ts-expect-error parseInt also handles undefined as we want it to
-        const length = Number.parseInt(res.getHeader('Upload-Length'), 10)
-        if (
-          Number.isNaN(length) &&
-          !this.options.uploadLengthDeferred &&
-          this.options.protocol === PROTOCOL_TUS_V1
-        ) {
-          this._emitHttpError(req, res, 'tus: invalid or missing length value')
+        if (!this.options.endpoint) {
+          // Don't attempt to create a new upload if no endpoint is provided.
+          this._emitHttpError(
+            req,
+            res,
+            'tus: unable to resume upload (new upload cannot be created without an endpoint)',
+          )
           return
         }
 
-        if (typeof this.options.onUploadUrlAvailable === 'function') {
-          this.options.onUploadUrlAvailable()
-        }
+        // Try to create a new upload
+        this.url = null
+        await this._createUpload()
+      }
 
-        this._saveUploadInUrlStorage().then(() => {
-          // Upload has already been completed and we do not need to send additional
-          // data to the server
-          if (offset === length) {
-            this._emitProgress(length, length)
-            this._emitSuccess(res)
-            return
-          }
+      const offsetStr = res.getHeader('Upload-Offset')
+      if (offsetStr === undefined) {
+        this._emitHttpError(req, res, 'tus: missing Upload-Offset header')
+        return
+      }
+      const offset = Number.parseInt(offsetStr, 10)
+      if (Number.isNaN(offset)) {
+        this._emitHttpError(req, res, 'tus: invalid Upload-Offset header')
+        return
+      }
 
-          this._offset = offset
-          this._performUpload()
-        })
-      })
-      .catch((err) => {
-        this._emitHttpError(req, undefined, 'tus: failed to resume upload', err)
-      })
+      // @ts-expect-error parseInt also handles undefined as we want it to
+      const length = Number.parseInt(res.getHeader('Upload-Length'), 10)
+      if (
+        Number.isNaN(length) &&
+        !this.options.uploadLengthDeferred &&
+        this.options.protocol === PROTOCOL_TUS_V1
+      ) {
+        this._emitHttpError(req, res, 'tus: invalid or missing length value')
+        return
+      }
+
+      if (typeof this.options.onUploadUrlAvailable === 'function') {
+        await this.options.onUploadUrlAvailable()
+      }
+
+      await this._saveUploadInUrlStorage()
+
+      // Upload has already been completed and we do not need to send additional
+      // data to the server
+      if (offset === length) {
+        this._emitProgress(length, length)
+        await this._emitSuccess(res)
+        return
+      }
+
+      this._offset = offset
+      await this._performUpload()
+    } catch (err) {
+      if (!(err instanceof Error)) {
+        throw new Error(`tus: value thrown that is not an error: ${err}`)
+      }
+
+      this._emitHttpError(req, undefined, 'tus: failed to resume upload', err)
+    }
   }
 
   /**
@@ -791,7 +783,7 @@ export class BaseUpload {
    *
    * @api private
    */
-  private _performUpload(): void {
+  private async _performUpload(): Promise<void> {
     // If the upload has been aborted, we will not send the next PATCH request.
     // This is important if the abort method was called during a callback, such
     // as onChunkComplete or onProgress.
@@ -816,34 +808,33 @@ export class BaseUpload {
     }
 
     req.setHeader('Upload-Offset', `${this._offset}`)
-    const promise = this._addChunkToRequest(req)
 
-    promise
-      .then((res) => {
-        if (res === undefined) {
-          this._emitError(new Error('tus: Expected res to be defined'))
-          return
-        }
-        if (!inStatusCategory(res.getStatus(), 200)) {
-          this._emitHttpError(req, res, 'tus: unexpected response while uploading chunk')
-          return
-        }
+    try {
+      const res = await this._addChunkToRequest(req)
 
-        this._handleUploadResponse(req, res)
-      })
-      .catch((err) => {
-        // Don't emit an error if the upload was aborted manually
-        if (this._aborted) {
-          return
-        }
+      if (!inStatusCategory(res.getStatus(), 200)) {
+        this._emitHttpError(req, res, 'tus: unexpected response while uploading chunk')
+        return
+      }
 
-        this._emitHttpError(
-          req,
-          undefined,
-          `tus: failed to upload chunk at offset ${this._offset}`,
-          err,
-        )
-      })
+      await this._handleUploadResponse(req, res)
+    } catch (err) {
+      // Don't emit an error if the upload was aborted manually
+      if (this._aborted) {
+        return
+      }
+
+      if (!(err instanceof Error)) {
+        throw new Error(`tus: value thrown that is not an error: ${err}`)
+      }
+
+      this._emitHttpError(
+        req,
+        undefined,
+        `tus: failed to upload chunk at offset ${this._offset}`,
+        err,
+      )
+    }
   }
 
   /**
@@ -852,7 +843,7 @@ export class BaseUpload {
    *
    * @api private
    */
-  private _addChunkToRequest(req: HttpRequest): Promise<HttpResponse> {
+  private async _addChunkToRequest(req: HttpRequest): Promise<HttpResponse> {
     const start = this._offset
     let end = this._offset + this.options.chunkSize
 
@@ -878,45 +869,43 @@ export class BaseUpload {
       end = this._size
     }
 
+    // TODO: What happens if abort is called during slice?
     // @ts-expect-error _source is set here
-    return this._source.slice(start, end).then(({ value, size, done }) => {
-      const sizeOfValue = size ?? 0
+    const { value, size, done } = await this._source.slice(start, end)
+    const sizeOfValue = size ?? 0
 
-      // If the upload length is deferred, the upload size was not specified during
-      // upload creation. So, if the file reader is done reading, we know the total
-      // upload size and can tell the tus server.
-      if (this.options.uploadLengthDeferred && done) {
-        this._size = this._offset + sizeOfValue
-        req.setHeader('Upload-Length', `${this._size}`)
-      }
+    // If the upload length is deferred, the upload size was not specified during
+    // upload creation. So, if the file reader is done reading, we know the total
+    // upload size and can tell the tus server.
+    if (this.options.uploadLengthDeferred && done) {
+      this._size = this._offset + sizeOfValue
+      req.setHeader('Upload-Length', `${this._size}`)
+    }
 
-      // The specified uploadSize might not match the actual amount of data that a source
-      // provides. In these cases, we cannot successfully complete the upload, so we
-      // rather error out and let the user know. If not, tus-js-client will be stuck
-      // in a loop of repeating empty PATCH requests.
-      // See https://community.transloadit.com/t/how-to-abort-hanging-companion-uploads/16488/13
-      const newSize = this._offset + sizeOfValue
-      if (!this.options.uploadLengthDeferred && done && newSize !== this._size) {
-        return Promise.reject(
-          new Error(
-            `upload was configured with a size of ${this._size} bytes, but the source is done after ${newSize} bytes`,
-          ),
-        )
-      }
+    // The specified uploadSize might not match the actual amount of data that a source
+    // provides. In these cases, we cannot successfully complete the upload, so we
+    // rather error out and let the user know. If not, tus-js-client will be stuck
+    // in a loop of repeating empty PATCH requests.
+    // See https://community.transloadit.com/t/how-to-abort-hanging-companion-uploads/16488/13
+    const newSize = this._offset + sizeOfValue
+    if (!this.options.uploadLengthDeferred && done && newSize !== this._size) {
+      throw new Error(
+        `upload was configured with a size of ${this._size} bytes, but the source is done after ${newSize} bytes`,
+      )
+    }
 
-      if (value == null) {
-        return this._sendRequest(req)
-      }
+    if (value == null) {
+      return await this._sendRequest(req)
+    }
 
-      if (
-        this.options.protocol === PROTOCOL_IETF_DRAFT_03 ||
-        this.options.protocol === PROTOCOL_IETF_DRAFT_05
-      ) {
-        req.setHeader('Upload-Complete', done ? '?1' : '?0')
-      }
-      this._emitProgress(this._offset, this._size)
-      return this._sendRequest(req, value)
-    })
+    if (
+      this.options.protocol === PROTOCOL_IETF_DRAFT_03 ||
+      this.options.protocol === PROTOCOL_IETF_DRAFT_05
+    ) {
+      req.setHeader('Upload-Complete', done ? '?1' : '?0')
+    }
+    this._emitProgress(this._offset, this._size)
+    return await this._sendRequest(req, value)
   }
 
   /**
@@ -925,7 +914,7 @@ export class BaseUpload {
    *
    * @api private
    */
-  private _handleUploadResponse(req: HttpRequest, res: HttpResponse): void {
+  private async _handleUploadResponse(req: HttpRequest, res: HttpResponse): Promise<void> {
     // TODO: || '' is not very good.
     const offset = Number.parseInt(res.getHeader('Upload-Offset') || '', 10)
     if (Number.isNaN(offset)) {
@@ -940,12 +929,12 @@ export class BaseUpload {
 
     if (offset === this._size) {
       // Yay, finally done :)
-      this._emitSuccess(res)
+      await this._emitSuccess(res)
       if (this._source) this._source.close()
       return
     }
 
-    this._performUpload()
+    await this._performUpload()
   }
 
   /**
@@ -964,12 +953,10 @@ export class BaseUpload {
    *
    * @api private
    */
-  private _removeFromUrlStorage(): void {
+  private async _removeFromUrlStorage(): Promise<void> {
     if (!this._urlStorageKey) return
 
-    this.options.urlStorage.removeUpload(this._urlStorageKey).catch((err) => {
-      this._emitError(err)
-    })
+    await this.options.urlStorage.removeUpload(this._urlStorageKey)
     this._urlStorageKey = undefined
   }
 
@@ -978,7 +965,7 @@ export class BaseUpload {
    *
    * @api private
    */
-  private _saveUploadInUrlStorage(): Promise<void> {
+  private async _saveUploadInUrlStorage(): Promise<void> {
     // We do not store the upload URL
     // - if it was disabled in the option, or
     // - if no fingerprint was calculated for the input (i.e. a stream), or
@@ -988,7 +975,7 @@ export class BaseUpload {
       !this._fingerprint ||
       this._urlStorageKey != null
     ) {
-      return Promise.resolve()
+      return
     }
 
     const storedUpload: PreviousUpload = {
@@ -1007,12 +994,9 @@ export class BaseUpload {
       storedUpload.uploadUrl = this.url
     }
 
-    return this.options.urlStorage
-      .addUpload(this._fingerprint, storedUpload)
-      .then((urlStorageKey) => {
-        // TODO: Emit a waring if urlStorageKey is undefined. Should we even allow this?
-        this._urlStorageKey = urlStorageKey
-      })
+    const urlStorageKey = await this.options.urlStorage.addUpload(this._fingerprint, storedUpload)
+    // TODO: Emit a waring if urlStorageKey is undefined. Should we even allow this?
+    this._urlStorageKey = urlStorageKey
   }
 
   /**
@@ -1198,6 +1182,12 @@ function splitSizeIntoParts(totalSize: number, partCount: number): Part[] {
   return parts
 }
 
+async function wait(delay: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, delay)
+  })
+}
+
 /**
  * Use the Termination extension to delete an upload from the server by sending a DELETE
  * request to the specified upload URL. This is only possible if the server supports the
@@ -1208,43 +1198,47 @@ function splitSizeIntoParts(totalSize: number, partCount: number): Part[] {
  * @param {object} options Optional options for influencing HTTP requests.
  * @return {Promise} The Promise will be resolved/rejected when the requests finish.
  */
-export function terminate(url: string, options: UploadOptions): Promise<void> {
+export async function terminate(url: string, options: UploadOptions): Promise<void> {
   const req = openRequest('DELETE', url, options)
 
-  return sendRequest(req, undefined, options)
-    .then((res) => {
-      // A 204 response indicates a successfull request
-      if (res.getStatus() === 204) {
-        return
-      }
+  try {
+    const res = await sendRequest(req, undefined, options)
+    // A 204 response indicates a successfull request
+    if (res.getStatus() === 204) {
+      return
+    }
 
-      throw new DetailedError(
-        'tus: unexpected response while terminating upload',
-        undefined,
-        req,
-        res,
-      )
-    })
-    .catch((err) => {
-      if (!(err instanceof DetailedError)) {
-        err = new DetailedError('tus: failed to terminate upload', err, req)
-      }
+    throw new DetailedError(
+      'tus: unexpected response while terminating upload',
+      undefined,
+      req,
+      res,
+    )
+  } catch (err) {
+    if (!(err instanceof Error)) {
+      throw new Error(`tus: value thrown that is not an error: ${err}`)
+    }
 
-      if (!shouldRetry(err, 0, options)) {
-        throw err
-      }
+    const detailedErr =
+      err instanceof DetailedError
+        ? err
+        : new DetailedError('tus: failed to terminate upload', err, req)
 
-      // Instead of keeping track of the retry attempts, we remove the first element from the delays
-      // array. If the array is empty, all retry attempts are used up and we will bubble up the error.
-      // We recursively call the terminate function will removing elements from the retryDelays array.
-      const delay = options.retryDelays[0]
-      const remainingDelays = options.retryDelays.slice(1)
-      const newOptions = {
-        ...options,
-        retryDelays: remainingDelays,
-      }
-      return new Promise((resolve) => {
-        setTimeout(resolve, delay)
-      }).then(() => terminate(url, newOptions))
-    })
+    if (!shouldRetry(detailedErr, 0, options)) {
+      throw detailedErr
+    }
+
+    // Instead of keeping track of the retry attempts, we remove the first element from the delays
+    // array. If the array is empty, all retry attempts are used up and we will bubble up the error.
+    // We recursively call the terminate function will removing elements from the retryDelays array.
+    const delay = options.retryDelays[0]
+    const remainingDelays = options.retryDelays.slice(1)
+    const newOptions = {
+      ...options,
+      retryDelays: remainingDelays,
+    }
+
+    await wait(delay)
+    await terminate(url, newOptions)
+  }
 }
