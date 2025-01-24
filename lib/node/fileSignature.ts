@@ -1,6 +1,6 @@
-import { createHash } from 'crypto'
-import * as fs from 'fs'
-import * as path from 'path'
+import { createHash } from 'node:crypto'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 import type { UploadInput, UploadOptions } from '../options.js'
 
 export function fingerprint(file: UploadInput, options: UploadOptions): Promise<string | null> {

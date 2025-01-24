@@ -1,5 +1,5 @@
-import path, { relative } from 'path'
-import { mkdir, readFile, writeFile } from 'fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import path, { relative } from 'node:path'
 
 /**
  * Each entry is a "subpackage" that users should be able to import as `tus-js-client/${entry}`.

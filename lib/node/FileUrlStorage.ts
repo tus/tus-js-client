@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import { lock } from 'proper-lockfile'
 import type { PreviousUpload, UrlStorage } from '../options.js'
 

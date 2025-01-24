@@ -19,7 +19,7 @@
         "noParameterAssign": "off",
         "noDefaultExport": "error",
         "useCollapsedElseIf": "error",
-        "useNodejsImportProtocol": "off"
+        "useNodejsImportProtocol": "error"
       },
       "suspicious": {
         "noExplicitAny": "error",

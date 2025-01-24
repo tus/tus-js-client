@@ -1,4 +1,4 @@
-import { createReadStream } from 'fs'
+import { createReadStream } from 'node:fs'
 import { Upload } from 'tus-js-client'
 
 const path = `${import.meta.dirname}/../../README.md`
