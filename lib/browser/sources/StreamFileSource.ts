@@ -44,38 +44,36 @@ export class StreamFileSource implements FileSource {
     this._reader = reader
   }
 
-  slice(start: number, end: number): Promise<SliceResult> {
+  async slice(start: number, end: number): Promise<SliceResult> {
     if (start < this._bufferOffset) {
-      return Promise.reject(new Error("Requested data is before the reader's current offset"))
+      throw new Error("Requested data is before the reader's current offset")
     }
 
-    return this._readUntilEnoughDataOrDone(start, end)
+    return await this._readUntilEnoughDataOrDone(start, end)
   }
 
-  private _readUntilEnoughDataOrDone(start: number, end: number): Promise<SliceResult> {
+  private async _readUntilEnoughDataOrDone(start: number, end: number): Promise<SliceResult> {
     const hasEnoughData = end <= this._bufferOffset + len(this._buffer)
     if (this._done || hasEnoughData) {
       const value = this._getDataFromBuffer(start, end)
       if (value === null) {
-        return Promise.resolve({ value: null, size: null, done: true })
+        return { value: null, size: null, done: true }
       }
 
       const size = value instanceof Blob ? value.size : value.length
       const done = this._done
-      return Promise.resolve({ value, size, done })
+      return { value, size, done }
     }
 
-    return this._reader.read().then(({ value, done }) => {
-      if (done) {
-        this._done = true
-      } else if (this._buffer === undefined) {
-        this._buffer = value
-      } else {
-        this._buffer = concat(this._buffer, value)
-      }
-
-      return this._readUntilEnoughDataOrDone(start, end)
-    })
+    const { value: value_2, done: done_1 } = await this._reader.read()
+    if (done_1) {
+      this._done = true
+    } else if (this._buffer === undefined) {
+      this._buffer = value_2
+    } else {
+      this._buffer = concat(this._buffer, value_2)
+    }
+    return await this._readUntilEnoughDataOrDone(start, end)
   }
 
   private _getDataFromBuffer(start: number, end: number) {

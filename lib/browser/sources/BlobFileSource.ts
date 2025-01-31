@@ -21,14 +21,14 @@ export class BlobFileSource implements FileSource {
       const size = value.length
       const done = end >= this.size
 
-      return Promise.resolve({ value, size, done })
+      return { value, size, done }
     }
 
     const value = this._file.slice(start, end)
     const size = value.size
     const done = end >= this.size
 
-    return Promise.resolve({ value, size, done })
+    return { value, size, done }
   }
 
   close() {

@@ -69,6 +69,7 @@ export class WebStorageUrlStorage implements UrlStorage {
       }
 
       try {
+        // TODO: Validate JSON
         const upload = JSON.parse(item)
         upload.urlStorageKey = key
 

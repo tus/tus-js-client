@@ -76,6 +76,7 @@ class Request implements HttpRequest {
         },
       }
 
+      // TODO: What to do here?
       // @ts-expect-error We still have to type `size` for `body`
       if (body?.size) {
         // @ts-expect-error We still have to type `size` for `body`

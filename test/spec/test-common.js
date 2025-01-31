@@ -934,7 +934,6 @@ describe('tus', () => {
       }
 
       spyOn(options, 'onShouldRetry').and.callThrough()
-      spyOn(Upload.prototype, '_emitError').and.callThrough()
 
       const upload = new Upload(file, options)
       upload.start()
@@ -1012,11 +1011,20 @@ describe('tus', () => {
       await options.onSuccess.toBeCalled
       expect(options.onSuccess).toHaveBeenCalled()
 
-      const [error1] = upload._emitError.calls.argsFor(0)
       expect(options.onShouldRetry).toHaveBeenCalled()
-      expect(options.onShouldRetry.calls.argsFor(0)).toEqual([error1, 0, upload.options])
-      const [error2] = upload._emitError.calls.argsFor(1)
-      expect(options.onShouldRetry.calls.argsFor(1)).toEqual([error2, 1, upload.options])
+      const args1 = options.onShouldRetry.calls.argsFor(0)
+      expect(args1[0].message).toEqual(
+        'tus: unexpected response while creating upload, originated from request (method: POST, url: http://tus.io/files/, response code: 500, response text: , request id: n/a)',
+      )
+      expect(args1[1]).toEqual(0)
+      expect(args1[2]).toEqual(upload.options)
+
+      const args2 = options.onShouldRetry.calls.argsFor(1)
+      expect(args2[0].message).toEqual(
+        'tus: unexpected response while uploading chunk, originated from request (method: PATCH, url: http://tus.io/files/foo, response code: 423, response text: , request id: n/a)',
+      )
+      expect(args2[1]).toEqual(1)
+      expect(args2[2]).toEqual(upload.options)
     })
 
     // This tests ensures that tus-js-client correctly aborts if the

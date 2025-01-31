@@ -35,26 +35,22 @@ export class BrowserFileReader implements FileReader {
     // TODO: Consider turning Blobs, Buffers, and Uint8Arrays into a single type.
     // Potentially handling it in the same way as in Node.js
     if (input instanceof Blob) {
-      return Promise.resolve(new BlobFileSource(input))
+      return new BlobFileSource(input)
     }
 
     if (isWebStream(input)) {
       chunkSize = Number(chunkSize)
       if (!Number.isFinite(chunkSize)) {
-        return Promise.reject(
-          new Error(
-            'cannot create source for stream without a finite value for the `chunkSize` option',
-          ),
+        throw new Error(
+          'cannot create source for stream without a finite value for the `chunkSize` option',
         )
       }
 
-      return Promise.resolve(new StreamFileSource(input))
+      return new StreamFileSource(input)
     }
 
-    return Promise.reject(
-      new Error(
-        'source object may only be an instance of File, Blob, or Reader in this environment',
-      ),
+    throw new Error(
+      'source object may only be an instance of File, Blob, or Reader in this environment',
     )
   }
 }
