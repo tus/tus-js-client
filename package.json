@@ -113,7 +113,7 @@
     "uglify-js": "^3.9.2"
   },
   "dependencies": {
-    "@types/node": "^20.12.12",
+    "@types/node": "^22.13.0",
     "buffer-from": "^1.1.2",
     "combine-errors": "^3.0.3",
     "is-stream": "^2.0.0",
