@@ -19,7 +19,12 @@ export function openFile(input: UploadInput, chunkSize: number): FileSource | nu
     return new ArrayBufferViewFileSource(input)
   }
 
-  if (input instanceof ArrayBuffer || input instanceof SharedArrayBuffer) {
+  // SharedArrayBuffer is not available in all browser context for security reasons.
+  // Hence we check if the constructor exists at all.
+  if (
+    input instanceof ArrayBuffer ||
+    (typeof SharedArrayBuffer !== 'undefined' && input instanceof SharedArrayBuffer)
+  ) {
     const view = new DataView(input)
     return new ArrayBufferViewFileSource(view)
   }
