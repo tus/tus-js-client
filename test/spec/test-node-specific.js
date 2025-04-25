@@ -4,6 +4,7 @@ import fs from 'node:fs'
 import http from 'node:http'
 import https from 'node:https'
 import stream from 'node:stream'
+import { text } from 'node:stream/consumers'
 import intoStream from 'into-stream'
 import temp from 'temp'
 import { Upload, canStoreURLs } from 'tus-js-client'
@@ -32,7 +33,7 @@ describe('tus', () => {
       await expectHelloWorldUpload(buffer, options)
     })
 
-    describe('uploading from a stream', () => {
+    describe('uploading from a Node.js stream', () => {
       it('should reject streams without specifying the size', async () => {
         const input = new stream.PassThrough()
         const options = {
@@ -141,12 +142,14 @@ describe('tus', () => {
       })
     })
 
-    describe('uploading from a fs.ReadStream', () => {
+    describe('uploading from a file on disk', () => {
       it('should accept fs.ReadStream', async () => {
         // Create a temporary file
         const path = temp.path()
-        fs.writeFileSync(path, 'hello world')
-        const file = fs.createReadStream(path)
+        fs.writeFileSync(path, 'XXXhello worldXXX')
+        const file1 = fs.createReadStream(path, { start: 3, end: 13 })
+        expect(await text(file1)).toBe('hello world') // ensure that tus-js-client uploads the same data as fs.createReadStream
+        const file2 = fs.createReadStream(path, { start: 3, end: 13 })
 
         const options = {
           httpStack: new TestHttpStack(),
@@ -154,7 +157,7 @@ describe('tus', () => {
           chunkSize: 7,
         }
 
-        await expectHelloWorldUpload(file, options)
+        await expectHelloWorldUpload(file2, options)
       })
 
       it('should support parallelUploads', async () => {
@@ -162,7 +165,7 @@ describe('tus', () => {
         // Create a temporary file
         const path = temp.path()
         fs.writeFileSync(path, 'hello world')
-        const file = fs.createReadStream(path)
+        const file = { path }
 
         const testStack = new TestHttpStack()
 
@@ -263,7 +266,7 @@ describe('tus', () => {
         // Create a temporary file
         const path = temp.path()
         fs.writeFileSync(path, 'hello world')
-        const file = fs.createReadStream(path)
+        const file = { path }
 
         const testStack = new TestHttpStack()
         const options = {
