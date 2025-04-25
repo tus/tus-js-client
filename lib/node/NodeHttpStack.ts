@@ -65,7 +65,7 @@ class Request implements HttpRequest {
 
   async send(body?: FileSliceTypes): Promise<HttpResponse> {
     if (body instanceof Blob) {
-      body = await body.bytes()
+      body = await body.arrayBuffer()
     }
 
     return new Promise((resolve, reject) => {
