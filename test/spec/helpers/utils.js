@@ -153,7 +153,15 @@ async function getBodySize(body) {
     return null
   }
 
-  if (body.size != null) {
+  if (
+    body instanceof ArrayBuffer ||
+    body instanceof SharedArrayBuffer ||
+    ArrayBuffer.isView(body)
+  ) {
+    return body.byteLength
+  }
+
+  if (body instanceof Blob) {
     return body.size
   }
 

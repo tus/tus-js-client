@@ -102,6 +102,14 @@ class Request implements HttpRequest {
         reject(err)
       })
 
+      if (body instanceof ArrayBuffer || body instanceof SharedArrayBuffer) {
+        body = new Uint8Array(body)
+      }
+
+      if (ArrayBuffer.isView(body) && !(body instanceof Uint8Array)) {
+        body = new Uint8Array(body.buffer, body.byteOffset, body.byteLength)
+      }
+
       if (body instanceof Readable) {
         // Readable stream are piped through a PassThrough instance, which
         // counts the number of bytes passed through. This is used, for example,

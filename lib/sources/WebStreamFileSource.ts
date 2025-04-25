@@ -1,6 +1,6 @@
-import type { FileSource, SliceResult } from '../../options.js'
+import type { FileSource, SliceResult, UploadInput } from '../options.js'
 
-function len(blobOrArray: StreamFileSource['_buffer']): number {
+function len(blobOrArray: WebStreamFileSource['_buffer']): number {
   if (blobOrArray === undefined) return 0
   if (blobOrArray instanceof Blob) return blobOrArray.size
   return blobOrArray.length
@@ -10,7 +10,7 @@ function len(blobOrArray: StreamFileSource['_buffer']): number {
   Typed arrays and blobs don't have a concat method.
   This function helps StreamSource accumulate data to reach chunkSize.
 */
-function concat<T extends StreamFileSource['_buffer']>(a: T, b: T): T {
+function concat<T extends WebStreamFileSource['_buffer']>(a: T, b: T): T {
   if (a instanceof Blob && b instanceof Blob) {
     return new Blob([a, b], { type: a.type }) as T
   }
@@ -23,8 +23,11 @@ function concat<T extends StreamFileSource['_buffer']>(a: T, b: T): T {
   throw new Error('Unknown data type')
 }
 
-export class StreamFileSource implements FileSource {
-  private _reader: Pick<ReadableStreamDefaultReader<StreamFileSource['_buffer']>, 'read'>
+/**
+ * WebStreamFileSource implements FileSource for Web Streams.
+ */
+export class WebStreamFileSource implements FileSource {
+  private _reader: Pick<ReadableStreamDefaultReader<WebStreamFileSource['_buffer']>, 'read'>
 
   private _buffer: Blob | Uint8Array | undefined
 
@@ -103,4 +106,10 @@ export class StreamFileSource implements FileSource {
     //@ts-expect-error cancel is not defined since we only pick `read`
     if (this._reader.cancel) this._reader.cancel()
   }
+}
+
+export function isWebStream(
+  input: UploadInput,
+): input is Pick<ReadableStreamDefaultReader, 'read'> {
+  return 'read' in input && typeof input.read === 'function'
 }
