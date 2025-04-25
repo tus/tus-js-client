@@ -9,6 +9,10 @@ import { WebStreamFileSource, isWebStream } from './sources/WebStreamFileSource.
  */
 export function openFile(input: UploadInput, chunkSize: number): FileSource | null {
   // File is a subtype of Blob, so we only check for Blob here.
+  // Note: We could turn Blobs into ArrayBuffers using `input.arrayBuffer()` and then
+  // pass it to the ArrayBufferFileSource. However, in browsers, a File instance can
+  // represent a file on disk. By keeping it a File instance and passing it to XHR/Fetch,
+  // we can avoid reading the entire file into memory.
   if (input instanceof Blob) {
     return new BlobFileSource(input)
   }
