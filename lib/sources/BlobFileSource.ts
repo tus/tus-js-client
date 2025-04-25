@@ -1,7 +1,10 @@
-import { isCordova } from '../../cordova/isCordova.js'
-import { readAsByteArray } from '../../cordova/readAsByteArray.js'
-import type { FileSource, SliceResult } from '../../options.js'
+import { isCordova } from '../cordova/isCordova.js'
+import { readAsByteArray } from '../cordova/readAsByteArray.js'
+import type { FileSource, SliceResult } from '../options.js'
 
+/**
+ * BlobFileSource implements FileSource for Blobs (and therefore also for File instances).
+ */
 export class BlobFileSource implements FileSource {
   private _file: Blob
 
@@ -13,6 +16,8 @@ export class BlobFileSource implements FileSource {
   }
 
   async slice(start: number, end: number): Promise<SliceResult> {
+    // TODO: This looks fishy. We should test how this actually works in Cordova
+    // and consider moving this into the lib/cordova/ directory.
     // In Apache Cordova applications, a File must be resolved using
     // FileReader instances, see
     // https://cordova.apache.org/docs/en/8.x/reference/cordova-plugin-file/index.html#read-a-file

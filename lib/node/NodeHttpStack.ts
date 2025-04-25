@@ -63,7 +63,11 @@ class Request implements HttpRequest {
     this._progressHandler = progressHandler
   }
 
-  send(body?: FileSliceTypes): Promise<HttpResponse> {
+  async send(body?: FileSliceTypes): Promise<HttpResponse> {
+    if (body instanceof Blob) {
+      body = await body.arrayBuffer()
+    }
+
     return new Promise((resolve, reject) => {
       const options = {
         ...parse(this._url),
@@ -101,6 +105,14 @@ class Request implements HttpRequest {
       req.on('error', (err) => {
         reject(err)
       })
+
+      if (body instanceof ArrayBuffer || body instanceof SharedArrayBuffer) {
+        body = new Uint8Array(body)
+      }
+
+      if (ArrayBuffer.isView(body) && !(body instanceof Uint8Array)) {
+        body = new Uint8Array(body.buffer, body.byteOffset, body.byteLength)
+      }
 
       if (body instanceof Readable) {
         // Readable stream are piped through a PassThrough instance, which

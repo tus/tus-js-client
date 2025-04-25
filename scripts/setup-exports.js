@@ -5,7 +5,7 @@ import path, { relative } from 'node:path'
  * Each entry is a "subpackage" that users should be able to import as `tus-js-client/${entry}`.
  */
 const EXPORTS = [
-  'node/sources/StreamFileSource',
+  'node/sources/NodeStreamFileSource',
   'node/FileUrlStorage',
   'node/NodeHttpStack',
   'browser/FetchHttpStack',

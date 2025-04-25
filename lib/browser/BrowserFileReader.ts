@@ -1,15 +1,13 @@
 import { isReactNativeFile, isReactNativePlatform } from '../reactnative/isReactNative.js'
 import { uriToBlob } from '../reactnative/uriToBlob.js'
 
+import {
+  openFile as openBaseFile,
+  supportedTypes as supportedBaseTypes,
+} from '../commonFileReader.js'
 import type { FileReader, FileSource, UploadInput } from '../options.js'
-import { BlobFileSource } from './sources/BlobFileSource.js'
-import { StreamFileSource } from './sources/StreamFileSource.js'
+import { BlobFileSource } from '../sources/BlobFileSource.js'
 
-function isWebStream(input: UploadInput): input is Pick<ReadableStreamDefaultReader, 'read'> {
-  return 'read' in input && typeof input.read === 'function'
-}
-
-// TODO: Make sure that we support ArrayBuffers, TypedArrays, DataViews and Blobs
 export class BrowserFileReader implements FileReader {
   async openFile(input: UploadInput, chunkSize: number): Promise<FileSource> {
     // In React Native, when user selects a file, instead of a File or Blob,
@@ -31,26 +29,11 @@ export class BrowserFileReader implements FileReader {
       }
     }
 
-    // File is a subtype of Blob, so we can check for Blob here.
-    // TODO: Consider turning Blobs, Buffers, and Uint8Arrays into a single type.
-    // Potentially handling it in the same way as in Node.js
-    if (input instanceof Blob) {
-      return new BlobFileSource(input)
-    }
-
-    if (isWebStream(input)) {
-      chunkSize = Number(chunkSize)
-      if (!Number.isFinite(chunkSize)) {
-        throw new Error(
-          'cannot create source for stream without a finite value for the `chunkSize` option',
-        )
-      }
-
-      return new StreamFileSource(input)
-    }
+    const fileSource = openBaseFile(input, chunkSize)
+    if (fileSource) return fileSource
 
     throw new Error(
-      'source object may only be an instance of File, Blob, or Reader in this environment',
+      `in this environment the source object may only be an instance of: ${supportedBaseTypes.join(', ')}`,
     )
   }
 }

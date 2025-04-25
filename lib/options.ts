@@ -20,14 +20,16 @@ export interface ReactNativeFile {
 
 export type UploadInput =
   // Blob, File, ReadableStreamDefaultReader are available in browsers and Node.js
-  | Blob
-  | File
+  | Blob // includes File
+  | ArrayBuffer
+  | SharedArrayBuffer
+  | ArrayBufferView // includes Node.js' Buffer
   // TODO: Should we keep the Pick<> here?
+  // TODO: Should we also accept ReadableStreamBYOBReader? What about ReadableStream?
   | Pick<ReadableStreamDefaultReader, 'read'>
   // Buffer, stream.Readable, fs.ReadStream are available in Node.js
-  | Buffer
-  | Readable
-  | ReadStream
+  | Readable // TODO: Replace this with our own interface based on https://github.com/DefinitelyTyped/DefinitelyTyped/blob/3634b01d50c10ce1afaae63e41d39e7da309d8e3/types/node/globals.d.ts#L399
+  | ReadStream // TODO: Replace this with { path: string, start: number?, end: number? }
   // ReactNativeFile is intended for React Native apps
   | ReactNativeFile
 
@@ -111,8 +113,7 @@ export type SliceResult =
   | {
       done: boolean
       // Platform-specific data type which must be usable by the HTTP stack as a body.
-      // TODO: Consider making this a Uint8Array (and optionally a web stream).
-      // This would make typing easier, but then we force file data to be read into memory.
+      // TODO: This shouldn't be unknown, but precise values.
       value: NonNullable<unknown>
       size: number
     }

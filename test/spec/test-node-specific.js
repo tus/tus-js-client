@@ -9,7 +9,7 @@ import temp from 'temp'
 import { Upload, canStoreURLs } from 'tus-js-client'
 import { FileUrlStorage } from 'tus-js-client/node/FileUrlStorage'
 import { NodeHttpStack } from 'tus-js-client/node/NodeHttpStack'
-import { StreamFileSource } from 'tus-js-client/node/sources/StreamFileSource'
+import { NodeStreamFileSource } from 'tus-js-client/node/sources/NodeStreamFileSource'
 import { assertUrlStorage } from './helpers/assertUrlStorage.js'
 import { TestHttpStack, waitableFunction } from './helpers/utils.js'
 
@@ -444,12 +444,12 @@ describe('tus', () => {
     })
   })
 
-  describe('#StreamFileSource', () => {
+  describe('#NodeStreamFileSource', () => {
     it('should slice at different ranges', async () => {
       const input = stream.Readable.from(Buffer.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), {
         objectMode: false,
       })
-      const source = new StreamFileSource(input)
+      const source = new NodeStreamFileSource(input)
 
       // Read all data from stream
       let ret = await source.slice(0, 10)
@@ -493,7 +493,7 @@ describe('tus', () => {
       // Null as an element in the array causes the stream to emit an error when trying
       // to read. This error should be passed to the caller.
       const input = stream.Readable.from([null])
-      const source = new StreamFileSource(input)
+      const source = new NodeStreamFileSource(input)
 
       const ret = source.slice(0, 10)
       await expectAsync(ret).toBeRejected({ code: 'ERR_STREAM_NULL_VALUES' })

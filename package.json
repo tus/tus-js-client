@@ -30,14 +30,14 @@
         }
       }
     },
-    "./node/sources/StreamFileSource": {
+    "./node/sources/NodeStreamFileSource": {
       "import": {
-        "types": "./lib.esm/node/sources/StreamFileSource.d.ts",
-        "default": "./lib.esm/node/sources/StreamFileSource.js"
+        "types": "./lib.esm/node/sources/NodeStreamFileSource.d.ts",
+        "default": "./lib.esm/node/sources/NodeStreamFileSource.js"
       },
       "require": {
-        "types": "./lib.cjs/node/sources/StreamFileSource.d.ts",
-        "default": "./lib.cjs/node/sources/StreamFileSource.js"
+        "types": "./lib.cjs/node/sources/NodeStreamFileSource.d.ts",
+        "default": "./lib.cjs/node/sources/NodeStreamFileSource.js"
       }
     },
     "./node/FileUrlStorage": {

@@ -19,8 +19,14 @@ const defaultOptions = {
   fingerprint,
 }
 
-export type FileTypes = Buffer | Readable | ReadStream
-export type FileSliceTypes = Buffer | ReadStream
+export type FileTypes =
+  | ArrayBuffer
+  | SharedArrayBuffer
+  | ArrayBufferView
+  | Blob
+  | Readable
+  | ReadStream
+export type FileSliceTypes = ArrayBuffer | SharedArrayBuffer | ArrayBufferView | Blob | ReadStream
 
 class Upload extends BaseUpload {
   constructor(file: UploadInput, options: Partial<UploadOptions> = {}) {

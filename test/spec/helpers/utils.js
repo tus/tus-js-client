@@ -1,14 +1,7 @@
-const isBrowser = typeof window !== 'undefined'
-const isNode = !isBrowser
-
 /**
- * Obtain a platform specific buffer object, which can be
- * handled by tus-js-client.
+ * Helper function to create a Blob from a string.
  */
 export function getBlob(str) {
-  if (isNode) {
-    return Buffer.from(str)
-  }
   return new Blob(str.split(''))
 }
 
@@ -153,7 +146,15 @@ async function getBodySize(body) {
     return null
   }
 
-  if (body.size != null) {
+  if (
+    body instanceof ArrayBuffer ||
+    (typeof SharedArrayBuffer !== 'undefined' && body instanceof SharedArrayBuffer) ||
+    ArrayBuffer.isView(body)
+  ) {
+    return body.byteLength
+  }
+
+  if (body instanceof Blob) {
     return body.size
   }
 

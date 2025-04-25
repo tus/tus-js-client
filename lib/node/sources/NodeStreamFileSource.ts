@@ -46,7 +46,7 @@ async function readChunk(stream: Readable, size: number) {
  */
 // TODO: Consider converting the node stream in a web stream. Then we can share the stream
 // handling between browsers and node.js.
-export class StreamFileSource implements FileSource {
+export class NodeStreamFileSource implements FileSource {
   // Setting the size to null indicates that we have no calculation available
   // for how much data this stream will emit requiring the user to specify
   // it manually (see the `uploadSize` option).
