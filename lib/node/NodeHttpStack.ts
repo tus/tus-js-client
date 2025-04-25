@@ -63,7 +63,11 @@ class Request implements HttpRequest {
     this._progressHandler = progressHandler
   }
 
-  send(body?: FileSliceTypes): Promise<HttpResponse> {
+  async send(body?: FileSliceTypes): Promise<HttpResponse> {
+    if (body instanceof Blob) {
+      body = await body.arrayBuffer()
+    }
+
     return new Promise((resolve, reject) => {
       const options = {
         ...parse(this._url),

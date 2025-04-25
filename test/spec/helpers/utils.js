@@ -1,14 +1,7 @@
-const isBrowser = typeof window !== 'undefined'
-const isNode = !isBrowser
-
 /**
- * Obtain a platform specific buffer object, which can be
- * handled by tus-js-client.
+ * Helper function to create a Blob from a string.
  */
 export function getBlob(str) {
-  if (isNode) {
-    return Buffer.from(str)
-  }
   return new Blob(str.split(''))
 }
 
