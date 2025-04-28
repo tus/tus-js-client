@@ -1,50 +1,47 @@
 import { type ReadStream, createReadStream, promises as fsPromises } from 'node:fs'
-import type { FileSource } from '../../options.js'
+import type { FileSource, PathReference } from '../../options.js'
 
-export async function getFileSource(stream: ReadStream): Promise<NodeFileSource> {
-  const path = stream.path.toString()
+export async function getFileSourceFromPath(file: PathReference): Promise<PathFileSource> {
+  const path = file.path.toString()
   const { size } = await fsPromises.stat(path)
 
-  // The fs.ReadStream might be configured to not read from the beginning
+  // The path reference might be configured to not read from the beginning
   // to the end, but instead from a slice in between. In this case, we consider
   // that range to indicate the actual uploadable size.
-  // This happens, for example, if a fs.ReadStream is used with the `parallelUploads`
-  // option. There, the ReadStream is sliced into multiple ReadStreams to fit the number
-  // of number of `parallelUploads`. Each ReadStream has `start` and `end` set.
+  // This happens, for example, if a path reference is used with the `parallelUploads`
+  // option. There, the path reference is sliced into multiple fs.ReadStreams to fit the
+  // number of `parallelUploads`. Each ReadStream has `start` and `end` set.
   // Note: `stream.end` is Infinity by default, so we need the check `isFinite`.
   // Note: `stream.end` is treated inclusively, so we need to add 1 here.
   // See the comment in slice() for more context.
-  // @ts-expect-error The types don't know start yet.
-  const start = stream.start ?? 0
-  // @ts-expect-error The types don't know end yet.
-  const end = Number.isFinite(stream.end) ? stream.end + 1 : size
+  const start = file.start ?? 0
+  const end = file.end != null && Number.isFinite(file.end) ? file.end + 1 : size
   const actualSize = end - start
 
-  return new NodeFileSource(stream, path, actualSize)
+  return new PathFileSource(file, path, actualSize)
 }
 
-export class NodeFileSource implements FileSource {
+export class PathFileSource implements FileSource {
   size: number
 
-  private _stream: ReadStream
+  private _file: PathReference
 
   private _path: string
 
-  constructor(stream: ReadStream, path: string, size: number) {
-    this._stream = stream
+  constructor(file: PathReference, path: string, size: number) {
+    this._file = file
     this._path = path
     this.size = size
   }
 
   slice(start: number, end: number) {
-    // The fs.ReadStream might be configured to not read from the beginning,
+    // The path reference might be configured to not read from the beginning,
     // but instead start at a different offset. The start value from the caller
     // does not include the offset, so we need to add this offset to our range later.
-    // This happens, for example, if a fs.ReadStream is used with the `parallelUploads`
-    // option. First, the ReadStream is sliced into multiple ReadStreams to fit the number
-    // of number of `parallelUploads`. Each ReadStream has `start` set.
-    // @ts-expect-error The types don't know start yet.
-    const offset = this._stream.start ?? 0
+    // This happens, for example, if a path reference is used with the `parallelUploads`
+    // option. First, the path reference is sliced into multiple fs.ReadStreams to fit the
+    // number of `parallelUploads`. Each ReadStream has `start` set.
+    const offset = this._file.start ?? 0
 
     const stream: ReadStream & { size?: number } = createReadStream(this._path, {
       start: offset + start,
@@ -62,6 +59,7 @@ export class NodeFileSource implements FileSource {
   }
 
   close() {
-    this._stream.destroy()
+    // TODO: Ensure that the read streams are closed
+    // TODO: Previously, the passed fs.ReadStream was closed here. Should we keep this behavior? If not, this is a breaking change.
   }
 }

@@ -1,8 +1,7 @@
-import { createReadStream } from 'node:fs'
 import { Upload } from 'tus-js-client'
 
 const path = `${import.meta.dirname}/../../README.md`
-const file = createReadStream(path)
+const file = { path }
 
 const options = {
   endpoint: 'https://tusd.tusdemo.net/files/',

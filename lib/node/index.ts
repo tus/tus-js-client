@@ -3,7 +3,7 @@ import type { Readable } from 'node:stream'
 import { DetailedError } from '../DetailedError.js'
 import { NoopUrlStorage } from '../NoopUrlStorage.js'
 import { enableDebugLog } from '../logger.js'
-import type { UploadInput, UploadOptions } from '../options.js'
+import type { PathReference, UploadInput, UploadOptions } from '../options.js'
 import { BaseUpload, defaultOptions as baseDefaultOptions, terminate } from '../upload.js'
 
 import { canStoreURLs } from './FileUrlStorage.js'
@@ -25,7 +25,8 @@ export type FileTypes =
   | ArrayBufferView
   | Blob
   | Readable
-  | ReadStream
+  | PathReference
+
 export type FileSliceTypes = ArrayBuffer | SharedArrayBuffer | ArrayBufferView | Blob | ReadStream
 
 class Upload extends BaseUpload {
