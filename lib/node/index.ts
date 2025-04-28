@@ -36,3 +36,4 @@ const isSupported = true
 // Note: The exported interface must be the same as in lib/browser/index.ts.
 // Any changes should be reflected in both files.
 export { Upload, defaultOptions, isSupported, canStoreURLs, enableDebugLog, DetailedError }
+export type * from '../options.js'
