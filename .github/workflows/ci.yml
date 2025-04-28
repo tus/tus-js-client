@@ -16,12 +16,12 @@ jobs:
             suite: 'browserstack'
           - desc: 'Puppeteer'
             suite: 'puppeteer'
-          - desc: 'Node.js 18'
-            suite: 'node'
-            node: 18
           - desc: 'Node.js 20'
             suite: 'node'
             node: 20
+          - desc: 'Node.js 22'
+            suite: 'node'
+            node: 22
     name: Tests (${{ matrix.desc }})
     steps:
       - name: Check out sources
@@ -66,7 +66,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node || 20 }}
+          node-version: ${{ matrix.node || 22 }}
       - name: Install dependencies
         uses: sergioramos/yarn-actions/install@v6
         with:
