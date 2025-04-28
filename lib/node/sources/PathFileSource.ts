@@ -35,6 +35,8 @@ export class PathFileSource implements FileSource {
   }
 
   slice(start: number, end: number) {
+    // TODO: Does this create multiple file descriptors? Can we reduce this by
+    // using a file handle instead?
     // The path reference might be configured to not read from the beginning,
     // but instead start at a different offset. The start value from the caller
     // does not include the offset, so we need to add this offset to our range later.

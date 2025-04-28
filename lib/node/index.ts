@@ -1,9 +1,7 @@
-import type { ReadStream } from 'node:fs'
-import type { Readable } from 'node:stream'
 import { DetailedError } from '../DetailedError.js'
 import { NoopUrlStorage } from '../NoopUrlStorage.js'
 import { enableDebugLog } from '../logger.js'
-import type { PathReference, UploadInput, UploadOptions } from '../options.js'
+import type { UploadInput, UploadOptions } from '../options.js'
 import { BaseUpload, defaultOptions as baseDefaultOptions, terminate } from '../upload.js'
 
 import { canStoreURLs } from './FileUrlStorage.js'
@@ -18,16 +16,6 @@ const defaultOptions = {
   urlStorage: new NoopUrlStorage(),
   fingerprint,
 }
-
-export type FileTypes =
-  | ArrayBuffer
-  | SharedArrayBuffer
-  | ArrayBufferView
-  | Blob
-  | Readable
-  | PathReference
-
-export type FileSliceTypes = ArrayBuffer | SharedArrayBuffer | ArrayBufferView | Blob | ReadStream
 
 class Upload extends BaseUpload {
   constructor(file: UploadInput, options: Partial<UploadOptions> = {}) {

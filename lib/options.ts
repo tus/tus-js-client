@@ -1,4 +1,4 @@
-import type { Readable } from 'node:stream'
+import type { Readable as NodeReadableStream } from 'node:stream'
 import type { DetailedError } from './DetailedError.js'
 
 export const PROTOCOL_TUS_V1 = 'tus-v1'
@@ -36,17 +36,17 @@ export interface PathReference {
 }
 
 export type UploadInput =
-  // Blob, File, ReadableStreamDefaultReader are available in browsers and Node.js
+  // available in all environments
   | Blob // includes File
   | ArrayBuffer
   | SharedArrayBuffer
   | ArrayBufferView // includes Node.js' Buffer
-  // TODO: Should we keep the Pick<> here?
-  // TODO: Should we also accept ReadableStreamBYOBReader? What about ReadableStream?
+  // TODO: We should accept a ReadableStream instead of a reader
   | Pick<ReadableStreamDefaultReader, 'read'>
-  // Buffer, stream.Readable, fs.ReadStream are available in Node.js
-  | Readable // TODO: Replace this with our own interface based on https://github.com/DefinitelyTyped/DefinitelyTyped/blob/3634b01d50c10ce1afaae63e41d39e7da309d8e3/types/node/globals.d.ts#L399
+  // available in Node.js
+  | NodeReadableStream
   | PathReference
+  // available in React Native
   | ReactNativeFile
 
 export interface UploadOptions {
@@ -120,6 +120,9 @@ export interface FileSource {
   close(): void
 }
 
+// TODO: Allow Web Streams' ReadableStream as well
+export type SliceType = Blob | ArrayBufferView | NodeReadableStream
+
 export type SliceResult =
   | {
       done: true
@@ -128,9 +131,11 @@ export type SliceResult =
     }
   | {
       done: boolean
-      // Platform-specific data type which must be usable by the HTTP stack as a body.
-      // TODO: This shouldn't be unknown, but precise values.
-      value: NonNullable<unknown>
+      value: NonNullable<SliceType>
+      // TODO: How should sizes be handled? If we want to allow `slice()` to return
+      // streams without buffering them before, this cannot return a known size.
+      // Should size be returned by the HTTP stack based on the number of uploaded bytes?
+      // It would make sense since it likely already counts progress.
       size: number
     }
 
@@ -150,7 +155,7 @@ export interface HttpRequest {
 
   setProgressHandler(handler: HttpProgressHandler): void
   // TODO: Should this be something like { value: unknown, size: number }?
-  send(body?: unknown): Promise<HttpResponse>
+  send(body?: SliceType): Promise<HttpResponse>
   abort(): Promise<void>
 
   // Return an environment specific object, e.g. the XMLHttpRequest object in browsers.
