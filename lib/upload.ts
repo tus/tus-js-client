@@ -12,6 +12,7 @@ import {
   PROTOCOL_IETF_DRAFT_05,
   PROTOCOL_TUS_V1,
   type PreviousUpload,
+  type SliceType,
   type UploadInput,
   type UploadOptions,
 } from './options.js'
@@ -981,7 +982,7 @@ export class BaseUpload {
    *
    * @api private
    */
-  _sendRequest(req: HttpRequest, body?: unknown): Promise<HttpResponse> {
+  _sendRequest(req: HttpRequest, body?: SliceType): Promise<HttpResponse> {
     return sendRequest(req, body, this.options)
   }
 }
@@ -1041,7 +1042,7 @@ function openRequest(method: string, url: string, options: UploadOptions): HttpR
  */
 async function sendRequest(
   req: HttpRequest,
-  body: unknown | undefined,
+  body: SliceType | undefined,
   options: UploadOptions,
 ): Promise<HttpResponse> {
   if (typeof options.onBeforeRequest === 'function') {

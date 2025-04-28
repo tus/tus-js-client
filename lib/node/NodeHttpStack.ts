@@ -4,9 +4,15 @@ import * as http from 'node:http'
 import * as https from 'node:https'
 import { Readable, Transform, type Writable } from 'node:stream'
 import { parse } from 'node:url'
+import isStream from 'is-stream'
 import throttle from 'lodash.throttle'
-import type { HttpProgressHandler, HttpRequest, HttpResponse, HttpStack } from '../options.js'
-import type { FileSliceTypes } from './index.js'
+import type {
+  HttpProgressHandler,
+  HttpRequest,
+  HttpResponse,
+  HttpStack,
+  SliceType,
+} from '../options.js'
 
 export class NodeHttpStack implements HttpStack {
   private _requestOptions: http.RequestOptions
@@ -63,9 +69,25 @@ class Request implements HttpRequest {
     this._progressHandler = progressHandler
   }
 
-  async send(body?: FileSliceTypes): Promise<HttpResponse> {
-    if (body instanceof Blob) {
-      body = await body.arrayBuffer()
+  async send(body?: SliceType): Promise<HttpResponse> {
+    let nodeBody: Readable | Uint8Array | undefined
+    if (body != null) {
+      if (body instanceof Blob) {
+        nodeBody = new Uint8Array(await body.arrayBuffer())
+      } else if (body instanceof Uint8Array) {
+        nodeBody = body
+      } else if (ArrayBuffer.isView(body)) {
+        // Any typed array other than Uint8Array or a DataVew
+        nodeBody = new Uint8Array(body.buffer, body.byteOffset, body.byteLength)
+      } else if (isStream.readable(body)) {
+        nodeBody = body
+      } else {
+        throw new Error(
+          // @ts-expect-error According to the types, this case cannot happen. But
+          // we still want to try logging the constructor if this code is reached by accident.
+          `Unsupported HTTP request body type in Node.js HTTP stack: ${typeof body} (constructor: ${body?.constructor?.name})`,
+        )
+      }
     }
 
     return new Promise((resolve, reject) => {
@@ -106,27 +128,19 @@ class Request implements HttpRequest {
         reject(err)
       })
 
-      if (body instanceof ArrayBuffer || body instanceof SharedArrayBuffer) {
-        body = new Uint8Array(body)
-      }
-
-      if (ArrayBuffer.isView(body) && !(body instanceof Uint8Array)) {
-        body = new Uint8Array(body.buffer, body.byteOffset, body.byteLength)
-      }
-
-      if (body instanceof Readable) {
+      if (nodeBody instanceof Readable) {
         // Readable stream are piped through a PassThrough instance, which
         // counts the number of bytes passed through. This is used, for example,
         // when an fs.ReadStream is provided to tus-js-client.
-        body.pipe(new ProgressEmitter(this._progressHandler)).pipe(req)
-      } else if (body instanceof Uint8Array) {
+        nodeBody.pipe(new ProgressEmitter(this._progressHandler)).pipe(req)
+      } else if (nodeBody instanceof Uint8Array) {
         // For Buffers and Uint8Arrays (in Node.js all buffers are instances of Uint8Array),
         // we write chunks of the buffer to the stream and use that to track the progress.
         // This is used when either a Buffer or a normal readable stream is provided
         // to tus-js-client.
-        writeBufferToStreamWithProgress(req, body, this._progressHandler)
+        writeBufferToStreamWithProgress(req, nodeBody, this._progressHandler)
       } else {
-        req.end(body)
+        req.end()
       }
     })
   }

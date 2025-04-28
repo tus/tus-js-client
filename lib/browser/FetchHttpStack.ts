@@ -1,4 +1,11 @@
-import type { HttpProgressHandler, HttpRequest, HttpResponse, HttpStack } from '../options.js'
+import { readable as isNodeReadableStream } from 'is-stream'
+import type {
+  HttpProgressHandler,
+  HttpRequest,
+  HttpResponse,
+  HttpStack,
+  SliceType,
+} from '../options.js'
 
 // TODO: Add tests for this.
 export class FetchHttpStack implements HttpStack {
@@ -42,7 +49,13 @@ class FetchRequest implements HttpRequest {
     // The Fetch API currently does not expose a way to track upload progress.
   }
 
-  async send(body?: Blob): Promise<FetchResponse> {
+  async send(body?: SliceType): Promise<FetchResponse> {
+    if (isNodeReadableStream(body)) {
+      throw new Error(
+        'Using a Node.js readable stream as HTTP request body is not supported using the Fetch API HTTP stack.',
+      )
+    }
+
     const res = await fetch(this._url, {
       method: this._method,
       headers: this._headers,

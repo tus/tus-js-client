@@ -1,4 +1,11 @@
-import type { HttpProgressHandler, HttpRequest, HttpResponse, HttpStack } from '../options.js'
+import { readable as isNodeReadableStream } from 'is-stream'
+import type {
+  HttpProgressHandler,
+  HttpRequest,
+  HttpResponse,
+  HttpStack,
+  SliceType,
+} from '../options.js'
 
 export class XHRHttpStack implements HttpStack {
   createRequest(method: string, url: string): HttpRequest {
@@ -58,8 +65,13 @@ class XHRRequest implements HttpRequest {
     }
   }
 
-  // TODO: Validate the type of body
-  send(body?: Blob): Promise<HttpResponse> {
+  send(body?: SliceType): Promise<HttpResponse> {
+    if (isNodeReadableStream(body)) {
+      throw new Error(
+        'Using a Node.js readable stream as HTTP request body is not supported using the XMLHttpRequest HTTP stack.',
+      )
+    }
+
     return new Promise((resolve, reject) => {
       this._xhr.onload = () => {
         resolve(new XHRResponse(this._xhr))
