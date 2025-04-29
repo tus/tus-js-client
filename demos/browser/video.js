@@ -34,7 +34,6 @@ function startUpload(file) {
   }
 
   const options = {
-    resume: false,
     endpoint,
     chunkSize,
     retryDelays: [0, 1000, 3000, 5000],
@@ -87,52 +86,44 @@ function startUpload(file) {
 function startStreamUpload() {
   navigator.mediaDevices
     .getUserMedia({ video: true })
-    .then((stream) => {
-      const mr = new MediaRecorder(stream)
-      const chunks = []
-      let done = false
-      let onDataAvailable = null
-
-      mr.onerror = onError
-      mr.onstop = () => {
-        done = true
-        if (onDataAvailable) onDataAvailable(readableRecorder.read())
-      }
-      mr.ondataavailable = (event) => {
-        chunks.push(event.data)
-        if (onDataAvailable) {
-          onDataAvailable(readableRecorder.read())
-          onDataAvailable = undefined
-        }
-      }
-
-      mr.start(1000)
-
-      const readableRecorder = {
-        read() {
-          if (done && chunks.length === 0) {
-            return Promise.resolve({ done: true })
-          }
-
-          if (chunks.length > 0) {
-            return Promise.resolve({ value: chunks.shift(), done: false })
-          }
-
-          return new Promise((resolve) => {
-            onDataAvailable = resolve
-          })
-        },
-      }
-
-      startUpload(readableRecorder)
+    .then((mediaStream) => {
+      const mr = new MediaRecorder(mediaStream)
 
       stopRecording = () => {
-        for (const t of stream.getTracks()) {
+        for (const t of mediaStream.getTracks()) {
           t.stop()
         }
         mr.stop()
         stopRecording = null
       }
+
+      const readableStream = new ReadableStream({
+        start(controller) {
+          mr.ondataavailable = (event) => {
+            event.data.bytes().then((buffer) => {
+              controller.enqueue(buffer)
+            })
+          }
+
+          mr.onstop = () => {
+            controller.close()
+          }
+
+          mr.onerror = (event) => {
+            controller.error(event.error)
+          }
+
+          mr.start(1000)
+        },
+        pull(_controller) {
+          // Nothing to do here. MediaRecorder let's us know when there is new data available.
+        },
+        cancel() {
+          mr.stop()
+        },
+      })
+
+      startUpload(readableStream)
     })
     .catch(onError)
 }

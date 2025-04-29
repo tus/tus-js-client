@@ -1,4 +1,4 @@
-import type { FileSource, SliceResult, UploadInput } from '../options.js'
+import type { FileSource, SliceResult } from '../options.js'
 
 function len(blobOrArray: WebStreamFileSource['_buffer']): number {
   if (blobOrArray === undefined) return 0
@@ -26,8 +26,9 @@ function concat<T extends WebStreamFileSource['_buffer']>(a: T, b: T): T {
 /**
  * WebStreamFileSource implements FileSource for Web Streams.
  */
+// TODO: Can we share code with NodeStreamFileSource?
 export class WebStreamFileSource implements FileSource {
-  private _reader: Pick<ReadableStreamDefaultReader<WebStreamFileSource['_buffer']>, 'read'>
+  private _reader: ReadableStreamDefaultReader<Uint8Array>
 
   private _buffer: Blob | Uint8Array | undefined
 
@@ -43,8 +44,14 @@ export class WebStreamFileSource implements FileSource {
   // it manually (see the `uploadSize` option).
   size = null
 
-  constructor(reader: Pick<ReadableStreamDefaultReader, 'read'>) {
-    this._reader = reader
+  constructor(stream: ReadableStream) {
+    if (stream.locked) {
+      throw new Error(
+        'Readable stream is already locked to reader. tus-js-client cannot obtain a new reader.',
+      )
+    }
+
+    this._reader = stream.getReader()
   }
 
   async slice(start: number, end: number): Promise<SliceResult> {
@@ -102,14 +109,6 @@ export class WebStreamFileSource implements FileSource {
   }
 
   close() {
-    // TODO: We should not call cancel
-    //@ts-expect-error cancel is not defined since we only pick `read`
-    if (this._reader.cancel) this._reader.cancel()
+    this._reader.cancel()
   }
-}
-
-export function isWebStream(
-  input: UploadInput,
-): input is Pick<ReadableStreamDefaultReader, 'read'> {
-  return 'read' in input && typeof input.read === 'function'
 }
