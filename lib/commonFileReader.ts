@@ -1,7 +1,7 @@
 import type { FileSource, UploadInput } from './options.js'
 import { ArrayBufferViewFileSource } from './sources/ArrayBufferViewFileSource.js'
 import { BlobFileSource } from './sources/BlobFileSource.js'
-import { WebStreamFileSource, isWebStream } from './sources/WebStreamFileSource.js'
+import { WebStreamFileSource } from './sources/WebStreamFileSource.js'
 
 /**
  * openFile provides FileSources for input types that have to be handled in all environments,
@@ -33,7 +33,7 @@ export function openFile(input: UploadInput, chunkSize: number): FileSource | nu
     return new ArrayBufferViewFileSource(view)
   }
 
-  if (isWebStream(input)) {
+  if (input instanceof ReadableStream) {
     chunkSize = Number(chunkSize)
     if (!Number.isFinite(chunkSize)) {
       throw new Error(
@@ -53,5 +53,5 @@ export const supportedTypes = [
   'ArrayBuffer',
   'SharedArrayBuffer',
   'ArrayBufferView',
-  'ReadableStreamDefaultReader (Web Streams)',
+  'ReadableStream (Web Streams)',
 ]

@@ -41,8 +41,7 @@ export type UploadInput =
   | ArrayBuffer
   | SharedArrayBuffer
   | ArrayBufferView // includes Node.js' Buffer
-  // TODO: We should accept a ReadableStream instead of a reader
-  | Pick<ReadableStreamDefaultReader, 'read'>
+  | ReadableStream // Web Streams
   // available in Node.js
   | NodeReadableStream
   | PathReference

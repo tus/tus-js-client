@@ -3,25 +3,20 @@ import { TestHttpStack, waitableFunction } from './helpers/utils.js'
 
 describe('tus', () => {
   describe('#Upload', () => {
-    describe('uploading data from a Web Stream reader', () => {
+    describe('uploading data from a Web Stream ReadableStream', () => {
       function makeReader(content, readSize = content.length) {
-        const reader = {
-          value: new TextEncoder().encode(content),
-          read() {
-            let value
-            let done = false
-            if (this.value.length > 0) {
-              value = this.value.subarray(0, readSize)
-              this.value = this.value.subarray(readSize)
+        let remainingData = new TextEncoder().encode(content)
+        return new ReadableStream({
+          pull(controller) {
+            if (remainingData.length > 0) {
+              const chunk = remainingData.subarray(0, readSize)
+              remainingData = remainingData.subarray(readSize)
+              controller.enqueue(chunk)
             } else {
-              done = true
+              controller.close()
             }
-            return Promise.resolve({ value, done })
           },
-          cancel: waitableFunction('cancel'),
-        }
-
-        return reader
+        })
       }
 
       async function assertReaderUpload({ readSize, chunkSize }) {

@@ -224,7 +224,7 @@ A boolean indicating if the fingerprint in the URL storage will be removed once 
 
 _Default value:_ `false`
 
-A boolean indicating whether a stream of data is going to be uploaded as a [`Reader`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader). If so, the total size isn't available when we begin uploading, so we use the Tus [`Upload-Defer-Length`](https://tus.io/protocols/resumable-upload.html#upload-defer-length) header. Once the reader is finished, the total file size is sent to the tus server in order to complete the upload. Furthermore, `chunkSize` must be set to a finite number. See the `/demos/browser/video.js` file for an example of how to use this property.
+A boolean indicating whether a stream of data is going to be uploaded as a [`Reader`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream). If so, the total size isn't available when we begin uploading, so we use the Tus [`Upload-Defer-Length`](https://tus.io/protocols/resumable-upload.html#upload-defer-length) header. Once the reader is finished, the total file size is sent to the tus server in order to complete the upload. Furthermore, `chunkSize` must be set to a finite number. See the `/demos/browser/video.js` file for an example of how to use this property.
 
 #### uploadDataDuringCreation
 
@@ -442,7 +442,7 @@ The constructor for the `tus.Upload` class. The upload will not be started autom
 
 Depending on the platform, the `file` argument must be an instance of the following types:
 
-- inside browser: `File`, `Blob`, or [`Reader`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader)
+- inside browser: `File`, `Blob`, or [`Reader`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream)
 - inside Node.js: `Buffer` or `Readable` stream
 - inside Cordova: `File` object from a `FileEntry` (see [demo](/demos/cordova/www/js/index.js))
 - inside React Native: Object with uri property: `{ uri: 'file:///...', ... }` (see [installation notes](/docs/installation.md#react-native-support) and [demo](/demos/reactnative/App.js))
