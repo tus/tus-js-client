@@ -413,6 +413,57 @@ describe('tus', () => {
           'tus: failed to upload chunk at offset 0, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)',
         )
       })
+
+      it('should upload data correctly when using a non zero starting offset', async () => {
+        const reader = makeReader('hello world', 1)
+
+        const testStack = new TestHttpStack()
+        const options = {
+          httpStack: testStack,
+          uploadUrl: 'http://tus.io/uploads/fileid',
+          retryDelays: [],
+          chunkSize: 6,
+          uploadLengthDeferred: true,
+          onSuccess: waitableFunction('onSuccess'),
+        }
+
+        const upload = new Upload(reader, options)
+        upload.start()
+
+        let req = await testStack.nextRequest()
+        expect(req.url).toBe('http://tus.io/uploads/fileid')
+        expect(req.method).toBe('HEAD')
+        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+
+        // Respond with a non zero offset to test that the stream that is created
+        // for the reader returns the correct data and ignores the data in the stream
+        // before the offset.
+        req.respondWith({
+          status: 200,
+          responseHeaders: {
+            'Upload-Offset': '6',
+          },
+        })
+
+        req = await testStack.nextRequest()
+        expect(req.url).toBe('http://tus.io/uploads/fileid')
+        expect(req.method).toBe('PATCH')
+        expect(req.requestHeaders['Upload-Length']).toBe('11')
+        expect(req.requestHeaders['Upload-Offset']).toBe('6')
+        expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
+        expect(req.body.length).toBe(5)
+        const bodyText = new TextDecoder().decode(req.body)
+        expect(bodyText).toBe('world')
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            'Upload-Offset': '11',
+          },
+        })
+
+        await options.onSuccess.toBeCalled
+      })
     })
   })
 })

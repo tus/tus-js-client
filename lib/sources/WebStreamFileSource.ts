@@ -75,13 +75,23 @@ export class WebStreamFileSource implements FileSource {
       return { value, size, done }
     }
 
-    const { value: value_2, done: done_1 } = await this._reader.read()
-    if (done_1) {
+    const { value, done } = await this._reader.read()
+    if (done) {
       this._done = true
-    } else if (this._buffer === undefined) {
-      this._buffer = value_2
     } else {
-      this._buffer = concat(this._buffer, value_2)
+      const chunkSize = len(value)
+
+      // If all of the chunk occurs before 'start' then drop it and clear the buffer.
+      // This greatly improves performance when reading from a stream we haven't started processing yet and 'start' is near the end of the file.
+      // Rather than buffering all of the unused data in memory just to only read a chunk near the end, rather immidiately drop data which will never be read.
+      if (this._bufferOffset + len(this._buffer) + chunkSize < start) {
+        this._buffer = undefined
+        this._bufferOffset += chunkSize
+      } else if (this._buffer === undefined) {
+        this._buffer = value
+      } else {
+        this._buffer = concat(this._buffer, value)
+      }
     }
     return await this._readUntilEnoughDataOrDone(start, end)
   }
