@@ -1,0 +1,94 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 100,
+    "attributePosition": "auto"
+  },
+  "organizeImports": {
+    "enabled": true
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "style": {
+        "noParameterAssign": "off",
+        "noDefaultExport": "error",
+        "useCollapsedElseIf": "error",
+        "useNodejsImportProtocol": "error"
+      },
+      "suspicious": {
+        "noExplicitAny": "error",
+        "useAwait": "error"
+      },
+      "correctness": {
+        "noNewSymbol": "error",
+        "noUndeclaredVariables": "error",
+        "noUnusedVariables": "error",
+        "noUnusedImports": "error"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "jsxQuoteStyle": "double",
+      "quoteProperties": "asNeeded",
+      "trailingCommas": "all",
+      "semicolons": "asNeeded",
+      "arrowParentheses": "always",
+      "bracketSpacing": true,
+      "bracketSameLine": false,
+      "quoteStyle": "single",
+      "attributePosition": "auto"
+    }
+  },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "overrides": [
+    {
+      "include": ["lib/node/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": ["__filename", "__dirname", "exports", "module", "require"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "include": ["test/**"],
+      "javascript": {
+        "globals": [
+          "jasmine",
+          "describe",
+          "expect",
+          "expectAsync",
+          "beforeEach",
+          "afterEach",
+          "it",
+          "spyOn"
+        ]
+      }
+    },
+    {
+      "include": ["demos/browser/**", "demos/cordova/**"],
+      "javascript": { "globals": ["tus", "Camera"] }
+    },
+    {
+      "include": ["tsconfig*.json"],
+      "json": { "parser": { "allowComments": true } }
+    }
+  ]
+}

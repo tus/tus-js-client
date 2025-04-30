@@ -6,9 +6,8 @@ on:
       - opened
       - synchronize
 jobs:
-  content:
-    if: "!contains(github.event.pull_request.title, 'WIP: ')"
-    runs-on: ubuntu-20.04
+  tests:
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -17,15 +16,13 @@ jobs:
             suite: 'browserstack'
           - desc: 'Puppeteer'
             suite: 'puppeteer'
-          - desc: 'Types'
-            suite: 'types'
-          - desc: 'Node.js 18'
-            suite: 'node'
-            node: 18
           - desc: 'Node.js 20'
             suite: 'node'
             node: 20
-    name: ${{ matrix.desc }}
+          - desc: 'Node.js 22'
+            suite: 'node'
+            node: 22
+    name: Tests (${{ matrix.desc }})
     steps:
       - name: Check out sources
         uses: actions/checkout@v4
@@ -56,6 +53,33 @@ jobs:
         env:
           BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
           BROWSERSTACK_KEY: ${{ secrets.BROWSERSTACK_KEY }}
+  lint:
+    name: Linter
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Git Clean
+        run: git clean -fxd --exclude=node_modules/
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node || 22 }}
+      - name: Install dependencies
+        uses: sergioramos/yarn-actions/install@v6
+        with:
+          frozen-lockfile: true
+      - name: Build
+        uses: sergioramos/yarn-actions/run@v6
+        with:
+          script: build
+      - name: Lint
+        uses: sergioramos/yarn-actions/run@v6
+        with:
+          script: lint
+
 # @TODO: port this Travis CI automation to GHA one day:
 # deploy:
 #   provider: npm

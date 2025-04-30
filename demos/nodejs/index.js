@@ -1,12 +1,7 @@
-/* eslint-disable no-console */
+import { Upload } from 'tus-js-client'
 
-'use strict'
-
-const fs = require('fs')
-const tus = require('../..')
-
-const path = `${__dirname}/../../README.md`
-const file = fs.createReadStream(path)
+const path = `${import.meta.dirname}/../../README.md`
+const file = { path }
 
 const options = {
   endpoint: 'https://tusd.tusdemo.net/files/',
@@ -28,5 +23,5 @@ const options = {
   },
 }
 
-const upload = new tus.Upload(file, options)
+const upload = new Upload(file, options)
 upload.start()

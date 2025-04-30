@@ -1,8 +1,6 @@
-'use strict'
-
-const assertUrlStorage = require('./helpers/assertUrlStorage')
-const { TestHttpStack, waitableFunction, wait } = require('./helpers/utils')
-const tus = require('../..')
+import { Upload, defaultOptions } from 'tus-js-client'
+import { assertUrlStorage } from './helpers/assertUrlStorage.js'
+import { TestHttpStack, wait, waitableFunction } from './helpers/utils.js'
 
 describe('tus', () => {
   beforeEach(() => {
@@ -29,7 +27,7 @@ describe('tus', () => {
       spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
       spyOn(options, 'onProgress')
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
 
       const previousUploads = await upload.findPreviousUploads()
       expect(previousUploads).toEqual([
@@ -52,8 +50,8 @@ describe('tus', () => {
       req.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Length': 11,
-          'Upload-Offset': 3,
+          'Upload-Length': '11',
+          'Upload-Offset': '3',
         },
       })
 
@@ -61,14 +59,14 @@ describe('tus', () => {
       expect(req.url).toBe('http://tus.io/uploads/resuming')
       expect(req.method).toBe('PATCH')
       expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-      expect(req.requestHeaders['Upload-Offset']).toBe(3)
+      expect(req.requestHeaders['Upload-Offset']).toBe('3')
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-      expect(req.body.size).toBe(11 - 3)
+      expect(req.bodySize).toBe(11 - 3)
 
       req.respondWith({
         status: 204,
         responseHeaders: {
-          'Upload-Offset': 11,
+          'Upload-Offset': '11',
         },
       })
 
@@ -89,7 +87,7 @@ describe('tus', () => {
         spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
         options.onSuccess = waitableFunction('onSuccess')
 
-        const upload = new tus.Upload(file, options)
+        const upload = new Upload(file, options)
         upload.start()
 
         expect(options.fingerprint).toHaveBeenCalled()
@@ -117,7 +115,7 @@ describe('tus', () => {
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 11,
+            'Upload-Offset': '11',
           },
         })
 
@@ -166,7 +164,7 @@ describe('tus', () => {
         }
         spyOn(options2, 'fingerprint').and.resolveTo('fingerprinted')
 
-        const upload = new tus.Upload(file, options2)
+        const upload = new Upload(file, options2)
         upload.start()
 
         expect(options2.fingerprint).toHaveBeenCalled()
@@ -179,8 +177,8 @@ describe('tus', () => {
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Length': 11,
-            'Upload-Offset': 3,
+            'Upload-Length': '11',
+            'Upload-Offset': '3',
           },
         })
 
@@ -198,14 +196,14 @@ describe('tus', () => {
         expect(req.url).toBe('http://tus.io/uploads/storedUrl')
         expect(req.method).toBe('PATCH')
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Offset']).toBe(3)
+        expect(req.requestHeaders['Upload-Offset']).toBe('3')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-        expect(req.body.size).toBe(11 - 3)
+        expect(req.bodySize).toBe(11 - 3)
 
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 11,
+            'Upload-Offset': '11',
           },
         })
 
@@ -226,7 +224,7 @@ describe('tus', () => {
       }
       spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
 
-      const upload = new tus.Upload(file, options)
+      const upload = new Upload(file, options)
 
       upload.resumeFromPreviousUpload({
         uploadUrl: 'http://tus.io/uploads/resuming',
@@ -248,469 +246,12 @@ describe('tus', () => {
       expect(localStorage.getItem('tus::fingerprinted::1337')).toBe(null)
     })
 
-    describe('uploading data from a Reader', () => {
-      function makeReader(content, readSize = content.length) {
-        const reader = {
-          value: content.split(''),
-          read() {
-            let value
-            let done = false
-            if (this.value.length > 0) {
-              value = this.value.slice(0, readSize)
-              this.value = this.value.slice(readSize)
-            } else {
-              done = true
-            }
-            return Promise.resolve({ value, done })
-          },
-          cancel: waitableFunction('cancel'),
-        }
-
-        return reader
-      }
-
-      async function assertReaderUpload({ readSize, chunkSize }) {
-        const reader = makeReader('hello world', readSize)
-
-        const testStack = new TestHttpStack()
-        const options = {
-          httpStack: testStack,
-          endpoint: 'http://tus.io/uploads',
-          chunkSize,
-          onProgress: waitableFunction('onProgress'),
-          onSuccess: waitableFunction('onSuccess'),
-          fingerprint() {},
-          uploadLengthDeferred: true,
-        }
-        spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
-
-        const upload = new tus.Upload(reader, options)
-        upload.start()
-
-        expect(options.fingerprint).toHaveBeenCalledWith(reader, upload.options)
-
-        let req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/uploads')
-        expect(req.method).toBe('POST')
-        expect(req.requestHeaders['Upload-Length']).toBe(undefined)
-        expect(req.requestHeaders['Upload-Defer-Length']).toBe(1)
-
-        req.respondWith({
-          status: 201,
-          responseHeaders: {
-            Location: 'http://tus.io/uploads/blargh',
-          },
-        })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/uploads/blargh')
-        expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Upload-Offset']).toBe(0)
-        expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-        expect(req.body.length).toBe(11)
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 11,
-          },
-        })
-
-        await options.onProgress.toBeCalled
-        expect(options.onProgress).toHaveBeenCalledWith(11, null)
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/uploads/blargh')
-        expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Upload-Offset']).toBe(11)
-        expect(req.requestHeaders['Upload-Length']).toBe(11)
-        expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-        expect(req.body).toBe(null)
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 11,
-          },
-        })
-
-        await options.onSuccess.toBeCalled
-        expect(upload.url).toBe('http://tus.io/uploads/blargh')
-        expect(options.onProgress).toHaveBeenCalledWith(11, 11)
-      }
-
-      it('should upload data', async () => {
-        await assertReaderUpload({ chunkSize: 100, readSize: 100 })
-      })
-
-      it('should read multiple times from the reader', async () => {
-        await assertReaderUpload({ chunkSize: 100, readSize: 6 })
-      })
-
-      it('should use multiple PATCH requests', async () => {
-        const reader = makeReader('hello world', 1)
-
-        const testStack = new TestHttpStack()
-        const options = {
-          httpStack: testStack,
-          endpoint: 'http://tus.io/uploads',
-          chunkSize: 6,
-          onProgress: waitableFunction('onProgress'),
-          onSuccess: waitableFunction('onSuccess'),
-          fingerprint() {},
-          uploadLengthDeferred: true,
-        }
-        spyOn(options, 'fingerprint').and.resolveTo('fingerprinted')
-
-        const upload = new tus.Upload(reader, options)
-        upload.start()
-
-        expect(options.fingerprint).toHaveBeenCalledWith(reader, upload.options)
-
-        let req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/uploads')
-        expect(req.method).toBe('POST')
-        expect(req.requestHeaders['Upload-Length']).toBe(undefined)
-        expect(req.requestHeaders['Upload-Defer-Length']).toBe(1)
-
-        req.respondWith({
-          status: 201,
-          responseHeaders: {
-            Location: 'http://tus.io/uploads/blargh',
-          },
-        })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/uploads/blargh')
-        expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Upload-Offset']).toBe(0)
-        expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-        expect(req.body.length).toBe(6)
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 6,
-          },
-        })
-
-        await options.onProgress.toBeCalled
-        expect(options.onProgress).toHaveBeenCalledWith(6, null)
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/uploads/blargh')
-        expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Offset']).toBe(6)
-        expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-        expect(req.body.length).toBe(5)
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 11,
-          },
-        })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/uploads/blargh')
-        expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Upload-Offset']).toBe(11)
-        expect(req.requestHeaders['Upload-Length']).toBe(11)
-        expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-        expect(req.body).toBe(null)
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 11,
-          },
-        })
-
-        await options.onSuccess.toBeCalled
-        expect(upload.url).toBe('http://tus.io/uploads/blargh')
-        expect(options.onProgress).toHaveBeenCalledWith(11, 11)
-      })
-
-      it('should retry the POST request', async () => {
-        const reader = makeReader('hello world', 1)
-
-        const testStack = new TestHttpStack()
-        const options = {
-          httpStack: testStack,
-          endpoint: 'http://tus.io/files/',
-          chunkSize: 11,
-          retryDelays: [10, 10, 10],
-          onSuccess: waitableFunction('onSuccess'),
-          uploadLengthDeferred: true,
-        }
-
-        const upload = new tus.Upload(reader, options)
-        upload.start()
-
-        let req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/files/')
-        expect(req.method).toBe('POST')
-
-        req.respondWith({
-          status: 500,
-        })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/files/')
-        expect(req.method).toBe('POST')
-
-        req.respondWith({
-          status: 201,
-          responseHeaders: {
-            Location: '/files/foo',
-          },
-        })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/files/foo')
-        expect(req.method).toBe('PATCH')
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 11,
-          },
-        })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/files/foo')
-        expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Upload-Length']).toBe(11)
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 11,
-          },
-        })
-
-        await options.onSuccess.toBeCalled
-      })
-
-      it('should retry the first PATCH request', async () => {
-        const reader = makeReader('hello world', 1)
-
-        const testStack = new TestHttpStack()
-        const options = {
-          httpStack: testStack,
-          endpoint: 'http://tus.io/files/',
-          chunkSize: 11,
-          retryDelays: [10, 10, 10],
-          onSuccess: waitableFunction('onSuccess'),
-          uploadLengthDeferred: true,
-        }
-
-        const upload = new tus.Upload(reader, options)
-        upload.start()
-
-        let req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/files/')
-        expect(req.method).toBe('POST')
-
-        req.respondWith({
-          status: 201,
-          responseHeaders: {
-            Location: '/files/foo',
-          },
-        })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/files/foo')
-        expect(req.method).toBe('PATCH')
-
-        req.respondWith({
-          status: 500,
-        })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/files/foo')
-        expect(req.method).toBe('HEAD')
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 0,
-          },
-        })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/files/foo')
-        expect(req.method).toBe('PATCH')
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 11,
-          },
-        })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/files/foo')
-        expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Upload-Length']).toBe(11)
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 11,
-          },
-        })
-
-        await options.onSuccess.toBeCalled
-      })
-
-      it('should retry following PATCH requests', async () => {
-        const reader = makeReader('hello world there!')
-
-        const testStack = new TestHttpStack()
-        const options = {
-          httpStack: testStack,
-          endpoint: 'http://tus.io/files/',
-          chunkSize: 6,
-          retryDelays: [10, 10, 10],
-          onSuccess() {},
-          uploadLengthDeferred: true,
-        }
-
-        const upload = new tus.Upload(reader, options)
-        upload.start()
-
-        let req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/files/')
-        expect(req.method).toBe('POST')
-
-        req.respondWith({
-          status: 201,
-          responseHeaders: {
-            Location: '/files/foo',
-          },
-        })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/files/foo')
-        expect(req.method).toBe('PATCH')
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 6,
-          },
-        })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/files/foo')
-        expect(req.method).toBe('PATCH')
-
-        req.respondWith({
-          status: 500,
-        })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/files/foo')
-        expect(req.method).toBe('HEAD')
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 6,
-          },
-        })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/files/foo')
-        expect(req.method).toBe('PATCH')
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 12,
-          },
-        })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/files/foo')
-        expect(req.method).toBe('PATCH')
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 18,
-          },
-        })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/files/foo')
-        expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Upload-Length']).toBe(18)
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 18,
-          },
-        })
-
-        await options.onSuccess.toBeCalled
-      })
-
-      it('should throw an error if the source provides less data than uploadSize', async () => {
-        const reader = makeReader('hello world')
-
-        const testStack = new TestHttpStack()
-        const options = {
-          httpStack: testStack,
-          uploadSize: 100,
-          chunkSize: 100,
-          endpoint: 'http://tus.io/uploads',
-          retryDelays: [],
-          onError: waitableFunction('onError'),
-        }
-
-        const upload = new tus.Upload(reader, options)
-        upload.start()
-        let req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/uploads')
-        expect(req.method).toBe('POST')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            Location: 'http://tus.io/uploads/foo',
-          },
-        })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('http://tus.io/uploads/foo')
-        expect(req.method).toBe('PATCH')
-
-        req.respondWith({
-          status: 204,
-          responseHeaders: {
-            'Upload-Offset': 11,
-          },
-        })
-
-        const err = await options.onError.toBeCalled
-
-        expect(err.message).toBe(
-          'tus: failed to upload chunk at offset 11, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)',
-        )
-      })
-    })
-
     describe('resolving of URIs', () => {
       // Disable these tests for IE 10 and 11 because it's not possible to overwrite
       // the navigator.product property.
       const isIE = navigator.userAgent.indexOf('Trident/') > 0
       if (isIE) {
-        console.log('Skipping tests for React Native in Internet Explorer') // eslint-disable-line no-console
+        console.log('Skipping tests for React Native in Internet Explorer')
         return
       }
 
@@ -744,7 +285,7 @@ describe('tus', () => {
           onSuccess: waitableFunction('onSuccess'),
         }
 
-        const upload = new tus.Upload(file, options)
+        const upload = new Upload(file, options)
         upload.start()
 
         // Wait a short interval to make sure that the XHR has been sent.
@@ -758,8 +299,8 @@ describe('tus', () => {
         req.respondWith({
           status: 200,
           responseHeaders: {
-            'Upload-Length': 11,
-            'Upload-Offset': 3,
+            'Upload-Length': '11',
+            'Upload-Offset': '3',
           },
           response: new Blob('hello world'.split('')),
         })
@@ -767,7 +308,7 @@ describe('tus', () => {
         req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads')
         expect(req.method).toBe('POST')
-        expect(req.requestHeaders['Upload-Length']).toBe(11)
+        expect(req.requestHeaders['Upload-Length']).toBe('11')
 
         req.respondWith({
           status: 201,
@@ -780,14 +321,14 @@ describe('tus', () => {
         expect(req.url).toBe('http://tus.io/uploads/blargh')
         expect(req.method).toBe('PATCH')
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Offset']).toBe(0)
+        expect(req.requestHeaders['Upload-Offset']).toBe('0')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-        expect(req.body.size).toBe(11)
+        expect(req.bodySize).toBe(11)
 
         req.respondWith({
           status: 204,
           responseHeaders: {
-            'Upload-Offset': 11,
+            'Upload-Offset': '11',
           },
         })
 
@@ -804,7 +345,7 @@ describe('tus', () => {
           onError: waitableFunction('onError'),
         }
 
-        const upload = new tus.Upload(file, options)
+        const upload = new Upload(file, options)
         upload.start()
 
         // Wait a short interval to make sure that the XHR has been sent.
@@ -829,7 +370,7 @@ describe('tus', () => {
 
   describe('#LocalStorageUrlStorage', () => {
     it('should allow storing and retrieving uploads', async () => {
-      await assertUrlStorage(tus.defaultOptions.urlStorage)
+      await assertUrlStorage(defaultOptions.urlStorage)
     })
   })
 })

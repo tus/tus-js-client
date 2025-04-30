@@ -1,8 +1,6 @@
-/* eslint-disable no-console */
-
-import React from 'react'
-import { StyleSheet, Text, View, Button, Image, Linking } from 'react-native'
 import { ImagePicker, Permissions } from 'expo'
+import React from 'react'
+import { Button, Image, Linking, StyleSheet, Text, View } from 'react-native'
 import * as tus from 'tus-js-client'
 
 const styles = StyleSheet.create({
@@ -19,6 +17,7 @@ const styles = StyleSheet.create({
   },
 })
 
+// biome-ignore lint/style/noDefaultExport: React Native uses default exports
 export default class App extends React.Component {
   constructor() {
     super()

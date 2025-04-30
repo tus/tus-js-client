@@ -63,6 +63,16 @@ _Default value:_ `null`
 
 An optional function called when the upload finished successfully.
 
+The argument will be an object with information about the completed upload. Its `lastResponse` property contains lastly received [`HttpResponse`](#httpstack), which can be used to retrieve additional data from the server. Be aware that this is usually a response to a `PATCH` request, but it might also be a response for a `POST` request (if `uploadDataDuringCreation` is enabled or an empty file is uploaded) or `HEAD` request (if an already completed upload is resumed).
+
+```js
+onSuccess: function (payload) {
+	  const { lastResponse } = payload
+	  // Server can include details in the Upload-Info header, for example.
+    console.log("Important information", lastResponse.getHeader('Upload-Info'))
+}
+```
+
 #### onError
 
 _Default value:_ `null`
@@ -156,6 +166,18 @@ metadata: {
 }
 ```
 
+#### metadataForPartialUploads
+
+_Default value:_ `{}`
+
+An object with string values used as additional meta data for partial uploads. When parallel uploads are enabled via `parallelUploads`, tus-js-client creates multiple partial uploads. The values from `metadata` are not passed to these partial uploads but only passed to the final upload, which is the concatentation of the partial uploads. In contrast, the values from `metadataForPartialUploads` are only passed to the partial uploads and not the final upload. This option has no effect if parallel uploads are not enabled. Can be used to associate partial uploads to a user, for example:
+
+```js
+metadataForPartialUploads: {
+    userId: "1234567"
+}
+```
+
 #### uploadUrl
 
 _Default value:_ `null`
@@ -202,7 +224,7 @@ A boolean indicating if the fingerprint in the URL storage will be removed once 
 
 _Default value:_ `false`
 
-A boolean indicating whether a stream of data is going to be uploaded as a [`Reader`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader). If so, the total size isn't available when we begin uploading, so we use the Tus [`Upload-Defer-Length`](https://tus.io/protocols/resumable-upload.html#upload-defer-length) header. Once the reader is finished, the total file size is sent to the tus server in order to complete the upload. Furthermore, `chunkSize` must be set to a finite number. See the `/demos/browser/video.js` file for an example of how to use this property.
+A boolean indicating whether a stream of data is going to be uploaded as a [`Reader`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream). If so, the total size isn't available when we begin uploading, so we use the Tus [`Upload-Defer-Length`](https://tus.io/protocols/resumable-upload.html#upload-defer-length) header. Once the reader is finished, the total file size is sent to the tus server in order to complete the upload. Furthermore, `chunkSize` must be set to a finite number. See the `/demos/browser/video.js` file for an example of how to use this property.
 
 #### uploadDataDuringCreation
 
@@ -224,7 +246,7 @@ X-Request-ID: fe51f777-f23e-4ed9-97d7-2785cc69f961
 
 _Default value:_ `1`
 
-A number indicating how many parts should be uploaded in parallel. If this number is not `1`, the input file will be split into multiple parts, where each part is uploaded individually in parallel. The value of `parallelUploads` determines the number of parts. Using `parallelUploadBoundaries` the size of each part can be changed. After all parts have been uploaded, the [`concatenation` extension](https://tus.io/protocols/resumable-upload.html#concatenation) will be used to concatenate all the parts together on the server-side, so the tus server must support this extension. This option should not be used if the input file is a streaming resource.
+A number indicating how many parts should be uploaded in parallel. If this number is not `1`, the input file will be split into multiple parts, where each part is uploaded individually in parallel. The value of `parallelUploads` determines the number of parts. Using `parallelUploadBoundaries` the size of each part can be changed. After all parts have been uploaded, the [`concatenation` extension](https://tus.io/protocols/resumable-upload.html#concatenation) will be used to concatenate all the parts together on the server-side, so the tus server must support this extension. This option should not be used if the input file is a streaming resource. By default, the values from `metadata` are not passed to the partial uploads and only used for the final upload where the parts are concatenated together again. The `metadataForPartialUploads` option can be used to set meta data specifically for partial uploads.
 
 The idea behind this option is that you can use multiple HTTP requests in parallel to better utilize the full capacity of the network connection to the tus server. If you want to use it, please evaluate it under real world situations to see if it actually improves your upload performance. In common browser session, we were not able to find a performance improve for the average user.
 
@@ -311,10 +333,17 @@ interface HttpRequest {
     getMethod(): string;
     getURL(): string;
 
+    // Set a header from this request.
     setHeader(header: string, value: string);
-    getHeader(header: string);
+
+    // Retrieve a header value from this request.
+    // Note: In browser environments this method can only return headers explicitly set by
+    // tus-js-client or users through the above `setHeader` method. It cannot return headers that are
+    // implicitly added by the browser (e.g. Content-Length) due to a security related API limitation.
+    getHeader(header: string): string | undefined;
 
     setProgressHandler((bytesSent: number): void): void;
+
     // Send the HTTP request with the provided request body. The value of the request body depends
     // on the platform and what `fileReader` implementation is used. With the default `fileReader`,
     // `body` can be
@@ -329,7 +358,7 @@ interface HttpRequest {
 
 interface HttpResponse {
     getStatus(): number;
-    getHeader(header: string): string;
+    getHeader(header: string): string | undefined;
     getBody(): string;
 
     // Return an environment specific object, e.g. the XMLHttpRequest object in browsers.
@@ -360,6 +389,8 @@ interface ListEntry {
   metadata: object
   creationTime: string
   urlStorageKey: string
+  uploadUrl: string | null
+  parallelUploadUrls: string[] | null
 }
 ```
 
@@ -399,15 +430,22 @@ interface SliceResult {
 }
 ```
 
+#### protocol
+
+_Default value:_ `'tus-v1'`
+
+tus-js-client uses the [tus v1.0.0 upload protocol](https://tus.io/protocols/resumable-upload) by default. It also includes experimental support for [the draft of Resumable Uploads For HTTP](https://datatracker.ietf.org/doc/draft-ietf-httpbis-resumable-upload/) developed in the HTTP working group of the IETF. By setting the `protocol` option to `'ietf-draft-03'` or `'ietf-draft-05'`, tus-js-client will use the protocol as defined in the draft version 03 or 05 respectively. Please be aware that this feature is experimental and that this option might change in breaking ways in non-major releases.
+
 ## tus.Upload(file, options)
 
 The constructor for the `tus.Upload` class. The upload will not be started automatically, use `start` to do so.
 
 Depending on the platform, the `file` argument must be an instance of the following types:
 
-- inside browser: `File`, `Blob`, or [`Reader`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader)
+- inside browser: `File`, `Blob`, or [`Reader`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream)
 - inside Node.js: `Buffer` or `Readable` stream
-- inside Cordova: `File` object from a `FileEntry` (see [demo](demos/cordova/www/js/index.js))
+- inside Cordova: `File` object from a `FileEntry` (see [demo](/demos/cordova/www/js/index.js))
+- inside React Native: Object with uri property: `{ uri: 'file:///...', ... }` (see [installation notes](/docs/installation.md#react-native-support) and [demo](/demos/reactnative/App.js))
 
 The `options` argument will be merged deeply with `tus.defaultOptions`. See its documentation for more details.
 
@@ -469,7 +507,7 @@ tus.Upload.terminate(url)
 
 ## tus.Upload#findPreviousUploads()
 
-Query the URL storage using the input file's fingerprint to retrieve a list of uploads for the input file, which have previously been started by the user. If you want to resume one of this uploads, pass the corresponding object to `tus.Upload#resumeFromPreviousUpload` before calling `tus.Upload#start`.
+Query the URL storage using the input file's fingerprint to retrieve a list of uploads for the input file, which have previously been started by the user. If you want to resume one of these uploads, pass the corresponding object to `tus.Upload#resumeFromPreviousUpload` before calling `tus.Upload#start`.
 
 The function returns a `Promise`, which resolves to a list with following structure:
 
@@ -478,9 +516,11 @@ findPreviousUploads(): Promise<Array<PreviousUpload>>;
 
 interface PreviousUpload {
     size: number | null;
-    metadata: object
+    metadata: object;
     creationTime: string;
     urlStorageKey: string;
+    uploadUrl: string | null;
+    parallelUploadUrls: string[] | null;
 }
 ```
 

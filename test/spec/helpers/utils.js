@@ -1,18 +1,7 @@
-/* eslint-disable max-classes-per-file */
-
-'use strict'
-
-const isBrowser = typeof window !== 'undefined'
-const isNode = !isBrowser
-
 /**
- * Obtain a platform specific buffer object, which can be
- * handled by tus-js-client.
+ * Helper function to create a Blob from a string.
  */
-function getBlob(str) {
-  if (isNode) {
-    return Buffer.from(str)
-  }
+export function getBlob(str) {
   return new Blob(str.split(''))
 }
 
@@ -35,7 +24,7 @@ function flatPromise() {
  * Create a spy-able function which resolves a Promise
  * once it is called.
  */
-function waitableFunction(name = 'func') {
+export function waitableFunction(name = 'func') {
   const [promise, resolve] = flatPromise()
   const fn = jasmine.createSpy(name, resolve).and.callThrough()
 
@@ -46,15 +35,17 @@ function waitableFunction(name = 'func') {
 /**
  * Create a Promise that resolves after the specified duration.
  */
-function wait(delay) {
-  return new Promise((resolve) => setTimeout(resolve, delay, 'timed out'))
+export function wait(delay) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, delay, 'timed out')
+  })
 }
 
 /**
  * TestHttpStack implements the HTTP stack interface for tus-js-client
  * and can be used to assert outgoing requests and respond with mock data.
  */
-class TestHttpStack {
+export class TestHttpStack {
   constructor() {
     this._pendingRequests = []
     this._pendingWaits = []
@@ -83,12 +74,13 @@ class TestHttpStack {
   }
 }
 
-class TestRequest {
+export class TestRequest {
   constructor(method, url, onRequestSend) {
     this.method = method
     this.url = url
     this.requestHeaders = {}
     this.body = null
+    this.bodySize = null
 
     this._onRequestSend = onRequestSend
     this._onProgress = () => {}
@@ -115,12 +107,14 @@ class TestRequest {
     this._onProgress = progressHandler
   }
 
-  send(body = null) {
+  async send(body = null) {
     this.body = body
 
     if (body) {
+      this.bodySize = await getBodySize(body)
+
       this._onProgress(0)
-      this._onProgress(body.length || body.size || 0)
+      this._onProgress(this.bodySize)
     }
 
     this._onRequestSend(this)
@@ -147,7 +141,40 @@ class TestRequest {
   }
 }
 
-class TestResponse {
+async function getBodySize(body) {
+  if (body == null) {
+    return null
+  }
+
+  if (
+    body instanceof ArrayBuffer ||
+    (typeof SharedArrayBuffer !== 'undefined' && body instanceof SharedArrayBuffer) ||
+    ArrayBuffer.isView(body)
+  ) {
+    return body.byteLength
+  }
+
+  if (body instanceof Blob) {
+    return body.size
+  }
+
+  if (body.length != null) {
+    return body.length
+  }
+
+  return new Promise((resolve) => {
+    body.on('readable', () => {
+      while (true) {
+        const chunk = body.read()
+        if (chunk == null) break
+
+        resolve(chunk.length)
+      }
+    })
+  })
+}
+
+export class TestResponse {
   constructor(res) {
     this._response = res
   }
@@ -167,11 +194,4 @@ class TestResponse {
   getUnderlyingObject() {
     throw new Error('not implemented')
   }
-}
-
-module.exports = {
-  TestHttpStack,
-  waitableFunction,
-  wait,
-  getBlob,
 }
