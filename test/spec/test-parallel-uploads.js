@@ -200,7 +200,7 @@ describe('tus', () => {
         },
       })
 
-      await options.onSuccess.toBeCalled
+      await options.onSuccess.toBeCalled()
 
       expect(upload.url).toBe('https://tus.io/uploads/upload3')
       expect(options.onProgress).toHaveBeenCalledWith(5, 11)
@@ -318,7 +318,7 @@ describe('tus', () => {
         },
       })
 
-      await options.onSuccess.toBeCalled
+      await options.onSuccess.toBeCalled()
       expect(upload.url).toBe('https://tus.io/uploads/upload3')
     })
 
@@ -346,7 +346,7 @@ describe('tus', () => {
         status: 500,
       })
 
-      const err = await options.onError.toBeCalled
+      const err = await options.onError.toBeCalled()
       expect(err.message).toBe(
         'tus: unexpected response while creating upload, originated from request (method: POST, url: https://tus.io/uploads, response code: 500, response text: , request id: n/a)',
       )
@@ -438,7 +438,7 @@ describe('tus', () => {
         },
       })
 
-      await options.onSuccess.toBeCalled
+      await options.onSuccess.toBeCalled()
 
       expect(upload.url).toBe('https://tus.io/uploads/upload3')
       expect(options.onProgress).toHaveBeenCalledWith(5, 11)
@@ -572,7 +572,7 @@ describe('tus', () => {
         },
       })
 
-      await options.onSuccess.toBeCalled
+      await options.onSuccess.toBeCalled()
 
       expect(upload.url).toBe('https://tus.io/uploads/upload3')
       expect(options.onProgress).toHaveBeenCalledWith(5, 11)

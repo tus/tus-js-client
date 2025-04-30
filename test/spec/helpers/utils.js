@@ -28,7 +28,7 @@ export function waitableFunction(name = 'func') {
   const [promise, resolve] = flatPromise()
   const fn = jasmine.createSpy(name, resolve).and.callThrough()
 
-  fn.toBeCalled = promise
+  fn.toBeCalled = () => promise
   return fn
 }
 

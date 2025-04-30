@@ -45,7 +45,7 @@ describe('tus', () => {
         const upload = new Upload(input, options)
         upload.start()
 
-        const err = await options.onError.toBeCalled
+        const err = await options.onError.toBeCalled()
         expect(err.message).toBe(
           "tus: cannot automatically derive upload's size from input. Specify it manually using the `uploadSize` option or use the `uploadLengthDeferred` option",
         )
@@ -61,7 +61,7 @@ describe('tus', () => {
         const upload = new Upload(input, options)
         upload.start()
 
-        const err = await options.onError.toBeCalled
+        const err = await options.onError.toBeCalled()
         expect(err.message).toBe(
           'cannot create source for stream without a finite value for the `chunkSize` option; specify a chunkSize to control the memory consumption',
         )
@@ -135,7 +135,7 @@ describe('tus', () => {
           },
         })
 
-        const err = await options.onError.toBeCalled
+        const err = await options.onError.toBeCalled()
         expect(err.message).toBe(
           'tus: failed to upload chunk at offset 0, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)',
         )
@@ -255,7 +255,7 @@ describe('tus', () => {
           },
         })
 
-        await options.onSuccess.toBeCalled
+        await options.onSuccess.toBeCalled()
 
         expect(upload.url).toBe('https://tus.io/uploads/upload3')
         expect(options.onProgress).toHaveBeenCalledWith(5, 11)
@@ -293,7 +293,7 @@ describe('tus', () => {
           },
         })
 
-        const err = await options.onError.toBeCalled
+        const err = await options.onError.toBeCalled()
         expect(err.message).toBe(
           'tus: failed to upload chunk at offset 0, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)',
         )
@@ -319,7 +319,7 @@ describe('tus', () => {
 
       req.responseError(resErr)
 
-      const err = await options.onError.toBeCalled
+      const err = await options.onError.toBeCalled()
       expect(err.causingError).toBe(resErr)
     })
 
@@ -385,7 +385,7 @@ describe('tus', () => {
         },
       })
 
-      await options.onSuccess.toBeCalled
+      await options.onSuccess.toBeCalled()
     })
   })
 
@@ -559,5 +559,5 @@ async function expectHelloWorldUpload(input, options) {
     },
   })
 
-  await options.onSuccess.toBeCalled
+  await options.onSuccess.toBeCalled()
 }

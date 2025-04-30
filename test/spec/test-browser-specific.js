@@ -119,7 +119,7 @@ describe('tus', () => {
           },
         })
 
-        await options.onSuccess.toBeCalled
+        await options.onSuccess.toBeCalled()
       }
 
       it('should store and retain with default options', async () => {
@@ -207,7 +207,7 @@ describe('tus', () => {
           },
         })
 
-        await options2.onSuccess.toBeCalled
+        await options2.onSuccess.toBeCalled()
 
         // Entry in localStorage should be removed after successful upload
         expect(localStorage.getItem(key)).toBe(null)
@@ -332,7 +332,7 @@ describe('tus', () => {
           },
         })
 
-        await options.onSuccess.toBeCalled
+        await options.onSuccess.toBeCalled()
         expect(upload.url).toBe('http://tus.io/uploads/blargh')
       })
 
@@ -358,7 +358,7 @@ describe('tus', () => {
 
         req.responseError()
 
-        await options.onError.toBeCalled
+        await options.onError.toBeCalled()
         expect(options.onError).toHaveBeenCalledWith(
           new Error(
             'tus: cannot fetch `file.uri` as Blob, make sure the uri is correct and accessible. [object Object]',

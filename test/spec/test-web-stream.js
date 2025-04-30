@@ -67,10 +67,10 @@ describe('tus', () => {
           },
         })
 
-        await options.onProgress.toBeCalled
+        await options.onProgress.toBeCalled()
         expect(options.onProgress).toHaveBeenCalledWith(0, 11)
 
-        await options.onSuccess.toBeCalled
+        await options.onSuccess.toBeCalled()
         expect(upload.url).toBe('http://tus.io/uploads/blargh')
         expect(options.onProgress).toHaveBeenCalledWith(11, 11)
       }
@@ -130,7 +130,7 @@ describe('tus', () => {
           },
         })
 
-        await options.onProgress.toBeCalled
+        await options.onProgress.toBeCalled()
         expect(options.onProgress).toHaveBeenCalledWith(6, null)
 
         req = await testStack.nextRequest()
@@ -149,7 +149,7 @@ describe('tus', () => {
           },
         })
 
-        await options.onSuccess.toBeCalled
+        await options.onSuccess.toBeCalled()
         expect(upload.url).toBe('http://tus.io/uploads/blargh')
         expect(options.onProgress).toHaveBeenCalledWith(11, 11)
       })
@@ -212,7 +212,7 @@ describe('tus', () => {
           },
         })
 
-        await options.onSuccess.toBeCalled
+        await options.onSuccess.toBeCalled()
       })
 
       it('should retry the first PATCH request', async () => {
@@ -284,7 +284,7 @@ describe('tus', () => {
           },
         })
 
-        await options.onSuccess.toBeCalled
+        await options.onSuccess.toBeCalled()
       })
 
       it('should retry following PATCH requests', async () => {
@@ -296,7 +296,7 @@ describe('tus', () => {
           endpoint: 'http://tus.io/files/',
           chunkSize: 6,
           retryDelays: [10, 10, 10],
-          onSuccess() {},
+          onSuccess: waitableFunction('onSuccess'),
           uploadLengthDeferred: true,
         }
 
@@ -378,7 +378,7 @@ describe('tus', () => {
           },
         })
 
-        await options.onSuccess.toBeCalled
+        await options.onSuccess.toBeCalled()
       })
 
       it('should throw an error if the source provides less data than uploadSize', async () => {
@@ -408,7 +408,7 @@ describe('tus', () => {
           },
         })
 
-        const err = await options.onError.toBeCalled
+        const err = await options.onError.toBeCalled()
         expect(err.message).toBe(
           'tus: failed to upload chunk at offset 0, caused by Error: upload was configured with a size of 100 bytes, but the source is done after 11 bytes, originated from request (method: PATCH, url: http://tus.io/uploads/foo, response code: n/a, response text: n/a, request id: n/a)',
         )
@@ -462,7 +462,7 @@ describe('tus', () => {
           },
         })
 
-        await options.onSuccess.toBeCalled
+        await options.onSuccess.toBeCalled()
       })
     })
   })

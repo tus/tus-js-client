@@ -92,7 +92,7 @@ describe('tus', () => {
           },
         })
 
-        await options.onSuccess.toBeCalled
+        await options.onSuccess.toBeCalled()
 
         expect(upload.url).toBe('http://tus.io/uploads/blargh')
         expect(options.onProgress).toHaveBeenCalledWith(13, 13)
