@@ -1,4 +1,4 @@
-import type { FileSource, SliceResult } from '../options.js'
+import type {FileSource, SliceResult, UploadOptions} from '../options.js'
 
 function len(blobOrArray: WebStreamFileSource['_buffer']): number {
   if (blobOrArray === undefined) return 0
@@ -28,7 +28,7 @@ function concat<T extends WebStreamFileSource['_buffer']>(a: T, b: T): T {
  */
 // TODO: Can we share code with NodeStreamFileSource?
 export class WebStreamFileSource implements FileSource {
-  private _reader: ReadableStreamDefaultReader<Uint8Array>
+  private readonly _reader: ReadableStreamDefaultReader<Uint8Array>
 
   private _buffer: Blob | Uint8Array | undefined
 
@@ -38,6 +38,8 @@ export class WebStreamFileSource implements FileSource {
   private _bufferOffset = 0
 
   private _done = false
+
+  private _stream: ReadableStream
 
   // Setting the size to null indicates that we have no calculation available
   // for how much data this stream will emit requiring the user to specify
@@ -50,8 +52,12 @@ export class WebStreamFileSource implements FileSource {
         'Readable stream is already locked to reader. tus-js-client cannot obtain a new reader.',
       )
     }
-
+    this._stream = stream
     this._reader = stream.getReader()
+  }
+
+  fingerprint(options: UploadOptions): Promise<string | null> {
+    return Promise.resolve(null);
   }
 
   async slice(start: number, end: number): Promise<SliceResult> {

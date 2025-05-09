@@ -1,4 +1,4 @@
-import type { FileSource, SliceResult } from '../options.js'
+import type { FileSource, SliceResult, UploadOptions } from '../options.js'
 
 /**
  * ArrayBufferViewFileSource implements FileSource for ArrayBufferView instances
@@ -8,13 +8,19 @@ import type { FileSource, SliceResult } from '../options.js'
  * or it will lead to weird behavior.
  */
 export class ArrayBufferViewFileSource implements FileSource {
-  private _view: ArrayBufferView
+  private readonly _view: ArrayBufferView
 
   size: number
 
   constructor(view: ArrayBufferView) {
     this._view = view
     this.size = view.byteLength
+  }
+
+  // TODO: Consider implementing a fingerprint function that uses a checksum/hash of the ArrayBufferView data
+  // TODO: Could also include byteOffset, byteLength and buffer.byteLength in fingerprint calculation
+  fingerprint(options: UploadOptions): Promise<string | null> {
+    return Promise.resolve(null);
   }
 
   slice(start: number, end: number): Promise<SliceResult> {
