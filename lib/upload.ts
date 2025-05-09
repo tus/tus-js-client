@@ -71,7 +71,7 @@ export class BaseUpload {
   // The fingerpinrt for the current file (set after start())
   private _fingerprint: string | null = null
 
-  // The key that the URL storage returned when saving an URL with a fingerprint,
+  // The key that the URL storage returned when saving a URL with a fingerprint,
   private _urlStorageKey?: string
 
   // The offset used in the current PATCH request
@@ -229,17 +229,16 @@ export class BaseUpload {
   }
 
   private async _prepareAndStartUpload(): Promise<void> {
-    this._fingerprint = await this.options.fingerprint(this.file, this.options)
+    if (this._source == null) {
+      this._source = await this.options.fileReader.openFile(this.file, this.options.chunkSize)
+    }
+    this._fingerprint = await this._source.fingerprint(this.options);
     if (this._fingerprint == null) {
       log(
         'No fingerprint was calculated meaning that the upload cannot be stored in the URL storage.',
       )
     } else {
       log(`Calculated fingerprint: ${this._fingerprint}`)
-    }
-
-    if (this._source == null) {
-      this._source = await this.options.fileReader.openFile(this.file, this.options.chunkSize)
     }
 
     // First, we look at the uploadLengthDeferred option.
@@ -1228,5 +1227,6 @@ export async function terminate(url: string, options: UploadOptions): Promise<vo
 
     await wait(delay)
     await terminate(url, newOptions)
+
   }
 }
