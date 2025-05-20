@@ -353,6 +353,10 @@ export class BaseUpload {
             if (totalSize == null) {
               throw new Error('tus: Expected totalSize to be set')
             }
+
+            // Update progress timestamp for the parallel upload to track stalls
+            upload._lastProgressTime = Date.now()
+
             this._emitProgress(totalProgress, totalSize)
           },
           // Wait until every partial upload has an upload URL, so we can add
@@ -1083,13 +1087,9 @@ export class BaseUpload {
 
     this._clearStallDetection()
 
-    // If using parallel uploads, abort them all
-    if (this._parallelUploads) {
-      for (const upload of this._parallelUploads) {
-        upload.abort()
-      }
-    } else if (this._req) {
-      // For single uploads, abort the current request
+    // Just abort the current request, not the entire upload
+    // Each parallel upload instance has its own stall detection
+    if (this._req) {
       this._req.abort()
     }
 
