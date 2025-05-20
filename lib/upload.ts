@@ -15,6 +15,7 @@ import {
   type SliceType,
   type UploadInput,
   type UploadOptions,
+  type StallDetectionOptions,
 } from './options.js'
 import { uuid } from './uuid.js'
 
@@ -54,6 +55,8 @@ export const defaultOptions = {
   httpStack: undefined,
 
   protocol: PROTOCOL_TUS_V1 as UploadOptions['protocol'],
+
+  stallDetection: undefined,
 }
 
 export class BaseUpload {
@@ -109,6 +112,13 @@ export class BaseUpload {
   // upload options or HEAD response)
   private _uploadLengthDeferred: boolean
 
+  // Stall detection properties
+  private _lastProgress = 0
+  private _lastProgressTime = 0
+  private _uploadStartTime = 0
+  private _stallCheckInterval?: ReturnType<typeof setTimeout>
+  private _hasProgressEvents = false
+
   constructor(file: UploadInput, options: UploadOptions) {
     // Warn about removed options from previous versions
     if ('resume' in options) {
@@ -127,6 +137,9 @@ export class BaseUpload {
     this._uploadLengthDeferred = this.options.uploadLengthDeferred
 
     this.file = file
+
+    // Initialize stall detection options
+    this.options.stallDetection = this._getStallDetectionDefaults(options.stallDetection)
   }
 
   async findPreviousUploads(): Promise<PreviousUpload[]> {
@@ -268,6 +281,9 @@ export class BaseUpload {
     } else {
       await this._startSingleUpload()
     }
+
+    // Setup stall detection
+    this._setupStallDetection()
   }
 
   /**
@@ -343,6 +359,10 @@ export class BaseUpload {
             if (totalSize == null) {
               throw new Error('tus: Expected totalSize to be set')
             }
+
+            // Update progress timestamp for the parallel upload to track stalls
+            upload._lastProgressTime = Date.now()
+
             this._emitProgress(totalProgress, totalSize)
           },
           // Wait until every partial upload has an upload URL, so we can add
@@ -463,6 +483,9 @@ export class BaseUpload {
     // Set the aborted flag before any `await`s, so no new requests are started.
     this._aborted = true
 
+    // Clear any stall detection
+    this._clearStallDetection()
+
     // Stop any parallel partial uploads, that have been started in _startParallelUploads.
     if (this._parallelUploads != null) {
       for (const upload of this._parallelUploads) {
@@ -557,6 +580,12 @@ export class BaseUpload {
    * @api private
    */
   private _emitProgress(bytesSent: number, bytesTotal: number | null): void {
+    // Update stall detection state if progress has been made
+    if (bytesSent > this._lastProgress) {
+      this._lastProgress = bytesSent
+      this._lastProgressTime = Date.now()
+    }
+
     if (typeof this.options.onProgress === 'function') {
       this.options.onProgress(bytesSent, bytesTotal)
     }
@@ -994,6 +1023,133 @@ export class BaseUpload {
    */
   _sendRequest(req: HttpRequest, body?: SliceType): Promise<HttpResponse> {
     return sendRequest(req, body, this.options)
+  }
+
+  /**
+   * Apply default stall detection options
+   */
+  private _getStallDetectionDefaults(
+    options?: Partial<StallDetectionOptions>
+  ): StallDetectionOptions {
+    return {
+      enabled: options?.enabled ?? true,
+      stallTimeout: options?.stallTimeout ?? 30000,
+      checkInterval: options?.checkInterval ?? 5000,
+      minimumBytesPerSecond: options?.minimumBytesPerSecond ?? 1
+    }
+  }
+
+  /**
+   * Detect if current HttpStack supports progress events
+   */
+  private _supportsProgressEvents(): boolean {
+    const httpStack = this.options.httpStack
+    // Check if getName method exists and if it returns one of our known stacks
+    return typeof httpStack.getName === 'function' &&
+           ["NodeHttpStack", "XHRHttpStack"].includes(httpStack.getName())
+  }
+
+  /**
+   * Check if upload has stalled based on progress events
+   */
+  private _isProgressStalled(now: number): boolean {
+    const stallDetection = this.options.stallDetection
+    if (!stallDetection) return false
+
+    const timeSinceProgress = now - this._lastProgressTime
+    const stallTimeout = stallDetection.stallTimeout ?? 30000
+    const isStalled = timeSinceProgress > stallTimeout
+
+    if (isStalled) {
+      log(`No progress for ${timeSinceProgress}ms (limit: ${stallTimeout}ms)`)
+    }
+
+    return isStalled
+  }
+
+  /**
+   * Check if upload has stalled based on transfer rate
+   */
+  private _isTransferRateStalled(now: number): boolean {
+    const stallDetection = this.options.stallDetection
+    if (!stallDetection) return false
+
+    const totalTime = Math.max((now - this._uploadStartTime) / 1000, 0.001) // in seconds, prevent division by zero
+    const bytesPerSecond = this._offset / totalTime
+
+    // Need grace period for initial connection setup (5 seconds)
+    const hasGracePeriodPassed = totalTime > 5
+    const minBytes = stallDetection.minimumBytesPerSecond ?? 1
+    const isStalled = hasGracePeriodPassed && bytesPerSecond < minBytes
+
+    if (isStalled) {
+      log(`Transfer rate too low: ${bytesPerSecond.toFixed(2)} bytes/sec (minimum: ${minBytes} bytes/sec)`)
+    }
+
+    return isStalled
+  }
+
+  /**
+   * Handle a detected stall by forcing a retry
+   */
+  private _handleStall(reason: string): void {
+    log(`Upload stalled: ${reason}`)
+
+    this._clearStallDetection()
+
+    // Just abort the current request, not the entire upload
+    // Each parallel upload instance has its own stall detection
+    if (this._req) {
+      this._req.abort()
+    }
+
+    // Force a retry via the error mechanism
+    this._retryOrEmitError(new Error(`Upload stalled: ${reason}`))
+  }
+
+  /**
+   * Clear stall detection timer if running
+   */
+  private _clearStallDetection(): void {
+    if (this._stallCheckInterval) {
+      clearInterval(this._stallCheckInterval)
+      this._stallCheckInterval = undefined
+    }
+  }
+
+  /**
+   * Setup stall detection monitoring
+   */
+  private _setupStallDetection(): void {
+    const stallDetection = this.options.stallDetection
+
+    // Early return if disabled or undefined
+    if (!stallDetection?.enabled) {
+      return
+    }
+
+    // Initialize state
+    this._uploadStartTime = Date.now()
+    this._lastProgressTime = Date.now()
+    this._hasProgressEvents = this._supportsProgressEvents()
+    this._clearStallDetection()
+
+    // Setup periodic check with default interval of 5000ms if undefined
+    this._stallCheckInterval = setInterval(() => {
+      // Skip check if already aborted
+      if (this._aborted) {
+        return
+      }
+
+      const now = Date.now()
+
+      // Different stall detection based on stack capabilities
+      if (this._hasProgressEvents && this._isProgressStalled(now)) {
+        this._handleStall("No progress events received")
+      } else if (!this._hasProgressEvents && this._isTransferRateStalled(now)) {
+        this._handleStall("Transfer rate too low")
+      }
+    }, stallDetection.checkInterval ?? 5000)
   }
 }
 
