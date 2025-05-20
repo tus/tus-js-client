@@ -72,6 +72,11 @@ export class TestHttpStack {
       this._pendingWaits.push(resolve)
     })
   }
+
+  supportsProgressEvents() {
+    // Test HTTP stack supports progress events for testing purposes
+    return true
+  }
 }
 
 export class TestRequest {

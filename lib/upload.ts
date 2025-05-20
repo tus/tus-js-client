@@ -3,6 +3,7 @@ import { Base64 } from 'js-base64'
 // provides WHATWG URL? Then we can get rid of @rollup/plugin-commonjs.
 import URL from 'url-parse'
 import { DetailedError } from './DetailedError.js'
+import { StallDetector } from './StallDetector.js'
 import { log } from './logger.js'
 import {
   type FileSource,
@@ -54,6 +55,12 @@ export const defaultOptions = {
   httpStack: undefined,
 
   protocol: PROTOCOL_TUS_V1 as UploadOptions['protocol'],
+
+  stallDetection: {
+    enabled: false,
+    stallTimeout: 30000,
+    checkInterval: 5000,
+  },
 }
 
 export class BaseUpload {
@@ -343,6 +350,7 @@ export class BaseUpload {
             if (totalSize == null) {
               throw new Error('tus: Expected totalSize to be set')
             }
+
             this._emitProgress(totalProgress, totalSize)
           },
           // Wait until every partial upload has an upload URL, so we can add
@@ -835,7 +843,37 @@ export class BaseUpload {
     const start = this._offset
     let end = this._offset + this.options.chunkSize
 
+    // Create stall detector for this request if stall detection is enabled and supported
+    // but don't start it yet - we'll start it after onBeforeRequest completes
+    let stallDetector: StallDetector | undefined
+
+    if (this.options.stallDetection?.enabled) {
+      // Only enable stall detection if the HTTP stack supports progress events
+      if (this.options.httpStack.supportsProgressEvents()) {
+        stallDetector = new StallDetector(
+          this.options.stallDetection,
+          this.options.httpStack,
+          (reason: string) => {
+            // Handle stall by aborting the current request and triggering retry
+            if (this._req) {
+              this._req.abort()
+            }
+            this._retryOrEmitError(new Error(`Upload stalled: ${reason}`))
+          },
+        )
+        // Don't start yet - will be started after onBeforeRequest
+      } else {
+        log(
+          'tus: stall detection is enabled but the HTTP stack does not support progress events, it will be disabled for this upload',
+        )
+      }
+    }
+
     req.setProgressHandler((bytesSent) => {
+      // Update per-request stall detector if active
+      if (stallDetector) {
+        stallDetector.updateProgress()
+      }
       this._emitProgress(start + bytesSent, this._size)
     })
 
@@ -883,18 +921,20 @@ export class BaseUpload {
       )
     }
 
+    let response: HttpResponse
     if (value == null) {
-      return await this._sendRequest(req)
+      response = await this._sendRequest(req, undefined, stallDetector)
+    } else {
+      if (
+        this.options.protocol === PROTOCOL_IETF_DRAFT_03 ||
+        this.options.protocol === PROTOCOL_IETF_DRAFT_05
+      ) {
+        req.setHeader('Upload-Complete', done ? '?1' : '?0')
+      }
+      response = await this._sendRequest(req, value, stallDetector)
     }
 
-    if (
-      this.options.protocol === PROTOCOL_IETF_DRAFT_03 ||
-      this.options.protocol === PROTOCOL_IETF_DRAFT_05
-    ) {
-      req.setHeader('Upload-Complete', done ? '?1' : '?0')
-    }
-    this._emitProgress(this._offset, this._size)
-    return await this._sendRequest(req, value)
+    return response
   }
 
   /**
@@ -992,8 +1032,12 @@ export class BaseUpload {
    *
    * @api private
    */
-  _sendRequest(req: HttpRequest, body?: SliceType): Promise<HttpResponse> {
-    return sendRequest(req, body, this.options)
+  _sendRequest(
+    req: HttpRequest,
+    body?: SliceType,
+    stallDetector?: StallDetector,
+  ): Promise<HttpResponse> {
+    return sendRequest(req, body, this.options, stallDetector)
   }
 }
 
@@ -1054,18 +1098,31 @@ async function sendRequest(
   req: HttpRequest,
   body: SliceType | undefined,
   options: UploadOptions,
+  stallDetector?: StallDetector,
 ): Promise<HttpResponse> {
   if (typeof options.onBeforeRequest === 'function') {
     await options.onBeforeRequest(req)
   }
 
-  const res = await req.send(body)
-
-  if (typeof options.onAfterResponse === 'function') {
-    await options.onAfterResponse(req, res)
+  // Start stall detection after onBeforeRequest completes but before the actual network request
+  if (stallDetector) {
+    stallDetector.start()
   }
 
-  return res
+  try {
+    const res = await req.send(body)
+
+    if (typeof options.onAfterResponse === 'function') {
+      await options.onAfterResponse(req, res)
+    }
+
+    return res
+  } finally {
+    // Always stop the stall detector when the request completes (success or failure)
+    if (stallDetector) {
+      stallDetector.stop()
+    }
+  }
 }
 
 /**
@@ -1219,6 +1276,10 @@ export async function terminate(url: string, options: UploadOptions): Promise<vo
     // Instead of keeping track of the retry attempts, we remove the first element from the delays
     // array. If the array is empty, all retry attempts are used up and we will bubble up the error.
     // We recursively call the terminate function will removing elements from the retryDelays array.
+    if (!options.retryDelays || options.retryDelays.length === 0) {
+      throw detailedErr
+    }
+
     const delay = options.retryDelays[0]
     const remainingDelays = options.retryDelays.slice(1)
     const newOptions = {

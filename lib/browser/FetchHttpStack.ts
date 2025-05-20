@@ -16,6 +16,11 @@ export class FetchHttpStack implements HttpStack {
   getName() {
     return 'FetchHttpStack'
   }
+
+  supportsProgressEvents(): boolean {
+    // The Fetch API does not support progress events for uploads
+    return false
+  }
 }
 
 class FetchRequest implements HttpRequest {
