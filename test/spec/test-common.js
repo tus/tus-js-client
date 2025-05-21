@@ -1352,7 +1352,7 @@ describe('tus', () => {
       expect(req.url).toBe('http://tus.io/uploads/resuming')
       expect(req.method).toBe('PATCH')
       expect(req.requestHeaders['Upload-Offset']).toBe('5')
-      expect(req.requestHeaders['Upload-Length']).toBe('11')
+      expect(req.requestHeaders['Upload-Length']).toBe(undefined)
       expect(req.body.size).toBe(4)
 
       req.respondWith({
@@ -1366,7 +1366,7 @@ describe('tus', () => {
       expect(req.url).toBe('http://tus.io/uploads/resuming')
       expect(req.method).toBe('PATCH')
       expect(req.requestHeaders['Upload-Offset']).toBe('9')
-      expect(req.requestHeaders['Upload-Length']).toBe(undefined)
+      expect(req.requestHeaders['Upload-Length']).toBe('11')
 
       req.respondWith({
         status: 204,
