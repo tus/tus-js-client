@@ -17,12 +17,7 @@
  * under the License.
  */
 * {
-  -webkit-tap-highlight-color: rgba(
-    0,
-    0,
-    0,
-    0
-  ); /* make transparent link selection, adjust last value opacity 0 to 1.0 */
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0); /* make transparent link selection, adjust last value opacity 0 to 1.0 */
 }
 
 body {
@@ -31,7 +26,7 @@ body {
   -webkit-user-select: none; /* prevent copy paste, to allow, change 'none' to 'text' */
   background-color: #e4e4e4;
   background-attachment: fixed;
-  font-family: 'HelveticaNeue-Light', 'HelveticaNeue', Helvetica, Arial, sans-serif;
+  font-family: "HelveticaNeue-Light", "HelveticaNeue", Helvetica, Arial, sans-serif;
   font-size: 15px;
   height: 100%;
   margin: 0px;

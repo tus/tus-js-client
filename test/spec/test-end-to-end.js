@@ -1,6 +1,5 @@
-const axios = require('axios')
-const { getBlob } = require('./helpers/utils')
-const tus = require('../..')
+import { Upload } from 'tus-js-client'
+import { getBlob } from './helpers/utils.js'
 
 // Test timeout for end-to-end tests when uploading to real server.
 const END_TO_END_TIMEOUT = 20 * 1000
@@ -31,7 +30,7 @@ describe('tus', () => {
             },
           }
 
-          const upload = new tus.Upload(file, options)
+          const upload = new Upload(file, options)
           upload.start()
         })
           .then(validateUploadContent)
@@ -67,7 +66,7 @@ describe('tus', () => {
             },
           }
 
-          const upload = new tus.Upload(file, options)
+          const upload = new Upload(file, options)
           upload.start()
         }).then(validateUploadContent)
       },
@@ -77,33 +76,36 @@ describe('tus', () => {
 })
 
 function validateUploadContent(upload) {
-  return axios.get(upload.url).then((res) => {
-    expect(res.status).toBe(200)
-    expect(res.data).toBe('hello world')
+  return fetch(upload.url)
+    .then((res) => {
+      expect(res.status).toBe(200)
+      return res.text()
+    })
+    .then((data) => {
+      expect(data).toBe('hello world')
 
-    return validateUploadMetadata(upload)
-  })
+      return validateUploadMetadata(upload)
+    })
 }
 
 function validateUploadMetadata(upload) {
-  return axios
-    .head(upload.url, {
-      headers: {
-        'Tus-Resumable': '1.0.0',
-      },
-    })
+  return fetch(upload.url, {
+    method: 'HEAD',
+    headers: {
+      'Tus-Resumable': '1.0.0',
+    },
+  })
     .then((res) => {
       expect(res.status).toBe(200)
-      expect(res.data).toBe('')
-      expect(res.headers['tus-resumable']).toBe('1.0.0')
-      expect(res.headers['upload-offset']).toBe('11')
-      expect(res.headers['upload-length']).toBe('11')
+      expect(res.headers.get('tus-resumable')).toBe('1.0.0')
+      expect(res.headers.get('upload-offset')).toBe('11')
+      expect(res.headers.get('upload-length')).toBe('11')
 
       // The values in the Upload-Metadata header may not be in the same
       // order as we submitted them (the specification does not require
       // that). Therefore, we split the values and verify that each one
       // is present.
-      const metadataStr = res.headers['upload-metadata']
+      const metadataStr = res.headers.get('upload-metadata')
       expect(metadataStr).toBeTruthy()
       const metadata = metadataStr.split(',')
       expect(metadata).toContain('filename aGVsbG8udHh0')
@@ -112,18 +114,19 @@ function validateUploadMetadata(upload) {
       expect(metadata).toContain('number MTAw')
       expect(metadata.length).toBe(4)
 
+      return res.text()
+    })
+    .then((data) => {
+      expect(data).toBe('')
+
       return upload
     })
 }
 
 function validateUploadDeletion(upload) {
-  return axios
-    .get(upload.url, {
-      validateStatus: (status) => status === 404,
-    })
-    .then((res) => {
-      expect(res.status).toBe(404)
+  return fetch(upload.url).then((res) => {
+    expect(res.status).toBe(404)
 
-      return upload
-    })
+    return upload
+  })
 }
