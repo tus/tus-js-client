@@ -234,6 +234,7 @@ describe('tus', () => {
         let req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/files/')
         expect(req.method).toBe('POST')
+        expect(req.requestHeaders['Upload-Defer-Length']).toBe('1')
 
         req.respondWith({
           status: 201,
@@ -258,6 +259,7 @@ describe('tus', () => {
           status: 204,
           responseHeaders: {
             'Upload-Offset': '0',
+            'Upload-Defer-Length': '1',
           },
         })
 
@@ -306,6 +308,7 @@ describe('tus', () => {
         let req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/files/')
         expect(req.method).toBe('POST')
+        expect(req.requestHeaders['Upload-Defer-Length']).toBe('1')
 
         req.respondWith({
           status: 201,
@@ -341,6 +344,7 @@ describe('tus', () => {
           status: 204,
           responseHeaders: {
             'Upload-Offset': '6',
+            'Upload-Defer-Length': '1',
           },
         })
 
@@ -442,6 +446,7 @@ describe('tus', () => {
           status: 200,
           responseHeaders: {
             'Upload-Offset': '6',
+            'Upload-Defer-Length': '1',
           },
         })
 

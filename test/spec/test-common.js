@@ -1330,5 +1330,63 @@ describe('tus', () => {
       expect(options.onError).not.toHaveBeenCalled()
       expect(options.onSuccess).toHaveBeenCalled()
     })
+
+    it('should send upload length on the last request when length is deferred and we know the total size', async () => {
+      const testStack = new TestHttpStack()
+      const file = getBlob('hello world')
+      const options = {
+        httpStack: testStack,
+        endpoint: 'http://tus.io/uploads',
+        uploadUrl: 'http://tus.io/uploads/resuming',
+        chunkSize: 4,
+        // No `uploadLengthDeferred: true` here, but the client learns
+        // about the deferred length from the HEAD response.
+      }
+
+      const upload = new Upload(file, options)
+      upload.start()
+
+      let req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/resuming')
+      expect(req.method).toBe('HEAD')
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Defer-Length': '1',
+          'Upload-Offset': '5',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/resuming')
+      expect(req.method).toBe('PATCH')
+      expect(req.requestHeaders['Upload-Offset']).toBe('5')
+      expect(req.requestHeaders['Upload-Length']).toBe(undefined)
+      expect(req.body.size).toBe(4)
+      expect(await req.body.text()).toBe(' wor')
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': '9',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/resuming')
+      expect(req.method).toBe('PATCH')
+      expect(req.requestHeaders['Upload-Offset']).toBe('9')
+      expect(req.requestHeaders['Upload-Length']).toBe('11')
+      expect(req.body.size).toBe(2)
+      expect(await req.body.text()).toBe('ld')
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': '11',
+        },
+      })
+    })
   })
 })

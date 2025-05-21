@@ -105,6 +105,10 @@ export class BaseUpload {
   // parts, if the parallelUploads option is used.
   private _parallelUploadUrls?: string[]
 
+  // True if the remote upload resource's length is deferred (either taken from
+  // upload options or HEAD response)
+  private _uploadLengthDeferred: boolean
+
   constructor(file: UploadInput, options: UploadOptions) {
     // Warn about removed options from previous versions
     if ('resume' in options) {
@@ -119,6 +123,8 @@ export class BaseUpload {
     // Cast chunkSize to integer
     // TODO: Remove this cast
     this.options.chunkSize = Number(this.options.chunkSize)
+
+    this._uploadLengthDeferred = this.options.uploadLengthDeferred
 
     this.file = file
   }
@@ -180,7 +186,7 @@ export class BaseUpload {
         return
       }
 
-      if (this.options.uploadLengthDeferred) {
+      if (this._uploadLengthDeferred) {
         this._emitError(
           new Error(
             'tus: cannot use the `uploadLengthDeferred` option when parallelUploads is enabled',
@@ -239,7 +245,7 @@ export class BaseUpload {
     // First, we look at the uploadLengthDeferred option.
     // Next, we check if the caller has supplied a manual upload size.
     // Finally, we try to use the calculated size from the source object.
-    if (this.options.uploadLengthDeferred) {
+    if (this._uploadLengthDeferred) {
       this._size = null
     } else if (this.options.uploadSize != null) {
       this._size = Number(this.options.uploadSize)
@@ -589,7 +595,7 @@ export class BaseUpload {
 
     const req = this._openRequest('POST', this.options.endpoint)
 
-    if (this.options.uploadLengthDeferred) {
+    if (this._uploadLengthDeferred) {
       req.setHeader('Upload-Defer-Length', '1')
     } else {
       if (this._size == null) {
@@ -606,7 +612,7 @@ export class BaseUpload {
 
     let res: HttpResponse
     try {
-      if (this.options.uploadDataDuringCreation && !this.options.uploadLengthDeferred) {
+      if (this.options.uploadDataDuringCreation && !this._uploadLengthDeferred) {
         this._offset = 0
         res = await this._addChunkToRequest(req)
       } else {
@@ -728,11 +734,14 @@ export class BaseUpload {
       throw new DetailedError('tus: invalid Upload-Offset header', undefined, req, res)
     }
 
+    const deferLength = res.getHeader('Upload-Defer-Length')
+    this._uploadLengthDeferred = deferLength === '1'
+
     // @ts-expect-error parseInt also handles undefined as we want it to
     const length = Number.parseInt(res.getHeader('Upload-Length'), 10)
     if (
       Number.isNaN(length) &&
-      !this.options.uploadLengthDeferred &&
+      !this._uploadLengthDeferred &&
       this.options.protocol === PROTOCOL_TUS_V1
     ) {
       throw new DetailedError('tus: invalid or missing length value', undefined, req, res)
@@ -842,7 +851,7 @@ export class BaseUpload {
     if (
       // @ts-expect-error _size is set here
       (end === Number.POSITIVE_INFINITY || end > this._size) &&
-      !this.options.uploadLengthDeferred
+      !this._uploadLengthDeferred
     ) {
       // @ts-expect-error _size is set here
       end = this._size
@@ -856,9 +865,10 @@ export class BaseUpload {
     // If the upload length is deferred, the upload size was not specified during
     // upload creation. So, if the file reader is done reading, we know the total
     // upload size and can tell the tus server.
-    if (this.options.uploadLengthDeferred && done) {
+    if (this._uploadLengthDeferred && done) {
       this._size = this._offset + sizeOfValue
       req.setHeader('Upload-Length', `${this._size}`)
+      this._uploadLengthDeferred = false
     }
 
     // The specified uploadSize might not match the actual amount of data that a source
@@ -867,7 +877,7 @@ export class BaseUpload {
     // in a loop of repeating empty PATCH requests.
     // See https://community.transloadit.com/t/how-to-abort-hanging-companion-uploads/16488/13
     const newSize = this._offset + sizeOfValue
-    if (!this.options.uploadLengthDeferred && done && newSize !== this._size) {
+    if (!this._uploadLengthDeferred && done && newSize !== this._size) {
       throw new Error(
         `upload was configured with a size of ${this._size} bytes, but the source is done after ${newSize} bytes`,
       )
