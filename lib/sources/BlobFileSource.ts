@@ -16,10 +16,6 @@ export class BlobFileSource implements FileSource {
   }
 
   fingerprint(options: UploadOptions): Promise<string | null> {
-    if (typeof options.fingerprint === 'function') {
-      return Promise.resolve(options.fingerprint(this._file, options));
-    }
-
     let name, lastModified;
     const projectId = options.projectId || 'defaultProjectId';
     if (this._file instanceof File) {

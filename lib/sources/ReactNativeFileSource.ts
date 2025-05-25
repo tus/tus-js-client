@@ -10,10 +10,6 @@ export class ReactNativeFileSource implements FileSource {
   }
 
   fingerprint(options: UploadOptions): Promise<string | null> {
-    if (typeof options.fingerprint === 'function') {
-      return Promise.resolve(options.fingerprint(this._file, options))
-    }
-
     return Promise.resolve(this.reactNativeFingerprint(this._file, options))
   }
 

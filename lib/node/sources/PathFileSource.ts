@@ -35,10 +35,6 @@ export class PathFileSource implements FileSource {
   }
 
   fingerprint(options: UploadOptions): Promise<string | null> {
-    if (typeof options.fingerprint === 'function') {
-      return Promise.resolve(options.fingerprint(this._file, options))
-    }
-
     return Promise.resolve([this._file, this.size, this._path, options.endpoint, options.projectId].join('-'))
   }
 
