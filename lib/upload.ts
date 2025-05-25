@@ -68,7 +68,7 @@ export class BaseUpload {
   // The underlying request object for the current PATCH request
   private _req?: HttpRequest
 
-  // The fingerpinrt for the current file (set after start())
+  // The fingerprint for the current file (set after start())
   private _fingerprint: string | null = null
 
   // The key that the URL storage returned when saving a URL with a fingerprint,
@@ -129,8 +129,8 @@ export class BaseUpload {
     this.file = file
   }
 
-  async findPreviousUploads(): Promise<PreviousUpload[]> {
-    const fingerprint = await this.options.fingerprint(this.file, this.options)
+  async findPreviousUploads(sourceFingerprint: string | null): Promise<PreviousUpload[]> {
+    const fingerprint = await this.options?.fingerprint?.(this.file, this.options, sourceFingerprint)
     if (!fingerprint) {
       throw new Error('tus: unable to calculate fingerprint for this input file')
     }
@@ -232,7 +232,10 @@ export class BaseUpload {
     if (this._source == null) {
       this._source = await this.options.fileReader.openFile(this.file, this.options.chunkSize)
     }
-    this._fingerprint = await this._source.fingerprint(this.options);
+    const fileSourceFingerprint = await this._source.fingerprint(this.options);
+
+    this._fingerprint = await this.options?.fingerprint?.(this.file, this.options, fileSourceFingerprint) ?? fileSourceFingerprint
+
     if (this._fingerprint == null) {
       log(
         'No fingerprint was calculated meaning that the upload cannot be stored in the URL storage.',

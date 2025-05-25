@@ -6,15 +6,13 @@ import { BaseUpload, defaultOptions as baseDefaultOptions, terminate } from '../
 
 import { BrowserFileReader } from './BrowserFileReader.js'
 import { XHRHttpStack as DefaultHttpStack } from './XHRHttpStack.js'
-import { fingerprint } from './fileSignature.js'
 import { WebStorageUrlStorage, canStoreURLs } from './urlStorage.js'
 
 const defaultOptions = {
   ...baseDefaultOptions,
   httpStack: new DefaultHttpStack(),
   fileReader: new BrowserFileReader(),
-  urlStorage: canStoreURLs ? new WebStorageUrlStorage() : new NoopUrlStorage(),
-  fingerprint,
+  urlStorage: canStoreURLs ? new WebStorageUrlStorage() : new NoopUrlStorage()
 }
 
 class Upload extends BaseUpload {

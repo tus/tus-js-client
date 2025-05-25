@@ -78,7 +78,7 @@ export class NodeStreamFileSource implements FileSource {
   // This should likely involve reading the stream and creating a hash/checksum
   // while preserving the stream's content for later use.
   fingerprint(options: UploadOptions): Promise<string | null> {
-    throw new Error("fingerprint not implemented for NodeStreamFileSource")
+    return Promise.resolve(null);
   }
 
   async slice(start: number, end: number) {

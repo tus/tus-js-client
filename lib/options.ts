@@ -56,7 +56,7 @@ export interface UploadOptions {
   uploadUrl?: string
   metadata: { [key: string]: string }
   metadataForPartialUploads: UploadOptions['metadata']
-  fingerprint: (file: UploadInput, options: UploadOptions) => Promise<string | null>
+  fingerprint?: (file: UploadInput, options: UploadOptions, sourceFingerprint: string | null) => Promise<string | null>
   uploadSize?: number
 
   onProgress?: (bytesSent: number, bytesTotal: number | null) => void
