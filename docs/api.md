@@ -208,6 +208,34 @@ Following example will trigger up to three retries, each after 1s, 3s and 5s res
 retryDelays: [1000, 3000, 5000]
 ```
 
+#### stallDetection
+
+_Default value:_ `{ enabled: false, stallTimeout: 30000, checkInterval: 5000 }`
+
+An object controlling the stall detection feature, which can automatically detect when an upload has stopped making progress and trigger a retry. This is useful for recovering from frozen uploads caused by network issues that don't trigger explicit errors.
+
+The stall detection options are:
+- `enabled`: Boolean indicating whether stall detection is active (default: `false`)
+- `stallTimeout`: Time in milliseconds without progress before considering the upload stalled (default: `30000`)
+- `checkInterval`: How often in milliseconds to check for stalls (default: `5000`)
+
+**Note:** Stall detection only works with HTTP stacks that support progress events. Currently, this includes:
+- `XHRHttpStack` (browser default) - Supported
+- `NodeHttpStack` (Node.js default) - Supported
+- `FetchHttpStack` - Not supported
+
+When a stall is detected, the upload will be automatically retried according to your `retryDelays` configuration. If `retryDelays` is `null`, the stall will trigger an error instead.
+
+Example configuration:
+
+```js
+stallDetection: {
+    enabled: true,
+    stallTimeout: 15000,  // 15 seconds without progress
+    checkInterval: 2000   // Check every 2 seconds
+}
+```
+
 #### storeFingerprintForResuming
 
 _Default value:_ `true`
