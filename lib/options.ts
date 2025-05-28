@@ -53,37 +53,40 @@ export type UploadInput =
  */
 export interface StallDetectionOptions {
   enabled: boolean
-  stallTimeout: number      // Time in ms before considering progress stalled
-  checkInterval: number     // How often to check for stalls
-  minimumBytesPerSecond: number // For stacks without progress events
+  stallTimeout: number // Time in ms before considering progress stalled
+  checkInterval: number // How often to check for stalls
 }
 
+export type Part = { start: number; end: number }
+
 export interface UploadOptions {
-  endpoint?: string
-
-  uploadUrl?: string
-  metadata: { [key: string]: string }
-  metadataForPartialUploads: UploadOptions['metadata']
-  fingerprint: (file: UploadInput, options: UploadOptions) => Promise<string | null>
-  uploadSize?: number
-
-  onProgress?: (bytesSent: number, bytesTotal: number | null) => void
-  onChunkComplete?: (chunkSize: number, bytesAccepted: number, bytesTotal: number | null) => void
-  onSuccess?: (payload: OnSuccessPayload) => void
-  onError?: (error: Error | DetailedError) => void
-  onShouldRetry?: (error: DetailedError, retryAttempt: number, options: UploadOptions) => boolean
-  onUploadUrlAvailable?: () => void | Promise<void>
+  endpoint?: string | null
+  uploadUrl?: string | null
+  metadata: Record<string, string>
+  metadataForPartialUploads?: Record<string, string>
+  uploadSize?: number | null
+  onProgress: ((bytesSent: number, bytesTotal: number | null) => void) | null
+  onChunkComplete:
+    | ((chunkSize: number, bytesAccepted: number, bytesTotal: number | null) => void)
+    | null
+  onSuccess: ((payload: OnSuccessPayload) => void) | null
+  onError: ((error: Error | DetailedError) => void) | null
+  onUploadUrlAvailable: (() => void) | null
+  onShouldRetry:
+    | ((err: Error | DetailedError, retryAttempt: number, options: UploadOptions) => boolean)
+    | null
 
   overridePatchMethod: boolean
-  headers: { [key: string]: string }
+  headers: Record<string, string>
   addRequestId: boolean
-  onBeforeRequest?: (req: HttpRequest) => void | Promise<void>
-  onAfterResponse?: (req: HttpRequest, res: HttpResponse) => void | Promise<void>
+
+  onBeforeRequest: ((req: HttpRequest) => void | Promise<void>) | null
+  onAfterResponse: ((req: HttpRequest, res: HttpResponse) => void | Promise<void>) | null
 
   chunkSize: number
-  retryDelays: number[]
+  retryDelays: number[] | null
   parallelUploads: number
-  parallelUploadBoundaries?: { start: number; end: number }[]
+  parallelUploadBoundaries?: Part[] | null
   storeFingerprintForResuming: boolean
   removeFingerprintOnSuccess: boolean
   uploadLengthDeferred: boolean
@@ -91,11 +94,13 @@ export interface UploadOptions {
 
   urlStorage: UrlStorage
   fileReader: FileReader
+  fingerprint: (file: UploadInput, options: UploadOptions) => Promise<string | null>
+  // TODO: Types need to be double-checked
   httpStack: HttpStack
 
   protocol: typeof PROTOCOL_TUS_V1 | typeof PROTOCOL_IETF_DRAFT_03 | typeof PROTOCOL_IETF_DRAFT_05
 
-  stallDetection?: Partial<StallDetectionOptions>
+  stallDetection?: StallDetectionOptions
 }
 
 export interface OnSuccessPayload {
@@ -153,6 +158,9 @@ export type SliceResult =
 export interface HttpStack {
   createRequest(method: string, url: string): HttpRequest
   getName(): string
+  // Indicates whether this HTTP stack implementation supports progress events
+  // during upload. If false, stall detection will use overall transfer rate instead.
+  supportsProgressEvents?: () => boolean
 }
 
 export type HttpProgressHandler = (bytesSent: number) => void
