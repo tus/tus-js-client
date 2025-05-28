@@ -1,8 +1,8 @@
 import { Base64 } from 'js-base64'
-// TODO: Package url-parse is CommonJS. Can we replace this with a ESM package that
-// provides WHATWG URL? Then we can get rid of @rollup/plugin-commonjs.
+// @ts-ignore
 import URL from 'url-parse'
 import { DetailedError } from './DetailedError.js'
+import { StallDetector } from './StallDetector.js'
 import { log } from './logger.js'
 import {
   type FileSource,
@@ -11,12 +11,18 @@ import {
   PROTOCOL_IETF_DRAFT_03,
   PROTOCOL_IETF_DRAFT_05,
   PROTOCOL_TUS_V1,
+  type Part,
   type PreviousUpload,
   type SliceType,
   type UploadInput,
   type UploadOptions,
 } from './options.js'
 import { uuid } from './uuid.js'
+
+// Add this type definition after the imports
+interface ExtendedHttpRequest extends HttpRequest {
+  _upload?: BaseUpload
+}
 
 export const defaultOptions = {
   endpoint: undefined,
@@ -27,17 +33,17 @@ export const defaultOptions = {
   fingerprint: undefined,
   uploadSize: undefined,
 
-  onProgress: undefined,
-  onChunkComplete: undefined,
-  onSuccess: undefined,
-  onError: undefined,
-  onUploadUrlAvailable: undefined,
+  onProgress: null,
+  onChunkComplete: null,
+  onSuccess: null,
+  onError: null,
+  onUploadUrlAvailable: null,
 
   overridePatchMethod: false,
   headers: {},
   addRequestId: false,
-  onBeforeRequest: undefined,
-  onAfterResponse: undefined,
+  onBeforeRequest: null,
+  onAfterResponse: null,
   onShouldRetry: defaultOnShouldRetry,
 
   chunkSize: Number.POSITIVE_INFINITY,
@@ -54,6 +60,12 @@ export const defaultOptions = {
   httpStack: undefined,
 
   protocol: PROTOCOL_TUS_V1 as UploadOptions['protocol'],
+
+  stallDetection: {
+    enabled: false,
+    stallTimeout: 30000,
+    checkInterval: 5000,
+  },
 }
 
 export class BaseUpload {
@@ -108,6 +120,9 @@ export class BaseUpload {
   // True if the remote upload resource's length is deferred (either taken from
   // upload options or HEAD response)
   private _uploadLengthDeferred: boolean
+
+  // Stall detector instance
+  private _stallDetector?: StallDetector
 
   constructor(file: UploadInput, options: UploadOptions) {
     // Warn about removed options from previous versions
@@ -214,6 +229,9 @@ export class BaseUpload {
         return
       }
     }
+
+    // Setup stall detection before starting the upload
+    this._setupStallDetection()
 
     // Note: `start` does not return a Promise or await the preparation on purpose.
     // Its supposed to return immediately and start the upload in the background.
@@ -343,6 +361,12 @@ export class BaseUpload {
             if (totalSize == null) {
               throw new Error('tus: Expected totalSize to be set')
             }
+
+            // Update progress timestamp for the parallel upload to track stalls
+            if (upload._stallDetector) {
+              upload._stallDetector.updateProgress()
+            }
+
             this._emitProgress(totalProgress, totalSize)
           },
           // Wait until every partial upload has an upload URL, so we can add
@@ -463,6 +487,11 @@ export class BaseUpload {
     // Set the aborted flag before any `await`s, so no new requests are started.
     this._aborted = true
 
+    // Clear any stall detection
+    if (this._stallDetector) {
+      this._stallDetector.stop()
+    }
+
     // Stop any parallel partial uploads, that have been started in _startParallelUploads.
     if (this._parallelUploads != null) {
       for (const upload of this._parallelUploads) {
@@ -557,6 +586,11 @@ export class BaseUpload {
    * @api private
    */
   private _emitProgress(bytesSent: number, bytesTotal: number | null): void {
+    // Update stall detection state if progress has been made
+    if (this._stallDetector) {
+      this._stallDetector.updateProgress()
+    }
+
     if (typeof this.options.onProgress === 'function') {
       this.options.onProgress(bytesSent, bytesTotal)
     }
@@ -893,7 +927,6 @@ export class BaseUpload {
     ) {
       req.setHeader('Upload-Complete', done ? '?1' : '?0')
     }
-    this._emitProgress(this._offset, this._size)
     return await this._sendRequest(req, value)
   }
 
@@ -933,6 +966,8 @@ export class BaseUpload {
   private _openRequest(method: string, url: string): HttpRequest {
     const req = openRequest(method, url, this.options)
     this._req = req
+    // Store reference to this upload instance for stall detection management
+    ;(req as ExtendedHttpRequest)._upload = this
     return req
   }
 
@@ -995,6 +1030,62 @@ export class BaseUpload {
   _sendRequest(req: HttpRequest, body?: SliceType): Promise<HttpResponse> {
     return sendRequest(req, body, this.options)
   }
+
+  /**
+   * Setup stall detection monitoring
+   */
+  private _setupStallDetection(): void {
+    const stallDetection = this.options.stallDetection
+
+    // Early return if disabled or undefined
+    if (!stallDetection || !stallDetection.enabled) {
+      return
+    }
+
+    // Create stall detector instance
+    this._stallDetector = new StallDetector(
+      stallDetection,
+      this.options.httpStack,
+      (reason: string) => this._handleStall(reason),
+    )
+
+    // Start monitoring
+    this._stallDetector.start()
+  }
+
+  /**
+   * Handle a detected stall by forcing a retry
+   */
+  private _handleStall(reason: string): void {
+    // Just abort the current request, not the entire upload
+    // Each parallel upload instance has its own stall detection
+    if (this._req) {
+      this._req.abort()
+    }
+
+    // Force a retry via the error mechanism
+    this._retryOrEmitError(new Error(`Upload stalled: ${reason}`))
+  }
+
+  /**
+   * Pause stall detection temporarily
+   * @api private
+   */
+  _pauseStallDetection(): void {
+    if (this._stallDetector) {
+      this._stallDetector.pause()
+    }
+  }
+
+  /**
+   * Resume stall detection
+   * @api private
+   */
+  _resumeStallDetection(): void {
+    if (this._stallDetector) {
+      this._stallDetector.resume()
+    }
+  }
 }
 
 function encodeMetadata(metadata: Record<string, string>): string {
@@ -1055,8 +1146,19 @@ async function sendRequest(
   body: SliceType | undefined,
   options: UploadOptions,
 ): Promise<HttpResponse> {
+  // Pause stall detection during onBeforeRequest callback to avoid false positives
+  const upload = (req as ExtendedHttpRequest)._upload
+  if (upload) {
+    upload._pauseStallDetection()
+  }
+
   if (typeof options.onBeforeRequest === 'function') {
     await options.onBeforeRequest(req)
+  }
+
+  // Resume stall detection after callback
+  if (upload) {
+    upload._resumeStallDetection()
   }
 
   const res = await req.send(body)
@@ -1143,8 +1245,6 @@ function resolveUrl(origin: string, link: string): string {
   return new URL(link, origin).toString()
 }
 
-type Part = { start: number; end: number }
-
 /**
  * Calculate the start and end positions for the parts if an upload
  * is split into multiple parallel requests.
@@ -1219,6 +1319,10 @@ export async function terminate(url: string, options: UploadOptions): Promise<vo
     // Instead of keeping track of the retry attempts, we remove the first element from the delays
     // array. If the array is empty, all retry attempts are used up and we will bubble up the error.
     // We recursively call the terminate function will removing elements from the retryDelays array.
+    if (!options.retryDelays || options.retryDelays.length === 0) {
+      throw detailedErr
+    }
+
     const delay = options.retryDelays[0]
     const remainingDelays = options.retryDelays.slice(1)
     const newOptions = {
