@@ -35,7 +35,7 @@ export class PathFileSource implements FileSource {
   }
 
   fingerprint(options: UploadOptions): Promise<string | null> {
-    return Promise.resolve([this._file, this.size, this._path, options.endpoint, options.projectId].join('-'))
+    return Promise.resolve([this._file, this.size, this._path, options.endpoint].join('-'))
   }
 
   slice(start: number, end: number) {

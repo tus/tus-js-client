@@ -21,7 +21,7 @@ export class ArrayBufferViewFileSource implements FileSource {
     const buffer = this._view.buffer.slice(this._view.byteOffset, this._view.byteOffset + this._view.byteLength);
     const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
     const hashContent = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-    return Promise.resolve([hashContent, options.endpoint, options.projectId].join('-'));
+    return Promise.resolve([hashContent, options.endpoint].join('-'));
   }
 
   slice(start: number, end: number): Promise<SliceResult> {

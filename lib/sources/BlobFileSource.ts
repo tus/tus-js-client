@@ -17,7 +17,6 @@ export class BlobFileSource implements FileSource {
 
   fingerprint(options: UploadOptions): Promise<string | null> {
     let name, lastModified;
-    const projectId = options.projectId || 'defaultProjectId';
     if (this._file instanceof File) {
       name = this._file.name;
       lastModified = this._file.lastModified;
@@ -26,7 +25,7 @@ export class BlobFileSource implements FileSource {
       lastModified = 0;
     }
 
-    return Promise.resolve(['tus-br', name, this._file.type, this._file.size, lastModified, options.endpoint, projectId].join('-'));
+    return Promise.resolve(['tus-br', name, this._file.type, this._file.size, lastModified, options.endpoint].join('-'));
   }
 
   async slice(start: number, end: number): Promise<SliceResult> {
