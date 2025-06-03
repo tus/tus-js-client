@@ -6,7 +6,7 @@ import {
   supportedTypes as supportedBaseTypes,
 } from '../commonFileReader.js'
 import type { FileReader, FileSource, UploadInput } from '../options.js'
-import { BlobFileSource } from '../sources/BlobFileSource.js'
+import { ReactNativeFileSource } from "../sources/ReactNativeFileSource.js";
 
 export class BrowserFileReader implements FileReader {
   async openFile(input: UploadInput, chunkSize: number): Promise<FileSource> {
@@ -20,8 +20,7 @@ export class BrowserFileReader implements FileReader {
       }
 
       try {
-        const blob = await uriToBlob(input.uri)
-        return new BlobFileSource(blob)
+        return new ReactNativeFileSource(input)
       } catch (err) {
         throw new Error(
           `tus: cannot fetch \`file.uri\` as Blob, make sure the uri is correct and accessible. ${err}`,
