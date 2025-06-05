@@ -872,7 +872,7 @@ export class BaseUpload {
     req.setProgressHandler((bytesSent) => {
       // Update per-request stall detector if active
       if (stallDetector) {
-        stallDetector.updateProgress()
+        stallDetector.updateProgress(start + bytesSent)
       }
       this._emitProgress(start + bytesSent, this._size)
     })
@@ -921,20 +921,19 @@ export class BaseUpload {
       )
     }
 
-    let response: HttpResponse
     if (value == null) {
-      response = await this._sendRequest(req, undefined, stallDetector)
-    } else {
-      if (
-        this.options.protocol === PROTOCOL_IETF_DRAFT_03 ||
-        this.options.protocol === PROTOCOL_IETF_DRAFT_05
-      ) {
-        req.setHeader('Upload-Complete', done ? '?1' : '?0')
-      }
-      response = await this._sendRequest(req, value, stallDetector)
+      return await this._sendRequest(req, undefined, stallDetector)
     }
 
-    return response
+    if (
+      this.options.protocol === PROTOCOL_IETF_DRAFT_03 ||
+      this.options.protocol === PROTOCOL_IETF_DRAFT_05
+    ) {
+      req.setHeader('Upload-Complete', done ? '?1' : '?0')
+    }
+
+    this._emitProgress(this._offset, this._size)
+    return await this._sendRequest(req, value, stallDetector)
   }
 
   /**
