@@ -850,17 +850,13 @@ export class BaseUpload {
     if (this.options.stallDetection?.enabled) {
       // Only enable stall detection if the HTTP stack supports progress events
       if (this.options.httpStack.supportsProgressEvents()) {
-        stallDetector = new StallDetector(
-          this.options.stallDetection,
-          this.options.httpStack,
-          (reason: string) => {
-            // Handle stall by aborting the current request and triggering retry
-            if (this._req) {
-              this._req.abort()
-            }
-            this._retryOrEmitError(new Error(`Upload stalled: ${reason}`))
-          },
-        )
+        stallDetector = new StallDetector(this.options.stallDetection, (reason: string) => {
+          // Handle stall by aborting the current request and triggering retry
+          if (this._req) {
+            this._req.abort()
+          }
+          this._retryOrEmitError(new Error(`Upload stalled: ${reason}`))
+        })
         // Don't start yet - will be started after onBeforeRequest
       } else {
         log(
@@ -872,7 +868,7 @@ export class BaseUpload {
     req.setProgressHandler((bytesSent) => {
       // Update per-request stall detector if active
       if (stallDetector) {
-        stallDetector.updateProgress()
+        stallDetector.updateProgress(start + bytesSent)
       }
       this._emitProgress(start + bytesSent, this._size)
     })
@@ -921,20 +917,19 @@ export class BaseUpload {
       )
     }
 
-    let response: HttpResponse
     if (value == null) {
-      response = await this._sendRequest(req, undefined, stallDetector)
-    } else {
-      if (
-        this.options.protocol === PROTOCOL_IETF_DRAFT_03 ||
-        this.options.protocol === PROTOCOL_IETF_DRAFT_05
-      ) {
-        req.setHeader('Upload-Complete', done ? '?1' : '?0')
-      }
-      response = await this._sendRequest(req, value, stallDetector)
+      return await this._sendRequest(req, undefined, stallDetector)
     }
 
-    return response
+    if (
+      this.options.protocol === PROTOCOL_IETF_DRAFT_03 ||
+      this.options.protocol === PROTOCOL_IETF_DRAFT_05
+    ) {
+      req.setHeader('Upload-Complete', done ? '?1' : '?0')
+    }
+
+    this._emitProgress(this._offset, this._size)
+    return await this._sendRequest(req, value, stallDetector)
   }
 
   /**
@@ -1104,25 +1099,27 @@ async function sendRequest(
     await options.onBeforeRequest(req)
   }
 
-  // Start stall detection after onBeforeRequest completes but before the actual network request
-  if (stallDetector) {
-    stallDetector.start()
-  }
-
-  try {
-    const res = await req.send(body)
-
-    if (typeof options.onAfterResponse === 'function') {
-      await options.onAfterResponse(req, res)
-    }
-
-    return res
-  } finally {
-    // Always stop the stall detector when the request completes (success or failure)
+  const sendWithStallDetection = async (): Promise<HttpResponse> => {
     if (stallDetector) {
-      stallDetector.stop()
+      stallDetector.start()
+    }
+
+    try {
+      return await req.send(body)
+    } finally {
+      if (stallDetector) {
+        stallDetector.stop()
+      }
     }
   }
+
+  const res = await sendWithStallDetection()
+
+  if (typeof options.onAfterResponse === 'function') {
+    await options.onAfterResponse(req, res)
+  }
+
+  return res
 }
 
 /**
@@ -1276,10 +1273,6 @@ export async function terminate(url: string, options: UploadOptions): Promise<vo
     // Instead of keeping track of the retry attempts, we remove the first element from the delays
     // array. If the array is empty, all retry attempts are used up and we will bubble up the error.
     // We recursively call the terminate function will removing elements from the retryDelays array.
-    if (!options.retryDelays || options.retryDelays.length === 0) {
-      throw detailedErr
-    }
-
     const delay = options.retryDelays[0]
     const remainingDelays = options.retryDelays.slice(1)
     const newOptions = {

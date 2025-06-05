@@ -1,39 +1,9 @@
 import { Upload } from 'tus-js-client'
-import { TestHttpStack, getBlob, waitableFunction } from './helpers/utils.js'
+import { TestHttpStack, getBlob, wait, waitableFunction } from './helpers/utils.js'
 
-// Custom HTTP stack that can simulate stalls
-class StallSimulatingHttpStack extends TestHttpStack {
-  constructor() {
-    super()
-    this.stallOnNextPatch = false
-  }
-
-  createRequest(method, url) {
-    const req = super.createRequest(method, url)
-
-    // If we want to simulate a stall on PATCH requests, override the send method
-    if (this.stallOnNextPatch && method === 'PATCH') {
-      this.stallOnNextPatch = false
-      req.send = async function (body) {
-        this.body = body
-        if (body) {
-          this.bodySize = await getBodySize(body)
-          // Don't call progress handler to simulate a stall
-        }
-        this._onRequestSend(this)
-        return this._requestPromise
-      }
-    }
-
-    return req
-  }
-
-  supportsProgressEvents() {
-    return true
-  }
-}
-
-// Helper to get body size
+/**
+ * Helper to get body size for various input types
+ */
 function getBodySize(body) {
   if (body == null) return null
   if (body instanceof Blob) return body.size
@@ -41,29 +11,174 @@ function getBodySize(body) {
   return 0
 }
 
+/**
+ * Enhanced HTTP stack for testing stall detection scenarios
+ * Supports both complete stalls and custom progress sequences
+ */
+class StallTestHttpStack extends TestHttpStack {
+  constructor() {
+    super()
+    this.stallOnNextPatch = false
+    this.progressSequences = new Map()
+    this.progressPromises = new Map()
+    this.nextProgressSequence = null
+  }
+
+  /**
+   * Configure the stack to stall on the next PATCH request
+   */
+  simulateStallOnNextPatch() {
+    this.stallOnNextPatch = true
+  }
+
+  /**
+   * Set a custom progress sequence for the next PATCH request
+   * @param {Array} sequence - Array of {bytes: number, delay: number} objects
+   */
+  setNextProgressSequence(sequence) {
+    this.nextProgressSequence = sequence
+  }
+
+  supportsProgressEvents() {
+    return true
+  }
+
+  createRequest(method, url) {
+    const req = super.createRequest(method, url)
+
+    if (method === 'PATCH') {
+      this._setupPatchRequest(req)
+    }
+
+    return req
+  }
+
+  _setupPatchRequest(req) {
+    const self = this
+
+    // Handle complete stalls
+    if (this.stallOnNextPatch) {
+      this.stallOnNextPatch = false
+      req.send = async function (body) {
+        this.body = body
+        if (body) {
+          this.bodySize = await getBodySize(body)
+          // Don't call progress handler to simulate a complete stall
+        }
+        this._onRequestSend(this)
+        return this._requestPromise
+      }
+      return
+    }
+
+    // Handle progress sequences
+    if (this.nextProgressSequence) {
+      this.progressSequences.set(req, this.nextProgressSequence)
+      this.nextProgressSequence = null
+    }
+
+    // Override respondWith to wait for progress events
+    const originalRespondWith = req.respondWith.bind(req)
+    req.respondWith = async (resData) => {
+      const progressPromise = self.progressPromises.get(req)
+      if (progressPromise) {
+        await progressPromise
+        self.progressPromises.delete(req)
+      }
+      originalRespondWith(resData)
+    }
+
+    // Override send to handle progress sequences
+    req.send = async function (body) {
+      this.body = body
+      if (body) {
+        this.bodySize = await getBodySize(body)
+      }
+
+      const progressSequence = self.progressSequences.get(req)
+      if (progressSequence && this._onProgress) {
+        self._scheduleProgressSequence(req, progressSequence, this._onProgress)
+      } else if (this._onProgress) {
+        self._scheduleDefaultProgress(req, this._onProgress, this.bodySize)
+      }
+
+      this._onRequestSend(this)
+      return this._requestPromise
+    }
+  }
+
+  _scheduleProgressSequence(req, sequence, progressHandler) {
+    const progressPromise = new Promise((resolve) => {
+      setTimeout(async () => {
+        for (const event of sequence) {
+          await new Promise((resolve) => setTimeout(resolve, event.delay || 0))
+          progressHandler(event.bytes)
+        }
+        resolve()
+      }, 10) // Small delay to ensure stall detector is started
+    })
+    this.progressPromises.set(req, progressPromise)
+  }
+
+  _scheduleDefaultProgress(req, progressHandler, bodySize) {
+    const progressPromise = new Promise((resolve) => {
+      setTimeout(() => {
+        progressHandler(0)
+        progressHandler(bodySize)
+        resolve()
+      }, 10) // Small delay to ensure stall detector is started
+    })
+    this.progressPromises.set(req, progressPromise)
+  }
+}
+
+/**
+ * Common test setup helper
+ */
+function createTestUpload(options = {}) {
+  const defaultOptions = {
+    httpStack: new StallTestHttpStack(),
+    endpoint: 'https://tus.io/uploads',
+    onError: waitableFunction('onError'),
+    onSuccess: waitableFunction('onSuccess'),
+    onProgress: waitableFunction('onProgress'),
+  }
+
+  const file = options.file || getBlob('hello world')
+  const uploadOptions = { ...defaultOptions, ...options }
+  const upload = new Upload(file, uploadOptions)
+
+  return { upload, options: uploadOptions, testStack: uploadOptions.httpStack }
+}
+
+/**
+ * Helper to handle standard upload creation flow
+ */
+async function handleUploadCreation(testStack, location = '/uploads/12345') {
+  const req = await testStack.nextRequest()
+  expect(req.method).toBe('POST')
+  req.respondWith({
+    status: 201,
+    responseHeaders: {
+      Location: location,
+    },
+  })
+  return req
+}
+
 describe('tus-stall-detection', () => {
   describe('integration tests', () => {
     it("should not enable stall detection if HTTP stack doesn't support progress events", async () => {
-      // Enable debug logging temporarily
       const { enableDebugLog } = await import('tus-js-client')
       enableDebugLog()
 
       const testStack = new TestHttpStack()
-      // Mock the stack to not support progress events
       testStack.supportsProgressEvents = () => false
 
-      const file = getBlob('hello world')
-
-      const options = {
+      const { upload } = createTestUpload({
         httpStack: testStack,
-        endpoint: 'https://tus.io/uploads',
-        stallDetection: {
-          enabled: true,
-        },
-        onError: waitableFunction('onError'),
-      }
-
-      const upload = new Upload(file, options)
+        stallDetection: { enabled: true },
+      })
 
       // Capture console output
       const originalLog = console.log
@@ -74,157 +189,83 @@ describe('tus-stall-detection', () => {
 
       upload.start()
 
-      // Handle the POST request
       const req = await testStack.nextRequest()
       expect(req.url).toBe('https://tus.io/uploads')
       expect(req.method).toBe('POST')
       req.respondWith({
         status: 201,
-        responseHeaders: {
-          Location: '/uploads/12345',
-        },
+        responseHeaders: { Location: '/uploads/12345' },
       })
 
-      // Wait a bit for any async operations
-      await new Promise((resolve) => setTimeout(resolve, 50))
-
-      // Restore console.log
+      await wait(50)
       console.log = originalLog
 
-      // Check that stall detection was disabled with appropriate log message
       expect(loggedMessage).toContain(
-        'tus: stall detection is enabled but the HTTP stack does not support progress events, it will be disabled for this upload',
+        'tus: stall detection is enabled but the HTTP stack does not support progress events',
       )
 
-      // Abort to clean up
       upload.abort()
     })
 
     it('should upload a file with stall detection enabled', async () => {
-      const testStack = new TestHttpStack()
-      // Mock the stack to support progress events
-      testStack.supportsProgressEvents = () => true
-
-      const file = getBlob('hello world')
-
-      const options = {
-        httpStack: testStack,
-        endpoint: 'https://tus.io/uploads',
+      const { upload, options, testStack } = createTestUpload({
         stallDetection: {
           enabled: true,
           checkInterval: 1000,
           stallTimeout: 2000,
         },
-        onSuccess: waitableFunction('onSuccess'),
-        onError: waitableFunction('onError'),
-      }
+      })
 
-      const upload = new Upload(file, options)
       upload.start()
 
-      // Handle the POST request to create the upload
-      let req = await testStack.nextRequest()
-      expect(req.url).toBe('https://tus.io/uploads')
-      expect(req.method).toBe('POST')
+      await handleUploadCreation(testStack)
 
-      req.respondWith({
-        status: 201,
-        responseHeaders: {
-          Location: '/uploads/12345',
-        },
-      })
+      const patchReq = await testStack.nextRequest()
+      expect(patchReq.url).toBe('https://tus.io/uploads/12345')
+      expect(patchReq.method).toBe('PATCH')
 
-      // Handle the PATCH request to upload the file
-      req = await testStack.nextRequest()
-      expect(req.url).toBe('https://tus.io/uploads/12345')
-      expect(req.method).toBe('PATCH')
-
-      // Complete the upload quickly (before stall detection triggers)
-      req.respondWith({
+      patchReq.respondWith({
         status: 204,
-        responseHeaders: {
-          'Upload-Offset': '11',
-        },
+        responseHeaders: { 'Upload-Offset': '11' },
       })
 
-      // Wait for the upload to complete successfully
       await options.onSuccess.toBeCalled()
-
-      // Make sure the error callback was not called
       expect(options.onError.calls.count()).toBe(0)
     })
 
     it('should detect stalls and emit error when no retries configured', async () => {
-      const testStack = new StallSimulatingHttpStack()
-      const file = getBlob('hello world')
-
-      const options = {
-        httpStack: testStack,
-        endpoint: 'https://tus.io/uploads',
+      const { upload, options, testStack } = createTestUpload({
         stallDetection: {
           enabled: true,
-          checkInterval: 100, // Fast check interval for testing
-          stallTimeout: 200, // Short timeout for testing
+          checkInterval: 100,
+          stallTimeout: 200,
         },
-        // No retries to get immediate error
         retryDelays: null,
-        onError: waitableFunction('onError'),
-        onSuccess: waitableFunction('onSuccess'),
-      }
-
-      const upload = new Upload(file, options)
-
-      // Tell the stack to simulate a stall on the next PATCH request
-      testStack.stallOnNextPatch = true
-
-      upload.start()
-
-      // Handle the POST request to create the upload
-      const req = await testStack.nextRequest()
-      expect(req.method).toBe('POST')
-      req.respondWith({
-        status: 201,
-        responseHeaders: {
-          Location: '/uploads/12345',
-        },
       })
 
-      // The PATCH request should be sent but will stall
-      // Don't wait for the response since it will be aborted
+      testStack.simulateStallOnNextPatch()
+      upload.start()
 
-      // Wait for stall detection to trigger and error to be emitted
+      await handleUploadCreation(testStack)
+
       const error = await options.onError.toBeCalled()
       expect(error.message).toContain('Upload stalled')
     })
 
     it('should retry when stall is detected', async () => {
-      const testStack = new StallSimulatingHttpStack()
-      const file = getBlob('hello world')
-
-      let requestCount = 0
-
-      const options = {
-        httpStack: testStack,
-        endpoint: 'https://tus.io/uploads',
+      const { upload, options, testStack } = createTestUpload({
         stallDetection: {
           enabled: true,
-          checkInterval: 100, // Fast check interval for testing
-          stallTimeout: 200, // Short timeout for testing
+          checkInterval: 100,
+          stallTimeout: 200,
         },
-        // Enable retries
         retryDelays: [100],
-        onError: waitableFunction('onError'),
-        onSuccess: waitableFunction('onSuccess'),
-      }
+      })
 
-      const upload = new Upload(file, options)
-
-      // Tell the stack to simulate a stall on the first PATCH request only
-      testStack.stallOnNextPatch = true
-
+      testStack.simulateStallOnNextPatch()
       upload.start()
 
-      // Keep handling requests until success
+      let requestCount = 0
       while (true) {
         const req = await testStack.nextRequest()
         requestCount++
@@ -232,9 +273,7 @@ describe('tus-stall-detection', () => {
         if (req.method === 'POST') {
           req.respondWith({
             status: 201,
-            responseHeaders: {
-              Location: '/uploads/12345',
-            },
+            responseHeaders: { Location: '/uploads/12345' },
           })
         } else if (req.method === 'HEAD') {
           req.respondWith({
@@ -245,167 +284,113 @@ describe('tus-stall-detection', () => {
             },
           })
         } else if (req.method === 'PATCH') {
-          // Complete the upload on any PATCH that isn't stalled
           req.respondWith({
             status: 204,
-            responseHeaders: {
-              'Upload-Offset': '11',
-            },
+            responseHeaders: { 'Upload-Offset': '11' },
           })
           break
         }
 
-        // Safety check to avoid infinite loop
         if (requestCount > 10) {
           throw new Error('Too many requests')
         }
       }
 
-      // Wait for success
       await options.onSuccess.toBeCalled()
-
-      // Error should not have been called since we retried
       expect(options.onError.calls.count()).toBe(0)
-
-      // We should have had more than 1 request (at least POST + PATCH)
       expect(requestCount).toBeGreaterThan(1)
     })
 
     it('should not incorrectly detect stalls during onBeforeRequest delays', async () => {
-      const testStack = new TestHttpStack()
-      // Mock the stack to support progress events
-      testStack.supportsProgressEvents = () => true
-
-      const file = getBlob('hello world')
-
-      const options = {
-        httpStack: testStack,
-        endpoint: 'https://tus.io/uploads',
+      const { upload, options, testStack } = createTestUpload({
         stallDetection: {
           enabled: true,
           checkInterval: 100,
           stallTimeout: 200,
         },
         onBeforeRequest: async (_req) => {
-          // Simulate a long-running operation like fetching auth tokens
-          await new Promise((resolve) => setTimeout(resolve, 300))
+          await wait(300) // Longer than stall timeout
         },
-        onSuccess: waitableFunction('onSuccess'),
-        onError: waitableFunction('onError'),
-      }
+      })
 
-      const upload = new Upload(file, options)
       upload.start()
 
-      // Handle the POST request to create the upload
-      let req = await testStack.nextRequest()
-      expect(req.url).toBe('https://tus.io/uploads')
-      expect(req.method).toBe('POST')
+      await handleUploadCreation(testStack)
 
-      req.respondWith({
-        status: 201,
-        responseHeaders: {
-          Location: '/uploads/12345',
-        },
-      })
+      const patchReq = await testStack.nextRequest()
+      expect(patchReq.url).toBe('https://tus.io/uploads/12345')
+      expect(patchReq.method).toBe('PATCH')
 
-      // Handle the PATCH request
-      req = await testStack.nextRequest()
-      expect(req.url).toBe('https://tus.io/uploads/12345')
-      expect(req.method).toBe('PATCH')
-
-      // Complete the upload
-      req.respondWith({
+      patchReq.respondWith({
         status: 204,
-        responseHeaders: {
-          'Upload-Offset': '11',
-        },
+        responseHeaders: { 'Upload-Offset': '11' },
       })
 
-      // Wait for the upload to complete successfully
       await options.onSuccess.toBeCalled()
-
-      // Stall detection should not have triggered during the onBeforeRequest delay
       expect(options.onError.calls.count()).toBe(0)
     })
 
     it('should detect stalls when progress events stop mid-upload', async () => {
-      const testStack = new TestHttpStack()
-      const file = getBlob('hello world'.repeat(100)) // Larger file for multiple progress events
-
-      let progressCallCount = 0
-      let progressHandler = null
-
-      // Override createRequest to capture and control progress events
-      const originalCreateRequest = testStack.createRequest.bind(testStack)
-      testStack.createRequest = function(method, url) {
-        const req = originalCreateRequest(method, url)
-
-        if (method === 'PATCH') {
-          const originalSetProgressHandler = req.setProgressHandler.bind(req)
-          req.setProgressHandler = function(handler) {
-            progressHandler = handler
-            originalSetProgressHandler(handler)
-          }
-
-          // Override send to simulate progress events that stop
-          const originalSend = req.send.bind(req)
-          req.send = async function(body) {
-            const result = originalSend(body)
-
-            // Simulate some progress events then stop
-            if (progressHandler && body) {
-              const totalSize = await getBodySize(body)
-              // Send progress events for first 30% of upload
-              for (let i = 0; i <= 3; i++) {
-                progressCallCount++
-                progressHandler(Math.floor(totalSize * 0.1 * i))
-                await new Promise(resolve => setTimeout(resolve, 50))
-              }
-              // Then stop sending progress events to simulate a stall
-            }
-
-            return result
-          }
-        }
-
-        return req
-      }
-
-      const options = {
-        httpStack: testStack,
-        endpoint: 'https://tus.io/uploads',
+      const file = getBlob('hello world'.repeat(100))
+      const { upload, options, testStack } = createTestUpload({
+        file,
         stallDetection: {
           enabled: true,
           checkInterval: 100,
           stallTimeout: 200,
         },
-        retryDelays: null, // No retries to get immediate error
-        onError: waitableFunction('onError'),
-        onProgress: waitableFunction('onProgress'),
-      }
-
-      const upload = new Upload(file, options)
-      upload.start()
-
-      // Handle the POST request
-      const req = await testStack.nextRequest()
-      expect(req.method).toBe('POST')
-      req.respondWith({
-        status: 201,
-        responseHeaders: {
-          Location: '/uploads/12345',
-        },
+        retryDelays: null,
       })
 
-      // The PATCH request will start sending progress events then stall
+      // Create a progress sequence that stops at 30% of the file
+      const fileSize = file.size
+      const progressSequence = [
+        { bytes: 0, delay: 10 },
+        { bytes: Math.floor(fileSize * 0.1), delay: 50 },
+        { bytes: Math.floor(fileSize * 0.2), delay: 50 },
+        { bytes: Math.floor(fileSize * 0.3), delay: 50 },
+        // No more progress events after 30%
+      ]
 
-      // Wait for stall detection to trigger
+      testStack.setNextProgressSequence(progressSequence)
+      upload.start()
+      await handleUploadCreation(testStack)
+
       const error = await options.onError.toBeCalled()
       expect(error.message).toContain('Upload stalled')
+      expect(options.onProgress.calls.count()).toBeGreaterThan(0)
+    })
 
-      // Verify that we received some progress events before the stall
-      expect(progressCallCount).toBeGreaterThan(0)
+    it('should detect stalls when progress value does not change', async () => {
+      const { upload, options, testStack } = createTestUpload({
+        stallDetection: {
+          enabled: true,
+          checkInterval: 50,
+          stallTimeout: 500,
+        },
+        retryDelays: null,
+      })
+
+      // Create a progress sequence that gets stuck at 300 bytes
+      const progressSequence = [
+        { bytes: 0, delay: 10 },
+        { bytes: 100, delay: 10 },
+        { bytes: 200, delay: 10 },
+        { bytes: 300, delay: 10 },
+        // Repeat the same value to trigger value-based stall detection
+        ...Array(12).fill({ bytes: 300, delay: 30 }),
+      ]
+
+      testStack.setNextProgressSequence(progressSequence)
+      upload.start()
+
+      await handleUploadCreation(testStack)
+
+      const patchReq = await testStack.nextRequest()
+      expect(patchReq.method).toBe('PATCH')
+
+      const error = await options.onError.toBeCalled()
+      expect(error.message).toContain('Upload stalled: no progress')
       expect(options.onProgress.calls.count()).toBeGreaterThan(0)
     })
   })

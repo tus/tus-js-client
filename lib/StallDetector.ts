@@ -1,23 +1,17 @@
 import { log } from './logger.js'
 import type { StallDetectionOptions } from './options.js'
-import type { HttpStack } from './options.js'
 
 export class StallDetector {
   private options: StallDetectionOptions
-  private httpStack: HttpStack
   private onStallDetected: (reason: string) => void
 
   private intervalId: ReturnType<typeof setInterval> | null = null
   private lastProgressTime = 0
+  private lastProgressValue = 0
   private isActive = false
 
-  constructor(
-    options: StallDetectionOptions,
-    httpStack: HttpStack,
-    onStallDetected: (reason: string) => void,
-  ) {
+  constructor(options: StallDetectionOptions, onStallDetected: (reason: string) => void) {
     this.options = options
-    this.httpStack = httpStack
     this.onStallDetected = onStallDetected
   }
 
@@ -30,6 +24,7 @@ export class StallDetector {
     }
 
     this.lastProgressTime = Date.now()
+    this.lastProgressValue = 0
     this.isActive = true
 
     log(
@@ -44,7 +39,7 @@ export class StallDetector {
 
       const now = Date.now()
       if (this._isProgressStalled(now)) {
-        this._handleStall('no progress events received')
+        this._handleStall('no progress')
       }
     }, this.options.checkInterval)
   }
@@ -62,9 +57,14 @@ export class StallDetector {
 
   /**
    * Update progress information
+   * @param progressValue The current progress value (bytes uploaded)
    */
-  updateProgress(): void {
-    this.lastProgressTime = Date.now()
+  updateProgress(progressValue: number): void {
+    // Only update progress time if the value has actually changed
+    if (progressValue !== this.lastProgressValue) {
+      this.lastProgressTime = Date.now()
+      this.lastProgressValue = progressValue
+    }
   }
 
   /**
