@@ -10,7 +10,6 @@ export class StallDetector {
   private intervalId: ReturnType<typeof setInterval> | null = null
   private lastProgressTime = 0
   private lastProgressValue = 0
-  private progressValueCount = 0
   private isActive = false
 
   constructor(
@@ -33,7 +32,6 @@ export class StallDetector {
 
     this.lastProgressTime = Date.now()
     this.lastProgressValue = 0
-    this.progressValueCount = 0
     this.isActive = true
 
     log(
@@ -47,10 +45,8 @@ export class StallDetector {
       }
 
       const now = Date.now()
-      if (this._isProgressValueStalled()) {
-        this._handleStall('progress value not changing')
-      } else if (this._isProgressStalled(now)) {
-        this._handleStall('no progress events received')
+      if (this._isProgressStalled(now)) {
+        this._handleStall('no progress')
       }
     }, this.options.checkInterval)
   }
@@ -71,14 +67,10 @@ export class StallDetector {
    * @param progressValue The current progress value (bytes uploaded)
    */
   updateProgress(progressValue: number): void {
-    this.lastProgressTime = Date.now()
-
-    // Track if the progress value has changed
-    if (progressValue === this.lastProgressValue) {
-      this.progressValueCount++
-    } else {
+    // Only update progress time if the value has actually changed
+    if (progressValue !== this.lastProgressValue) {
+      this.lastProgressTime = Date.now()
       this.lastProgressValue = progressValue
-      this.progressValueCount = 0
     }
   }
 
@@ -92,25 +84,6 @@ export class StallDetector {
 
     if (isStalled) {
       log(`tus: no progress for ${timeSinceProgress}ms (limit: ${stallTimeout}ms)`)
-    }
-
-    return isStalled
-  }
-
-  /**
-   * Check if upload has stalled based on progress value not changing
-   */
-  private _isProgressValueStalled(): boolean {
-    // Calculate how many times we expect progress to have changed based on check intervals
-    const expectedProgressChanges = Math.floor(
-      this.options.stallTimeout / this.options.checkInterval,
-    )
-    const isStalled = this.progressValueCount >= expectedProgressChanges
-
-    if (isStalled) {
-      log(
-        `tus: progress value stuck at ${this.lastProgressValue} bytes for ${this.progressValueCount} checks`,
-      )
     }
 
     return isStalled

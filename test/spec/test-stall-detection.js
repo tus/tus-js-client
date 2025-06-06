@@ -426,7 +426,7 @@ describe('tus-stall-detection', () => {
       expect(patchReq.method).toBe('PATCH')
 
       const error = await options.onError.toBeCalled()
-      expect(error.message).toContain('Upload stalled: progress value not changing')
+      expect(error.message).toContain('Upload stalled: no progress')
       expect(options.onProgress.calls.count()).toBeGreaterThan(0)
     })
   })
