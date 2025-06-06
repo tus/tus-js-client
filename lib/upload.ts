@@ -1273,10 +1273,6 @@ export async function terminate(url: string, options: UploadOptions): Promise<vo
     // Instead of keeping track of the retry attempts, we remove the first element from the delays
     // array. If the array is empty, all retry attempts are used up and we will bubble up the error.
     // We recursively call the terminate function will removing elements from the retryDelays array.
-    if (!options.retryDelays || options.retryDelays.length === 0) {
-      throw detailedErr
-    }
-
     const delay = options.retryDelays[0]
     const remainingDelays = options.retryDelays.slice(1)
     const newOptions = {
