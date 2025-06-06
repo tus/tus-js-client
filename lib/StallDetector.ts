@@ -1,10 +1,8 @@
 import { log } from './logger.js'
 import type { StallDetectionOptions } from './options.js'
-import type { HttpStack } from './options.js'
 
 export class StallDetector {
   private options: StallDetectionOptions
-  private httpStack: HttpStack
   private onStallDetected: (reason: string) => void
 
   private intervalId: ReturnType<typeof setInterval> | null = null
@@ -12,13 +10,8 @@ export class StallDetector {
   private lastProgressValue = 0
   private isActive = false
 
-  constructor(
-    options: StallDetectionOptions,
-    httpStack: HttpStack,
-    onStallDetected: (reason: string) => void,
-  ) {
+  constructor(options: StallDetectionOptions, onStallDetected: (reason: string) => void) {
     this.options = options
-    this.httpStack = httpStack
     this.onStallDetected = onStallDetected
   }
 

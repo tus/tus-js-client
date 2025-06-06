@@ -850,17 +850,13 @@ export class BaseUpload {
     if (this.options.stallDetection?.enabled) {
       // Only enable stall detection if the HTTP stack supports progress events
       if (this.options.httpStack.supportsProgressEvents()) {
-        stallDetector = new StallDetector(
-          this.options.stallDetection,
-          this.options.httpStack,
-          (reason: string) => {
-            // Handle stall by aborting the current request and triggering retry
-            if (this._req) {
-              this._req.abort()
-            }
-            this._retryOrEmitError(new Error(`Upload stalled: ${reason}`))
-          },
-        )
+        stallDetector = new StallDetector(this.options.stallDetection, (reason: string) => {
+          // Handle stall by aborting the current request and triggering retry
+          if (this._req) {
+            this._req.abort()
+          }
+          this._retryOrEmitError(new Error(`Upload stalled: ${reason}`))
+        })
         // Don't start yet - will be started after onBeforeRequest
       } else {
         log(
