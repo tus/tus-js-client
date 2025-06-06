@@ -22,7 +22,6 @@ class StallTestHttpStack extends TestHttpStack {
     this.progressSequences = new Map()
     this.progressPromises = new Map()
     this.nextProgressSequence = null
-    this.customProgressHandler = null
   }
 
   /**
@@ -38,14 +37,6 @@ class StallTestHttpStack extends TestHttpStack {
    */
   setNextProgressSequence(sequence) {
     this.nextProgressSequence = sequence
-  }
-
-  /**
-   * Set a custom progress handler for the next PATCH request
-   * @param {Function} handler - Custom handler function
-   */
-  setCustomProgressHandler(handler) {
-    this.customProgressHandler = handler
   }
 
   supportsProgressEvents() {
@@ -76,28 +67,6 @@ class StallTestHttpStack extends TestHttpStack {
         }
         this._onRequestSend(this)
         return this._requestPromise
-      }
-      return
-    }
-
-    // Handle custom progress handlers
-    if (this.customProgressHandler) {
-      const customHandler = this.customProgressHandler
-      this.customProgressHandler = null
-
-      const originalSetProgressHandler = req.setProgressHandler.bind(req)
-      req.setProgressHandler = (handler) => {
-        customHandler.progressHandler = handler
-        originalSetProgressHandler(handler)
-      }
-
-      const originalSend = req.send.bind(req)
-      req.send = async (body) => {
-        const result = originalSend(body)
-        if (customHandler.onSend) {
-          await customHandler.onSend(body, customHandler.progressHandler)
-        }
-        return result
       }
       return
     }
@@ -373,27 +342,22 @@ describe('tus-stall-detection', () => {
         retryDelays: null,
       })
 
-      let progressCallCount = 0
-      testStack.setCustomProgressHandler({
-        onSend: async (body, progressHandler) => {
-          if (progressHandler && body) {
-            const totalSize = await getBodySize(body)
-            // Send progress events for first 30% of upload then stop
-            for (let i = 0; i <= 3; i++) {
-              progressCallCount++
-              progressHandler(Math.floor(totalSize * 0.1 * i))
-              await wait(50)
-            }
-          }
-        },
-      })
+      // Create a progress sequence that stops at 30% of the file
+      const fileSize = file.size
+      const progressSequence = [
+        { bytes: 0, delay: 10 },
+        { bytes: Math.floor(fileSize * 0.1), delay: 50 },
+        { bytes: Math.floor(fileSize * 0.2), delay: 50 },
+        { bytes: Math.floor(fileSize * 0.3), delay: 50 },
+        // No more progress events after 30%
+      ]
 
+      testStack.setNextProgressSequence(progressSequence)
       upload.start()
       await handleUploadCreation(testStack)
 
       const error = await options.onError.toBeCalled()
       expect(error.message).toContain('Upload stalled')
-      expect(progressCallCount).toBeGreaterThan(0)
       expect(options.onProgress.calls.count()).toBeGreaterThan(0)
     })
 
