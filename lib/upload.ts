@@ -1099,25 +1099,27 @@ async function sendRequest(
     await options.onBeforeRequest(req)
   }
 
-  // Start stall detection after onBeforeRequest completes but before the actual network request
-  if (stallDetector) {
-    stallDetector.start()
-  }
-
-  try {
-    const res = await req.send(body)
-
-    if (typeof options.onAfterResponse === 'function') {
-      await options.onAfterResponse(req, res)
-    }
-
-    return res
-  } finally {
-    // Always stop the stall detector when the request completes (success or failure)
+  const sendWithStallDetection = async (): Promise<HttpResponse> => {
     if (stallDetector) {
-      stallDetector.stop()
+      stallDetector.start()
+    }
+
+    try {
+      return await req.send(body)
+    } finally {
+      if (stallDetector) {
+        stallDetector.stop()
+      }
     }
   }
+
+  const res = await sendWithStallDetection()
+
+  if (typeof options.onAfterResponse === 'function') {
+    await options.onAfterResponse(req, res)
+  }
+
+  return res
 }
 
 /**
