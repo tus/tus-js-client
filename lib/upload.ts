@@ -56,6 +56,8 @@ export const defaultOptions = {
   protocol: PROTOCOL_TUS_V1 as UploadOptions['protocol'],
 }
 
+export const noOpFingerprint = async () => null
+
 export class BaseUpload {
   options: UploadOptions
 
@@ -68,10 +70,10 @@ export class BaseUpload {
   // The underlying request object for the current PATCH request
   private _req?: HttpRequest
 
-  // The fingerpinrt for the current file (set after start())
+  // The fingerprint for the current file (set after start())
   private _fingerprint: string | null = null
 
-  // The key that the URL storage returned when saving an URL with a fingerprint,
+  // The key that the URL storage returned when saving a URL with a fingerprint,
   private _urlStorageKey?: string
 
   // The offset used in the current PATCH request
@@ -129,8 +131,8 @@ export class BaseUpload {
     this.file = file
   }
 
-  async findPreviousUploads(): Promise<PreviousUpload[]> {
-    const fingerprint = await this.options.fingerprint(this.file, this.options)
+  async findPreviousUploads(sourceFingerprint: string | null): Promise<PreviousUpload[]> {
+    const fingerprint = await this.options?.fingerprint?.(this.file, this.options, sourceFingerprint)
     if (!fingerprint) {
       throw new Error('tus: unable to calculate fingerprint for this input file')
     }
@@ -228,18 +230,32 @@ export class BaseUpload {
     })
   }
 
+  async _getFingerprint(): Promise<string | null> {
+    const sourceFingerprint = await this._getSourceFingerprint()
+
+    if (this.options.fingerprint) {
+      return await this.options.fingerprint(this.file, this.options, sourceFingerprint)
+    }
+
+    return sourceFingerprint
+  }
+
+  private async _getSourceFingerprint() {
+    return this._source ? this._source.fingerprint(this.options) : null
+  }
+
   private async _prepareAndStartUpload(): Promise<void> {
-    this._fingerprint = await this.options.fingerprint(this.file, this.options)
+    if (this._source == null) {
+      this._source = await this.options.fileReader.openFile(this.file, this.options.chunkSize)
+    }
+
+    this._fingerprint = await this._getFingerprint()
     if (this._fingerprint == null) {
       log(
         'No fingerprint was calculated meaning that the upload cannot be stored in the URL storage.',
       )
     } else {
       log(`Calculated fingerprint: ${this._fingerprint}`)
-    }
-
-    if (this._source == null) {
-      this._source = await this.options.fileReader.openFile(this.file, this.options.chunkSize)
     }
 
     // First, we look at the uploadLengthDeferred option.
@@ -1228,5 +1244,6 @@ export async function terminate(url: string, options: UploadOptions): Promise<vo
 
     await wait(delay)
     await terminate(url, newOptions)
+
   }
 }

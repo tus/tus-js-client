@@ -23,7 +23,7 @@ export interface ReactNativeFile {
 /**
  * PathReference is a reference to a file on disk. Currently, it's only supported
  * in Node.js. It can be supplied as a normal object or as an instance of `fs.ReadStream`,
- * which also statisfies this interface.
+ * which also satisfies this interface.
  *
  * Optionally, a start and/or end position can be defined to define a range of bytes from
  * the file that should be uploaded instead of the entire file. Both start and end are
@@ -54,7 +54,7 @@ export interface UploadOptions {
   uploadUrl?: string
   metadata: { [key: string]: string }
   metadataForPartialUploads: UploadOptions['metadata']
-  fingerprint: (file: UploadInput, options: UploadOptions) => Promise<string | null>
+  fingerprint: (file: UploadInput, options: UploadOptions, sourceFingerprint: string | null) => Promise<string | null>
   uploadSize?: number
 
   onProgress?: (bytesSent: number, bytesTotal: number | null) => void
@@ -117,6 +117,7 @@ export interface FileSource {
   size: number | null
   slice(start: number, end: number): Promise<SliceResult>
   close(): void
+  fingerprint(options: UploadOptions): Promise<string | null>
 }
 
 // TODO: Allow Web Streams' ReadableStream as well

@@ -2,11 +2,10 @@ import { DetailedError } from '../DetailedError.js'
 import { NoopUrlStorage } from '../NoopUrlStorage.js'
 import { enableDebugLog } from '../logger.js'
 import type { UploadInput, UploadOptions } from '../options.js'
-import { BaseUpload, defaultOptions as baseDefaultOptions, terminate } from '../upload.js'
+import { BaseUpload, defaultOptions as baseDefaultOptions, noOpFingerprint, terminate } from '../upload.js'
 
 import { BrowserFileReader } from './BrowserFileReader.js'
 import { XHRHttpStack as DefaultHttpStack } from './XHRHttpStack.js'
-import { fingerprint } from './fileSignature.js'
 import { WebStorageUrlStorage, canStoreURLs } from './urlStorage.js'
 
 const defaultOptions = {
@@ -14,7 +13,7 @@ const defaultOptions = {
   httpStack: new DefaultHttpStack(),
   fileReader: new BrowserFileReader(),
   urlStorage: canStoreURLs ? new WebStorageUrlStorage() : new NoopUrlStorage(),
-  fingerprint,
+  fingerprint: noOpFingerprint
 }
 
 class Upload extends BaseUpload {

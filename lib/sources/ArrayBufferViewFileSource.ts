@@ -1,20 +1,27 @@
-import type { FileSource, SliceResult } from '../options.js'
+import type { FileSource, SliceResult, UploadOptions } from '../options.js'
 
 /**
  * ArrayBufferViewFileSource implements FileSource for ArrayBufferView instances
- * (e.g. TypedArry or DataView).
+ * (e.g., TypedArray or DataView).
  *
  * Note that the underlying ArrayBuffer should not change once passed to tus-js-client
  * or it will lead to weird behavior.
  */
 export class ArrayBufferViewFileSource implements FileSource {
-  private _view: ArrayBufferView
+  private readonly _view: ArrayBufferView
 
   size: number
 
   constructor(view: ArrayBufferView) {
     this._view = view
     this.size = view.byteLength
+  }
+
+  async fingerprint(options: UploadOptions): Promise<string | null> {
+    const buffer = this._view.buffer.slice(this._view.byteOffset, this._view.byteOffset + this._view.byteLength);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashContent = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    return Promise.resolve([hashContent, options.endpoint].join('-'));
   }
 
   slice(start: number, end: number): Promise<SliceResult> {
