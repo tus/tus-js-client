@@ -56,6 +56,8 @@ export const defaultOptions = {
   protocol: PROTOCOL_TUS_V1 as UploadOptions['protocol'],
 }
 
+export const noOpFingerprint = async () => null
+
 export class BaseUpload {
   options: UploadOptions
 
@@ -228,14 +230,26 @@ export class BaseUpload {
     })
   }
 
+  async _getFingerprint(): Promise<string | null> {
+    const sourceFingerprint = await this._getSourceFingerprint()
+
+    if (this.options.fingerprint) {
+      return await this.options.fingerprint(this.file, this.options, sourceFingerprint)
+    }
+
+    return sourceFingerprint
+  }
+
+  private async _getSourceFingerprint() {
+    return this._source ? this._source.fingerprint(this.options) : null
+  }
+
   private async _prepareAndStartUpload(): Promise<void> {
     if (this._source == null) {
       this._source = await this.options.fileReader.openFile(this.file, this.options.chunkSize)
     }
-    const fileSourceFingerprint = await this._source.fingerprint(this.options);
 
-    this._fingerprint = await this.options?.fingerprint?.(this.file, this.options, fileSourceFingerprint) ?? fileSourceFingerprint
-
+    this._fingerprint = await this._getFingerprint()
     if (this._fingerprint == null) {
       log(
         'No fingerprint was calculated meaning that the upload cannot be stored in the URL storage.',
