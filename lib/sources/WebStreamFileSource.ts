@@ -39,8 +39,6 @@ export class WebStreamFileSource implements FileSource {
 
   private _done = false
 
-  private _stream: ReadableStream
-
   // Setting the size to null indicates that we have no calculation available
   // for how much data this stream will emit requiring the user to specify
   // it manually (see the `uploadSize` option).
@@ -52,7 +50,6 @@ export class WebStreamFileSource implements FileSource {
         'Readable stream is already locked to reader. tus-js-client cannot obtain a new reader.',
       )
     }
-    this._stream = stream
     this._reader = stream.getReader()
   }
 
