@@ -249,7 +249,7 @@ describe('tus-stall-detection', () => {
       await handleUploadCreation(testStack)
 
       const error = await options.onError.toBeCalled()
-      expect(error.message).toContain('Upload stalled')
+      expect(error.message).toContain('stalled:')
     })
 
     it('should retry when stall is detected', async () => {
@@ -357,7 +357,7 @@ describe('tus-stall-detection', () => {
       await handleUploadCreation(testStack)
 
       const error = await options.onError.toBeCalled()
-      expect(error.message).toContain('Upload stalled')
+      expect(error.message).toContain('stalled:')
       expect(options.onProgress.calls.count()).toBeGreaterThan(0)
     })
 
@@ -390,7 +390,7 @@ describe('tus-stall-detection', () => {
       expect(patchReq.method).toBe('PATCH')
 
       const error = await options.onError.toBeCalled()
-      expect(error.message).toContain('Upload stalled: no progress')
+      expect(error.message).toContain('stalled: no progress')
       expect(options.onProgress.calls.count()).toBeGreaterThan(0)
     })
   })

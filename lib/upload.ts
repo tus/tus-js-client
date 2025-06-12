@@ -104,6 +104,9 @@ export class BaseUpload {
   // The offset of the remote upload before the latest attempt was started.
   private _offsetBeforeRetry = 0
 
+  // The reason for the last stall detection, if any
+  private _stallReason?: string
+
   // An array of BaseUpload instances which are used for uploading the different
   // parts, if the parallelUploads option is used.
   private _parallelUploads?: BaseUpload[]
@@ -818,8 +821,16 @@ export class BaseUpload {
         throw new Error(`tus: value thrown that is not an error: ${err}`)
       }
 
+      // Include stall reason in error message if available
+      const errorMessage = this._stallReason
+        ? `tus: failed to upload chunk at offset ${this._offset} (stalled: ${this._stallReason})`
+        : `tus: failed to upload chunk at offset ${this._offset}`
+
+      // Clear the stall reason after using it
+      this._stallReason = undefined
+
       throw new DetailedError(
-        `tus: failed to upload chunk at offset ${this._offset}`,
+        errorMessage,
         err,
         req,
         undefined,
@@ -851,11 +862,14 @@ export class BaseUpload {
       // Only enable stall detection if the HTTP stack supports progress events
       if (this.options.httpStack.supportsProgressEvents()) {
         stallDetector = new StallDetector(this.options.stallDetection, (reason: string) => {
-          // Handle stall by aborting the current request and triggering retry
+          // Handle stall by aborting the current request
+          // The abort will cause the request to fail, which will be caught
+          // in _performUpload and wrapped in a DetailedError for proper retry handling
           if (this._req) {
+            this._stallReason = reason
             this._req.abort()
           }
-          this._retryOrEmitError(new Error(`Upload stalled: ${reason}`))
+          // Don't call _retryOrEmitError here - let the natural error flow handle it
         })
         // Don't start yet - will be started after onBeforeRequest
       } else {
