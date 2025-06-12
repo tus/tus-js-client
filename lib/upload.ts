@@ -1108,21 +1108,18 @@ async function sendRequest(
     await options.onBeforeRequest(req)
   }
 
-  const sendWithStallDetection = async (): Promise<HttpResponse> => {
-    if (stallDetector) {
-      stallDetector.start()
-    }
-
-    try {
-      return await req.send(body)
-    } finally {
-      if (stallDetector) {
-        stallDetector.stop()
-      }
-    }
+  if (stallDetector) {
+    stallDetector.start()
   }
 
-  const res = await sendWithStallDetection()
+  let res: HttpResponse
+  try {
+    res = await req.send(body)
+  } finally {
+    if (stallDetector) {
+      stallDetector.stop()
+    }
+  }
 
   if (typeof options.onAfterResponse === 'function') {
     await options.onAfterResponse(req, res)
