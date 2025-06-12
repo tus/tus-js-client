@@ -829,12 +829,7 @@ export class BaseUpload {
       // Clear the stall reason after using it
       this._stallReason = undefined
 
-      throw new DetailedError(
-        errorMessage,
-        err,
-        req,
-        undefined,
-      )
+      throw new DetailedError(errorMessage, err, req, undefined)
     }
 
     if (!inStatusCategory(res.getStatus(), 200)) {
