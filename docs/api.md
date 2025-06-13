@@ -350,6 +350,9 @@ interface HttpRequest {
     // - in browsers: a TypedArray, a DataView a Blob, or null.
     // - in  Node.js: a Buffer, a ReadableStream, or null.
     send(body: any): Promise<HttpResponse>;
+
+    // Aborts the request if it's currently in progress. If so, `send` should reject
+    // with an error of type DOMException, with name AbortError.
     abort(): Promise<void>;
 
     // Return an environment specific object, e.g. the XMLHttpRequest object in browsers.

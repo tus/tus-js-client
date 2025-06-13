@@ -81,11 +81,16 @@ class XHRRequest implements HttpRequest {
         reject(err)
       }
 
+      this._xhr.onabort = () => {
+        reject(new DOMException('Request was aborted', 'AbortError'))
+      }
+
       this._xhr.send(body)
     })
   }
 
   abort(): Promise<void> {
+    // Note: Calling abort() triggers the `abort` event, but no `error` event.
     this._xhr.abort()
     return Promise.resolve()
   }

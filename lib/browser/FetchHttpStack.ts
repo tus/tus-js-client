@@ -68,6 +68,7 @@ class FetchRequest implements HttpRequest {
   }
 
   abort(): Promise<void> {
+    // Note: When abort() is called, the fetch() promise rejects with an Error of type DOMException, with name AbortError.
     this._controller.abort()
     return Promise.resolve()
   }

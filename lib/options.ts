@@ -155,6 +155,9 @@ export interface HttpRequest {
   setProgressHandler(handler: HttpProgressHandler): void
   // TODO: Should this be something like { value: unknown, size: number }?
   send(body?: SliceType): Promise<HttpResponse>
+
+  // Aborts the request if it's currently in progress. If so, `send` should reject
+  // with an error of type DOMException, with name AbortError.
   abort(): Promise<void>
 
   // Return an environment specific object, e.g. the XMLHttpRequest object in browsers.
