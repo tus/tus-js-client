@@ -575,7 +575,6 @@ async function expectHelloWorldUpload(input, options) {
   await options.onSuccess.toBeCalled()
 }
 
-
 //TODO: duplicates some logic from similar tests — can be refactored in a follow-up for maintainability
 async function expectHelloWorldUploadWithDeferred(input, options) {
   options.httpStack = new TestHttpStack()
@@ -628,4 +627,3 @@ async function expectHelloWorldUploadWithDeferred(input, options) {
 
   await options.onSuccess.toBeCalled()
 }
-
