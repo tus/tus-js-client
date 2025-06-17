@@ -13,7 +13,7 @@ import type { FileSource } from '../../options.js'
 async function readChunk(stream: Readable, size: number) {
   return new Promise<Buffer>((resolve, reject) => {
     const onError = (err: Error) => {
-      stream.off('readable', onReadable)
+      cleanup()
       reject(err)
     }
 
@@ -22,15 +22,25 @@ async function readChunk(stream: Readable, size: number) {
       const chunk = stream.read(size)
 
       if (chunk != null) {
-        stream.off('error', onError)
-        stream.off('readable', onReadable)
-
+        cleanup()
         resolve(chunk)
       }
     }
 
+    const onEnd = () => {
+      cleanup()
+      resolve(Buffer.alloc(0))
+    }
+
+    const cleanup = () => {
+      stream.off('error', onError)
+      stream.off('readable', onReadable)
+      stream.off('end', onEnd)
+    }
+
     stream.once('error', onError)
     stream.on('readable', onReadable)
+    stream.once('end', onEnd)
   })
 }
 
