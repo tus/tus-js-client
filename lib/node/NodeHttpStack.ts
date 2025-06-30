@@ -146,7 +146,9 @@ class Request implements HttpRequest {
   }
 
   abort() {
-    if (this._request != null) this._request.abort()
+    // Note: The destroy() method will trigger an `error` event with the provided error.
+    if (this._request != null)
+      this._request.destroy(new DOMException('Request was aborted', 'AbortError'))
     return Promise.resolve()
   }
 
