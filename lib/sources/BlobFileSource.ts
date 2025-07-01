@@ -1,18 +1,31 @@
 import { isCordova } from '../cordova/isCordova.js'
 import { readAsByteArray } from '../cordova/readAsByteArray.js'
-import type { FileSource, SliceResult } from '../options.js'
+import type { FileSource, SliceResult, UploadOptions } from '../options.js'
 
 /**
  * BlobFileSource implements FileSource for Blobs (and therefore also for File instances).
  */
 export class BlobFileSource implements FileSource {
-  private _file: Blob
+  private readonly _file: Blob
 
   size: number
 
   constructor(file: Blob) {
     this._file = file
     this.size = file.size
+  }
+
+  fingerprint(options: UploadOptions): Promise<string | null> {
+    let name, lastModified;
+    if (this._file instanceof File) {
+      name = this._file.name;
+      lastModified = this._file.lastModified;
+    } else {
+      name = 'blob';
+      lastModified = 0;
+    }
+
+    return Promise.resolve(['tus-br', name, this._file.type, this._file.size, lastModified, options.endpoint].join('-'));
   }
 
   async slice(start: number, end: number): Promise<SliceResult> {

@@ -1,5 +1,5 @@
-import type { Readable } from 'node:stream'
-import type { FileSource } from '../../options.js'
+import { Readable, Transform } from 'node:stream'
+import type { FileSource, UploadOptions } from '../../options.js'
 
 /**
  * readChunk reads a chunk with the given size from the given
@@ -74,9 +74,16 @@ export class NodeStreamFileSource implements FileSource {
     })
   }
 
+  // TODO: Implement fingerprint calculation for NodeStreamFileSource.
+  // This should likely involve reading the stream and creating a hash/checksum
+  // while preserving the stream's content for later use.
+  fingerprint(options: UploadOptions): Promise<string | null> {
+    return Promise.resolve(null);
+  }
+
   async slice(start: number, end: number) {
     // Fail fast if the caller requests a proportion of the data which is not
-    // available any more.
+    // available anymore.
     if (start < this._bufPos) {
       throw new Error('cannot slice from position which we already seeked away')
     }
