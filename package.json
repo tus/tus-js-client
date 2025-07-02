@@ -87,7 +87,7 @@
   "homepage": "https://github.com/tus/tus-js-client",
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.1",
-    "@biomejs/biome": "^1.7.3",
+    "@biomejs/biome": "^2.0.6",
     "@rollup/plugin-commonjs": "^28.0.2",
     "@rollup/plugin-node-resolve": "^16.0.0",
     "@rollup/plugin-typescript": "^12.1.2",
