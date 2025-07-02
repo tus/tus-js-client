@@ -1,4 +1,4 @@
-import { Upload, defaultOptions } from 'tus-js-client'
+import { defaultOptions, Upload } from 'tus-js-client'
 import { assertUrlStorage } from './helpers/assertUrlStorage.js'
 import { TestHttpStack, wait, waitableFunction } from './helpers/utils.js'
 

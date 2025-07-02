@@ -1,5 +1,5 @@
 import { Upload } from 'tus-js-client'
-import { TestHttpStack, getBlob, wait, waitableFunction } from './helpers/utils.js'
+import { getBlob, TestHttpStack, wait, waitableFunction } from './helpers/utils.js'
 
 describe('tus', () => {
   describe('parallel uploading', () => {

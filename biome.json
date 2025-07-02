@@ -9,9 +9,7 @@
     "lineWidth": 100,
     "attributePosition": "auto"
   },
-  "organizeImports": {
-    "enabled": true
-  },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
@@ -19,17 +17,26 @@
         "noParameterAssign": "off",
         "noDefaultExport": "error",
         "useCollapsedElseIf": "error",
-        "useNodejsImportProtocol": "error"
+        "useNodejsImportProtocol": "error",
+        "useAsConstAssertion": "error",
+        "useDefaultParameterLast": "error",
+        "useEnumInitializers": "error",
+        "useSelfClosingElements": "error",
+        "useSingleVarDeclarator": "error",
+        "noUnusedTemplateLiteral": "error",
+        "useNumberNamespace": "error",
+        "noInferrableTypes": "error",
+        "noUselessElse": "error"
       },
       "suspicious": {
         "noExplicitAny": "error",
         "useAwait": "error"
       },
       "correctness": {
-        "noNewSymbol": "error",
         "noUndeclaredVariables": "error",
         "noUnusedVariables": "error",
-        "noUnusedImports": "error"
+        "noUnusedImports": "error",
+        "noInvalidBuiltinInstantiation": "error"
       }
     }
   },
@@ -53,14 +60,20 @@
   },
   "overrides": [
     {
-      "include": ["lib/node/**"],
+      "includes": ["**/lib/node/**"],
       "linter": {
         "rules": {
           "style": {
             "noRestrictedGlobals": {
               "level": "error",
               "options": {
-                "deniedGlobals": ["__filename", "__dirname", "exports", "module", "require"]
+                "deniedGlobals": {
+                  "__filename": "Not available in ESM.",
+                  "__dirname": "Not available in ESM.",
+                  "exports": "Not available in ESM.",
+                  "module": "Not available in ESM.",
+                  "require": "Not available in ESM."
+                }
               }
             }
           }
@@ -68,7 +81,7 @@
       }
     },
     {
-      "include": ["test/**"],
+      "includes": ["**/test/**"],
       "javascript": {
         "globals": [
           "jasmine",
@@ -83,11 +96,11 @@
       }
     },
     {
-      "include": ["demos/browser/**", "demos/cordova/**"],
+      "includes": ["**/demos/browser/**", "**/demos/cordova/**"],
       "javascript": { "globals": ["tus", "Camera"] }
     },
     {
-      "include": ["tsconfig*.json"],
+      "includes": ["**/tsconfig*.json"],
       "json": { "parser": { "allowComments": true } }
     }
   ]

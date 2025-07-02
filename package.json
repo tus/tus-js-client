@@ -71,7 +71,14 @@
       }
     }
   },
-  "files": ["lib/", "lib.cjs/", "lib.esm/", "dist/", "node/", "browser/"],
+  "files": [
+    "lib/",
+    "lib.cjs/",
+    "lib.esm/",
+    "dist/",
+    "node/",
+    "browser/"
+  ],
   "engines": {
     "node": ">=20"
   },
@@ -79,7 +86,15 @@
     "type": "git",
     "url": "git+https://github.com/tus/tus-js-client.git"
   },
-  "keywords": ["tus", "resumable", "upload", "protocol", "progress", "file", "browser"],
+  "keywords": [
+    "tus",
+    "resumable",
+    "upload",
+    "protocol",
+    "progress",
+    "file",
+    "browser"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/tus/tus-js-client/issues"
@@ -144,5 +159,6 @@
     "lint-type-exports": "attw --pack .",
     "lint": "npm-run-all lint-*",
     "fix": "biome check --write ."
-  }
+  },
+  "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
 }

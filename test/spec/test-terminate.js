@@ -1,5 +1,5 @@
 import { Upload } from 'tus-js-client'
-import { TestHttpStack, getBlob } from './helpers/utils.js'
+import { getBlob, TestHttpStack } from './helpers/utils.js'
 
 describe('tus', () => {
   describe('terminate upload', () => {
