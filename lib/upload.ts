@@ -1170,7 +1170,7 @@ function splitSizeIntoParts(totalSize: number, partCount: number): Part[] {
   return parts
 }
 
-async function wait(delay: number) {
+function wait(delay: number) {
   return new Promise((resolve) => {
     setTimeout(resolve, delay)
   })

@@ -1,11 +1,10 @@
-import { isReactNativeFile, isReactNativePlatform } from '../reactnative/isReactNative.js'
-import { uriToBlob } from '../reactnative/uriToBlob.js'
-
 import {
   openFile as openBaseFile,
   supportedTypes as supportedBaseTypes,
 } from '../commonFileReader.js'
 import type { FileReader, FileSource, UploadInput } from '../options.js'
+import { isReactNativeFile, isReactNativePlatform } from '../reactnative/isReactNative.js'
+import { uriToBlob } from '../reactnative/uriToBlob.js'
 import { BlobFileSource } from '../sources/BlobFileSource.js'
 
 export class BrowserFileReader implements FileReader {

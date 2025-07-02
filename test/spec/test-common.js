@@ -1,5 +1,5 @@
-import { Upload, isSupported } from 'tus-js-client'
-import { TestHttpStack, TestResponse, getBlob, wait, waitableFunction } from './helpers/utils.js'
+import { isSupported, Upload } from 'tus-js-client'
+import { getBlob, TestHttpStack, TestResponse, wait, waitableFunction } from './helpers/utils.js'
 
 // Uncomment to enable debug log from tus-js-client
 // tus.enableDebugLog();

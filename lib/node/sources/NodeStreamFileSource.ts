@@ -10,7 +10,7 @@ import type { FileSource } from '../../options.js'
  * Note that we rely on the stream behaving as Node.js documents:
  * https://nodejs.org/api/stream.html#readablereadsize
  */
-async function readChunk(stream: Readable, size: number) {
+function readChunk(stream: Readable, size: number) {
   return new Promise<Buffer>((resolve, reject) => {
     const onError = (err: Error) => {
       stream.off('readable', onReadable)

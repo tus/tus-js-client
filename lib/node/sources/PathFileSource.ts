@@ -1,4 +1,4 @@
-import { type ReadStream, createReadStream, promises as fsPromises } from 'node:fs'
+import { createReadStream, promises as fsPromises, type ReadStream } from 'node:fs'
 import type { FileSource, PathReference } from '../../options.js'
 
 export async function getFileSourceFromPath(file: PathReference): Promise<PathFileSource> {

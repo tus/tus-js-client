@@ -8,7 +8,7 @@ describe('tus', () => {
   describe('end-to-end', () => {
     it(
       'should upload to a real tus server',
-      async () => {
+      () => {
         return new Promise((resolve, reject) => {
           const file = getBlob('hello world')
           const options = {
@@ -44,7 +44,7 @@ describe('tus', () => {
 
     it(
       'should upload to a real tus server with creation-with-upload',
-      async () => {
+      () => {
         return new Promise((resolve, reject) => {
           const file = getBlob('hello world')
           const options = {

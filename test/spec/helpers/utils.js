@@ -141,7 +141,7 @@ export class TestRequest {
   }
 }
 
-async function getBodySize(body) {
+function getBodySize(body) {
   if (body == null) {
     return null
   }
