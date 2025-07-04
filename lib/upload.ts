@@ -939,7 +939,6 @@ export class BaseUpload {
 
   /**
    * Remove the entry in the URL storage, if it has been saved before.
-   * 
    * If the `onShouldRemoveFromUrlStorage` option is provided and is a function,
    * it will be invoked to determine whether the removal should proceed.
    * If it returns or resolves to `false`, the removal is skipped.
