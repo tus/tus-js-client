@@ -578,5 +578,210 @@ describe('tus', () => {
       expect(options.onProgress).toHaveBeenCalledWith(5, 11)
       expect(options.onProgress).toHaveBeenCalledWith(11, 11)
     })
+
+    it('should preserve upload URL in partial uploads during retry', async () => {
+      const testStack = new TestHttpStack()
+      const file = getBlob('hello')
+
+      const options = {
+        httpStack: testStack,
+        parallelUploads: 1, // Use single parallel to focus on one upload
+        retryDelays: [10],
+        endpoint: 'https://tus.io/uploads',
+        onSuccess: waitableFunction(),
+        headers: { 'Upload-Concat': 'partial' }, // Force partial upload behavior
+        storeFingerprintForResuming: false, // This is key - partial uploads don't store fingerprints
+      }
+
+      const upload = new Upload(file, options)
+      upload.start()
+
+      // Create partial upload
+      let req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads')
+      expect(req.method).toBe('POST')
+      expect(req.requestHeaders['Upload-Concat']).toBe('partial')
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: 'https://tus.io/uploads/upload1',
+        },
+      })
+
+      // PATCH request fails
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads/upload1')
+      expect(req.method).toBe('PATCH')
+
+      req.respondWith({
+        status: 500,
+      })
+
+      // The key test: what happens on retry?
+      req = await testStack.nextRequest()
+
+      // With the fix: should be HEAD to existing URL (resume)
+      expect(req.url).toBe('https://tus.io/uploads/upload1')
+      expect(req.method).toBe('HEAD')
+
+      // Without the fix: would be POST to create new upload
+      // (because storeFingerprintForResuming: false and uploadUrl: null)
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Length': '5',
+          'Upload-Offset': '0',
+        },
+      })
+
+      // Resume PATCH
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads/upload1')
+      expect(req.method).toBe('PATCH')
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': '5',
+        },
+      })
+
+      await options.onSuccess.toBeCalled()
+    })
+
+    it('should resume partial uploads on retry instead of creating fresh uploads', async () => {
+      const testStack = new TestHttpStack()
+      const file = getBlob('hello world')
+
+      // Track all requests to detect if fresh uploads are created
+      const allRequests = []
+      const originalCreateRequest = testStack.createRequest.bind(testStack)
+      testStack.createRequest = function(method, url) {
+        allRequests.push({ method, url })
+        return originalCreateRequest(method, url)
+      }
+
+      const options = {
+        httpStack: testStack,
+        parallelUploads: 2,
+        retryDelays: [10],
+        endpoint: 'https://tus.io/uploads',
+        onSuccess: waitableFunction(),
+      }
+
+      const upload = new Upload(file, options)
+      upload.start()
+
+      // First partial upload creation
+      let req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads')
+      expect(req.method).toBe('POST')
+      expect(req.requestHeaders['Upload-Concat']).toBe('partial')
+      expect(req.requestHeaders['Upload-Length']).toBe('5')
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: 'https://tus.io/uploads/upload1',
+        },
+      })
+
+      // Second partial upload creation
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads')
+      expect(req.method).toBe('POST')
+      expect(req.requestHeaders['Upload-Concat']).toBe('partial')
+      expect(req.requestHeaders['Upload-Length']).toBe('6')
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: 'https://tus.io/uploads/upload2',
+        },
+      })
+
+      // First PATCH request succeeds
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads/upload1')
+      expect(req.method).toBe('PATCH')
+      expect(req.requestHeaders['Upload-Offset']).toBe('0')
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': '5',
+        },
+      })
+
+      // Second PATCH request fails (network error)
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads/upload2')
+      expect(req.method).toBe('PATCH')
+      expect(req.requestHeaders['Upload-Offset']).toBe('0')
+
+      req.respondWith({
+        status: 500,
+      })
+
+      // CRITICAL TEST: After retry delay, we should NOT see another POST to /uploads
+      // The next request should be HEAD to the existing upload2 URL
+      req = await testStack.nextRequest()
+
+      // Verify we're not creating a fresh upload (this is the key test)
+      expect(req.method).not.toBe('POST')
+      expect(req.url).toBe('https://tus.io/uploads/upload2')
+      expect(req.method).toBe('HEAD')
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Length': '6',
+          'Upload-Offset': '0',
+        },
+      })
+
+      // Resume with PATCH from current offset
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads/upload2')
+      expect(req.method).toBe('PATCH')
+      expect(req.requestHeaders['Upload-Offset']).toBe('0')
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': '6',
+        },
+      })
+
+      // Final concatenation
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads')
+      expect(req.method).toBe('POST')
+      expect(req.requestHeaders['Upload-Concat']).toBe(
+        'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2',
+      )
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: 'https://tus.io/uploads/upload3',
+        },
+      })
+
+      await options.onSuccess.toBeCalled()
+
+      // Final verification: count how many POST requests to /uploads we made
+      const postToUploads = allRequests.filter(r =>
+        r.method === 'POST' && r.url === 'https://tus.io/uploads'
+      )
+
+      // Should only be 3 POSTs: 2 partial + 1 final concatenation
+      // If the bug exists, we'd see 4 POSTs (an extra one from the retry)
+      expect(postToUploads.length).toBe(3)
+    })
+
+
   })
 })
