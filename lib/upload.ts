@@ -407,7 +407,9 @@ export class BaseUpload {
 
     let res: HttpResponse
     try {
-      res = await this._sendRequest(req)
+      // Create stall detector for final concatenation POST request
+      const stallDetector = this._createStallDetector()
+      res = await this._sendRequest(req, undefined, stallDetector)
     } catch (err) {
       if (!(err instanceof Error)) {
         throw new Error(`tus: value thrown that is not an error: ${err}`)
@@ -638,7 +640,9 @@ export class BaseUpload {
         ) {
           req.setHeader('Upload-Complete', '?0')
         }
-        res = await this._sendRequest(req)
+        // Create stall detector for POST request
+        const stallDetector = this._createStallDetector()
+        res = await this._sendRequest(req, undefined, stallDetector)
       }
     } catch (err) {
       if (!(err instanceof Error)) {
@@ -700,7 +704,9 @@ export class BaseUpload {
 
     let res: HttpResponse
     try {
-      res = await this._sendRequest(req)
+      // Create stall detector for HEAD request
+      const stallDetector = this._createStallDetector()
+      res = await this._sendRequest(req, undefined, stallDetector)
     } catch (err) {
       if (!(err instanceof Error)) {
         throw new Error(`tus: value thrown that is not an error: ${err}`)
@@ -852,6 +858,34 @@ export class BaseUpload {
   }
 
   /**
+   * Create a stall detector if stall detection is enabled and supported.
+   *
+   * @api private
+   */
+  private _createStallDetector(): StallDetector | undefined {
+    if (this.options.stallDetection?.enabled) {
+      // Only enable stall detection if the HTTP stack supports progress events
+      if (this.options.httpStack.supportsProgressEvents()) {
+        return new StallDetector(this.options.stallDetection, (reason: string) => {
+          // Handle stall by aborting the current request
+          // The abort will cause the request to fail, which will be caught
+          // in _performUpload and wrapped in a DetailedError for proper retry handling
+          if (this._req) {
+            this._stallReason = reason
+            this._req.abort()
+          }
+          // Don't call _retryOrEmitError here - let the natural error flow handle it
+        })
+      } else {
+        log(
+          'tus: stall detection is enabled but the HTTP stack does not support progress events, it will be disabled for this upload',
+        )
+      }
+    }
+    return undefined
+  }
+
+  /**
    * _addChunktoRequest reads a chunk from the source and sends it using the
    * supplied request object. It will not handle the response.
    *
@@ -863,28 +897,7 @@ export class BaseUpload {
 
     // Create stall detector for this request if stall detection is enabled and supported
     // but don't start it yet - we'll start it after onBeforeRequest completes
-    let stallDetector: StallDetector | undefined
-
-    if (this.options.stallDetection?.enabled) {
-      // Only enable stall detection if the HTTP stack supports progress events
-      if (this.options.httpStack.supportsProgressEvents()) {
-        stallDetector = new StallDetector(this.options.stallDetection, (reason: string) => {
-          // Handle stall by aborting the current request
-          // The abort will cause the request to fail, which will be caught
-          // in _performUpload and wrapped in a DetailedError for proper retry handling
-          if (this._req) {
-            this._stallReason = reason
-            this._req.abort()
-          }
-          // Don't call _retryOrEmitError here - let the natural error flow handle it
-        })
-        // Don't start yet - will be started after onBeforeRequest
-      } else {
-        log(
-          'tus: stall detection is enabled but the HTTP stack does not support progress events, it will be disabled for this upload',
-        )
-      }
-    }
+    const stallDetector = this._createStallDetector()
 
     req.setProgressHandler((bytesSent) => {
       // Update per-request stall detector if active
