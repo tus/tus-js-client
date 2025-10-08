@@ -1,0 +1,47 @@
+import { DetailedError } from '../DetailedError.js';
+import { NoopUrlStorage } from '../NoopUrlStorage.js';
+import { enableDebugLog } from '../logger.js';
+import type { UploadInput, UploadOptions } from '../options.js';
+import { BaseUpload } from '../upload.js';
+import { BrowserFileReader } from './BrowserFileReader.js';
+import { XHRHttpStack as DefaultHttpStack } from './XHRHttpStack.js';
+import { fingerprint } from './fileSignature.js';
+import { WebStorageUrlStorage, canStoreURLs } from './urlStorage.js';
+declare const defaultOptions: {
+    httpStack: DefaultHttpStack;
+    fileReader: BrowserFileReader;
+    urlStorage: NoopUrlStorage | WebStorageUrlStorage;
+    fingerprint: typeof fingerprint;
+    endpoint: undefined;
+    uploadUrl: undefined;
+    metadata: {};
+    metadataForPartialUploads: {};
+    uploadSize: undefined;
+    onProgress: undefined;
+    onChunkComplete: undefined;
+    onSuccess: undefined;
+    onError: undefined;
+    onUploadUrlAvailable: undefined;
+    overridePatchMethod: boolean;
+    headers: {};
+    addRequestId: boolean;
+    onBeforeRequest: undefined;
+    onAfterResponse: undefined;
+    onShouldRetry: (err: DetailedError) => boolean;
+    chunkSize: number;
+    retryDelays: number[];
+    parallelUploads: number;
+    parallelUploadBoundaries: undefined;
+    storeFingerprintForResuming: boolean;
+    removeFingerprintOnSuccess: boolean;
+    uploadLengthDeferred: boolean;
+    uploadDataDuringCreation: boolean;
+    protocol: UploadOptions["protocol"];
+};
+declare class Upload extends BaseUpload {
+    constructor(file: UploadInput, options?: Partial<UploadOptions>);
+    static terminate(url: string, options?: Partial<UploadOptions>): Promise<void>;
+}
+declare const isSupported: boolean;
+export { Upload, defaultOptions, isSupported, canStoreURLs, enableDebugLog, DetailedError };
+export type * from '../options.js';

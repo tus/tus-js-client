@@ -1,0 +1,1 @@
+{"version":3,"file":"isCordova.js","sourceRoot":"","sources":["../../lib/cordova/isCordova.ts"],"names":[],"mappings":"AAAA,MAAM,SAAS,GAAG,GAAG,EAAE,CACrB,OAAO,MAAM,KAAK,WAAW;IAC7B,CAAC,UAAU,IAAI,MAAM,IAAI,SAAS,IAAI,MAAM,IAAI,SAAS,IAAI,MAAM,CAAC,CAAA;AAEtE,OAAO,EAAE,SAAS,EAAE,CAAA"}
