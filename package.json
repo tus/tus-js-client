@@ -131,7 +131,7 @@
     "@types/node": "^24.0.10",
     "buffer-from": "^1.1.2",
     "combine-errors": "^3.0.3",
-    "is-stream": "^2.0.0",
+    "is-stream": "^4.0.1",
     "js-base64": "^3.7.2",
     "lodash.throttle": "^4.1.1",
     "proper-lockfile": "^4.1.2",
