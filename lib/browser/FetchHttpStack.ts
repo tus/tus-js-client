@@ -93,7 +93,7 @@ class FetchResponse implements HttpResponse {
   }
 
   getHeader(header: string): string | undefined {
-    return this._res.headers.get(header) || undefined
+    return this._res.headers.get(header) || this._res.headers.get(header.toLowerCase()) || undefined
   }
 
   getBody(): string {

@@ -184,7 +184,9 @@ export class TestResponse {
   }
 
   getHeader(header) {
-    return this._response.responseHeaders[header]
+    return (
+      this._response.responseHeaders[header] || this._response.responseHeaders[header.toLowerCase()]
+    )
   }
 
   getBody() {

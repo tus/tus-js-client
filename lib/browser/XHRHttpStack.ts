@@ -112,7 +112,11 @@ class XHRResponse implements HttpResponse {
   }
 
   getHeader(header: string): string | undefined {
-    return this._xhr.getResponseHeader(header) || undefined
+    return (
+      this._xhr.getResponseHeader(header) ||
+      this._xhr.getResponseHeader(header.toLowerCase()) ||
+      undefined
+    )
   }
 
   getBody(): string {
