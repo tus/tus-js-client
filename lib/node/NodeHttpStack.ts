@@ -89,7 +89,7 @@ class Request implements HttpRequest {
 
     return new Promise((resolve, reject) => {
       const options = {
-        ...(new URL(this._url)),
+        ...new URL(this._url),
         ...this._requestOptions,
 
         method: this._method,
