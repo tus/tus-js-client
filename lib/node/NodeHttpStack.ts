@@ -3,7 +3,6 @@
 import * as http from 'node:http'
 import * as https from 'node:https'
 import { Readable, Transform, type Writable } from 'node:stream'
-import { parse } from 'node:url'
 import isStream from 'is-stream'
 import throttle from 'lodash.throttle'
 import type {
@@ -92,7 +91,7 @@ class Request implements HttpRequest {
 
     return new Promise((resolve, reject) => {
       const options = {
-        ...parse(this._url),
+        ...(new URL((this._url)),
         ...this._requestOptions,
 
         method: this._method,
