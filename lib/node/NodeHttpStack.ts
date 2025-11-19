@@ -1,9 +1,6 @@
-// The url.parse method is superseeded by the url.URL constructor,
-// but it is still included in Node.js
 import * as http from 'node:http'
 import * as https from 'node:https'
 import { Readable, Transform, type Writable } from 'node:stream'
-import { parse } from 'node:url'
 import isStream from 'is-stream'
 import throttle from 'lodash.throttle'
 import type {
@@ -91,8 +88,12 @@ class Request implements HttpRequest {
     }
 
     return new Promise((resolve, reject) => {
+      const parsedUrl = new URL(this._url)
       const options = {
-        ...parse(this._url),
+        protocol: parsedUrl.protocol,
+        hostname: parsedUrl.hostname,
+        port: parsedUrl.port,
+        path: parsedUrl.pathname + parsedUrl.search,
         ...this._requestOptions,
 
         method: this._method,
