@@ -88,12 +88,8 @@ class Request implements HttpRequest {
     }
 
     return new Promise((resolve, reject) => {
-      const parsedUrl = new URL(this._url)
+      const url = new URL(this._url)
       const options = {
-        protocol: parsedUrl.protocol,
-        hostname: parsedUrl.hostname,
-        port: parsedUrl.port,
-        path: parsedUrl.pathname + parsedUrl.search,
         ...this._requestOptions,
 
         method: this._method,
@@ -110,8 +106,8 @@ class Request implements HttpRequest {
         options.headers['Content-Length'] = body.size
       }
 
-      const httpModule = options.protocol === 'https:' ? https : http
-      this._request = httpModule.request(options)
+      const httpModule = url.protocol === 'https:' ? https : http
+      this._request = httpModule.request(url, options)
       const req = this._request
       req.on('response', (res) => {
         const resChunks: Buffer[] = []
