@@ -106,6 +106,19 @@ describe('tus', () => {
         await expectHelloWorldUpload(input, options)
       })
 
+      it('should upload with deferred length and chunkSize divides size exactly', async () => {
+        const input = new stream.PassThrough()
+        const options = {
+          httpStack: new TestHttpStack(),
+          endpoint: '/uploads',
+          chunkSize: 7,
+          uploadLengthDeferred: true,
+        }
+
+        input.end('my hello WORLD')
+        await expectHelloWorldUploadWithDeferred(input, options)
+      })
+
       it('should throw an error if the source provides less data than uploadSize', async () => {
         const input = new stream.PassThrough()
         input.end('hello world')
@@ -557,6 +570,59 @@ async function expectHelloWorldUpload(input, options) {
     responseHeaders: {
       'Upload-Offset': '11',
     },
+  })
+
+  await options.onSuccess.toBeCalled()
+}
+
+//TODO: duplicates some logic from similar tests — can be refactored in a follow-up for maintainability
+async function expectHelloWorldUploadWithDeferred(input, options) {
+  options.httpStack = new TestHttpStack()
+  options.onSuccess = waitableFunction('onSuccess')
+
+  const upload = new Upload(input, options)
+  upload.start()
+
+  let req = await options.httpStack.nextRequest()
+  expect(req.url).toBe('/uploads')
+  expect(req.method).toBe('POST')
+  expect(req.requestHeaders['Upload-Length']).toBe(undefined)
+  expect(req.requestHeaders['Upload-Defer-Length']).toBe('1')
+  req.respondWith({
+    status: 201,
+    responseHeaders: { Location: '/uploads/blargh' },
+  })
+
+  req = await options.httpStack.nextRequest()
+  expect(req.url).toBe('/uploads/blargh')
+  expect(req.method).toBe('PATCH')
+  expect(req.requestHeaders['Upload-Offset']).toBe('0')
+  expect(req.bodySize).toBe(7)
+  req.respondWith({
+    status: 204,
+    responseHeaders: { 'Upload-Offset': '7' },
+  })
+
+  req = await options.httpStack.nextRequest()
+  expect(req.url).toBe('/uploads/blargh')
+  expect(req.method).toBe('PATCH')
+  expect(req.requestHeaders['Upload-Offset']).toBe('7')
+  expect(req.requestHeaders['Upload-Length']).toBe(undefined)
+  expect(req.bodySize).toBe(7)
+  req.respondWith({
+    status: 204,
+    responseHeaders: { 'Upload-Offset': '14' },
+  })
+
+  req = await options.httpStack.nextRequest()
+  expect(req.url).toBe('/uploads/blargh')
+  expect(req.method).toBe('PATCH')
+  expect(req.requestHeaders['Upload-Offset']).toBe('14')
+  expect(req.requestHeaders['Upload-Length']).toBe('14')
+  expect(req.bodySize).toBe(0)
+  req.respondWith({
+    status: 204,
+    responseHeaders: { 'Upload-Offset': '14' },
   })
 
   await options.onSuccess.toBeCalled()
