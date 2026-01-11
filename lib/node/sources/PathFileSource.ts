@@ -56,7 +56,7 @@ export class PathFileSource implements FileSource {
       autoClose: true,
     })
     const size = Math.min(end - start, this.size)
-    const done = size >= this.size
+    const done = end >= this.size
     return Promise.resolve({ value: stream, size, done })
   }
 
