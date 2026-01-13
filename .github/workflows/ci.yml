@@ -12,8 +12,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - desc: 'Browserstack'
-            suite: 'browserstack'
           - desc: 'Puppeteer'
             suite: 'puppeteer'
           - desc: 'Node.js 20'
@@ -50,9 +48,6 @@ jobs:
         uses: sergioramos/yarn-actions/run@v6
         with:
           script: test-${{ matrix.suite }}
-        env:
-          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
-          BROWSERSTACK_KEY: ${{ secrets.BROWSERSTACK_KEY }}
   lint:
     name: Linter
     runs-on: ubuntu-22.04
