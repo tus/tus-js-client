@@ -33,4 +33,4 @@ jobs:
         with:
           script: build
       - name: Publish
-        run: npm publish
+        run: npm publish --tag ${{ contains(github.ref_name, '-') && 'next' || 'latest' }}
