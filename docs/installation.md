@@ -58,10 +58,6 @@ var tus = require('tus-js-client')
 
 ## Browser support
 
-<a href="https://browserstack.com">
-  <img alt="BrowserStack logo" src="/docs/browserstack.png" align="right" />
-</a>
-
 tus-js-client is tested and known to support following browsers:
 
 - Microsoft Edge 12+
@@ -75,10 +71,6 @@ tus-js-client is tested and known to support following browsers:
 Support in other browsers is _very likely_ but has not been confirmed yet.
 Since we only use Web Storage, XMLHttpRequest2, the File API and Blob API,
 more than 95% of today's users should be able to use tus-js-client.
-
-Compatibility between browsers is continuously ensured by automated tests
-in the corresponding browsers on [BrowserStack](https://browserstack.com),
-who provide their great service glady for Open Source project for free.
 
 ## Node.js support
 
