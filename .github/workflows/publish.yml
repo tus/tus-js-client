@@ -1,0 +1,36 @@
+name: Publish package
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+      - name: Git Clean
+        run: git clean -fxd --exclude=node_modules/
+      - name: Install Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+      - name: Install dependencies
+        uses: sergioramos/yarn-actions/install@v6
+        with:
+          frozen-lockfile: true
+      - name: Build
+        uses: sergioramos/yarn-actions/run@v6
+        with:
+          script: build
+      - name: Publish
+        run: npm publish
