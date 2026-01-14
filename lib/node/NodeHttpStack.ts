@@ -257,16 +257,16 @@ function writeBufferToStreamWithProgress(
     // and no 'drain' event is emitted, so won't continue writing data.
     const canContinue = stream.write(chunk)
 
-    if (!canContinue) {
+    if (offset >= source.length) {
+      // If all data has been written, close the stream if needed, and emit a 'finish' event.
+      stream.end()
+    } else if (!canContinue) {
       // If the buffer is full, wait for the 'drain' event to write more data.
       stream.once('drain', writeNextChunk)
       onprogress(offset)
-    } else if (offset < source.length) {
+    } else {
       // If there's still data to write and the buffer is not full, write next chunk.
       writeNextChunk()
-    } else {
-      // If all data has been written, close the stream if needed, and emit a 'finish' event.
-      stream.end()
     }
   }
 
