@@ -65,7 +65,7 @@ input.addEventListener('change', function (e) {
 
 ## Build status
 
-[![Actions Status](https://github.com/tus/tus-js-client/workflows/CI/badge.svg)](https://github.com/tus/tus-js-client/actions)
+[![CI](https://github.com/tus/tus-js-client/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tus/tus-js-client/actions/workflows/ci.yml?query=branch%3Amain)
 
 ## License
 
