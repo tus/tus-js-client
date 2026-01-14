@@ -37,7 +37,7 @@ jobs:
         if: matrix.suite == 'deno'
         uses: denoland/setup-deno@v2
         with:
-          deno-version: stable
+          deno-version: latest
       - name: Install dependencies
         run: npm ci
       - name: Build
