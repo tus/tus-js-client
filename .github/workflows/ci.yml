@@ -20,6 +20,9 @@ jobs:
           - desc: 'Node.js 22'
             suite: 'node'
             node: 22
+          - desc: 'Node.js 24'
+            suite: 'node'
+            node: 24
     name: Tests (${{ matrix.desc }})
     steps:
       - name: Check out sources
@@ -31,7 +34,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: ${{ matrix.node || 20 }}
+          node-version: ${{ matrix.node || 24 }}
       - name: Install dependencies
         uses: sergioramos/yarn-actions/install@v6
         with:
@@ -61,7 +64,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: ${{ matrix.node || 22 }}
+          node-version: ${{ matrix.node || 24 }}
       - name: Install dependencies
         uses: sergioramos/yarn-actions/install@v6
         with:
