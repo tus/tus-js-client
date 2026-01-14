@@ -23,6 +23,8 @@ jobs:
           - desc: 'Node.js 24'
             suite: 'node'
             node: 24
+          - desc: 'Deno'
+            suite: 'deno'
     name: Tests (${{ matrix.desc }})
     steps:
       - name: Check out sources
@@ -31,6 +33,11 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node || 24 }}
+      - name: Install Deno
+        if: matrix.suite == 'deno'
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: stable
       - name: Install dependencies
         run: npm ci
       - name: Build

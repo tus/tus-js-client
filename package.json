@@ -151,6 +151,7 @@
     "watch": "npm-run-all --parallel watch-*",
     "test-puppeteer": "karma start test/karma/puppeteer.conf.cjs",
     "test-node": "jasmine test/spec/node-index.js",
+    "test-deno": "deno run --allow-env --allow-read --allow-write --allow-net ./node_modules/.bin/jasmine test/spec/node-index.js",
     "lint-code": "biome check .",
     "lint-package": "publint --pack npm",
     "lint-type-exports": "attw --pack .",
