@@ -19,12 +19,32 @@ const defaultOptions = {
 
 class Upload extends BaseUpload {
   constructor(file: UploadInput, options: Partial<UploadOptions> = {}) {
-    const allOpts = { ...defaultOptions, ...options }
+    const allOpts = {
+      ...defaultOptions,
+      ...options,
+      // Deep merge stallDetection options if provided
+      ...(options.stallDetection && {
+        stallDetection: {
+          ...defaultOptions.stallDetection,
+          ...options.stallDetection,
+        },
+      }),
+    }
     super(file, allOpts)
   }
 
   static terminate(url: string, options: Partial<UploadOptions> = {}) {
-    const allOpts = { ...defaultOptions, ...options }
+    const allOpts = {
+      ...defaultOptions,
+      ...options,
+      // Deep merge stallDetection options if provided
+      ...(options.stallDetection && {
+        stallDetection: {
+          ...defaultOptions.stallDetection,
+          ...options.stallDetection,
+        },
+      }),
+    }
     return terminate(url, allOpts)
   }
 }
@@ -36,4 +56,5 @@ const isSupported = true
 // Note: The exported interface must be the same as in lib/browser/index.ts.
 // Any changes should be reflected in both files.
 export { Upload, defaultOptions, isSupported, canStoreURLs, enableDebugLog, DetailedError }
+export { NodeHttpStack } from './NodeHttpStack.js'
 export type * from '../options.js'

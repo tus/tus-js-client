@@ -25,6 +25,11 @@ export class NodeHttpStack implements HttpStack {
   getName() {
     return 'NodeHttpStack'
   }
+
+  supportsProgressEvents(): boolean {
+    // Node.js HTTP stack supports progress tracking through streams
+    return true
+  }
 }
 
 class Request implements HttpRequest {
