@@ -27,53 +27,29 @@ jobs:
     steps:
       - name: Check out sources
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-      - name: Git Clean
-        run: git clean -fxd --exclude=node_modules/
       - name: Install Node.js
         uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node || 24 }}
       - name: Install dependencies
-        uses: sergioramos/yarn-actions/install@v6
-        with:
-          frozen-lockfile: true
+        run: npm ci
       - name: Build
-        uses: sergioramos/yarn-actions/run@v6
-        with:
-          script: build
-      - name: Lint
-        uses: sergioramos/yarn-actions/run@v6
-        with:
-          script: lint
+        run: npm run build
       - name: Test
-        uses: sergioramos/yarn-actions/run@v6
-        with:
-          script: test-${{ matrix.suite }}
+        run: npm run test-${{ matrix.suite }}
   lint:
     name: Linter
     runs-on: ubuntu-22.04
     steps:
       - name: Check out sources
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-      - name: Git Clean
-        run: git clean -fxd --exclude=node_modules/
       - name: Install Node.js
         uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node || 24 }}
       - name: Install dependencies
-        uses: sergioramos/yarn-actions/install@v6
-        with:
-          frozen-lockfile: true
+        run: npm ci
       - name: Build
-        uses: sergioramos/yarn-actions/run@v6
-        with:
-          script: build
+        run: npm run build
       - name: Lint
-        uses: sergioramos/yarn-actions/run@v6
-        with:
-          script: lint
+        run: npm run lint

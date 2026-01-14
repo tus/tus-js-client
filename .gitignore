@@ -5,5 +5,4 @@ lib.cjs
 lib.esm
 dist
 .DS_Store
-yarn-error.log
 tus-js-client-*.tgz
