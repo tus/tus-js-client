@@ -15,14 +15,22 @@ export function getLargeBlob(sizeInBytes) {
   const chunkSize = 1024 * 1024 // 1 MB chunks to avoid memory issues
   const chunks = []
 
-  let remainingBytes = sizeInBytes
-  while (remainingBytes > 0) {
-    const currentChunkSize = Math.min(chunkSize, remainingBytes)
+  let bytesWritten = 0
+  while (bytesWritten < sizeInBytes) {
+    const currentChunkSize = Math.min(chunkSize, sizeInBytes - bytesWritten)
+
+    // Calculate where we are in the pattern for this chunk
+    const startOffset = bytesWritten % pattern.length
+
+    // Build the chunk content efficiently
+    // Create a shifted pattern that starts at the correct offset
+    const shiftedPattern = pattern.substring(startOffset) + pattern.substring(0, startOffset)
     const fullRepetitions = Math.floor(currentChunkSize / pattern.length)
     const remainder = currentChunkSize % pattern.length
-    const chunk = pattern.repeat(fullRepetitions) + pattern.substring(0, remainder)
+    const chunk = shiftedPattern.repeat(fullRepetitions) + shiftedPattern.substring(0, remainder)
+
     chunks.push(chunk)
-    remainingBytes -= currentChunkSize
+    bytesWritten += currentChunkSize
   }
 
   // In browser, Blob constructor is native
