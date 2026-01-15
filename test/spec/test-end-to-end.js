@@ -8,6 +8,9 @@ const END_TO_END_TIMEOUT = 120 * 1000
 // File size for end-to-end tests (50 MB = 52,428,800 bytes)
 const FILE_SIZE = 50 * 1024 * 1024
 
+// Pattern used for generating large blobs (must match getLargeBlob in utils.js)
+const BLOB_PATTERN = 'abcdefghij'
+
 describe('tus', () => {
   describe('end-to-end', () => {
     it(
@@ -83,7 +86,6 @@ describe('tus', () => {
 function validateUploadContent(upload, expectedSize) {
   // For large files, we validate content by sampling different parts
   // to ensure the file was uploaded correctly without downloading everything
-  const pattern = 'abcdefghij' // The pattern used by getLargeBlob
   const sampleSize = 1000 // Sample 1KB from each location
 
   // Sample from beginning, middle, and end
@@ -109,12 +111,15 @@ function validateUploadContent(upload, expectedSize) {
         return res.text()
       })
       .then((data) => {
-        // Validate that the content matches the expected pattern
-        const offset = sample.start % pattern.length
-        let expected = ''
-        for (let i = 0; i < data.length; i++) {
-          expected += pattern[(offset + i) % pattern.length]
-        }
+        // Generate expected content efficiently using the same approach as getLargeBlob
+        const offset = sample.start % BLOB_PATTERN.length
+        const fullRepetitions = Math.floor(data.length / BLOB_PATTERN.length)
+        const remainder = data.length % BLOB_PATTERN.length
+        // Create a shifted pattern starting from the offset position
+        const shiftedPattern = BLOB_PATTERN.substring(offset) + BLOB_PATTERN.substring(0, offset)
+        const expected =
+          shiftedPattern.repeat(fullRepetitions) + shiftedPattern.substring(0, remainder)
+
         if (data !== expected) {
           throw new Error(
             `Content mismatch at ${sample.name} (position ${sample.start}): expected pattern to repeat correctly`,
