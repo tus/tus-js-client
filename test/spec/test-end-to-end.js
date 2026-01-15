@@ -111,13 +111,14 @@ function validateUploadContent(upload, expectedSize) {
       .then((data) => {
         // Validate that the content matches the expected pattern
         const offset = sample.start % pattern.length
+        let expected = ''
         for (let i = 0; i < data.length; i++) {
-          const expectedChar = pattern[(offset + i) % pattern.length]
-          if (data[i] !== expectedChar) {
-            throw new Error(
-              `Content mismatch at ${sample.name} (position ${sample.start + i}): expected '${expectedChar}', got '${data[i]}'`,
-            )
-          }
+          expected += pattern[(offset + i) % pattern.length]
+        }
+        if (data !== expected) {
+          throw new Error(
+            `Content mismatch at ${sample.name} (position ${sample.start}): expected pattern to repeat correctly`,
+          )
         }
       })
   })
