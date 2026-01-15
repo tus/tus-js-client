@@ -8,16 +8,13 @@ const END_TO_END_TIMEOUT = 120 * 1000
 // File size for end-to-end tests (50 MB = 52,428,800 bytes)
 const FILE_SIZE = 50 * 1024 * 1024
 
-// Pattern used for generating large blobs (must match getLargeBlob in utils.js)
-const BLOB_PATTERN = 'abcdefghij'
-
 describe('tus', () => {
   describe('end-to-end', () => {
     it(
       'should upload to a real tus server',
       () => {
+        const file = getLargeBlob(FILE_SIZE)
         return new Promise((resolve, reject) => {
-          const file = getLargeBlob(FILE_SIZE)
           const options = {
             endpoint: 'https://tusd.tusdemo.net/files/',
             metadata: {
@@ -40,7 +37,7 @@ describe('tus', () => {
           const upload = new Upload(file, options)
           upload.start()
         })
-          .then((upload) => validateUploadContent(upload, FILE_SIZE))
+          .then((upload) => validateUploadContent(upload, file))
           .then((upload) => validateUploadMetadata(upload, FILE_SIZE))
           .then((upload) => {
             return upload.abort(true).then(() => upload)
@@ -53,8 +50,8 @@ describe('tus', () => {
     it(
       'should upload to a real tus server with creation-with-upload',
       () => {
+        const file = getLargeBlob(FILE_SIZE)
         return new Promise((resolve, reject) => {
-          const file = getLargeBlob(FILE_SIZE)
           const options = {
             endpoint: 'https://tusd.tusdemo.net/files/',
             metadata: {
@@ -76,34 +73,30 @@ describe('tus', () => {
 
           const upload = new Upload(file, options)
           upload.start()
-        }).then((upload) => validateUploadContent(upload, FILE_SIZE))
+        }).then((upload) => validateUploadContent(upload, file))
       },
       END_TO_END_TIMEOUT,
     )
   })
 })
 
-function validateUploadContent(upload, expectedSize) {
-  // Download and validate the entire uploaded file
-  return fetch(upload.url)
-    .then((res) => {
+function validateUploadContent(upload, originalBlob) {
+  // Download and validate the entire uploaded file against the original blob
+  return Promise.all([
+    fetch(upload.url).then((res) => {
       expect(res.status).toBe(200)
       return res.text()
-    })
-    .then((data) => {
-      // Verify the file size
-      expect(data.length).toBe(expectedSize)
+    }),
+    originalBlob.text(),
+  ]).then(([downloadedContent, originalContent]) => {
+    // Verify the file size matches
+    expect(downloadedContent.length).toBe(originalContent.length)
 
-      // Generate the expected content
-      const fullRepetitions = Math.floor(expectedSize / BLOB_PATTERN.length)
-      const remainder = expectedSize % BLOB_PATTERN.length
-      const expected = BLOB_PATTERN.repeat(fullRepetitions) + BLOB_PATTERN.substring(0, remainder)
+    // Validate that the downloaded content matches the original blob
+    expect(downloadedContent).toBe(originalContent)
 
-      // Validate that the content matches
-      expect(data).toBe(expected)
-
-      return upload
-    })
+    return upload
+  })
 }
 
 function validateUploadMetadata(upload, expectedSize) {
