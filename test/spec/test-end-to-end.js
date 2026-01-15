@@ -23,8 +23,8 @@ describe('tus', () => {
             metadata: {
               nonlatin: 'słońce',
               number: 100,
-              filename: 'large-file.bin',
-              filetype: 'application/octet-stream',
+              filename: 'large-file.txt',
+              filetype: 'text/plain',
             },
             onSuccess() {
               expect(upload.url).toMatch(/^https:\/\/tusd\.tusdemo\.net\/files\//)
@@ -60,8 +60,8 @@ describe('tus', () => {
             metadata: {
               nonlatin: 'słońce',
               number: 100,
-              filename: 'large-file.bin',
-              filetype: 'application/octet-stream',
+              filename: 'large-file.txt',
+              filetype: 'text/plain',
             },
             onSuccess() {
               expect(upload.url).toMatch(/^https:\/\/tusd\.tusdemo\.net\/files\//)
@@ -84,51 +84,26 @@ describe('tus', () => {
 })
 
 function validateUploadContent(upload, expectedSize) {
-  // For large files, we validate content by sampling different parts
-  // to ensure the file was uploaded correctly without downloading everything
-  const sampleSize = 1000 // Sample 1KB from each location
-
-  // Sample from beginning, middle, and end
-  const samples = [
-    { start: 0, end: sampleSize, name: 'beginning' },
-    {
-      start: Math.floor(expectedSize / 2),
-      end: Math.floor(expectedSize / 2) + sampleSize,
-      name: 'middle',
-    },
-    { start: expectedSize - sampleSize, end: expectedSize, name: 'end' },
-  ]
-
-  // Fetch and validate each sample
-  const validationPromises = samples.map((sample) => {
-    return fetch(upload.url, {
-      headers: {
-        Range: `bytes=${sample.start}-${sample.end - 1}`,
-      },
+  // Download and validate the entire uploaded file
+  return fetch(upload.url)
+    .then((res) => {
+      expect(res.status).toBe(200)
+      return res.text()
     })
-      .then((res) => {
-        expect(res.status).toBe(206) // Partial content
-        return res.text()
-      })
-      .then((data) => {
-        // Generate expected content efficiently using the same approach as getLargeBlob
-        const offset = sample.start % BLOB_PATTERN.length
-        const fullRepetitions = Math.floor(data.length / BLOB_PATTERN.length)
-        const remainder = data.length % BLOB_PATTERN.length
-        // Create a shifted pattern starting from the offset position
-        const shiftedPattern = BLOB_PATTERN.substring(offset) + BLOB_PATTERN.substring(0, offset)
-        const expected =
-          shiftedPattern.repeat(fullRepetitions) + shiftedPattern.substring(0, remainder)
+    .then((data) => {
+      // Verify the file size
+      expect(data.length).toBe(expectedSize)
 
-        if (data !== expected) {
-          throw new Error(
-            `Content mismatch at ${sample.name} (position ${sample.start}): expected pattern to repeat correctly`,
-          )
-        }
-      })
-  })
+      // Generate the expected content
+      const fullRepetitions = Math.floor(expectedSize / BLOB_PATTERN.length)
+      const remainder = expectedSize % BLOB_PATTERN.length
+      const expected = BLOB_PATTERN.repeat(fullRepetitions) + BLOB_PATTERN.substring(0, remainder)
 
-  return Promise.all(validationPromises).then(() => upload)
+      // Validate that the content matches
+      expect(data).toBe(expected)
+
+      return upload
+    })
 }
 
 function validateUploadMetadata(upload, expectedSize) {
@@ -151,8 +126,8 @@ function validateUploadMetadata(upload, expectedSize) {
       const metadataStr = res.headers.get('upload-metadata')
       expect(metadataStr).toBeTruthy()
       const metadata = metadataStr.split(',')
-      expect(metadata).toContain('filename bGFyZ2UtZmlsZS5iaW4=')
-      expect(metadata).toContain('filetype YXBwbGljYXRpb24vb2N0ZXQtc3RyZWFt')
+      expect(metadata).toContain('filename bGFyZ2UtZmlsZS50eHQ=')
+      expect(metadata).toContain('filetype dGV4dC9wbGFpbg==')
       expect(metadata).toContain('nonlatin c8WCb8WEY2U=')
       expect(metadata).toContain('number MTAw')
       expect(metadata.length).toBe(4)
