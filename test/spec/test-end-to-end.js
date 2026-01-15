@@ -5,7 +5,7 @@ import { getLargeBlob } from './helpers/utils.js'
 // Increased to handle 50 MB uploads
 const END_TO_END_TIMEOUT = 120 * 1000
 
-// File size for end-to-end tests (50 MB)
+// File size for end-to-end tests (50 MB = 52,428,800 bytes)
 const FILE_SIZE = 50 * 1024 * 1024
 
 describe('tus', () => {

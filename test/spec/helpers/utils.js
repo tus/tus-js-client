@@ -18,8 +18,9 @@ export function getLargeBlob(sizeInBytes) {
   let remainingBytes = sizeInBytes
   while (remainingBytes > 0) {
     const currentChunkSize = Math.min(chunkSize, remainingBytes)
-    const repetitions = Math.ceil(currentChunkSize / pattern.length)
-    const chunk = pattern.repeat(repetitions).substring(0, currentChunkSize)
+    const fullRepetitions = Math.floor(currentChunkSize / pattern.length)
+    const remainder = currentChunkSize % pattern.length
+    const chunk = pattern.repeat(fullRepetitions) + pattern.substring(0, remainder)
     chunks.push(chunk)
     remainingBytes -= currentChunkSize
   }
