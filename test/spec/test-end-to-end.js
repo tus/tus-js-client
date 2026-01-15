@@ -37,7 +37,7 @@ describe('tus', () => {
           const upload = new Upload(file, options)
           upload.start()
         })
-          .then(validateUploadMetadata)
+          .then((upload) => validateUploadMetadata(upload, FILE_SIZE))
           .then((upload) => {
             return upload.abort(true).then(() => upload)
           })
@@ -72,14 +72,14 @@ describe('tus', () => {
 
           const upload = new Upload(file, options)
           upload.start()
-        }).then(validateUploadMetadata)
+        }).then((upload) => validateUploadMetadata(upload, FILE_SIZE))
       },
       END_TO_END_TIMEOUT,
     )
   })
 })
 
-function validateUploadMetadata(upload) {
+function validateUploadMetadata(upload, expectedSize) {
   return fetch(upload.url, {
     method: 'HEAD',
     headers: {
@@ -89,8 +89,8 @@ function validateUploadMetadata(upload) {
     .then((res) => {
       expect(res.status).toBe(200)
       expect(res.headers.get('tus-resumable')).toBe('1.0.0')
-      expect(res.headers.get('upload-offset')).toBe(String(FILE_SIZE))
-      expect(res.headers.get('upload-length')).toBe(String(FILE_SIZE))
+      expect(res.headers.get('upload-offset')).toBe(String(expectedSize))
+      expect(res.headers.get('upload-length')).toBe(String(expectedSize))
 
       // The values in the Upload-Metadata header may not be in the same
       // order as we submitted them (the specification does not require

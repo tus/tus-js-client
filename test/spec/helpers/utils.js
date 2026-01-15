@@ -12,12 +12,21 @@ export function getBlob(str) {
 export function getLargeBlob(sizeInBytes) {
   // Use a pattern that's easy to verify and compresses well
   const pattern = 'abcdefghij' // 10 bytes
-  const repetitions = Math.ceil(sizeInBytes / pattern.length)
-  const content = pattern.repeat(repetitions).substring(0, sizeInBytes)
+  const chunkSize = 1024 * 1024 // 1 MB chunks to avoid memory issues
+  const chunks = []
+
+  let remainingBytes = sizeInBytes
+  while (remainingBytes > 0) {
+    const currentChunkSize = Math.min(chunkSize, remainingBytes)
+    const repetitions = Math.ceil(currentChunkSize / pattern.length)
+    const chunk = pattern.repeat(repetitions).substring(0, currentChunkSize)
+    chunks.push(chunk)
+    remainingBytes -= currentChunkSize
+  }
 
   // In browser, Blob constructor is native
   // In Node.js (when using test environment), Blob is also available
-  return new Blob([content])
+  return new Blob(chunks)
 }
 
 /**
