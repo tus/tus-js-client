@@ -37,6 +37,7 @@ describe('tus', () => {
           const upload = new Upload(file, options)
           upload.start()
         })
+          .then((upload) => validateUploadContent(upload, FILE_SIZE))
           .then((upload) => validateUploadMetadata(upload, FILE_SIZE))
           .then((upload) => {
             return upload.abort(true).then(() => upload)
@@ -72,12 +73,57 @@ describe('tus', () => {
 
           const upload = new Upload(file, options)
           upload.start()
-        }).then((upload) => validateUploadMetadata(upload, FILE_SIZE))
+        }).then((upload) => validateUploadContent(upload, FILE_SIZE))
       },
       END_TO_END_TIMEOUT,
     )
   })
 })
+
+function validateUploadContent(upload, expectedSize) {
+  // For large files, we validate content by sampling different parts
+  // to ensure the file was uploaded correctly without downloading everything
+  const pattern = 'abcdefghij' // The pattern used by getLargeBlob
+  const sampleSize = 1000 // Sample 1KB from each location
+
+  // Sample from beginning, middle, and end
+  const samples = [
+    { start: 0, end: sampleSize, name: 'beginning' },
+    {
+      start: Math.floor(expectedSize / 2),
+      end: Math.floor(expectedSize / 2) + sampleSize,
+      name: 'middle',
+    },
+    { start: expectedSize - sampleSize, end: expectedSize, name: 'end' },
+  ]
+
+  // Fetch and validate each sample
+  const validationPromises = samples.map((sample) => {
+    return fetch(upload.url, {
+      headers: {
+        Range: `bytes=${sample.start}-${sample.end - 1}`,
+      },
+    })
+      .then((res) => {
+        expect(res.status).toBe(206) // Partial content
+        return res.text()
+      })
+      .then((data) => {
+        // Validate that the content matches the expected pattern
+        const offset = sample.start % pattern.length
+        for (let i = 0; i < data.length; i++) {
+          const expectedChar = pattern[(offset + i) % pattern.length]
+          if (data[i] !== expectedChar) {
+            throw new Error(
+              `Content mismatch at ${sample.name} (position ${sample.start + i}): expected '${expectedChar}', got '${data[i]}'`,
+            )
+          }
+        }
+      })
+  })
+
+  return Promise.all(validationPromises).then(() => upload)
+}
 
 function validateUploadMetadata(upload, expectedSize) {
   return fetch(upload.url, {
