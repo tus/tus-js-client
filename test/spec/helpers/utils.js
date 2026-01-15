@@ -6,6 +6,21 @@ export function getBlob(str) {
 }
 
 /**
+ * Helper function to create a Blob of a specific size filled with repeated content.
+ * Works in both Node.js and browser environments.
+ */
+export function getLargeBlob(sizeInBytes) {
+  // Use a pattern that's easy to verify and compresses well
+  const pattern = 'abcdefghij' // 10 bytes
+  const repetitions = Math.ceil(sizeInBytes / pattern.length)
+  const content = pattern.repeat(repetitions).substring(0, sizeInBytes)
+
+  // In browser, Blob constructor is native
+  // In Node.js (when using test environment), Blob is also available
+  return new Blob([content])
+}
+
+/**
  * Create a promise and obtain the resolve/reject functions
  * outside of the Promise callback.
  */
