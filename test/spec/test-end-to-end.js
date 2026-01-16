@@ -1,5 +1,11 @@
 import { Upload } from 'tus-js-client'
-import { createStreamingSource, getLargeBlob } from './helpers/utils.js'
+import {
+  createStreamingSource,
+  getLargeBlob,
+  validateUploadContent,
+  validateUploadDeletion,
+  validateUploadMetadata,
+} from './helpers/utils.js'
 
 // Test timeout for end-to-end tests when uploading to real server.
 // Increased to handle 50 MB uploads
@@ -123,65 +129,3 @@ describe('tus', () => {
     )
   })
 })
-
-function validateUploadContent(upload, originalBlob) {
-  // Download and validate the entire uploaded file against the original blob
-  return Promise.all([
-    fetch(upload.url).then((res) => {
-      expect(res.status).toBe(200)
-      return res.text()
-    }),
-    originalBlob.text(),
-  ]).then(([downloadedContent, originalContent]) => {
-    // Verify the file size matches
-    expect(downloadedContent.length).toBe(originalContent.length)
-
-    // Validate that the downloaded content matches the original blob
-    expect(downloadedContent).toBe(originalContent)
-
-    return upload
-  })
-}
-
-function validateUploadMetadata(upload, expectedSize) {
-  return fetch(upload.url, {
-    method: 'HEAD',
-    headers: {
-      'Tus-Resumable': '1.0.0',
-    },
-  })
-    .then((res) => {
-      expect(res.status).toBe(200)
-      expect(res.headers.get('tus-resumable')).toBe('1.0.0')
-      expect(res.headers.get('upload-offset')).toBe(String(expectedSize))
-      expect(res.headers.get('upload-length')).toBe(String(expectedSize))
-
-      // The values in the Upload-Metadata header may not be in the same
-      // order as we submitted them (the specification does not require
-      // that). Therefore, we split the values and verify that each one
-      // is present.
-      const metadataStr = res.headers.get('upload-metadata')
-      expect(metadataStr).toBeTruthy()
-      const metadata = metadataStr.split(',')
-      expect(metadata).toContain('filename bGFyZ2UtZmlsZS50eHQ=')
-      expect(metadata).toContain('filetype dGV4dC9wbGFpbg==')
-      expect(metadata).toContain('nonlatin c8WCb8WEY2U=')
-      expect(metadata).toContain('number MTAw')
-      expect(metadata.length).toBe(4)
-
-      return res.text()
-    })
-    .then((data) => {
-      expect(data).toBe('')
-
-      return upload
-    })
-}
-
-function validateUploadDeletion(upload) {
-  return fetch(upload.url).then((res) => {
-    expect(res.status).toBe(404)
-
-    return upload
-  })
-}
