@@ -94,7 +94,7 @@ describe('tus', () => {
             metadata: {
               nonlatin: 'słońce',
               number: 100,
-              filename: 'large-streamed-file.txt',
+              filename: 'large-file.txt',
               filetype: 'text/plain',
             },
             uploadLengthDeferred: true, // Required for streaming sources
