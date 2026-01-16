@@ -1,5 +1,5 @@
 import { Upload } from 'tus-js-client'
-import { getLargeBlob } from './helpers/utils.js'
+import { createStreamingSource, getLargeBlob } from './helpers/utils.js'
 
 // Test timeout for end-to-end tests when uploading to real server.
 // Increased to handle 50 MB uploads
@@ -74,6 +74,50 @@ describe('tus', () => {
           const upload = new Upload(file, options)
           upload.start()
         }).then((upload) => validateUploadContent(upload, file))
+      },
+      END_TO_END_TIMEOUT,
+    )
+
+    it(
+      'should upload a streamed 50 MB file to a real tus server',
+      () => {
+        // Create a streaming source that yields data piece by piece
+        const stream = createStreamingSource(FILE_SIZE)
+
+        // Store the original blob for validation
+        const originalBlob = getLargeBlob(FILE_SIZE)
+
+        return new Promise((resolve, reject) => {
+          const options = {
+            endpoint: 'https://tusd.tusdemo.net/files/',
+            chunkSize: 20 * 1024 * 1024, // 20 MiB chunks
+            metadata: {
+              nonlatin: 'słońce',
+              number: 100,
+              filename: 'large-streamed-file.txt',
+              filetype: 'text/plain',
+            },
+            uploadLengthDeferred: true, // Required for streaming sources
+            onSuccess() {
+              expect(upload.url).toMatch(/^https:\/\/tusd\.tusdemo\.net\/files\//)
+              console.log('Upload URL (streamed):', upload.url)
+
+              resolve(upload)
+            },
+            onError(err) {
+              reject(err)
+            },
+          }
+
+          const upload = new Upload(stream, options)
+          upload.start()
+        })
+          .then((upload) => validateUploadContent(upload, originalBlob))
+          .then((upload) => validateUploadMetadata(upload, FILE_SIZE))
+          .then((upload) => {
+            return upload.abort(true).then(() => upload)
+          })
+          .then(validateUploadDeletion)
       },
       END_TO_END_TIMEOUT,
     )

@@ -39,6 +39,45 @@ export function getLargeBlob(sizeInBytes) {
 }
 
 /**
+ * Helper function to create a ReadableStream that streams data piece by piece.
+ * This emulates a real streaming source and works in both Node.js and browser environments.
+ * @param {number} sizeInBytes - Total size of data to stream
+ * @param {number} streamChunkSize - Size of each chunk to stream (default 1 MB)
+ * @returns {ReadableStream} A readable stream that yields the data in chunks
+ */
+export function createStreamingSource(sizeInBytes, streamChunkSize = 1024 * 1024) {
+  const pattern = 'abcdefghij' // 10 bytes
+  let bytesStreamed = 0
+
+  return new ReadableStream({
+    pull(controller) {
+      if (bytesStreamed >= sizeInBytes) {
+        controller.close()
+        return
+      }
+
+      const currentChunkSize = Math.min(streamChunkSize, sizeInBytes - bytesStreamed)
+
+      // Calculate where we are in the pattern for this chunk
+      const startOffset = bytesStreamed % pattern.length
+
+      // Build the chunk content efficiently
+      const shiftedPattern = pattern.substring(startOffset) + pattern.substring(0, startOffset)
+      const fullRepetitions = Math.floor(currentChunkSize / pattern.length)
+      const remainder = currentChunkSize % pattern.length
+      const chunk = shiftedPattern.repeat(fullRepetitions) + shiftedPattern.substring(0, remainder)
+
+      // Convert to Uint8Array for streaming
+      const encoder = new TextEncoder()
+      const data = encoder.encode(chunk)
+
+      controller.enqueue(data)
+      bytesStreamed += currentChunkSize
+    },
+  })
+}
+
+/**
  * Create a promise and obtain the resolve/reject functions
  * outside of the Promise callback.
  */
