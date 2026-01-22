@@ -110,7 +110,7 @@
     "test-deno": "deno run --allow-env --allow-read --allow-write --allow-net ./node_modules/.bin/jasmine test/spec/node-index.js",
     "lint-code": "biome check .",
     "lint-package": "publint --pack npm",
-    "lint-type-exports": "attw --pack .",
+    "lint-type-exports": "attw --pack . --profile esm-only",
     "lint": "npm-run-all lint-*",
     "fix": "biome check --write ."
   }
