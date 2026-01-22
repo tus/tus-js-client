@@ -3,77 +3,37 @@
   "version": "5.0.0-pre2",
   "description": "A pure JavaScript client for the tus resumable upload protocol",
   "type": "module",
-  "main": "./lib.cjs/browser/index.js",
-  "types": "./lib.cjs/browser/index.d.ts",
-  "module": "./lib.esm/browser/index.js",
   "exports": {
     "./package.json": "./package.json",
     ".": {
       "node": {
-        "import": {
-          "types": "./lib.esm/node/index.d.ts",
-          "default": "./lib.esm/node/index.js"
-        },
-        "require": {
-          "types": "./lib.cjs/node/index.d.ts",
-          "default": "./lib.cjs/node/index.js"
-        }
+        "types": "./lib.esm/node/index.d.ts",
+        "default": "./lib.esm/node/index.js"
       },
       "default": {
-        "import": {
-          "types": "./lib.esm/browser/index.d.ts",
-          "default": "./lib.esm/browser/index.js"
-        },
-        "require": {
-          "types": "./lib.cjs/browser/index.d.ts",
-          "default": "./lib.cjs/browser/index.js"
-        }
+        "types": "./lib.esm/browser/index.d.ts",
+        "default": "./lib.esm/browser/index.js"
       }
     },
     "./node/sources/NodeStreamFileSource": {
-      "import": {
-        "types": "./lib.esm/node/sources/NodeStreamFileSource.d.ts",
-        "default": "./lib.esm/node/sources/NodeStreamFileSource.js"
-      },
-      "require": {
-        "types": "./lib.cjs/node/sources/NodeStreamFileSource.d.ts",
-        "default": "./lib.cjs/node/sources/NodeStreamFileSource.js"
-      }
+      "types": "./lib.esm/node/sources/NodeStreamFileSource.d.ts",
+      "default": "./lib.esm/node/sources/NodeStreamFileSource.js"
     },
     "./node/FileUrlStorage": {
-      "import": {
-        "types": "./lib.esm/node/FileUrlStorage.d.ts",
-        "default": "./lib.esm/node/FileUrlStorage.js"
-      },
-      "require": {
-        "types": "./lib.cjs/node/FileUrlStorage.d.ts",
-        "default": "./lib.cjs/node/FileUrlStorage.js"
-      }
+      "types": "./lib.esm/node/FileUrlStorage.d.ts",
+      "default": "./lib.esm/node/FileUrlStorage.js"
     },
     "./node/NodeHttpStack": {
-      "import": {
-        "types": "./lib.esm/node/NodeHttpStack.d.ts",
-        "default": "./lib.esm/node/NodeHttpStack.js"
-      },
-      "require": {
-        "types": "./lib.cjs/node/NodeHttpStack.d.ts",
-        "default": "./lib.cjs/node/NodeHttpStack.js"
-      }
+      "types": "./lib.esm/node/NodeHttpStack.d.ts",
+      "default": "./lib.esm/node/NodeHttpStack.js"
     },
     "./browser/FetchHttpStack": {
-      "import": {
-        "types": "./lib.esm/browser/FetchHttpStack.d.ts",
-        "default": "./lib.esm/browser/FetchHttpStack.js"
-      },
-      "require": {
-        "types": "./lib.cjs/browser/FetchHttpStack.d.ts",
-        "default": "./lib.cjs/browser/FetchHttpStack.js"
-      }
+      "types": "./lib.esm/browser/FetchHttpStack.d.ts",
+      "default": "./lib.esm/browser/FetchHttpStack.js"
     }
   },
   "files": [
     "lib/",
-    "lib.cjs/",
     "lib.esm/",
     "dist/",
     "node/",
@@ -105,7 +65,6 @@
     "@biomejs/biome": "^2.0.6",
     "@rollup/plugin-commonjs": "^28.0.2",
     "@rollup/plugin-node-resolve": "^16.0.0",
-    "@rollup/plugin-typescript": "^12.1.2",
     "@types/lodash.throttle": "^4.1.9",
     "@types/proper-lockfile": "^4.1.4",
     "@types/url-parse": "^1.4.11",
@@ -136,14 +95,11 @@
     "url-parse": "^1.5.7"
   },
   "scripts": {
-    "clean": "rm -rf dist lib.cjs lib.esm",
-    "build-exports": "node scripts/setup-exports.js",
+    "clean": "rm -rf dist lib.esm",
     "build-test-bundle": "mkdir -p dist && rollup test/spec/browser-index.js --format iife --sourcemap --plugin node-resolve --plugin commonjs --file dist/browser-test-bundle.js",
-    "build-bundle": "mkdir -p dist && rollup lib/browser/index.ts --format umd --name tus --plugin typescript --plugin node-resolve --plugin commonjs --file ./dist/tus.js --sourcemap --sourcemapFile ./dist/tus.js.map",
+    "build-bundle": "mkdir -p dist && rollup lib.esm/browser/index.js --format umd --name tus --plugin node-resolve --plugin commonjs --file ./dist/tus.js --sourcemap --sourcemapFile ./dist/tus.js.map",
     "build-minify": "uglifyjs ./dist/tus.js -o ./dist/tus.min.js --compress --mangle --source-map \"content='./dist/tus.js.map',url='tus.min.js.map'\"",
-    "build-transpile-esm": "tsc --project tsconfig-esm.json && echo '{\"type\":\"module\"}' > lib.esm/package.json",
-    "build-transpile-cjs": "tsc --project tsconfig-cjs.json && echo '{\"type\":\"commonjs\"}' > lib.cjs/package.json",
-    "build-transpile": "npm-run-all build-transpile-esm build-transpile-cjs",
+    "build-transpile": "tsc",
     "build": "npm-run-all clean build-transpile build-bundle build-minify build-test-bundle",
     "watch-bundle": "chokidar --initial \"lib/**/*\" -c \"npm run build-bundle\"",
     "watch-test-bundle": "chokidar --initial \"test/spec/**/*\" -c \"npm run build-test-bundle\"",
