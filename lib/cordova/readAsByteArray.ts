@@ -5,7 +5,7 @@
  */
 // TODO: Reconsider whether this is a sensible approach or whether we cause
 // high memory usage with `chunkSize` is unset.
-export function readAsByteArray(chunk: Blob): Promise<Uint8Array> {
+export function readAsByteArray(chunk: Blob): Promise<Uint8Array<ArrayBuffer>> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => {

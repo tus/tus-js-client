@@ -20,17 +20,20 @@ export function openFile(input: UploadInput, chunkSize: number): FileSource | nu
   // ArrayBufferViews can be TypedArray (e.g. Uint8Array) or DataView instances.
   // Note that Node.js' Buffers are also Uint8Arrays.
   if (ArrayBuffer.isView(input)) {
-    return new ArrayBufferViewFileSource(input)
+    if (typeof SharedArrayBuffer !== 'undefined' && input.buffer instanceof SharedArrayBuffer) {
+      throw new Error('tus: SharedArrayBuffer-backed views are not supported for uploads')
+    }
+    return new ArrayBufferViewFileSource(input as ArrayBufferView<ArrayBuffer>)
+  }
+
+  if (input instanceof ArrayBuffer) {
+    return new ArrayBufferViewFileSource(new DataView(input))
   }
 
   // SharedArrayBuffer is not available in all browser context for security reasons.
   // Hence we check if the constructor exists at all.
-  if (
-    input instanceof ArrayBuffer ||
-    (typeof SharedArrayBuffer !== 'undefined' && input instanceof SharedArrayBuffer)
-  ) {
-    const view = new DataView(input)
-    return new ArrayBufferViewFileSource(view)
+  if (typeof SharedArrayBuffer !== 'undefined' && input instanceof SharedArrayBuffer) {
+    throw new Error('tus: SharedArrayBuffer is not supported for uploads')
   }
 
   if (input instanceof ReadableStream) {
