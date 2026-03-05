@@ -8,11 +8,11 @@ import type { FileSource, SliceResult } from '../options.js'
  * or it will lead to weird behavior.
  */
 export class ArrayBufferViewFileSource implements FileSource {
-  private _view: ArrayBufferView
+  private _view: ArrayBufferView<ArrayBuffer>
 
   size: number
 
-  constructor(view: ArrayBufferView) {
+  constructor(view: ArrayBufferView<ArrayBuffer>) {
     this._view = view
     this.size = view.byteLength
   }

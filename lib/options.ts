@@ -120,7 +120,7 @@ export interface FileSource {
 }
 
 // TODO: Allow Web Streams' ReadableStream as well
-export type SliceType = Blob | ArrayBufferView | NodeReadableStream
+export type SliceType = Blob | ArrayBufferView<ArrayBuffer> | NodeReadableStream
 
 export type SliceResult =
   | {

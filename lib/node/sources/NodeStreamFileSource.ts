@@ -89,7 +89,7 @@ export class NodeStreamFileSource implements FileSource {
       throw this._error
     }
 
-    let returnBuffer: Buffer & { size?: number }
+    let returnBuffer: Buffer<ArrayBuffer> & { size?: number }
     // Always attempt to drain the buffer first, even if this means that we
     // return less data than the caller requested.
     if (start < this._bufPos + this._buf.length) {
