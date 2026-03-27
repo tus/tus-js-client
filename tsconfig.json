@@ -10,6 +10,8 @@
     "skipLibCheck": true,
     "allowJs": false,
     "sourceMap": true,
-    "noImplicitAny": true
+    "noImplicitAny": true,
+    "outDir": "lib.esm/",
+    "declaration": true
   }
 }
