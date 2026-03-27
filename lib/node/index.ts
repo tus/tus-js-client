@@ -1,13 +1,17 @@
+import { FetchHttpStack } from '../browser/FetchHttpStack.js'
 import { DetailedError } from '../DetailedError.js'
 import { enableDebugLog } from '../logger.js'
 import { NoopUrlStorage } from '../NoopUrlStorage.js'
 import type { UploadInput, UploadOptions } from '../options.js'
 import { BaseUpload, defaultOptions as baseDefaultOptions, terminate } from '../upload.js'
-
 import { canStoreURLs } from './FileUrlStorage.js'
 import { fingerprint } from './fileSignature.js'
 import { NodeFileReader } from './NodeFileReader.js'
-import { NodeHttpStack as DefaultHttpStack } from './NodeHttpStack.js'
+import { NodeHttpStack } from './NodeHttpStack.js'
+
+// @ts-expect-error: Bun global
+const isBun = typeof Bun !== 'undefined'
+const DefaultHttpStack = !isBun ? NodeHttpStack : FetchHttpStack
 
 const defaultOptions = {
   ...baseDefaultOptions,
