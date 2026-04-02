@@ -1,7 +1,4 @@
 import { Base64 } from 'js-base64'
-// TODO: Package url-parse is CommonJS. Can we replace this with a ESM package that
-// provides WHATWG URL? Then we can get rid of @rollup/plugin-commonjs.
-import URL from 'url-parse'
 import { DetailedError } from './DetailedError.js'
 import { log } from './logger.js'
 import {
@@ -1140,7 +1137,17 @@ function defaultOnShouldRetry(err: DetailedError): boolean {
  * http://example.com/upload/abc
  */
 function resolveUrl(origin: string, link: string): string {
-  return new URL(link, origin).toString()
+  try {
+    return new URL(link, origin).toString()
+  } catch (err) {
+    if (origin.startsWith('/') || !origin.includes('://')) {
+      const base = 'http://tus.io'
+      const fullOrigin = origin.startsWith('/') ? `${base}${origin}` : `${base}/${origin}`
+      const resolved = new URL(link, fullOrigin).toString()
+      return resolved.replace(base, '')
+    }
+    throw err
+  }
 }
 
 type Part = { start: number; end: number }
