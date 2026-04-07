@@ -494,7 +494,12 @@ export class BaseUpload {
     if (this._aborted) return
 
     if (typeof this.options.onError === 'function') {
-      this.options.onError(err)
+      try {
+        this.options.onError(err)
+      } catch (callbackErr) {
+        const causeMsg = callbackErr instanceof Error ? callbackErr.message : String(callbackErr)
+        throw new Error(`tus: error thrown in 'onError' callback: ${causeMsg}`)
+      }
     } else {
       throw err
     }
@@ -558,7 +563,12 @@ export class BaseUpload {
    */
   private _emitProgress(bytesSent: number, bytesTotal: number | null): void {
     if (typeof this.options.onProgress === 'function') {
-      this.options.onProgress(bytesSent, bytesTotal)
+      try {
+        this.options.onProgress(bytesSent, bytesTotal)
+      } catch (err) {
+        const causeMsg = err instanceof Error ? err.message : String(err)
+        throw new Error(`tus: error thrown in 'onProgress' callback: ${causeMsg}`)
+      }
     }
   }
 
@@ -577,7 +587,13 @@ export class BaseUpload {
     bytesTotal: number | null,
   ): void {
     if (typeof this.options.onChunkComplete === 'function') {
-      this.options.onChunkComplete(chunkSize, bytesAccepted, bytesTotal)
+      try {
+        this.options.onChunkComplete(chunkSize, bytesAccepted, bytesTotal)
+      } catch (err) {
+
+        const causeMsg = err instanceof Error ? err.message : String(err)
+        throw new Error(`tus: error thrown in 'onChunkComplete' callback: ${causeMsg}`)
+      }
     }
   }
 
@@ -628,7 +644,7 @@ export class BaseUpload {
       if (!(err instanceof Error)) {
         throw new Error(`tus: value thrown that is not an error: ${err}`)
       }
-
+      
       throw new DetailedError('tus: failed to create upload', err, req, undefined)
     }
 
@@ -1056,13 +1072,23 @@ async function sendRequest(
   options: UploadOptions,
 ): Promise<HttpResponse> {
   if (typeof options.onBeforeRequest === 'function') {
-    await options.onBeforeRequest(req)
+    try {
+      await options.onBeforeRequest(req)
+    } catch (err) {
+      const causeMsg = err instanceof Error ? err.message : String(err)
+      throw new Error(`tus: error thrown in 'onBeforeRequest' callback: ${causeMsg}`)
+    }
   }
 
   const res = await req.send(body)
 
   if (typeof options.onAfterResponse === 'function') {
-    await options.onAfterResponse(req, res)
+    try {
+      await options.onAfterResponse(req, res)
+    } catch (err) {
+      const causeMsg = err instanceof Error ? err.message : String(err)
+      throw new Error(`tus: error thrown in 'onAfterResponse' callback: ${causeMsg}`)
+    }
   }
 
   return res
@@ -1117,7 +1143,12 @@ function shouldRetry(
   }
 
   if (options && typeof options.onShouldRetry === 'function') {
-    return options.onShouldRetry(err, retryAttempt, options)
+    try {
+      return options.onShouldRetry(err, retryAttempt, options)
+    } catch (callbackErr) {
+      const causeMsg = callbackErr instanceof Error ? callbackErr.message : String(callbackErr)
+      throw new Error(`tus: error thrown in 'onShouldRetry' callback: ${causeMsg}`)
+    }
   }
 
   return defaultOnShouldRetry(err)
