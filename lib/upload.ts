@@ -590,7 +590,6 @@ export class BaseUpload {
       try {
         this.options.onChunkComplete(chunkSize, bytesAccepted, bytesTotal)
       } catch (err) {
-
         const causeMsg = err instanceof Error ? err.message : String(err)
         throw new Error(`tus: error thrown in 'onChunkComplete' callback: ${causeMsg}`)
       }
@@ -644,7 +643,7 @@ export class BaseUpload {
       if (!(err instanceof Error)) {
         throw new Error(`tus: value thrown that is not an error: ${err}`)
       }
-      
+
       throw new DetailedError('tus: failed to create upload', err, req, undefined)
     }
 
