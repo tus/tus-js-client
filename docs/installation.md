@@ -43,6 +43,7 @@ tus-js-client can be used in following environments:
 - Browsers
 - Node.js
 - Deno
+- Bun
 - React Native applications
 - Apache Cordova applications
 
