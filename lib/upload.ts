@@ -1132,11 +1132,15 @@ function shouldRetry(
   // - the error is server error (i.e. not a status 4xx except a 409 or 423) or
   // a onShouldRetry is specified and returns true
   // - the browser does not indicate that we are offline
+  const isCallbackError =
+    err.message.includes('tus: error thrown in') && err.message.includes('callback')
   const isNetworkError = 'originalRequest' in err && err.originalRequest != null
   if (
     options.retryDelays == null ||
     retryAttempt >= options.retryDelays.length ||
-    !isNetworkError
+    !isNetworkError ||
+    // do not retry if callback function throws Error
+    isCallbackError
   ) {
     return false
   }
