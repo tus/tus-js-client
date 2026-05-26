@@ -15,25 +15,36 @@ import type {
 } from './options.js'
 import {
   TUS_DEFAULT_CLIENT_PROTOCOL,
+  TUS_FLOW_POLICY,
   type TusRequestPlan,
+  tusCheckConfiguredUploadSize,
+  tusChunkEnd,
+  tusCreatedUploadCompletesWithoutPatch,
+  tusCreateUploadCompleteValue,
   tusCreateUploadRequestPlan,
+  tusDeferredUploadLengthPlan,
   tusExpectedResponseStatusForOperation,
   tusFinalUploadRequestPlan,
   tusGetUploadOffsetRequestPlan,
-  tusIsClientErrorStatus,
-  tusIsLockedStatus,
-  tusIsSuccessfulResponseStatus,
   tusPartialUploadHeaders,
   tusPatchUploadRequestPlan,
+  tusPlanResumeResponseStatus,
+  tusPlanSingleUploadStart,
+  tusPlanUploadCompletionAfterOffset,
+  tusPlanUploadStorage,
   tusReadUploadChunkResponse,
   tusReadUploadCreationResponse,
   tusReadUploadOffsetResponse,
   tusRequestIdHeaders,
+  tusShouldResetRetryAttempt,
   tusShouldRetryStatus,
-  tusSupportsProtocol,
+  tusShouldSendUploadBodyDuringCreation,
   tusTerminateUploadRequestPlan,
   tusUploadBodyHeaders,
+  tusUploadIsCompleteAfterChunk,
   tusUploadLengthHeaders,
+  tusValidateCreateUpload,
+  tusValidateUploadStart,
 } from './protocol_generated.js'
 import { uuid } from './uuid.js'
 
@@ -164,70 +175,21 @@ export class BaseUpload {
   }
 
   start(): void {
-    if (!this.file) {
-      this._emitError(new Error('tus: no file or stream to upload provided'))
+    const startValidation = tusValidateUploadStart({
+      hasCurrentUrl: this.url != null,
+      hasEndpoint: this.options.endpoint != null,
+      hasFile: Boolean(this.file),
+      hasUploadSize: this.options.uploadSize != null,
+      hasUploadUrl: this.options.uploadUrl != null,
+      parallelUploadBoundariesCount: this.options.parallelUploadBoundaries?.length ?? null,
+      parallelUploads: this.options.parallelUploads,
+      protocol: this.options.protocol,
+      retryDelays: this.options.retryDelays,
+      uploadLengthDeferred: this._uploadLengthDeferred,
+    })
+    if (!startValidation.ok) {
+      this._emitError(new Error(startValidation.message))
       return
-    }
-
-    if (!tusSupportsProtocol(this.options.protocol)) {
-      this._emitError(new Error(`tus: unsupported protocol ${this.options.protocol}`))
-      return
-    }
-
-    if (!this.options.endpoint && !this.options.uploadUrl && !this.url) {
-      this._emitError(new Error('tus: neither an endpoint or an upload URL is provided'))
-      return
-    }
-
-    const { retryDelays } = this.options
-    if (retryDelays != null && Object.prototype.toString.call(retryDelays) !== '[object Array]') {
-      this._emitError(new Error('tus: the `retryDelays` option must either be an array or null'))
-      return
-    }
-
-    if (this.options.parallelUploads > 1) {
-      // Test which options are incompatible with parallel uploads.
-      if (this.options.uploadUrl != null) {
-        this._emitError(
-          new Error('tus: cannot use the `uploadUrl` option when parallelUploads is enabled'),
-        )
-        return
-      }
-
-      if (this.options.uploadSize != null) {
-        this._emitError(
-          new Error('tus: cannot use the `uploadSize` option when parallelUploads is enabled'),
-        )
-        return
-      }
-
-      if (this._uploadLengthDeferred) {
-        this._emitError(
-          new Error(
-            'tus: cannot use the `uploadLengthDeferred` option when parallelUploads is enabled',
-          ),
-        )
-        return
-      }
-    }
-
-    if (this.options.parallelUploadBoundaries) {
-      if (this.options.parallelUploads <= 1) {
-        this._emitError(
-          new Error(
-            'tus: cannot use the `parallelUploadBoundaries` option when `parallelUploads` is disabled',
-          ),
-        )
-        return
-      }
-      if (this.options.parallelUploads !== this.options.parallelUploadBoundaries.length) {
-        this._emitError(
-          new Error(
-            'tus: the `parallelUploadBoundaries` must have the same length as the value of `parallelUploads`',
-          ),
-        )
-        return
-      }
     }
 
     // Note: `start` does not return a Promise or await the preparation on purpose.
@@ -392,15 +354,16 @@ export class BaseUpload {
     // creating the final upload.
     await Promise.all(uploads)
 
-    if (this.options.endpoint == null) {
-      throw new Error('tus: Expected options.endpoint to be set')
+    const endpoint = this.options.endpoint
+    if (endpoint == null) {
+      throw new Error(TUS_FLOW_POLICY.messages.createMissingEndpoint)
     }
     if (!this._parallelUploadUrls) {
       throw new Error('tus: Expected _parallelUploadUrls to be set')
     }
     const req = this._openRequest(
       tusFinalUploadRequestPlan({
-        endpoint: this.options.endpoint,
+        endpoint,
         encodeMetadataValue,
         metadata: this.options.metadata,
         protocol: this.options.protocol,
@@ -424,17 +387,18 @@ export class BaseUpload {
       status: res.getStatus(),
     })
     if (!creationResponse.ok && creationResponse.reason === 'unexpectedStatus') {
-      throw new DetailedError('tus: unexpected response while creating upload', undefined, req, res)
+      throw new DetailedError(
+        TUS_FLOW_POLICY.messages.unexpectedCreateResponse,
+        undefined,
+        req,
+        res,
+      )
     }
     if (!creationResponse.ok) {
-      throw new DetailedError('tus: invalid or missing Location header', undefined, req, res)
+      throw new DetailedError(TUS_FLOW_POLICY.messages.uploadLocationMissing, undefined, req, res)
     }
 
-    if (this.options.endpoint == null) {
-      throw new Error('tus: Expeced endpoint to be defined.')
-    }
-
-    this.url = resolveUrl(this.options.endpoint, creationResponse.location)
+    this.url = resolveUrl(endpoint, creationResponse.location)
     log(`Created upload at ${this.url}`)
 
     await this._emitSuccess(res)
@@ -452,21 +416,21 @@ export class BaseUpload {
     // aborted previously.
     this._aborted = false
 
-    // The upload had been started previously and we should reuse this URL.
-    if (this.url != null) {
-      log(`Resuming upload from previous URL: ${this.url}`)
+    const plan = tusPlanSingleUploadStart({
+      currentUrl: this.url,
+      uploadUrl: this.options.uploadUrl,
+    })
+    log(plan.logMessage)
+
+    if (plan.action === 'resumeCurrent') {
       return await this._resumeUpload()
     }
 
-    // A URL has manually been specified, so we try to resume
-    if (this.options.uploadUrl != null) {
-      log(`Resuming upload from provided URL: ${this.options.uploadUrl}`)
-      this.url = this.options.uploadUrl
+    if (plan.action === 'resumeConfigured') {
+      this.url = plan.url
       return await this._resumeUpload()
     }
 
-    // An upload has not started for the file yet, so we start a new one
-    log('Creating a new upload')
     return await this._createUpload()
   }
 
@@ -530,8 +494,12 @@ export class BaseUpload {
       // We will reset the attempt counter if
       // - we were already able to connect to the server (offset != null) and
       // - we were able to upload a small chunk of data to the server
-      const shouldResetDelays = this._offset != null && this._offset > this._offsetBeforeRetry
-      if (shouldResetDelays) {
+      if (
+        tusShouldResetRetryAttempt({
+          offset: this._offset,
+          offsetBeforeRetry: this._offsetBeforeRetry,
+        })
+      ) {
         this._retryAttempt = 0
       }
 
@@ -610,29 +578,41 @@ export class BaseUpload {
    * @api private
    */
   private async _createUpload(): Promise<void> {
-    if (!this.options.endpoint) {
-      throw new Error('tus: unable to create upload because no endpoint is provided')
+    const endpoint = this.options.endpoint
+    const validation = tusValidateCreateUpload({
+      hasEndpoint: endpoint != null,
+      size: this._size,
+      uploadLengthDeferred: this._uploadLengthDeferred,
+    })
+    if (!validation.ok) {
+      throw new Error(validation.message)
     }
-
-    if (!this._uploadLengthDeferred && this._size == null) {
-      throw new Error('tus: expected _size to be set')
+    if (endpoint == null) {
+      throw new Error(TUS_FLOW_POLICY.messages.createMissingEndpoint)
     }
 
     const req = this._openRequest(
       tusCreateUploadRequestPlan({
-        endpoint: this.options.endpoint,
+        endpoint,
         encodeMetadataValue,
         metadata: this.options.metadata,
         protocol: this.options.protocol,
         size: this._size,
-        uploadComplete: this.options.uploadDataDuringCreation ? undefined : false,
+        uploadComplete: tusCreateUploadCompleteValue({
+          uploadDataDuringCreation: this.options.uploadDataDuringCreation,
+        }),
         uploadLengthDeferred: this._uploadLengthDeferred,
       }),
     )
 
     let res: HttpResponse
     try {
-      if (this.options.uploadDataDuringCreation && !this._uploadLengthDeferred) {
+      if (
+        tusShouldSendUploadBodyDuringCreation({
+          uploadDataDuringCreation: this.options.uploadDataDuringCreation,
+          uploadLengthDeferred: this._uploadLengthDeferred,
+        })
+      ) {
         this._offset = 0
         res = await this._addChunkToRequest(req)
       } else {
@@ -651,24 +631,25 @@ export class BaseUpload {
       status: res.getStatus(),
     })
     if (!creationResponse.ok && creationResponse.reason === 'unexpectedStatus') {
-      throw new DetailedError('tus: unexpected response while creating upload', undefined, req, res)
+      throw new DetailedError(
+        TUS_FLOW_POLICY.messages.unexpectedCreateResponse,
+        undefined,
+        req,
+        res,
+      )
     }
     if (!creationResponse.ok) {
-      throw new DetailedError('tus: invalid or missing Location header', undefined, req, res)
+      throw new DetailedError(TUS_FLOW_POLICY.messages.uploadLocationMissing, undefined, req, res)
     }
 
-    if (this.options.endpoint == null) {
-      throw new Error('tus: Expected options.endpoint to be set')
-    }
-
-    this.url = resolveUrl(this.options.endpoint, creationResponse.location)
+    this.url = resolveUrl(endpoint, creationResponse.location)
     log(`Created upload at ${this.url}`)
 
     if (typeof this.options.onUploadUrlAvailable === 'function') {
       await this.options.onUploadUrlAvailable()
     }
 
-    if (this._size === 0) {
+    if (tusCreatedUploadCompletesWithoutPatch({ size: this._size })) {
       // Nothing to upload and file was successfully created
       await this._emitSuccess(res)
       if (this._source) this._source.close()
@@ -694,7 +675,7 @@ export class BaseUpload {
    */
   private async _resumeUpload(): Promise<void> {
     if (this.url == null) {
-      throw new Error('tus: Expected url to be set')
+      throw new Error(TUS_FLOW_POLICY.messages.missingPatchUrl)
     }
     const req = this._openRequest(
       tusGetUploadOffsetRequestPlan({
@@ -715,33 +696,19 @@ export class BaseUpload {
     }
 
     const status = res.getStatus()
-    if (!tusIsSuccessfulResponseStatus(status)) {
-      // If the upload is locked, we
-      // emit an error instead of directly starting a new upload. This way the
-      // retry logic can catch the error and will retry the upload. An upload
-      // is usually locked for a short period of time and will be available
-      // afterwards.
-      if (tusIsLockedStatus(status)) {
-        throw new DetailedError('tus: upload is currently locked; retry later', undefined, req, res)
-      }
-
-      if (tusIsClientErrorStatus(status)) {
-        // Remove stored fingerprint and corresponding endpoint,
-        // on client errors since the file can not be found
+    const responseStatusPlan = tusPlanResumeResponseStatus({
+      hasEndpoint: this.options.endpoint != null,
+      status,
+    })
+    if (responseStatusPlan.action !== 'readOffset') {
+      if (responseStatusPlan.removeStoredUpload) {
         await this._removeFromUrlStorage()
       }
 
-      if (!this.options.endpoint) {
-        // Don't attempt to create a new upload if no endpoint is provided.
-        throw new DetailedError(
-          'tus: unable to resume upload (new upload cannot be created without an endpoint)',
-          undefined,
-          req,
-          res,
-        )
+      if (responseStatusPlan.action === 'fail') {
+        throw new DetailedError(responseStatusPlan.message, undefined, req, res)
       }
 
-      // Try to create a new upload
       this.url = null
       await this._createUpload()
       return
@@ -753,16 +720,21 @@ export class BaseUpload {
       status,
     })
     if (!offsetResponse.ok && offsetResponse.reason === 'unexpectedStatus') {
-      throw new DetailedError('tus: unexpected response while resuming upload', undefined, req, res)
+      throw new DetailedError(
+        TUS_FLOW_POLICY.messages.unexpectedResumeResponse,
+        undefined,
+        req,
+        res,
+      )
     }
     if (!offsetResponse.ok && offsetResponse.reason === 'missingOffset') {
-      throw new DetailedError('tus: missing Upload-Offset header', undefined, req, res)
+      throw new DetailedError(TUS_FLOW_POLICY.messages.missingResumeOffset, undefined, req, res)
     }
     if (!offsetResponse.ok && offsetResponse.reason === 'invalidOffset') {
-      throw new DetailedError('tus: invalid Upload-Offset header', undefined, req, res)
+      throw new DetailedError(TUS_FLOW_POLICY.messages.invalidResumeOffset, undefined, req, res)
     }
     if (!offsetResponse.ok) {
-      throw new DetailedError('tus: invalid or missing length value', undefined, req, res)
+      throw new DetailedError(TUS_FLOW_POLICY.messages.invalidResumeLength, undefined, req, res)
     }
 
     const offset = offsetResponse.offset
@@ -777,8 +749,9 @@ export class BaseUpload {
 
     // Upload has already been completed and we do not need to send additional
     // data to the server
-    if (length != null && offset === length) {
-      this._emitProgress(length, length)
+    const completionPlan = tusPlanUploadCompletionAfterOffset({ length, offset })
+    if (completionPlan.complete) {
+      this._emitProgress(completionPlan.length, completionPlan.length)
       await this._emitSuccess(res)
       return
     }
@@ -805,7 +778,7 @@ export class BaseUpload {
     let req: HttpRequest
 
     if (this.url == null) {
-      throw new Error('tus: Expected url to be set')
+      throw new Error(TUS_FLOW_POLICY.messages.missingPatchUrl)
     }
     req = this._openRequest(
       tusPatchUploadRequestPlan({
@@ -837,10 +810,6 @@ export class BaseUpload {
       )
     }
 
-    if (!tusIsSuccessfulResponseStatus(res.getStatus())) {
-      throw new DetailedError('tus: unexpected response while uploading chunk', undefined, req, res)
-    }
-
     await this._handleUploadResponse(req, res)
   }
 
@@ -852,34 +821,30 @@ export class BaseUpload {
    */
   private async _addChunkToRequest(req: HttpRequest): Promise<HttpResponse> {
     const start = this._offset
-    let end = this._offset + this.options.chunkSize
+    const end = tusChunkEnd({
+      chunkSize: this.options.chunkSize,
+      offset: this._offset,
+      size: this._size,
+      uploadLengthDeferred: this._uploadLengthDeferred,
+    })
 
     req.setProgressHandler((bytesSent) => {
       this._emitProgress(start + bytesSent, this._size)
     })
-
-    // The specified chunkSize may be Infinity or the calcluated end position
-    // may exceed the file's size. In both cases, we limit the end position to
-    // the input's total size for simpler calculations and correctness.
-    if (
-      // @ts-expect-error _size is set here
-      (end === Number.POSITIVE_INFINITY || end > this._size) &&
-      !this._uploadLengthDeferred
-    ) {
-      // @ts-expect-error _size is set here
-      end = this._size
-    }
 
     // TODO: What happens if abort is called during slice?
     // @ts-expect-error _source is set here
     const { value, size, done } = await this._source.slice(start, end)
     const sizeOfValue = size ?? 0
 
-    // If the upload length is deferred, the upload size was not specified during
-    // upload creation. So, if the file reader is done reading, we know the total
-    // upload size and can tell the tus server.
-    if (this._uploadLengthDeferred && done) {
-      this._size = this._offset + sizeOfValue
+    const deferredLengthPlan = tusDeferredUploadLengthPlan({
+      done,
+      offset: this._offset,
+      uploadLengthDeferred: this._uploadLengthDeferred,
+      valueSize: sizeOfValue,
+    })
+    if (deferredLengthPlan.shouldDeclareLength) {
+      this._size = deferredLengthPlan.size
       setRequestHeaders(req, tusUploadLengthHeaders({ size: this._size }))
       this._uploadLengthDeferred = false
     }
@@ -892,10 +857,14 @@ export class BaseUpload {
     // in a loop of repeating empty PATCH requests.
     // See https://community.transloadit.com/t/how-to-abort-hanging-companion-uploads/16488/13
     const newSize = this._offset + sizeOfValue
-    if (!this._uploadLengthDeferred && done && newSize !== this._size) {
-      throw new Error(
-        `upload was configured with a size of ${this._size} bytes, but the source is done after ${newSize} bytes`,
-      )
+    const sizeCheck = tusCheckConfiguredUploadSize({
+      done,
+      newSize,
+      size: this._size,
+      uploadLengthDeferred: this._uploadLengthDeferred,
+    })
+    if (!sizeCheck.ok) {
+      throw new Error(sizeCheck.message)
     }
 
     if (value == null) {
@@ -918,10 +887,10 @@ export class BaseUpload {
       status: res.getStatus(),
     })
     if (!chunkResponse.ok && chunkResponse.reason === 'unexpectedStatus') {
-      throw new DetailedError('tus: unexpected response while uploading chunk', undefined, req, res)
+      throw new DetailedError(TUS_FLOW_POLICY.messages.unexpectedChunkResponse, undefined, req, res)
     }
     if (!chunkResponse.ok) {
-      throw new DetailedError('tus: invalid or missing offset value', undefined, req, res)
+      throw new DetailedError(TUS_FLOW_POLICY.messages.invalidChunkOffset, undefined, req, res)
     }
     const offset = chunkResponse.offset
 
@@ -930,7 +899,7 @@ export class BaseUpload {
 
     this._offset = offset
 
-    if (offset === this._size) {
+    if (tusUploadIsCompleteAfterChunk({ offset, size: this._size })) {
       // Yay, finally done :)
       await this._emitSuccess(res)
       if (this._source) this._source.close()
@@ -969,15 +938,17 @@ export class BaseUpload {
    * @api private
    */
   private async _saveUploadInUrlStorage(): Promise<void> {
+    const storagePlan = tusPlanUploadStorage({
+      fingerprint: this._fingerprint,
+      hasUrlStorageKey: this._urlStorageKey != null,
+      storeFingerprintForResuming: this.options.storeFingerprintForResuming,
+    })
+
     // We do not store the upload URL
     // - if it was disabled in the option, or
     // - if no fingerprint was calculated for the input (i.e. a stream), or
-    // - if the URL is already stored (i.e. key is set alread).
-    if (
-      !this.options.storeFingerprintForResuming ||
-      !this._fingerprint ||
-      this._urlStorageKey != null
-    ) {
+    // - if the URL is already stored (i.e. key is set already).
+    if (!storagePlan.shouldStore) {
       return
     }
 
@@ -985,7 +956,7 @@ export class BaseUpload {
       size: this._size,
       metadata: this.options.metadata,
       creationTime: new Date().toString(),
-      urlStorageKey: this._fingerprint,
+      urlStorageKey: storagePlan.fingerprint,
     }
 
     if (this._parallelUploads) {
@@ -997,7 +968,10 @@ export class BaseUpload {
       storedUpload.uploadUrl = this.url
     }
 
-    const urlStorageKey = await this.options.urlStorage.addUpload(this._fingerprint, storedUpload)
+    const urlStorageKey = await this.options.urlStorage.addUpload(
+      storagePlan.fingerprint,
+      storedUpload,
+    )
     // TODO: Emit a waring if urlStorageKey is undefined. Should we even allow this?
     this._urlStorageKey = urlStorageKey
   }
@@ -1206,7 +1180,7 @@ export async function terminate(url: string, options: UploadOptions): Promise<vo
     }
 
     throw new DetailedError(
-      'tus: unexpected response while terminating upload',
+      TUS_FLOW_POLICY.messages.unexpectedTerminateResponse,
       undefined,
       req,
       res,

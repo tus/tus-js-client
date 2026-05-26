@@ -164,6 +164,43 @@ export const TUS_RETRY_POLICY = {
   successStatusCategory: 200,
 }
 
+export const TUS_FLOW_POLICY = {
+  messages: {
+    configuredUploadSizeMismatch:
+      'upload was configured with a size of {expectedSize} bytes, but the source is done after {actualSize} bytes',
+    createMissingEndpoint: 'tus: unable to create upload because no endpoint is provided',
+    createMissingSize: 'tus: expected _size to be set',
+    invalidChunkOffset: 'tus: invalid or missing offset value',
+    invalidResumeLength: 'tus: invalid or missing length value',
+    invalidResumeOffset: 'tus: invalid Upload-Offset header',
+    lockedUpload: 'tus: upload is currently locked; retry later',
+    missingEndpointOrUploadUrl: 'tus: neither an endpoint or an upload URL is provided',
+    missingInput: 'tus: no file or stream to upload provided',
+    missingPatchUrl: 'tus: Expected url to be set',
+    missingResumeOffset: 'tus: missing Upload-Offset header',
+    parallelBoundariesLengthMismatch:
+      'tus: the `parallelUploadBoundaries` must have the same length as the value of `parallelUploads`',
+    parallelBoundariesWithoutParallelUploads:
+      'tus: cannot use the `parallelUploadBoundaries` option when `parallelUploads` is disabled',
+    parallelUploadsWithDeferredLength:
+      'tus: cannot use the `uploadLengthDeferred` option when parallelUploads is enabled',
+    parallelUploadsWithUploadSize:
+      'tus: cannot use the `uploadSize` option when parallelUploads is enabled',
+    parallelUploadsWithUploadUrl:
+      'tus: cannot use the `uploadUrl` option when parallelUploads is enabled',
+    resumeWithoutEndpoint:
+      'tus: unable to resume upload (new upload cannot be created without an endpoint)',
+    retryDelaysNotArray: 'tus: the `retryDelays` option must either be an array or null',
+    unexpectedChunkResponse: 'tus: unexpected response while uploading chunk',
+    unexpectedCreateResponse: 'tus: unexpected response while creating upload',
+    unexpectedResumeResponse: 'tus: unexpected response while resuming upload',
+    unexpectedTerminateResponse: 'tus: unexpected response while terminating upload',
+    uploadLocationMissing: 'tus: invalid or missing Location header',
+    unsupportedProtocolPrefix: 'tus: unsupported protocol ',
+  },
+  minimumParallelUploads: 2,
+}
+
 export type TusNumericHeaderReadResult =
   | { ok: false; reason: 'invalid' | 'missing' }
   | { ok: true; value: number }
@@ -186,6 +223,398 @@ export type TusUploadOffsetResponseReadResult =
 export type TusUploadChunkResponseReadResult =
   | { ok: false; reason: 'invalidOffset' | 'missingOffset' | 'unexpectedStatus' }
   | { ok: true; offset: number }
+
+export type TusUploadStartValidationReason =
+  | 'missingInput'
+  | 'unsupportedProtocol'
+  | 'missingEndpointOrUploadUrl'
+  | 'retryDelaysNotArray'
+  | 'parallelUploadsWithUploadUrl'
+  | 'parallelUploadsWithUploadSize'
+  | 'parallelUploadsWithDeferredLength'
+  | 'parallelBoundariesWithoutParallelUploads'
+  | 'parallelBoundariesLengthMismatch'
+
+export type TusUploadStartValidationResult =
+  | { ok: false; message: string; reason: TusUploadStartValidationReason }
+  | { ok: true }
+
+export interface TusUploadStartValidationInput {
+  hasCurrentUrl: boolean
+  hasEndpoint: boolean
+  hasFile: boolean
+  hasUploadSize: boolean
+  hasUploadUrl: boolean
+  parallelUploadBoundariesCount: number | null
+  parallelUploads: number
+  protocol: string
+  retryDelays: unknown
+  uploadLengthDeferred: boolean
+}
+
+export type TusSingleUploadStartPlan =
+  | { action: 'create'; logMessage: string }
+  | { action: 'resumeCurrent'; logMessage: string; url: string }
+  | { action: 'resumeConfigured'; logMessage: string; url: string }
+
+export type TusResumeResponseStatusPlan =
+  | { action: 'create'; removeStoredUpload: boolean }
+  | {
+      action: 'fail'
+      message: string
+      reason: 'locked' | 'resumeWithoutEndpoint'
+      removeStoredUpload: boolean
+    }
+  | { action: 'readOffset' }
+
+export type TusCreateUploadValidationResult =
+  | { ok: false; message: string; reason: 'missingEndpoint' | 'missingSize' }
+  | { ok: true }
+
+export type TusDeferredUploadLengthPlan =
+  | { shouldDeclareLength: false }
+  | { shouldDeclareLength: true; size: number }
+
+export type TusUploadOffsetCompletionPlan = { complete: false } | { complete: true; length: number }
+
+export type TusConfiguredUploadSizeCheck = { ok: true } | { message: string; ok: false }
+
+export type TusUploadStoragePlan =
+  | { shouldStore: false }
+  | { fingerprint: string; shouldStore: true }
+
+function tusFormatFlowMessage(template: string, values: Record<string, string | number>): string {
+  let message = template
+  for (const [name, value] of Object.entries(values)) {
+    message = message.split(`{${name}}`).join(String(value))
+  }
+
+  return message
+}
+
+function tusUploadStartValidationError(
+  reason: TusUploadStartValidationReason,
+  message: string,
+): TusUploadStartValidationResult {
+  return { ok: false, message, reason }
+}
+
+export function tusValidateUploadStart({
+  hasCurrentUrl,
+  hasEndpoint,
+  hasFile,
+  hasUploadSize,
+  hasUploadUrl,
+  parallelUploadBoundariesCount,
+  parallelUploads,
+  protocol,
+  retryDelays,
+  uploadLengthDeferred,
+}: TusUploadStartValidationInput): TusUploadStartValidationResult {
+  if (!hasFile) {
+    return tusUploadStartValidationError('missingInput', TUS_FLOW_POLICY.messages.missingInput)
+  }
+
+  if (!tusSupportsProtocol(protocol)) {
+    return tusUploadStartValidationError(
+      'unsupportedProtocol',
+      `${TUS_FLOW_POLICY.messages.unsupportedProtocolPrefix}${protocol}`,
+    )
+  }
+
+  if (!hasEndpoint && !hasUploadUrl && !hasCurrentUrl) {
+    return tusUploadStartValidationError(
+      'missingEndpointOrUploadUrl',
+      TUS_FLOW_POLICY.messages.missingEndpointOrUploadUrl,
+    )
+  }
+
+  if (retryDelays != null && !Array.isArray(retryDelays)) {
+    return tusUploadStartValidationError(
+      'retryDelaysNotArray',
+      TUS_FLOW_POLICY.messages.retryDelaysNotArray,
+    )
+  }
+
+  if (parallelUploads >= TUS_FLOW_POLICY.minimumParallelUploads) {
+    if (hasUploadUrl) {
+      return tusUploadStartValidationError(
+        'parallelUploadsWithUploadUrl',
+        TUS_FLOW_POLICY.messages.parallelUploadsWithUploadUrl,
+      )
+    }
+
+    if (hasUploadSize) {
+      return tusUploadStartValidationError(
+        'parallelUploadsWithUploadSize',
+        TUS_FLOW_POLICY.messages.parallelUploadsWithUploadSize,
+      )
+    }
+
+    if (uploadLengthDeferred) {
+      return tusUploadStartValidationError(
+        'parallelUploadsWithDeferredLength',
+        TUS_FLOW_POLICY.messages.parallelUploadsWithDeferredLength,
+      )
+    }
+  }
+
+  if (parallelUploadBoundariesCount != null) {
+    if (parallelUploads < TUS_FLOW_POLICY.minimumParallelUploads) {
+      return tusUploadStartValidationError(
+        'parallelBoundariesWithoutParallelUploads',
+        TUS_FLOW_POLICY.messages.parallelBoundariesWithoutParallelUploads,
+      )
+    }
+
+    if (parallelUploads !== parallelUploadBoundariesCount) {
+      return tusUploadStartValidationError(
+        'parallelBoundariesLengthMismatch',
+        TUS_FLOW_POLICY.messages.parallelBoundariesLengthMismatch,
+      )
+    }
+  }
+
+  return { ok: true }
+}
+
+export function tusPlanSingleUploadStart({
+  currentUrl,
+  uploadUrl,
+}: {
+  currentUrl: string | null
+  uploadUrl: string | null | undefined
+}): TusSingleUploadStartPlan {
+  if (currentUrl != null) {
+    return {
+      action: 'resumeCurrent',
+      logMessage: `Resuming upload from previous URL: ${currentUrl}`,
+      url: currentUrl,
+    }
+  }
+
+  if (uploadUrl != null) {
+    return {
+      action: 'resumeConfigured',
+      logMessage: `Resuming upload from provided URL: ${uploadUrl}`,
+      url: uploadUrl,
+    }
+  }
+
+  return { action: 'create', logMessage: 'Creating a new upload' }
+}
+
+export function tusValidateCreateUpload({
+  hasEndpoint,
+  size,
+  uploadLengthDeferred,
+}: {
+  hasEndpoint: boolean
+  size: number | null
+  uploadLengthDeferred: boolean
+}): TusCreateUploadValidationResult {
+  if (!hasEndpoint) {
+    return {
+      ok: false,
+      message: TUS_FLOW_POLICY.messages.createMissingEndpoint,
+      reason: 'missingEndpoint',
+    }
+  }
+
+  if (!uploadLengthDeferred && size == null) {
+    return { ok: false, message: TUS_FLOW_POLICY.messages.createMissingSize, reason: 'missingSize' }
+  }
+
+  return { ok: true }
+}
+
+export function tusShouldSendUploadBodyDuringCreation({
+  uploadDataDuringCreation,
+  uploadLengthDeferred,
+}: {
+  uploadDataDuringCreation: boolean
+  uploadLengthDeferred: boolean
+}): boolean {
+  return uploadDataDuringCreation && !uploadLengthDeferred
+}
+
+export function tusCreateUploadCompleteValue({
+  uploadDataDuringCreation,
+}: {
+  uploadDataDuringCreation: boolean
+}): boolean | undefined {
+  return uploadDataDuringCreation ? undefined : false
+}
+
+export function tusCreatedUploadCompletesWithoutPatch({ size }: { size: number | null }): boolean {
+  return size === 0
+}
+
+export function tusPlanResumeResponseStatus({
+  hasEndpoint,
+  status,
+}: {
+  hasEndpoint: boolean
+  status: number
+}): TusResumeResponseStatusPlan {
+  if (tusIsSuccessfulResponseStatus(status)) {
+    return { action: 'readOffset' }
+  }
+
+  if (tusIsLockedStatus(status)) {
+    return {
+      action: 'fail',
+      message: TUS_FLOW_POLICY.messages.lockedUpload,
+      reason: 'locked',
+      removeStoredUpload: false,
+    }
+  }
+
+  const removeStoredUpload = tusIsClientErrorStatus(status)
+  if (!hasEndpoint) {
+    return {
+      action: 'fail',
+      message: TUS_FLOW_POLICY.messages.resumeWithoutEndpoint,
+      reason: 'resumeWithoutEndpoint',
+      removeStoredUpload,
+    }
+  }
+
+  return { action: 'create', removeStoredUpload }
+}
+
+export function tusUploadIsCompleteAfterOffset({
+  length,
+  offset,
+}: {
+  length: number | null
+  offset: number
+}): boolean {
+  return length != null && offset === length
+}
+
+export function tusPlanUploadCompletionAfterOffset({
+  length,
+  offset,
+}: {
+  length: number | null
+  offset: number
+}): TusUploadOffsetCompletionPlan {
+  if (length == null || offset !== length) {
+    return { complete: false }
+  }
+
+  return { complete: true, length }
+}
+
+export function tusUploadIsCompleteAfterChunk({
+  offset,
+  size,
+}: {
+  offset: number
+  size: number | null
+}): boolean {
+  return offset === size
+}
+
+export function tusShouldResetRetryAttempt({
+  offset,
+  offsetBeforeRetry,
+}: {
+  offset: number
+  offsetBeforeRetry: number
+}): boolean {
+  return offset > offsetBeforeRetry
+}
+
+export function tusShouldStoreUpload({
+  fingerprint,
+  hasUrlStorageKey,
+  storeFingerprintForResuming,
+}: {
+  fingerprint: string | null
+  hasUrlStorageKey: boolean
+  storeFingerprintForResuming: boolean
+}): boolean {
+  return storeFingerprintForResuming && fingerprint != null && !hasUrlStorageKey
+}
+
+export function tusPlanUploadStorage({
+  fingerprint,
+  hasUrlStorageKey,
+  storeFingerprintForResuming,
+}: {
+  fingerprint: string | null
+  hasUrlStorageKey: boolean
+  storeFingerprintForResuming: boolean
+}): TusUploadStoragePlan {
+  if (!storeFingerprintForResuming || fingerprint == null || hasUrlStorageKey) {
+    return { shouldStore: false }
+  }
+
+  return { fingerprint, shouldStore: true }
+}
+
+export function tusChunkEnd({
+  chunkSize,
+  offset,
+  size,
+  uploadLengthDeferred,
+}: {
+  chunkSize: number
+  offset: number
+  size: number | null
+  uploadLengthDeferred: boolean
+}): number {
+  const end = offset + chunkSize
+  if ((end === Number.POSITIVE_INFINITY || (size != null && end > size)) && !uploadLengthDeferred) {
+    return size ?? end
+  }
+
+  return end
+}
+
+export function tusDeferredUploadLengthPlan({
+  done,
+  offset,
+  uploadLengthDeferred,
+  valueSize,
+}: {
+  done: boolean
+  offset: number
+  uploadLengthDeferred: boolean
+  valueSize: number
+}): TusDeferredUploadLengthPlan {
+  if (!uploadLengthDeferred || !done) {
+    return { shouldDeclareLength: false }
+  }
+
+  return { shouldDeclareLength: true, size: offset + valueSize }
+}
+
+export function tusCheckConfiguredUploadSize({
+  done,
+  newSize,
+  size,
+  uploadLengthDeferred,
+}: {
+  done: boolean
+  newSize: number
+  size: number | null
+  uploadLengthDeferred: boolean
+}): TusConfiguredUploadSizeCheck {
+  if (uploadLengthDeferred || !done || newSize === size) {
+    return { ok: true }
+  }
+
+  return {
+    message: tusFormatFlowMessage(TUS_FLOW_POLICY.messages.configuredUploadSizeMismatch, {
+      actualSize: newSize,
+      expectedSize: size ?? 'unknown',
+    }),
+    ok: false,
+  }
+}
 
 export function tusStatusInCategory(status: number, category: number): boolean {
   return status >= category && status < category + 100
