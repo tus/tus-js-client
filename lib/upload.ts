@@ -17,7 +17,9 @@ import {
   type UploadOptions,
 } from './options.js'
 import {
+  TUS_CONTENT_TYPES,
   TUS_DEFAULT_PROTOCOL_VERSION,
+  TUS_HEADER_VALUES,
   TUS_HEADERS,
   TUS_HTTP_METHODS,
   TUS_REQUEST_CONTENT_TYPES,
@@ -337,7 +339,7 @@ export class BaseUpload {
           // Add the header to indicate the this is a partial upload.
           headers: {
             ...this.options.headers,
-            'Upload-Concat': 'partial',
+            [TUS_HEADERS.UPLOAD_CONCAT]: TUS_HEADER_VALUES.UPLOAD_CONCAT_PARTIAL,
           },
           // Reject or resolve the promise if the upload errors or completes.
           onSuccess: resolve,
@@ -388,7 +390,10 @@ export class BaseUpload {
       throw new Error('tus: Expected options.endpoint to be set')
     }
     const req = this._openRequest(TUS_HTTP_METHODS.POST, this.options.endpoint)
-    req.setHeader('Upload-Concat', `final;${this._parallelUploadUrls.join(' ')}`)
+    req.setHeader(
+      TUS_HEADERS.UPLOAD_CONCAT,
+      `${TUS_HEADER_VALUES.UPLOAD_CONCAT_FINAL_PREFIX}${this._parallelUploadUrls.join(' ')}`,
+    )
 
     // Add metadata if values have been added
     const metadata = encodeMetadata(this.options.metadata)
@@ -627,7 +632,7 @@ export class BaseUpload {
           this.options.protocol === PROTOCOL_IETF_DRAFT_03 ||
           this.options.protocol === PROTOCOL_IETF_DRAFT_05
         ) {
-          req.setHeader('Upload-Complete', '?0')
+          req.setHeader(TUS_HEADERS.UPLOAD_COMPLETE, TUS_HEADER_VALUES.UPLOAD_COMPLETE_FALSE)
         }
         res = await this._sendRequest(req)
       }
@@ -797,7 +802,7 @@ export class BaseUpload {
     // X-HTTP-Method-Override header for simulating a PATCH request.
     if (this.options.overridePatchMethod) {
       req = this._openRequest(TUS_HTTP_METHODS.POST, this.url)
-      req.setHeader('X-HTTP-Method-Override', TUS_HTTP_METHODS.PATCH)
+      req.setHeader(TUS_HEADERS.X_HTTP_METHOD_OVERRIDE, TUS_HTTP_METHODS.PATCH)
     } else {
       req = this._openRequest(TUS_HTTP_METHODS.PATCH, this.url)
     }
@@ -849,7 +854,7 @@ export class BaseUpload {
     if (this.options.protocol === PROTOCOL_TUS_V1) {
       req.setHeader(TUS_HEADERS.CONTENT_TYPE, TUS_REQUEST_CONTENT_TYPES.PATCH_TUS_UPLOAD)
     } else if (this.options.protocol === PROTOCOL_IETF_DRAFT_05) {
-      req.setHeader(TUS_HEADERS.CONTENT_TYPE, 'application/partial-upload')
+      req.setHeader(TUS_HEADERS.CONTENT_TYPE, TUS_CONTENT_TYPES.PARTIAL_UPLOAD)
     }
 
     // The specified chunkSize may be Infinity or the calcluated end position
@@ -898,7 +903,10 @@ export class BaseUpload {
       this.options.protocol === PROTOCOL_IETF_DRAFT_03 ||
       this.options.protocol === PROTOCOL_IETF_DRAFT_05
     ) {
-      req.setHeader('Upload-Complete', done ? '?1' : '?0')
+      req.setHeader(
+        TUS_HEADERS.UPLOAD_COMPLETE,
+        done ? TUS_HEADER_VALUES.UPLOAD_COMPLETE_TRUE : TUS_HEADER_VALUES.UPLOAD_COMPLETE_FALSE,
+      )
     }
     this._emitProgress(this._offset, this._size)
     return await this._sendRequest(req, value)
@@ -1031,9 +1039,15 @@ function openRequest(method: string, url: string, options: UploadOptions): HttpR
   const req = options.httpStack.createRequest(method, url)
 
   if (options.protocol === PROTOCOL_IETF_DRAFT_03) {
-    req.setHeader('Upload-Draft-Interop-Version', '5')
+    req.setHeader(
+      TUS_HEADERS.UPLOAD_DRAFT_INTEROP_VERSION,
+      TUS_HEADER_VALUES.UPLOAD_DRAFT_INTEROP_VERSION_03,
+    )
   } else if (options.protocol === PROTOCOL_IETF_DRAFT_05) {
-    req.setHeader('Upload-Draft-Interop-Version', '6')
+    req.setHeader(
+      TUS_HEADERS.UPLOAD_DRAFT_INTEROP_VERSION,
+      TUS_HEADER_VALUES.UPLOAD_DRAFT_INTEROP_VERSION_05,
+    )
   } else {
     req.setHeader(TUS_HEADERS.TUS_RESUMABLE, TUS_DEFAULT_PROTOCOL_VERSION)
   }
@@ -1045,7 +1059,7 @@ function openRequest(method: string, url: string, options: UploadOptions): HttpR
 
   if (options.addRequestId) {
     const requestId = uuid()
-    req.setHeader('X-Request-ID', requestId)
+    req.setHeader(TUS_HEADERS.X_REQUEST_ID, requestId)
   }
 
   return req

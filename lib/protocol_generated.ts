@@ -29,10 +29,28 @@ export const TUS_HEADERS = {
   TUS_MAX_SIZE: 'Tus-Max-Size',
   TUS_RESUMABLE: 'Tus-Resumable',
   TUS_VERSION: 'Tus-Version',
+  UPLOAD_COMPLETE: 'Upload-Complete',
+  UPLOAD_CONCAT: 'Upload-Concat',
   UPLOAD_DEFER_LENGTH: 'Upload-Defer-Length',
+  UPLOAD_DRAFT_INTEROP_VERSION: 'Upload-Draft-Interop-Version',
   UPLOAD_LENGTH: 'Upload-Length',
   UPLOAD_METADATA: 'Upload-Metadata',
   UPLOAD_OFFSET: 'Upload-Offset',
+  X_HTTP_METHOD_OVERRIDE: 'X-HTTP-Method-Override',
+  X_REQUEST_ID: 'X-Request-ID',
+} as const
+
+export const TUS_CONTENT_TYPES = {
+  PARTIAL_UPLOAD: 'application/partial-upload',
+} as const
+
+export const TUS_HEADER_VALUES = {
+  UPLOAD_COMPLETE_FALSE: '?0',
+  UPLOAD_COMPLETE_TRUE: '?1',
+  UPLOAD_CONCAT_FINAL_PREFIX: 'final;',
+  UPLOAD_CONCAT_PARTIAL: 'partial',
+  UPLOAD_DRAFT_INTEROP_VERSION_03: '5',
+  UPLOAD_DRAFT_INTEROP_VERSION_05: '6',
 } as const
 
 export const TUS_REQUEST_CONTENT_TYPES = {
