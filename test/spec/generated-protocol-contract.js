@@ -299,11 +299,7 @@ export const tusProtocolOperations = [
 export const tusClientFeatures = [
   {
     featureId: 'singleUploadLifecycle',
-    operationIds: [
-      'createTusUpload',
-      'getTusUploadOffset',
-      'patchTusUpload',
-    ],
+    operationIds: ['createTusUpload', 'getTusUploadOffset', 'patchTusUpload'],
     primitives: [
       'open-input-source',
       'fingerprint-input',
@@ -315,11 +311,7 @@ export const tusClientFeatures = [
   },
   {
     featureId: 'terminateUpload',
-    operationIds: [
-      'terminateTusUpload',
-    ],
-    primitives: [
-      'retry-with-backoff',
-    ],
+    operationIds: ['terminateTusUpload'],
+    primitives: ['retry-with-backoff'],
   },
 ]

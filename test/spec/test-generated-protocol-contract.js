@@ -45,9 +45,7 @@ function expectRequestMatchesOperation(req, operation) {
 function getResponse(operation, statusCode) {
   const response = operation.responses.find((candidate) => candidate.statusCode === statusCode)
   if (!response) {
-    throw new Error(
-      `Missing generated response status ${statusCode} for ${operation.operationId}`,
-    )
+    throw new Error(`Missing generated response status ${statusCode} for ${operation.operationId}`)
   }
 
   return response
