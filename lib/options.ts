@@ -1,9 +1,17 @@
 import type { Readable as NodeReadableStream } from 'node:stream'
 import type { DetailedError } from './DetailedError.js'
 
+// <api2-generated-tus protocolVersions>
+
+// This block is generated from Transloadit API2 TUS protocol contracts. If it looks wrong,
+// please report the issue instead of editing this block by hand; the source fix
+// belongs in the protocol contract generator so all TUS clients stay in sync.
+
 export const PROTOCOL_TUS_V1 = 'tus-v1'
 export const PROTOCOL_IETF_DRAFT_03 = 'ietf-draft-03'
 export const PROTOCOL_IETF_DRAFT_05 = 'ietf-draft-05'
+
+// </api2-generated-tus protocolVersions>
 
 /**
  * ReactNativeFile describes the structure that is returned from the
