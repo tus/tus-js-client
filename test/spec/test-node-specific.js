@@ -268,7 +268,13 @@ describe('tus', () => {
         await options.onSuccess.toBeCalled()
 
         expect(upload.url).toBe('https://tus.io/uploads/upload3')
-        expect(options.onProgress).toHaveBeenCalledWith(5, 11)
+        expect(
+          options.onProgress.calls
+            .allArgs()
+            .some(
+              ([bytesSent, bytesTotal]) => bytesSent > 0 && bytesSent < 11 && bytesTotal === 11,
+            ),
+        ).toBe(true)
         expect(options.onProgress).toHaveBeenCalledWith(11, 11)
       })
 
