@@ -1,3 +1,7 @@
+// This file is generated from Transloadit API2 TUS protocol contracts. If it looks wrong,
+// please report the issue instead of editing this file by hand; the source fix
+// belongs in the protocol contract generator so all TUS clients stay in sync.
+
 /**
  * Generate a UUID v4 based on random numbers. We intentioanlly use the less
  * secure Math.random function here since the more secure crypto.getRandomNumbers
