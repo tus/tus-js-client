@@ -22,6 +22,7 @@ import {
   TUS_HEADER_VALUES,
   TUS_HEADERS,
   TUS_HTTP_METHODS,
+  TUS_OPERATION_METHODS,
   TUS_REQUEST_CONTENT_TYPES,
   TUS_RESPONSE_STATUS_CODES,
 } from './protocol_generated.js'
@@ -389,7 +390,7 @@ export class BaseUpload {
     if (this.options.endpoint == null) {
       throw new Error('tus: Expected options.endpoint to be set')
     }
-    const req = this._openRequest(TUS_HTTP_METHODS.POST, this.options.endpoint)
+    const req = this._openRequest(TUS_OPERATION_METHODS.CREATE_TUS_UPLOAD, this.options.endpoint)
     req.setHeader(
       TUS_HEADERS.UPLOAD_CONCAT,
       `${TUS_HEADER_VALUES.UPLOAD_CONCAT_FINAL_PREFIX}${this._parallelUploadUrls.join(' ')}`,
@@ -605,7 +606,7 @@ export class BaseUpload {
       throw new Error('tus: unable to create upload because no endpoint is provided')
     }
 
-    const req = this._openRequest(TUS_HTTP_METHODS.POST, this.options.endpoint)
+    const req = this._openRequest(TUS_OPERATION_METHODS.CREATE_TUS_UPLOAD, this.options.endpoint)
 
     if (this._uploadLengthDeferred) {
       req.setHeader(TUS_HEADERS.UPLOAD_DEFER_LENGTH, '1')
@@ -692,7 +693,7 @@ export class BaseUpload {
     if (this.url == null) {
       throw new Error('tus: Expected url to be set')
     }
-    const req = this._openRequest(TUS_HTTP_METHODS.HEAD, this.url)
+    const req = this._openRequest(TUS_OPERATION_METHODS.GET_TUS_UPLOAD_OFFSET, this.url)
 
     let res: HttpResponse
     try {
@@ -804,7 +805,7 @@ export class BaseUpload {
       req = this._openRequest(TUS_HTTP_METHODS.POST, this.url)
       req.setHeader(TUS_HEADERS.X_HTTP_METHOD_OVERRIDE, TUS_HTTP_METHODS.PATCH)
     } else {
-      req = this._openRequest(TUS_HTTP_METHODS.PATCH, this.url)
+      req = this._openRequest(TUS_OPERATION_METHODS.PATCH_TUS_UPLOAD, this.url)
     }
 
     req.setHeader(TUS_HEADERS.UPLOAD_OFFSET, `${this._offset}`)
@@ -1208,7 +1209,7 @@ function wait(delay: number) {
  * @return {Promise} The Promise will be resolved/rejected when the requests finish.
  */
 export async function terminate(url: string, options: UploadOptions): Promise<void> {
-  const req = openRequest(TUS_HTTP_METHODS.DELETE, url, options)
+  const req = openRequest(TUS_OPERATION_METHODS.TERMINATE_TUS_UPLOAD, url, options)
 
   try {
     const res = await sendRequest(req, undefined, options)
