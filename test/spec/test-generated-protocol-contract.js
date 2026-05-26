@@ -56,6 +56,8 @@ function expectRequestMatchesOperation(req, operation) {
 
   if (operation.request.contentType) {
     expect(req.requestHeaders['Content-Type']).toBe(operation.request.contentType)
+  } else {
+    expect(req.requestHeaders['Content-Type']).toBeUndefined()
   }
 
   if (operation.request.headerVariants.length > 0) {

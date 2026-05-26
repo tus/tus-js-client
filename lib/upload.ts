@@ -4,29 +4,36 @@ import { Base64 } from 'js-base64'
 import URL from 'url-parse'
 import { DetailedError } from './DetailedError.js'
 import { log } from './logger.js'
-import {
-  type FileSource,
-  type HttpRequest,
-  type HttpResponse,
-  PROTOCOL_TUS_V1,
-  type PreviousUpload,
-  type SliceType,
-  type UploadInput,
-  type UploadOptions,
+import type {
+  FileSource,
+  HttpRequest,
+  HttpResponse,
+  PreviousUpload,
+  SliceType,
+  UploadInput,
+  UploadOptions,
 } from './options.js'
 import {
-  TUS_HEADERS,
-  TUS_OPERATION_IDS,
-  TUS_OPERATION_METHODS,
-  TUS_RESPONSE_STATUS_CODES,
-  tusChunkContentTypeForProtocol,
-  tusFinalUploadConcatValue,
-  tusMethodOverrideForOperation,
+  TUS_DEFAULT_CLIENT_PROTOCOL,
+  type TusRequestPlan,
+  tusCreateUploadRequestPlan,
+  tusExpectedResponseStatusForOperation,
+  tusFinalUploadRequestPlan,
+  tusGetUploadOffsetRequestPlan,
+  tusIsClientErrorStatus,
+  tusIsLockedStatus,
+  tusIsSuccessfulResponseStatus,
   tusPartialUploadHeaders,
-  tusRequestHeadersForProtocol,
+  tusPatchUploadRequestPlan,
+  tusReadUploadChunkResponse,
+  tusReadUploadCreationResponse,
+  tusReadUploadOffsetResponse,
   tusRequestIdHeaders,
+  tusShouldRetryStatus,
   tusSupportsProtocol,
-  tusUploadCompleteHeaderForProtocol,
+  tusTerminateUploadRequestPlan,
+  tusUploadBodyHeaders,
+  tusUploadLengthHeaders,
 } from './protocol_generated.js'
 import { uuid } from './uuid.js'
 
@@ -65,7 +72,7 @@ export const defaultOptions = {
   fileReader: undefined,
   httpStack: undefined,
 
-  protocol: PROTOCOL_TUS_V1 as UploadOptions['protocol'],
+  protocol: TUS_DEFAULT_CLIENT_PROTOCOL as UploadOptions['protocol'],
 }
 
 export class BaseUpload {
@@ -391,14 +398,15 @@ export class BaseUpload {
     if (!this._parallelUploadUrls) {
       throw new Error('tus: Expected _parallelUploadUrls to be set')
     }
-    const req = this._openRequest(TUS_OPERATION_METHODS.CREATE_TUS_UPLOAD, this.options.endpoint)
-    req.setHeader(TUS_HEADERS.UPLOAD_CONCAT, tusFinalUploadConcatValue(this._parallelUploadUrls))
-
-    // Add metadata if values have been added
-    const metadata = encodeMetadata(this.options.metadata)
-    if (metadata !== '') {
-      req.setHeader(TUS_HEADERS.UPLOAD_METADATA, metadata)
-    }
+    const req = this._openRequest(
+      tusFinalUploadRequestPlan({
+        endpoint: this.options.endpoint,
+        encodeMetadataValue,
+        metadata: this.options.metadata,
+        protocol: this.options.protocol,
+        uploadUrls: this._parallelUploadUrls,
+      }),
+    )
 
     let res: HttpResponse
     try {
@@ -411,12 +419,14 @@ export class BaseUpload {
       throw new DetailedError('tus: failed to concatenate parallel uploads', err, req, undefined)
     }
 
-    if (!inStatusCategory(res.getStatus(), 200)) {
+    const creationResponse = tusReadUploadCreationResponse({
+      getHeader: (headerName) => res.getHeader(headerName),
+      status: res.getStatus(),
+    })
+    if (!creationResponse.ok && creationResponse.reason === 'unexpectedStatus') {
       throw new DetailedError('tus: unexpected response while creating upload', undefined, req, res)
     }
-
-    const location = res.getHeader(TUS_HEADERS.LOCATION)
-    if (location == null) {
+    if (!creationResponse.ok) {
       throw new DetailedError('tus: invalid or missing Location header', undefined, req, res)
     }
 
@@ -424,7 +434,7 @@ export class BaseUpload {
       throw new Error('tus: Expeced endpoint to be defined.')
     }
 
-    this.url = resolveUrl(this.options.endpoint, location)
+    this.url = resolveUrl(this.options.endpoint, creationResponse.location)
     log(`Created upload at ${this.url}`)
 
     await this._emitSuccess(res)
@@ -604,22 +614,21 @@ export class BaseUpload {
       throw new Error('tus: unable to create upload because no endpoint is provided')
     }
 
-    const req = this._openRequest(TUS_OPERATION_METHODS.CREATE_TUS_UPLOAD, this.options.endpoint)
-
-    if (this._uploadLengthDeferred) {
-      req.setHeader(TUS_HEADERS.UPLOAD_DEFER_LENGTH, '1')
-    } else {
-      if (this._size == null) {
-        throw new Error('tus: expected _size to be set')
-      }
-      req.setHeader(TUS_HEADERS.UPLOAD_LENGTH, `${this._size}`)
+    if (!this._uploadLengthDeferred && this._size == null) {
+      throw new Error('tus: expected _size to be set')
     }
 
-    // Add metadata if values have been added
-    const metadata = encodeMetadata(this.options.metadata)
-    if (metadata !== '') {
-      req.setHeader(TUS_HEADERS.UPLOAD_METADATA, metadata)
-    }
+    const req = this._openRequest(
+      tusCreateUploadRequestPlan({
+        endpoint: this.options.endpoint,
+        encodeMetadataValue,
+        metadata: this.options.metadata,
+        protocol: this.options.protocol,
+        size: this._size,
+        uploadComplete: this.options.uploadDataDuringCreation ? undefined : false,
+        uploadLengthDeferred: this._uploadLengthDeferred,
+      }),
+    )
 
     let res: HttpResponse
     try {
@@ -627,13 +636,6 @@ export class BaseUpload {
         this._offset = 0
         res = await this._addChunkToRequest(req)
       } else {
-        const uploadCompleteHeader = tusUploadCompleteHeaderForProtocol(
-          this.options.protocol,
-          false,
-        )
-        if (uploadCompleteHeader) {
-          req.setHeader(uploadCompleteHeader.name, uploadCompleteHeader.value)
-        }
         res = await this._sendRequest(req)
       }
     } catch (err) {
@@ -644,12 +646,14 @@ export class BaseUpload {
       throw new DetailedError('tus: failed to create upload', err, req, undefined)
     }
 
-    if (!inStatusCategory(res.getStatus(), 200)) {
+    const creationResponse = tusReadUploadCreationResponse({
+      getHeader: (headerName) => res.getHeader(headerName),
+      status: res.getStatus(),
+    })
+    if (!creationResponse.ok && creationResponse.reason === 'unexpectedStatus') {
       throw new DetailedError('tus: unexpected response while creating upload', undefined, req, res)
     }
-
-    const location = res.getHeader(TUS_HEADERS.LOCATION)
-    if (location == null) {
+    if (!creationResponse.ok) {
       throw new DetailedError('tus: invalid or missing Location header', undefined, req, res)
     }
 
@@ -657,7 +661,7 @@ export class BaseUpload {
       throw new Error('tus: Expected options.endpoint to be set')
     }
 
-    this.url = resolveUrl(this.options.endpoint, location)
+    this.url = resolveUrl(this.options.endpoint, creationResponse.location)
     log(`Created upload at ${this.url}`)
 
     if (typeof this.options.onUploadUrlAvailable === 'function') {
@@ -692,7 +696,12 @@ export class BaseUpload {
     if (this.url == null) {
       throw new Error('tus: Expected url to be set')
     }
-    const req = this._openRequest(TUS_OPERATION_METHODS.GET_TUS_UPLOAD_OFFSET, this.url)
+    const req = this._openRequest(
+      tusGetUploadOffsetRequestPlan({
+        protocol: this.options.protocol,
+        uploadUrl: this.url,
+      }),
+    )
 
     let res: HttpResponse
     try {
@@ -706,17 +715,17 @@ export class BaseUpload {
     }
 
     const status = res.getStatus()
-    if (!inStatusCategory(status, 200)) {
-      // If the upload is locked (indicated by the 423 Locked status code), we
+    if (!tusIsSuccessfulResponseStatus(status)) {
+      // If the upload is locked, we
       // emit an error instead of directly starting a new upload. This way the
       // retry logic can catch the error and will retry the upload. An upload
       // is usually locked for a short period of time and will be available
       // afterwards.
-      if (status === 423) {
+      if (tusIsLockedStatus(status)) {
         throw new DetailedError('tus: upload is currently locked; retry later', undefined, req, res)
       }
 
-      if (inStatusCategory(status, 400)) {
+      if (tusIsClientErrorStatus(status)) {
         // Remove stored fingerprint and corresponding endpoint,
         // on client errors since the file can not be found
         await this._removeFromUrlStorage()
@@ -735,29 +744,30 @@ export class BaseUpload {
       // Try to create a new upload
       this.url = null
       await this._createUpload()
+      return
     }
 
-    const offsetStr = res.getHeader(TUS_HEADERS.UPLOAD_OFFSET)
-    if (offsetStr === undefined) {
+    const offsetResponse = tusReadUploadOffsetResponse({
+      getHeader: (headerName) => res.getHeader(headerName),
+      protocol: this.options.protocol,
+      status,
+    })
+    if (!offsetResponse.ok && offsetResponse.reason === 'unexpectedStatus') {
+      throw new DetailedError('tus: unexpected response while resuming upload', undefined, req, res)
+    }
+    if (!offsetResponse.ok && offsetResponse.reason === 'missingOffset') {
       throw new DetailedError('tus: missing Upload-Offset header', undefined, req, res)
     }
-    const offset = Number.parseInt(offsetStr, 10)
-    if (Number.isNaN(offset)) {
+    if (!offsetResponse.ok && offsetResponse.reason === 'invalidOffset') {
       throw new DetailedError('tus: invalid Upload-Offset header', undefined, req, res)
     }
-
-    const deferLength = res.getHeader(TUS_HEADERS.UPLOAD_DEFER_LENGTH)
-    this._uploadLengthDeferred = deferLength === '1'
-
-    // @ts-expect-error parseInt also handles undefined as we want it to
-    const length = Number.parseInt(res.getHeader(TUS_HEADERS.UPLOAD_LENGTH), 10)
-    if (
-      Number.isNaN(length) &&
-      !this._uploadLengthDeferred &&
-      this.options.protocol === PROTOCOL_TUS_V1
-    ) {
+    if (!offsetResponse.ok) {
       throw new DetailedError('tus: invalid or missing length value', undefined, req, res)
     }
+
+    const offset = offsetResponse.offset
+    const length = offsetResponse.length
+    this._uploadLengthDeferred = offsetResponse.uploadLengthDeferred
 
     if (typeof this.options.onUploadUrlAvailable === 'function') {
       await this.options.onUploadUrlAvailable()
@@ -767,7 +777,7 @@ export class BaseUpload {
 
     // Upload has already been completed and we do not need to send additional
     // data to the server
-    if (offset === length) {
+    if (length != null && offset === length) {
       this._emitProgress(length, length)
       await this._emitSuccess(res)
       return
@@ -797,24 +807,14 @@ export class BaseUpload {
     if (this.url == null) {
       throw new Error('tus: Expected url to be set')
     }
-    // Some browser and servers may not support the PATCH method. For those
-    // cases, you can tell tus-js-client to use a POST request with the
-    // generated method-override header for simulating a PATCH request.
-    if (this.options.overridePatchMethod) {
-      const methodOverride = tusMethodOverrideForOperation(TUS_OPERATION_IDS.PATCH_TUS_UPLOAD)
-      if (!methodOverride) {
-        throw new Error('tus: expected PATCH method override to be available')
-      }
-
-      req = this._openRequest(methodOverride.method, this.url)
-      for (const [name, value] of Object.entries(methodOverride.headers)) {
-        req.setHeader(name, value)
-      }
-    } else {
-      req = this._openRequest(TUS_OPERATION_METHODS.PATCH_TUS_UPLOAD, this.url)
-    }
-
-    req.setHeader(TUS_HEADERS.UPLOAD_OFFSET, `${this._offset}`)
+    req = this._openRequest(
+      tusPatchUploadRequestPlan({
+        offset: this._offset,
+        overridePatchMethod: this.options.overridePatchMethod,
+        protocol: this.options.protocol,
+        uploadUrl: this.url,
+      }),
+    )
 
     let res: HttpResponse
     try {
@@ -837,7 +837,7 @@ export class BaseUpload {
       )
     }
 
-    if (!inStatusCategory(res.getStatus(), 200)) {
+    if (!tusIsSuccessfulResponseStatus(res.getStatus())) {
       throw new DetailedError('tus: unexpected response while uploading chunk', undefined, req, res)
     }
 
@@ -857,11 +857,6 @@ export class BaseUpload {
     req.setProgressHandler((bytesSent) => {
       this._emitProgress(start + bytesSent, this._size)
     })
-
-    const contentType = tusChunkContentTypeForProtocol(this.options.protocol)
-    if (contentType) {
-      req.setHeader(TUS_HEADERS.CONTENT_TYPE, contentType)
-    }
 
     // The specified chunkSize may be Infinity or the calcluated end position
     // may exceed the file's size. In both cases, we limit the end position to
@@ -885,9 +880,11 @@ export class BaseUpload {
     // upload size and can tell the tus server.
     if (this._uploadLengthDeferred && done) {
       this._size = this._offset + sizeOfValue
-      req.setHeader(TUS_HEADERS.UPLOAD_LENGTH, `${this._size}`)
+      setRequestHeaders(req, tusUploadLengthHeaders({ size: this._size }))
       this._uploadLengthDeferred = false
     }
+
+    setRequestHeaders(req, tusUploadBodyHeaders({ done, protocol: this.options.protocol }))
 
     // The specified uploadSize might not match the actual amount of data that a source
     // provides. In these cases, we cannot successfully complete the upload, so we
@@ -905,10 +902,6 @@ export class BaseUpload {
       return await this._sendRequest(req)
     }
 
-    const uploadCompleteHeader = tusUploadCompleteHeaderForProtocol(this.options.protocol, done)
-    if (uploadCompleteHeader) {
-      req.setHeader(uploadCompleteHeader.name, uploadCompleteHeader.value)
-    }
     this._emitProgress(this._offset, this._size)
     return await this._sendRequest(req, value)
   }
@@ -920,11 +913,17 @@ export class BaseUpload {
    * @api private
    */
   private async _handleUploadResponse(req: HttpRequest, res: HttpResponse): Promise<void> {
-    // TODO: || '' is not very good.
-    const offset = Number.parseInt(res.getHeader(TUS_HEADERS.UPLOAD_OFFSET) || '', 10)
-    if (Number.isNaN(offset)) {
+    const chunkResponse = tusReadUploadChunkResponse({
+      getHeader: (headerName) => res.getHeader(headerName),
+      status: res.getStatus(),
+    })
+    if (!chunkResponse.ok && chunkResponse.reason === 'unexpectedStatus') {
+      throw new DetailedError('tus: unexpected response while uploading chunk', undefined, req, res)
+    }
+    if (!chunkResponse.ok) {
       throw new DetailedError('tus: invalid or missing offset value', undefined, req, res)
     }
+    const offset = chunkResponse.offset
 
     this._emitProgress(offset, this._size)
     this._emitChunkComplete(offset - this._offset, offset, this._size)
@@ -946,8 +945,8 @@ export class BaseUpload {
    *
    * @api private
    */
-  private _openRequest(method: string, url: string): HttpRequest {
-    const req = openRequest(method, url, this.options)
+  private _openRequest(plan: TusRequestPlan): HttpRequest {
+    const req = openRequest(plan, this.options)
     this._req = req
     return req
   }
@@ -1013,20 +1012,14 @@ export class BaseUpload {
   }
 }
 
-function encodeMetadata(metadata: Record<string, string>): string {
-  return Object.entries(metadata)
-    .map(([key, value]) => `${key} ${Base64.encode(String(value))}`)
-    .join(',')
+function encodeMetadataValue(value: string): string {
+  return Base64.encode(value)
 }
 
-/**
- * Checks whether a given status is in the range of the expected category.
- * For example, only a status between 200 and 299 will satisfy the category 200.
- *
- * @api private
- */
-function inStatusCategory(status: number, category: 100 | 200 | 300 | 400 | 500): boolean {
-  return status >= category && status < category + 100
+function setRequestHeaders(req: HttpRequest, headers: Record<string, string>): void {
+  for (const [name, value] of Object.entries(headers)) {
+    req.setHeader(name, value)
+  }
 }
 
 /**
@@ -1036,12 +1029,10 @@ function inStatusCategory(status: number, category: 100 | 200 | 300 | 400 | 500)
  *
  * @api private
  */
-function openRequest(method: string, url: string, options: UploadOptions): HttpRequest {
-  const req = options.httpStack.createRequest(method, url)
+function openRequest(plan: TusRequestPlan, options: UploadOptions): HttpRequest {
+  const req = options.httpStack.createRequest(plan.method, plan.url)
 
-  for (const [name, value] of Object.entries(tusRequestHeadersForProtocol(options.protocol))) {
-    req.setHeader(name, value)
-  }
+  setRequestHeaders(req, plan.headers)
 
   const headers = options.headers || {}
 
@@ -1119,7 +1110,7 @@ function shouldRetry(
   // - retryDelays option is set
   // - we didn't exceed the maxium number of retries, yet, and
   // - this error was caused by a request or it's response and
-  // - the error is server error (i.e. not a status 4xx except a 409 or 423) or
+  // - the error has a retryable response status, or
   // a onShouldRetry is specified and returns true
   // - the browser does not indicate that we are offline
   const isNetworkError = 'originalRequest' in err && err.originalRequest != null
@@ -1139,13 +1130,13 @@ function shouldRetry(
 }
 
 /**
- * determines if the request should be retried. Will only retry if not a status 4xx except a 409 or 423
+ * determines if the request should be retried.
  * @param {DetailedError} err
  * @returns {boolean}
  */
 function defaultOnShouldRetry(err: DetailedError): boolean {
   const status = err.originalResponse ? err.originalResponse.getStatus() : 0
-  return (!inStatusCategory(status, 400) || status === 409 || status === 423) && isOnline()
+  return tusShouldRetryStatus(status) && isOnline()
 }
 
 /**
@@ -1202,12 +1193,15 @@ function wait(delay: number) {
  * @return {Promise} The Promise will be resolved/rejected when the requests finish.
  */
 export async function terminate(url: string, options: UploadOptions): Promise<void> {
-  const req = openRequest(TUS_OPERATION_METHODS.TERMINATE_TUS_UPLOAD, url, options)
+  const plan = tusTerminateUploadRequestPlan({
+    protocol: options.protocol,
+    uploadUrl: url,
+  })
+  const req = openRequest(plan, options)
 
   try {
     const res = await sendRequest(req, undefined, options)
-    // A 204 response indicates a successfull request
-    if (res.getStatus() === TUS_RESPONSE_STATUS_CODES.TERMINATE_TUS_UPLOAD_204) {
+    if (tusExpectedResponseStatusForOperation(plan.operationId, res.getStatus())) {
       return
     }
 
