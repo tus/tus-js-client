@@ -1,4 +1,5 @@
 import './test-common.js'
+import './test-generated-protocol-contract.js'
 import './test-node-specific.js'
 import './test-parallel-uploads.js'
 import './test-terminate.js'
