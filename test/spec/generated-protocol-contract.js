@@ -2,6 +2,13 @@
 // please report the issue instead of editing this file by hand; the source fix
 // belongs in the protocol contract generator so all TUS clients stay in sync.
 
+export const tusWireVersions = [
+  {
+    default: true,
+    value: '1.0.0',
+  },
+]
+
 export const tusProtocolOperations = [
   {
     operationId: 'discoverTusCapabilities',

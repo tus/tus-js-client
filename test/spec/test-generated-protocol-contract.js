@@ -1,5 +1,9 @@
 import { Upload } from 'tus-js-client'
-import { tusClientFeatures, tusProtocolOperations } from './generated-protocol-contract.js'
+import {
+  tusClientFeatures,
+  tusProtocolOperations,
+  tusWireVersions,
+} from './generated-protocol-contract.js'
 import { getBlob, TestHttpStack, waitableFunction } from './helpers/utils.js'
 
 function getProtocolOperation(operationId) {
@@ -18,6 +22,15 @@ function getClientFeature(featureId) {
   }
 
   return feature
+}
+
+function getDefaultWireVersion() {
+  const versions = tusWireVersions.filter((candidate) => candidate.default)
+  if (versions.length !== 1) {
+    throw new Error('Generated TUS protocol contract must have exactly one default wire version')
+  }
+
+  return versions[0].value
 }
 
 function requestMatchesHeaderVariant(requestHeaders, variant) {
@@ -54,9 +67,10 @@ function getResponse(operation, statusCode) {
 function responseHeadersFor(response, overrides) {
   const headers = {}
   const variant = response.headerVariants[0]
+  const defaultWireVersion = getDefaultWireVersion()
   for (const field of variant?.fields ?? []) {
     if (!field.required) continue
-    headers[field.displayName] = overrides[field.displayName] ?? '1.0.0'
+    headers[field.displayName] = overrides[field.displayName] ?? defaultWireVersion
   }
 
   return headers
