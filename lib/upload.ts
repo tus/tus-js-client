@@ -8,8 +8,6 @@ import {
   type FileSource,
   type HttpRequest,
   type HttpResponse,
-  PROTOCOL_IETF_DRAFT_03,
-  PROTOCOL_IETF_DRAFT_05,
   PROTOCOL_TUS_V1,
   type PreviousUpload,
   type SliceType,
@@ -17,14 +15,18 @@ import {
   type UploadOptions,
 } from './options.js'
 import {
-  TUS_CONTENT_TYPES,
-  TUS_DEFAULT_PROTOCOL_VERSION,
-  TUS_HEADER_VALUES,
   TUS_HEADERS,
-  TUS_HTTP_METHODS,
+  TUS_OPERATION_IDS,
   TUS_OPERATION_METHODS,
-  TUS_REQUEST_CONTENT_TYPES,
   TUS_RESPONSE_STATUS_CODES,
+  tusChunkContentTypeForProtocol,
+  tusFinalUploadConcatValue,
+  tusMethodOverrideForOperation,
+  tusPartialUploadHeaders,
+  tusRequestHeadersForProtocol,
+  tusRequestIdHeaders,
+  tusSupportsProtocol,
+  tusUploadCompleteHeaderForProtocol,
 } from './protocol_generated.js'
 import { uuid } from './uuid.js'
 
@@ -160,11 +162,7 @@ export class BaseUpload {
       return
     }
 
-    if (
-      ![PROTOCOL_TUS_V1, PROTOCOL_IETF_DRAFT_03, PROTOCOL_IETF_DRAFT_05].includes(
-        this.options.protocol,
-      )
-    ) {
+    if (!tusSupportsProtocol(this.options.protocol)) {
       this._emitError(new Error(`tus: unsupported protocol ${this.options.protocol}`))
       return
     }
@@ -340,7 +338,7 @@ export class BaseUpload {
           // Add the header to indicate the this is a partial upload.
           headers: {
             ...this.options.headers,
-            [TUS_HEADERS.UPLOAD_CONCAT]: TUS_HEADER_VALUES.UPLOAD_CONCAT_PARTIAL,
+            ...tusPartialUploadHeaders(),
           },
           // Reject or resolve the promise if the upload errors or completes.
           onSuccess: resolve,
@@ -390,11 +388,11 @@ export class BaseUpload {
     if (this.options.endpoint == null) {
       throw new Error('tus: Expected options.endpoint to be set')
     }
+    if (!this._parallelUploadUrls) {
+      throw new Error('tus: Expected _parallelUploadUrls to be set')
+    }
     const req = this._openRequest(TUS_OPERATION_METHODS.CREATE_TUS_UPLOAD, this.options.endpoint)
-    req.setHeader(
-      TUS_HEADERS.UPLOAD_CONCAT,
-      `${TUS_HEADER_VALUES.UPLOAD_CONCAT_FINAL_PREFIX}${this._parallelUploadUrls.join(' ')}`,
-    )
+    req.setHeader(TUS_HEADERS.UPLOAD_CONCAT, tusFinalUploadConcatValue(this._parallelUploadUrls))
 
     // Add metadata if values have been added
     const metadata = encodeMetadata(this.options.metadata)
@@ -629,11 +627,12 @@ export class BaseUpload {
         this._offset = 0
         res = await this._addChunkToRequest(req)
       } else {
-        if (
-          this.options.protocol === PROTOCOL_IETF_DRAFT_03 ||
-          this.options.protocol === PROTOCOL_IETF_DRAFT_05
-        ) {
-          req.setHeader(TUS_HEADERS.UPLOAD_COMPLETE, TUS_HEADER_VALUES.UPLOAD_COMPLETE_FALSE)
+        const uploadCompleteHeader = tusUploadCompleteHeaderForProtocol(
+          this.options.protocol,
+          false,
+        )
+        if (uploadCompleteHeader) {
+          req.setHeader(uploadCompleteHeader.name, uploadCompleteHeader.value)
         }
         res = await this._sendRequest(req)
       }
@@ -800,10 +799,17 @@ export class BaseUpload {
     }
     // Some browser and servers may not support the PATCH method. For those
     // cases, you can tell tus-js-client to use a POST request with the
-    // X-HTTP-Method-Override header for simulating a PATCH request.
+    // generated method-override header for simulating a PATCH request.
     if (this.options.overridePatchMethod) {
-      req = this._openRequest(TUS_HTTP_METHODS.POST, this.url)
-      req.setHeader(TUS_HEADERS.X_HTTP_METHOD_OVERRIDE, TUS_HTTP_METHODS.PATCH)
+      const methodOverride = tusMethodOverrideForOperation(TUS_OPERATION_IDS.PATCH_TUS_UPLOAD)
+      if (!methodOverride) {
+        throw new Error('tus: expected PATCH method override to be available')
+      }
+
+      req = this._openRequest(methodOverride.method, this.url)
+      for (const [name, value] of Object.entries(methodOverride.headers)) {
+        req.setHeader(name, value)
+      }
     } else {
       req = this._openRequest(TUS_OPERATION_METHODS.PATCH_TUS_UPLOAD, this.url)
     }
@@ -852,10 +858,9 @@ export class BaseUpload {
       this._emitProgress(start + bytesSent, this._size)
     })
 
-    if (this.options.protocol === PROTOCOL_TUS_V1) {
-      req.setHeader(TUS_HEADERS.CONTENT_TYPE, TUS_REQUEST_CONTENT_TYPES.PATCH_TUS_UPLOAD)
-    } else if (this.options.protocol === PROTOCOL_IETF_DRAFT_05) {
-      req.setHeader(TUS_HEADERS.CONTENT_TYPE, TUS_CONTENT_TYPES.PARTIAL_UPLOAD)
+    const contentType = tusChunkContentTypeForProtocol(this.options.protocol)
+    if (contentType) {
+      req.setHeader(TUS_HEADERS.CONTENT_TYPE, contentType)
     }
 
     // The specified chunkSize may be Infinity or the calcluated end position
@@ -900,14 +905,9 @@ export class BaseUpload {
       return await this._sendRequest(req)
     }
 
-    if (
-      this.options.protocol === PROTOCOL_IETF_DRAFT_03 ||
-      this.options.protocol === PROTOCOL_IETF_DRAFT_05
-    ) {
-      req.setHeader(
-        TUS_HEADERS.UPLOAD_COMPLETE,
-        done ? TUS_HEADER_VALUES.UPLOAD_COMPLETE_TRUE : TUS_HEADER_VALUES.UPLOAD_COMPLETE_FALSE,
-      )
+    const uploadCompleteHeader = tusUploadCompleteHeaderForProtocol(this.options.protocol, done)
+    if (uploadCompleteHeader) {
+      req.setHeader(uploadCompleteHeader.name, uploadCompleteHeader.value)
     }
     this._emitProgress(this._offset, this._size)
     return await this._sendRequest(req, value)
@@ -1039,19 +1039,10 @@ function inStatusCategory(status: number, category: 100 | 200 | 300 | 400 | 500)
 function openRequest(method: string, url: string, options: UploadOptions): HttpRequest {
   const req = options.httpStack.createRequest(method, url)
 
-  if (options.protocol === PROTOCOL_IETF_DRAFT_03) {
-    req.setHeader(
-      TUS_HEADERS.UPLOAD_DRAFT_INTEROP_VERSION,
-      TUS_HEADER_VALUES.UPLOAD_DRAFT_INTEROP_VERSION_03,
-    )
-  } else if (options.protocol === PROTOCOL_IETF_DRAFT_05) {
-    req.setHeader(
-      TUS_HEADERS.UPLOAD_DRAFT_INTEROP_VERSION,
-      TUS_HEADER_VALUES.UPLOAD_DRAFT_INTEROP_VERSION_05,
-    )
-  } else {
-    req.setHeader(TUS_HEADERS.TUS_RESUMABLE, TUS_DEFAULT_PROTOCOL_VERSION)
+  for (const [name, value] of Object.entries(tusRequestHeadersForProtocol(options.protocol))) {
+    req.setHeader(name, value)
   }
+
   const headers = options.headers || {}
 
   for (const [name, value] of Object.entries(headers)) {
@@ -1060,7 +1051,9 @@ function openRequest(method: string, url: string, options: UploadOptions): HttpR
 
   if (options.addRequestId) {
     const requestId = uuid()
-    req.setHeader(TUS_HEADERS.X_REQUEST_ID, requestId)
+    for (const [name, value] of Object.entries(tusRequestIdHeaders(requestId))) {
+      req.setHeader(name, value)
+    }
   }
 
   return req
