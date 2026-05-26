@@ -1,7 +1,3 @@
-// This file is generated from Transloadit API2 TUS protocol contracts. If it looks wrong,
-// please report the issue instead of editing this file by hand; the source fix
-// belongs in the protocol contract generator so all TUS clients stay in sync.
-
 import { Base64 } from 'js-base64'
 // TODO: Package url-parse is CommonJS. Can we replace this with a ESM package that
 // provides WHATWG URL? Then we can get rid of @rollup/plugin-commonjs.
