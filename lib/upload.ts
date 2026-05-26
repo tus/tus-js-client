@@ -16,6 +16,13 @@ import {
   type UploadInput,
   type UploadOptions,
 } from './options.js'
+import {
+  TUS_DEFAULT_PROTOCOL_VERSION,
+  TUS_HEADERS,
+  TUS_HTTP_METHODS,
+  TUS_REQUEST_CONTENT_TYPES,
+  TUS_RESPONSE_STATUS_CODES,
+} from './protocol_generated.js'
 import { uuid } from './uuid.js'
 
 export const defaultOptions = {
@@ -380,13 +387,13 @@ export class BaseUpload {
     if (this.options.endpoint == null) {
       throw new Error('tus: Expected options.endpoint to be set')
     }
-    const req = this._openRequest('POST', this.options.endpoint)
+    const req = this._openRequest(TUS_HTTP_METHODS.POST, this.options.endpoint)
     req.setHeader('Upload-Concat', `final;${this._parallelUploadUrls.join(' ')}`)
 
     // Add metadata if values have been added
     const metadata = encodeMetadata(this.options.metadata)
     if (metadata !== '') {
-      req.setHeader('Upload-Metadata', metadata)
+      req.setHeader(TUS_HEADERS.UPLOAD_METADATA, metadata)
     }
 
     let res: HttpResponse
@@ -404,7 +411,7 @@ export class BaseUpload {
       throw new DetailedError('tus: unexpected response while creating upload', undefined, req, res)
     }
 
-    const location = res.getHeader('Location')
+    const location = res.getHeader(TUS_HEADERS.LOCATION)
     if (location == null) {
       throw new DetailedError('tus: invalid or missing Location header', undefined, req, res)
     }
@@ -593,21 +600,21 @@ export class BaseUpload {
       throw new Error('tus: unable to create upload because no endpoint is provided')
     }
 
-    const req = this._openRequest('POST', this.options.endpoint)
+    const req = this._openRequest(TUS_HTTP_METHODS.POST, this.options.endpoint)
 
     if (this._uploadLengthDeferred) {
-      req.setHeader('Upload-Defer-Length', '1')
+      req.setHeader(TUS_HEADERS.UPLOAD_DEFER_LENGTH, '1')
     } else {
       if (this._size == null) {
         throw new Error('tus: expected _size to be set')
       }
-      req.setHeader('Upload-Length', `${this._size}`)
+      req.setHeader(TUS_HEADERS.UPLOAD_LENGTH, `${this._size}`)
     }
 
     // Add metadata if values have been added
     const metadata = encodeMetadata(this.options.metadata)
     if (metadata !== '') {
-      req.setHeader('Upload-Metadata', metadata)
+      req.setHeader(TUS_HEADERS.UPLOAD_METADATA, metadata)
     }
 
     let res: HttpResponse
@@ -636,7 +643,7 @@ export class BaseUpload {
       throw new DetailedError('tus: unexpected response while creating upload', undefined, req, res)
     }
 
-    const location = res.getHeader('Location')
+    const location = res.getHeader(TUS_HEADERS.LOCATION)
     if (location == null) {
       throw new DetailedError('tus: invalid or missing Location header', undefined, req, res)
     }
@@ -680,7 +687,7 @@ export class BaseUpload {
     if (this.url == null) {
       throw new Error('tus: Expected url to be set')
     }
-    const req = this._openRequest('HEAD', this.url)
+    const req = this._openRequest(TUS_HTTP_METHODS.HEAD, this.url)
 
     let res: HttpResponse
     try {
@@ -725,7 +732,7 @@ export class BaseUpload {
       await this._createUpload()
     }
 
-    const offsetStr = res.getHeader('Upload-Offset')
+    const offsetStr = res.getHeader(TUS_HEADERS.UPLOAD_OFFSET)
     if (offsetStr === undefined) {
       throw new DetailedError('tus: missing Upload-Offset header', undefined, req, res)
     }
@@ -734,11 +741,11 @@ export class BaseUpload {
       throw new DetailedError('tus: invalid Upload-Offset header', undefined, req, res)
     }
 
-    const deferLength = res.getHeader('Upload-Defer-Length')
+    const deferLength = res.getHeader(TUS_HEADERS.UPLOAD_DEFER_LENGTH)
     this._uploadLengthDeferred = deferLength === '1'
 
     // @ts-expect-error parseInt also handles undefined as we want it to
-    const length = Number.parseInt(res.getHeader('Upload-Length'), 10)
+    const length = Number.parseInt(res.getHeader(TUS_HEADERS.UPLOAD_LENGTH), 10)
     if (
       Number.isNaN(length) &&
       !this._uploadLengthDeferred &&
@@ -789,13 +796,13 @@ export class BaseUpload {
     // cases, you can tell tus-js-client to use a POST request with the
     // X-HTTP-Method-Override header for simulating a PATCH request.
     if (this.options.overridePatchMethod) {
-      req = this._openRequest('POST', this.url)
-      req.setHeader('X-HTTP-Method-Override', 'PATCH')
+      req = this._openRequest(TUS_HTTP_METHODS.POST, this.url)
+      req.setHeader('X-HTTP-Method-Override', TUS_HTTP_METHODS.PATCH)
     } else {
-      req = this._openRequest('PATCH', this.url)
+      req = this._openRequest(TUS_HTTP_METHODS.PATCH, this.url)
     }
 
-    req.setHeader('Upload-Offset', `${this._offset}`)
+    req.setHeader(TUS_HEADERS.UPLOAD_OFFSET, `${this._offset}`)
 
     let res: HttpResponse
     try {
@@ -840,9 +847,9 @@ export class BaseUpload {
     })
 
     if (this.options.protocol === PROTOCOL_TUS_V1) {
-      req.setHeader('Content-Type', 'application/offset+octet-stream')
+      req.setHeader(TUS_HEADERS.CONTENT_TYPE, TUS_REQUEST_CONTENT_TYPES.PATCH_TUS_UPLOAD)
     } else if (this.options.protocol === PROTOCOL_IETF_DRAFT_05) {
-      req.setHeader('Content-Type', 'application/partial-upload')
+      req.setHeader(TUS_HEADERS.CONTENT_TYPE, 'application/partial-upload')
     }
 
     // The specified chunkSize may be Infinity or the calcluated end position
@@ -867,7 +874,7 @@ export class BaseUpload {
     // upload size and can tell the tus server.
     if (this._uploadLengthDeferred && done) {
       this._size = this._offset + sizeOfValue
-      req.setHeader('Upload-Length', `${this._size}`)
+      req.setHeader(TUS_HEADERS.UPLOAD_LENGTH, `${this._size}`)
       this._uploadLengthDeferred = false
     }
 
@@ -905,7 +912,7 @@ export class BaseUpload {
    */
   private async _handleUploadResponse(req: HttpRequest, res: HttpResponse): Promise<void> {
     // TODO: || '' is not very good.
-    const offset = Number.parseInt(res.getHeader('Upload-Offset') || '', 10)
+    const offset = Number.parseInt(res.getHeader(TUS_HEADERS.UPLOAD_OFFSET) || '', 10)
     if (Number.isNaN(offset)) {
       throw new DetailedError('tus: invalid or missing offset value', undefined, req, res)
     }
@@ -1028,7 +1035,7 @@ function openRequest(method: string, url: string, options: UploadOptions): HttpR
   } else if (options.protocol === PROTOCOL_IETF_DRAFT_05) {
     req.setHeader('Upload-Draft-Interop-Version', '6')
   } else {
-    req.setHeader('Tus-Resumable', '1.0.0')
+    req.setHeader(TUS_HEADERS.TUS_RESUMABLE, TUS_DEFAULT_PROTOCOL_VERSION)
   }
   const headers = options.headers || {}
 
@@ -1187,12 +1194,12 @@ function wait(delay: number) {
  * @return {Promise} The Promise will be resolved/rejected when the requests finish.
  */
 export async function terminate(url: string, options: UploadOptions): Promise<void> {
-  const req = openRequest('DELETE', url, options)
+  const req = openRequest(TUS_HTTP_METHODS.DELETE, url, options)
 
   try {
     const res = await sendRequest(req, undefined, options)
     // A 204 response indicates a successfull request
-    if (res.getStatus() === 204) {
+    if (res.getStatus() === TUS_RESPONSE_STATUS_CODES.TERMINATE_TUS_UPLOAD_204) {
       return
     }
 
