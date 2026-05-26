@@ -100,6 +100,49 @@ export const tusProtocolOperations = [
             },
           ],
         },
+        {
+          fields: [
+            {
+              displayName: 'Tus-Resumable',
+              name: 'tus-resumable',
+              required: true,
+            },
+            {
+              displayName: 'Upload-Concat',
+              name: 'upload-concat',
+              required: true,
+            },
+            {
+              displayName: 'Upload-Length',
+              name: 'upload-length',
+              required: true,
+            },
+            {
+              displayName: 'Upload-Metadata',
+              name: 'upload-metadata',
+              required: false,
+            },
+          ],
+        },
+        {
+          fields: [
+            {
+              displayName: 'Tus-Resumable',
+              name: 'tus-resumable',
+              required: true,
+            },
+            {
+              displayName: 'Upload-Concat',
+              name: 'upload-concat',
+              required: true,
+            },
+            {
+              displayName: 'Upload-Metadata',
+              name: 'upload-metadata',
+              required: false,
+            },
+          ],
+        },
       ],
     },
     responses: [
@@ -327,6 +370,21 @@ export const tusClientFeatures = [
     primitives: ['defer-upload-length', 'emit-progress'],
   },
   {
+    featureId: 'creationWithUpload',
+    operationIds: ['createTusUpload'],
+    primitives: ['upload-during-creation', 'emit-progress'],
+  },
+  {
+    featureId: 'overridePatchMethod',
+    operationIds: ['getTusUploadOffset', 'patchTusUpload'],
+    primitives: ['override-patch-method'],
+  },
+  {
+    featureId: 'parallelUploadConcat',
+    operationIds: ['createTusUpload', 'patchTusUpload'],
+    primitives: ['concatenate-partial-uploads', 'emit-progress'],
+  },
+  {
     featureId: 'retryOffsetRecovery',
     operationIds: ['createTusUpload', 'getTusUploadOffset', 'patchTusUpload'],
     primitives: ['retry-with-backoff', 'recover-offset-after-error'],
@@ -393,6 +451,44 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'singleUploadLifecycle',
+  },
+  {
+    behavior: 'creation-with-upload',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/creation-with-upload-contract',
+    },
+    featureId: 'creationWithUpload',
+    input: {
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      kind: 'blob',
+      metadata: {
+        filename: 'hello.txt',
+      },
+      uploadDataDuringCreation: true,
+    },
+    operationIds: ['createTusUpload'],
+    primitives: ['upload-during-creation', 'emit-progress'],
+    requests: [
+      {
+        bodySize: 11,
+        headers: {
+          'Content-Type': 'application/offset+octet-stream',
+          'Upload-Length': '11',
+        },
+        operationId: 'createTusUpload',
+        response: {
+          headers: {
+            Location: 'https://tus.io/uploads/creation-with-upload-contract',
+            'Upload-Offset': '11',
+          },
+          statusCode: 201,
+        },
+        url: 'endpoint',
+      },
+    ],
+    scenarioId: 'creationWithUpload',
   },
   {
     behavior: 'resume-from-previous-upload',
@@ -492,6 +588,163 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'deferredLengthUpload',
+  },
+  {
+    behavior: 'override-patch-method',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/override-contract',
+    },
+    featureId: 'overridePatchMethod',
+    input: {
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      kind: 'blob',
+      overridePatchMethod: true,
+      uploadUrl: 'https://tus.io/uploads/override-contract',
+    },
+    operationIds: ['getTusUploadOffset', 'patchTusUpload'],
+    primitives: ['override-patch-method'],
+    requests: [
+      {
+        operationId: 'getTusUploadOffset',
+        response: {
+          headers: {
+            'Upload-Length': '11',
+            'Upload-Offset': '3',
+          },
+          statusCode: 200,
+        },
+        uploadUrl: 'https://tus.io/uploads/override-contract',
+        url: 'upload',
+      },
+      {
+        bodySize: 8,
+        headers: {
+          'Content-Type': 'application/offset+octet-stream',
+          'Upload-Offset': '3',
+          'X-HTTP-Method-Override': 'PATCH',
+        },
+        method: 'POST',
+        operationId: 'patchTusUpload',
+        response: {
+          headers: {
+            'Upload-Offset': '11',
+          },
+          statusCode: 204,
+        },
+        uploadUrl: 'https://tus.io/uploads/override-contract',
+        url: 'upload',
+      },
+    ],
+    scenarioId: 'overridePatchMethod',
+  },
+  {
+    behavior: 'parallel-upload-concat',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/parallel-final',
+    },
+    featureId: 'parallelUploadConcat',
+    input: {
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      kind: 'blob',
+      metadata: {
+        foo: 'hello',
+      },
+      metadataForPartialUploads: {
+        test: 'world',
+      },
+      parallelUploads: 2,
+    },
+    operationIds: [
+      'createTusUpload',
+      'createTusUpload',
+      'patchTusUpload',
+      'patchTusUpload',
+      'createTusUpload',
+    ],
+    primitives: ['concatenate-partial-uploads', 'emit-progress'],
+    requests: [
+      {
+        headers: {
+          'Upload-Concat': 'partial',
+          'Upload-Length': '5',
+          'Upload-Metadata': 'test d29ybGQ=',
+        },
+        operationId: 'createTusUpload',
+        response: {
+          headers: {
+            Location: 'https://tus.io/uploads/parallel-part-1',
+          },
+          statusCode: 201,
+        },
+        url: 'endpoint',
+      },
+      {
+        headers: {
+          'Upload-Concat': 'partial',
+          'Upload-Length': '6',
+          'Upload-Metadata': 'test d29ybGQ=',
+        },
+        operationId: 'createTusUpload',
+        response: {
+          headers: {
+            Location: 'https://tus.io/uploads/parallel-part-2',
+          },
+          statusCode: 201,
+        },
+        url: 'endpoint',
+      },
+      {
+        bodySize: 5,
+        headers: {
+          'Upload-Offset': '0',
+        },
+        operationId: 'patchTusUpload',
+        response: {
+          headers: {
+            'Upload-Offset': '5',
+          },
+          statusCode: 204,
+        },
+        uploadUrl: 'https://tus.io/uploads/parallel-part-1',
+        url: 'upload',
+      },
+      {
+        bodySize: 6,
+        headers: {
+          'Upload-Offset': '0',
+        },
+        operationId: 'patchTusUpload',
+        response: {
+          headers: {
+            'Upload-Offset': '6',
+          },
+          statusCode: 204,
+        },
+        uploadUrl: 'https://tus.io/uploads/parallel-part-2',
+        url: 'upload',
+      },
+      {
+        absentHeaders: ['Upload-Length'],
+        headers: {
+          'Upload-Concat':
+            'final;https://tus.io/uploads/parallel-part-1 https://tus.io/uploads/parallel-part-2',
+          'Upload-Metadata': 'foo aGVsbG8=',
+        },
+        operationId: 'createTusUpload',
+        response: {
+          headers: {
+            Location: 'https://tus.io/uploads/parallel-final',
+          },
+          statusCode: 201,
+        },
+        url: 'endpoint',
+      },
+    ],
+    scenarioId: 'parallelUploadConcat',
   },
   {
     behavior: 'retry-patch-after-offset-recovery',

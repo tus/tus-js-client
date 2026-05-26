@@ -51,11 +51,12 @@ function requestMatchesHeaderVariant(requestHeaders, variant) {
     .every((field) => requestHeaders[field.displayName] != null)
 }
 
-function expectRequestMatchesOperation(req, operation) {
-  expect(req.method).toBe(operation.method)
+function expectRequestMatchesOperation(req, operation, request) {
+  expect(req.method).toBe(request.method ?? operation.method)
 
-  if (operation.request.contentType) {
-    expect(req.requestHeaders['Content-Type']).toBe(operation.request.contentType)
+  const expectedContentType = request.headers?.['Content-Type'] ?? operation.request.contentType
+  if (expectedContentType) {
+    expect(req.requestHeaders['Content-Type']).toBe(expectedContentType)
   } else {
     expect(req.requestHeaders['Content-Type']).toBeUndefined()
   }
@@ -168,6 +169,10 @@ function expectedUrlForScenarioRequest(scenario, request) {
     return scenario.input.endpointUrl
   }
 
+  if (request.uploadUrl) {
+    return request.uploadUrl
+  }
+
   const uploadUrl =
     scenario.input.uploadUrl ??
     scenario.input.storedUpload?.uploadUrl ??
@@ -183,7 +188,7 @@ function expectScenarioRequest(req, scenario, request) {
   const operation = getProtocolOperation(request.operationId)
 
   expect(req.url).toBe(expectedUrlForScenarioRequest(scenario, request))
-  expectRequestMatchesOperation(req, operation)
+  expectRequestMatchesOperation(req, operation, request)
 
   for (const [header, value] of Object.entries(request.headers ?? {})) {
     expect(req.requestHeaders[header]).toBe(value)
@@ -218,8 +223,24 @@ async function startScenarioUpload(scenario, testStack) {
     options.chunkSize = scenario.input.chunkSize
   }
 
+  if (scenario.input.metadataForPartialUploads != null) {
+    options.metadataForPartialUploads = scenario.input.metadataForPartialUploads
+  }
+
+  if (scenario.input.overridePatchMethod != null) {
+    options.overridePatchMethod = scenario.input.overridePatchMethod
+  }
+
+  if (scenario.input.parallelUploads != null) {
+    options.parallelUploads = scenario.input.parallelUploads
+  }
+
   if (scenario.input.retryDelays != null) {
     options.retryDelays = scenario.input.retryDelays
+  }
+
+  if (scenario.input.uploadDataDuringCreation != null) {
+    options.uploadDataDuringCreation = scenario.input.uploadDataDuringCreation
   }
 
   if (scenario.input.uploadLengthDeferred != null) {
@@ -293,8 +314,11 @@ describe('generated TUS protocol contract', () => {
   it('covers the expected first wave of generated conformance scenarios', () => {
     expect(tusClientConformanceScenarios.map((scenario) => scenario.scenarioId)).toEqual([
       'singleUploadLifecycle',
+      'creationWithUpload',
       'resumeFromPreviousUpload',
       'deferredLengthUpload',
+      'overridePatchMethod',
+      'parallelUploadConcat',
       'retryPatchAfterOffsetRecovery',
       'terminateWithRetry',
     ])
