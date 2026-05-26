@@ -317,8 +317,315 @@ export const tusClientFeatures = [
     ],
   },
   {
+    featureId: 'resumeUpload',
+    operationIds: ['getTusUploadOffset', 'patchTusUpload'],
+    primitives: ['fingerprint-input', 'resume-from-previous-upload', 'store-resume-url'],
+  },
+  {
+    featureId: 'deferredLengthUpload',
+    operationIds: ['createTusUpload', 'patchTusUpload'],
+    primitives: ['defer-upload-length', 'emit-progress'],
+  },
+  {
+    featureId: 'retryOffsetRecovery',
+    operationIds: ['createTusUpload', 'getTusUploadOffset', 'patchTusUpload'],
+    primitives: ['retry-with-backoff', 'recover-offset-after-error'],
+  },
+  {
     featureId: 'terminateUpload',
     operationIds: ['terminateTusUpload'],
-    primitives: ['retry-with-backoff'],
+    primitives: ['terminate-upload', 'retry-with-backoff'],
+  },
+]
+
+export const tusClientConformanceScenarios = [
+  {
+    behavior: 'single-upload-lifecycle',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/generated-contract',
+    },
+    featureId: 'singleUploadLifecycle',
+    input: {
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      kind: 'blob',
+      metadata: {
+        filename: 'hello.txt',
+      },
+    },
+    operationIds: ['createTusUpload', 'patchTusUpload'],
+    primitives: [
+      'open-input-source',
+      'fingerprint-input',
+      'store-resume-url',
+      'retry-with-backoff',
+      'emit-progress',
+      'abort-current-request',
+    ],
+    requests: [
+      {
+        headers: {
+          'Upload-Length': '11',
+        },
+        operationId: 'createTusUpload',
+        response: {
+          headers: {
+            Location: 'https://tus.io/uploads/generated-contract',
+          },
+          statusCode: 201,
+        },
+        url: 'endpoint',
+      },
+      {
+        bodySize: 11,
+        headers: {
+          'Upload-Offset': '0',
+        },
+        operationId: 'patchTusUpload',
+        response: {
+          headers: {
+            'Upload-Offset': '11',
+          },
+          statusCode: 204,
+        },
+        url: 'upload',
+      },
+    ],
+    scenarioId: 'singleUploadLifecycle',
+  },
+  {
+    behavior: 'resume-from-previous-upload',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/resume-contract',
+    },
+    featureId: 'resumeUpload',
+    input: {
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      kind: 'blob',
+      storedUpload: {
+        fingerprint: 'contract-resume-fingerprint',
+        uploadUrl: 'https://tus.io/uploads/resume-contract',
+      },
+    },
+    operationIds: ['getTusUploadOffset', 'patchTusUpload'],
+    primitives: ['fingerprint-input', 'resume-from-previous-upload', 'store-resume-url'],
+    requests: [
+      {
+        operationId: 'getTusUploadOffset',
+        response: {
+          headers: {
+            'Upload-Length': '11',
+            'Upload-Offset': '5',
+          },
+          statusCode: 200,
+        },
+        url: 'upload',
+      },
+      {
+        bodySize: 6,
+        headers: {
+          'Upload-Offset': '5',
+        },
+        operationId: 'patchTusUpload',
+        response: {
+          headers: {
+            'Upload-Offset': '11',
+          },
+          statusCode: 204,
+        },
+        url: 'upload',
+      },
+    ],
+    scenarioId: 'resumeFromPreviousUpload',
+  },
+  {
+    behavior: 'deferred-length-upload',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/deferred-contract',
+    },
+    featureId: 'deferredLengthUpload',
+    input: {
+      chunkSize: 100,
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      kind: 'readable-stream',
+      metadata: {
+        filename: 'hello.txt',
+      },
+      uploadLengthDeferred: true,
+    },
+    operationIds: ['createTusUpload', 'patchTusUpload'],
+    primitives: ['defer-upload-length', 'emit-progress'],
+    requests: [
+      {
+        absentHeaders: ['Upload-Length'],
+        headers: {
+          'Upload-Defer-Length': '1',
+        },
+        operationId: 'createTusUpload',
+        response: {
+          headers: {
+            Location: 'https://tus.io/uploads/deferred-contract',
+          },
+          statusCode: 201,
+        },
+        url: 'endpoint',
+      },
+      {
+        bodySize: 11,
+        headers: {
+          'Upload-Length': '11',
+          'Upload-Offset': '0',
+        },
+        operationId: 'patchTusUpload',
+        response: {
+          headers: {
+            'Upload-Offset': '11',
+          },
+          statusCode: 204,
+        },
+        url: 'upload',
+      },
+    ],
+    scenarioId: 'deferredLengthUpload',
+  },
+  {
+    behavior: 'retry-patch-after-offset-recovery',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/retry-contract',
+    },
+    featureId: 'retryOffsetRecovery',
+    input: {
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      kind: 'blob',
+      metadata: {
+        filename: 'hello.txt',
+      },
+      retryDelays: [0, 0],
+    },
+    operationIds: ['createTusUpload', 'patchTusUpload', 'getTusUploadOffset', 'patchTusUpload'],
+    primitives: ['retry-with-backoff', 'recover-offset-after-error'],
+    requests: [
+      {
+        headers: {
+          'Upload-Length': '11',
+        },
+        operationId: 'createTusUpload',
+        response: {
+          headers: {
+            Location: 'https://tus.io/uploads/retry-contract',
+          },
+          statusCode: 201,
+        },
+        url: 'endpoint',
+      },
+      {
+        bodySize: 11,
+        headers: {
+          'Upload-Offset': '0',
+        },
+        operationId: 'patchTusUpload',
+        response: {
+          statusCode: 500,
+        },
+        url: 'upload',
+      },
+      {
+        operationId: 'getTusUploadOffset',
+        response: {
+          headers: {
+            'Upload-Length': '11',
+            'Upload-Offset': '0',
+          },
+          statusCode: 200,
+        },
+        url: 'upload',
+      },
+      {
+        bodySize: 11,
+        headers: {
+          'Upload-Offset': '0',
+        },
+        operationId: 'patchTusUpload',
+        response: {
+          headers: {
+            'Upload-Offset': '11',
+          },
+          statusCode: 204,
+        },
+        url: 'upload',
+      },
+    ],
+    scenarioId: 'retryPatchAfterOffsetRecovery',
+  },
+  {
+    behavior: 'terminate-with-retry',
+    completion: {
+      kind: 'terminated',
+      uploadUrl: 'https://tus.io/uploads/terminate-contract',
+    },
+    featureId: 'terminateUpload',
+    input: {
+      chunkSize: 5,
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      kind: 'blob',
+      metadata: {
+        filename: 'hello.txt',
+      },
+      retryDelays: [0, 0],
+    },
+    operationIds: ['createTusUpload', 'patchTusUpload', 'terminateTusUpload', 'terminateTusUpload'],
+    primitives: ['terminate-upload', 'retry-with-backoff'],
+    requests: [
+      {
+        headers: {
+          'Upload-Length': '11',
+        },
+        operationId: 'createTusUpload',
+        response: {
+          headers: {
+            Location: 'https://tus.io/uploads/terminate-contract',
+          },
+          statusCode: 201,
+        },
+        url: 'endpoint',
+      },
+      {
+        bodySize: 5,
+        headers: {
+          'Upload-Offset': '0',
+        },
+        operationId: 'patchTusUpload',
+        response: {
+          headers: {
+            'Upload-Offset': '5',
+          },
+          statusCode: 204,
+        },
+        url: 'upload',
+      },
+      {
+        operationId: 'terminateTusUpload',
+        response: {
+          statusCode: 423,
+        },
+        url: 'upload',
+      },
+      {
+        operationId: 'terminateTusUpload',
+        response: {
+          statusCode: 204,
+        },
+        url: 'upload',
+      },
+    ],
+    scenarioId: 'terminateWithRetry',
   },
 ]
