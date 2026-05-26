@@ -40,6 +40,9 @@ jobs:
           deno-version: latest
       - name: Install dependencies
         run: npm ci
+      - name: Install Puppeteer browser
+        if: matrix.suite == 'puppeteer'
+        run: npx puppeteer browsers install chrome
       - name: Build
         run: npm run build
       - name: Test
