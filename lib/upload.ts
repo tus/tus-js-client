@@ -26,6 +26,7 @@ import {
   tusGetUploadOffsetRequestPlan,
   tusPartialUploadHeaders,
   tusPatchUploadRequestPlan,
+  tusPlanPreparedUploadMode,
   tusPlanPreparedUploadSize,
   tusPlanResumeOffsetResponse,
   tusPlanResumeResponseStatus,
@@ -231,13 +232,17 @@ export class BaseUpload {
     }
     this._size = preparedUploadSizePlan.size
 
-    // If the upload was configured to use multiple requests or if we resume from
-    // an upload which used multiple requests, we start a parallel upload.
-    if (this.options.parallelUploads > 1 || this._parallelUploadUrls != null) {
+    const preparedUploadModePlan = tusPlanPreparedUploadMode({
+      hasParallelUploadUrls: this._parallelUploadUrls != null,
+      parallelUploads: this.options.parallelUploads,
+    })
+
+    if (preparedUploadModePlan.action === 'parallel') {
       await this._startParallelUpload()
-    } else {
-      await this._startSingleUpload()
+      return
     }
+
+    await this._startSingleUpload()
   }
 
   /**

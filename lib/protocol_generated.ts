@@ -295,6 +295,8 @@ export type TusPreparedUploadSizePlan =
   | { ok: false; message: string; reason: 'cannotDeriveUploadSize' | 'invalidUploadSize' }
   | { ok: true; size: number | null }
 
+export type TusPreparedUploadModePlan = { action: 'parallel' } | { action: 'single' }
+
 export type TusDeferredUploadLengthPlan =
   | { shouldDeclareLength: false }
   | { shouldDeclareLength: true; size: number }
@@ -536,6 +538,20 @@ export function tusPlanPreparedUploadSize({
   }
 
   return { ok: true, size: sourceSize }
+}
+
+export function tusPlanPreparedUploadMode({
+  hasParallelUploadUrls,
+  parallelUploads,
+}: {
+  hasParallelUploadUrls: boolean
+  parallelUploads: number
+}): TusPreparedUploadModePlan {
+  if (hasParallelUploadUrls || parallelUploads >= TUS_FLOW_POLICY.minimumParallelUploads) {
+    return { action: 'parallel' }
+  }
+
+  return { action: 'single' }
 }
 
 export function tusCreatedUploadCompletesWithoutPatch({ size }: { size: number | null }): boolean {
