@@ -19,7 +19,6 @@ import {
   type TusRequestPlan,
   tusCheckConfiguredUploadSize,
   tusChunkEnd,
-  tusCreatedUploadCompletesWithoutPatch,
   tusCreateUploadCompleteValue,
   tusCreateUploadRequestPlan,
   tusDeferredUploadLengthPlan,
@@ -32,6 +31,7 @@ import {
   tusPlanSingleUploadStart,
   tusPlanUploadChunkResponse,
   tusPlanUploadCompletionAfterOffset,
+  tusPlanUploadCreationResponse,
   tusPlanUploadStorage,
   tusReadUploadChunkResponse,
   tusReadUploadCreationResponse,
@@ -382,23 +382,19 @@ export class BaseUpload {
       throw new DetailedError('tus: failed to concatenate parallel uploads', err, req, undefined)
     }
 
-    const creationResponse = tusReadUploadCreationResponse({
-      getHeader: (headerName) => res.getHeader(headerName),
-      status: res.getStatus(),
+    const creationResponsePlan = tusPlanUploadCreationResponse({
+      followUp: 'none',
+      response: tusReadUploadCreationResponse({
+        getHeader: (headerName) => res.getHeader(headerName),
+        status: res.getStatus(),
+      }),
+      size: this._size,
     })
-    if (!creationResponse.ok && creationResponse.reason === 'unexpectedStatus') {
-      throw new DetailedError(
-        TUS_FLOW_POLICY.messages.unexpectedCreateResponse,
-        undefined,
-        req,
-        res,
-      )
-    }
-    if (!creationResponse.ok) {
-      throw new DetailedError(TUS_FLOW_POLICY.messages.uploadLocationMissing, undefined, req, res)
+    if (creationResponsePlan.action === 'fail') {
+      throw new DetailedError(creationResponsePlan.message, undefined, req, res)
     }
 
-    this.url = resolveUrl(endpoint, creationResponse.location)
+    this.url = resolveUrl(endpoint, creationResponsePlan.location)
     log(`Created upload at ${this.url}`)
 
     await this._emitSuccess(res)
@@ -626,30 +622,26 @@ export class BaseUpload {
       throw new DetailedError('tus: failed to create upload', err, req, undefined)
     }
 
-    const creationResponse = tusReadUploadCreationResponse({
-      getHeader: (headerName) => res.getHeader(headerName),
-      status: res.getStatus(),
+    const creationResponsePlan = tusPlanUploadCreationResponse({
+      followUp: 'patchIfNonempty',
+      response: tusReadUploadCreationResponse({
+        getHeader: (headerName) => res.getHeader(headerName),
+        status: res.getStatus(),
+      }),
+      size: this._size,
     })
-    if (!creationResponse.ok && creationResponse.reason === 'unexpectedStatus') {
-      throw new DetailedError(
-        TUS_FLOW_POLICY.messages.unexpectedCreateResponse,
-        undefined,
-        req,
-        res,
-      )
-    }
-    if (!creationResponse.ok) {
-      throw new DetailedError(TUS_FLOW_POLICY.messages.uploadLocationMissing, undefined, req, res)
+    if (creationResponsePlan.action === 'fail') {
+      throw new DetailedError(creationResponsePlan.message, undefined, req, res)
     }
 
-    this.url = resolveUrl(endpoint, creationResponse.location)
+    this.url = resolveUrl(endpoint, creationResponsePlan.location)
     log(`Created upload at ${this.url}`)
 
     if (typeof this.options.onUploadUrlAvailable === 'function') {
       await this.options.onUploadUrlAvailable()
     }
 
-    if (tusCreatedUploadCompletesWithoutPatch({ size: this._size })) {
+    if (creationResponsePlan.action === 'complete') {
       // Nothing to upload and file was successfully created
       await this._emitSuccess(res)
       if (this._source) this._source.close()

@@ -287,6 +287,13 @@ export type TusUploadStoragePlan =
   | { shouldStore: false }
   | { fingerprint: string; shouldStore: true }
 
+export type TusUploadCreationFollowUp = 'none' | 'patchIfNonempty'
+
+export type TusUploadCreationResponsePlan =
+  | { action: 'complete'; location: string }
+  | { action: 'continue'; location: string }
+  | { action: 'fail'; message: string; reason: 'missingLocation' | 'unexpectedStatus' }
+
 export type TusUploadChunkResponsePlan =
   | { action: 'complete'; chunkSize: number; offset: number }
   | { action: 'continue'; chunkSize: number; offset: number }
@@ -461,6 +468,38 @@ export function tusCreateUploadCompleteValue({
 
 export function tusCreatedUploadCompletesWithoutPatch({ size }: { size: number | null }): boolean {
   return size === 0
+}
+
+export function tusPlanUploadCreationResponse({
+  followUp,
+  response,
+  size,
+}: {
+  followUp: TusUploadCreationFollowUp
+  response: TusUploadCreationResponseReadResult
+  size: number | null
+}): TusUploadCreationResponsePlan {
+  if (!response.ok && response.reason === 'unexpectedStatus') {
+    return {
+      action: 'fail',
+      message: TUS_FLOW_POLICY.messages.unexpectedCreateResponse,
+      reason: response.reason,
+    }
+  }
+
+  if (!response.ok) {
+    return {
+      action: 'fail',
+      message: TUS_FLOW_POLICY.messages.uploadLocationMissing,
+      reason: response.reason,
+    }
+  }
+
+  if (followUp === 'none' || tusCreatedUploadCompletesWithoutPatch({ size })) {
+    return { action: 'complete', location: response.location }
+  }
+
+  return { action: 'continue', location: response.location }
 }
 
 export function tusPlanResumeResponseStatus({
