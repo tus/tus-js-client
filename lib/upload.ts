@@ -30,6 +30,7 @@ import {
   tusPatchUploadRequestPlan,
   tusPlanResumeResponseStatus,
   tusPlanSingleUploadStart,
+  tusPlanUploadChunkResponse,
   tusPlanUploadCompletionAfterOffset,
   tusPlanUploadStorage,
   tusReadUploadChunkResponse,
@@ -41,7 +42,6 @@ import {
   tusShouldSendUploadBodyDuringCreation,
   tusTerminateUploadRequestPlan,
   tusUploadBodyHeaders,
-  tusUploadIsCompleteAfterChunk,
   tusUploadLengthHeaders,
   tusValidateCreateUpload,
   tusValidateUploadStart,
@@ -882,24 +882,24 @@ export class BaseUpload {
    * @api private
    */
   private async _handleUploadResponse(req: HttpRequest, res: HttpResponse): Promise<void> {
-    const chunkResponse = tusReadUploadChunkResponse({
-      getHeader: (headerName) => res.getHeader(headerName),
-      status: res.getStatus(),
+    const chunkResponsePlan = tusPlanUploadChunkResponse({
+      currentOffset: this._offset,
+      response: tusReadUploadChunkResponse({
+        getHeader: (headerName) => res.getHeader(headerName),
+        status: res.getStatus(),
+      }),
+      size: this._size,
     })
-    if (!chunkResponse.ok && chunkResponse.reason === 'unexpectedStatus') {
-      throw new DetailedError(TUS_FLOW_POLICY.messages.unexpectedChunkResponse, undefined, req, res)
+    if (chunkResponsePlan.action === 'fail') {
+      throw new DetailedError(chunkResponsePlan.message, undefined, req, res)
     }
-    if (!chunkResponse.ok) {
-      throw new DetailedError(TUS_FLOW_POLICY.messages.invalidChunkOffset, undefined, req, res)
-    }
-    const offset = chunkResponse.offset
 
-    this._emitProgress(offset, this._size)
-    this._emitChunkComplete(offset - this._offset, offset, this._size)
+    this._emitProgress(chunkResponsePlan.offset, this._size)
+    this._emitChunkComplete(chunkResponsePlan.chunkSize, chunkResponsePlan.offset, this._size)
 
-    this._offset = offset
+    this._offset = chunkResponsePlan.offset
 
-    if (tusUploadIsCompleteAfterChunk({ offset, size: this._size })) {
+    if (chunkResponsePlan.action === 'complete') {
       // Yay, finally done :)
       await this._emitSuccess(res)
       if (this._source) this._source.close()

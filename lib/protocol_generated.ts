@@ -287,6 +287,15 @@ export type TusUploadStoragePlan =
   | { shouldStore: false }
   | { fingerprint: string; shouldStore: true }
 
+export type TusUploadChunkResponsePlan =
+  | { action: 'complete'; chunkSize: number; offset: number }
+  | { action: 'continue'; chunkSize: number; offset: number }
+  | {
+      action: 'fail'
+      message: string
+      reason: 'invalidOffset' | 'missingOffset' | 'unexpectedStatus'
+    }
+
 function tusFormatFlowMessage(template: string, values: Record<string, string | number>): string {
   let message = template
   for (const [name, value] of Object.entries(values)) {
@@ -519,6 +528,39 @@ export function tusUploadIsCompleteAfterChunk({
   size: number | null
 }): boolean {
   return offset === size
+}
+
+export function tusPlanUploadChunkResponse({
+  currentOffset,
+  response,
+  size,
+}: {
+  currentOffset: number
+  response: TusUploadChunkResponseReadResult
+  size: number | null
+}): TusUploadChunkResponsePlan {
+  if (!response.ok && response.reason === 'unexpectedStatus') {
+    return {
+      action: 'fail',
+      message: TUS_FLOW_POLICY.messages.unexpectedChunkResponse,
+      reason: response.reason,
+    }
+  }
+
+  if (!response.ok) {
+    return {
+      action: 'fail',
+      message: TUS_FLOW_POLICY.messages.invalidChunkOffset,
+      reason: response.reason,
+    }
+  }
+
+  const chunkSize = response.offset - currentOffset
+  if (tusUploadIsCompleteAfterChunk({ offset: response.offset, size })) {
+    return { action: 'complete', chunkSize, offset: response.offset }
+  }
+
+  return { action: 'continue', chunkSize, offset: response.offset }
 }
 
 export function tusShouldResetRetryAttempt({
