@@ -26,6 +26,7 @@ import {
   tusGetUploadOffsetRequestPlan,
   tusPartialUploadHeaders,
   tusPatchUploadRequestPlan,
+  tusPlanPreparedUploadSize,
   tusPlanResumeOffsetResponse,
   tusPlanResumeResponseStatus,
   tusPlanRetryAfterError,
@@ -220,24 +221,15 @@ export class BaseUpload {
       this._source = await this.options.fileReader.openFile(this.file, this.options.chunkSize)
     }
 
-    // First, we look at the uploadLengthDeferred option.
-    // Next, we check if the caller has supplied a manual upload size.
-    // Finally, we try to use the calculated size from the source object.
-    if (this._uploadLengthDeferred) {
-      this._size = null
-    } else if (this.options.uploadSize != null) {
-      this._size = Number(this.options.uploadSize)
-      if (Number.isNaN(this._size)) {
-        throw new Error('tus: cannot convert `uploadSize` option into a number')
-      }
-    } else {
-      this._size = this._source.size
-      if (this._size == null) {
-        throw new Error(
-          "tus: cannot automatically derive upload's size from input. Specify it manually using the `uploadSize` option or use the `uploadLengthDeferred` option",
-        )
-      }
+    const preparedUploadSizePlan = tusPlanPreparedUploadSize({
+      sourceSize: this._source.size,
+      uploadLengthDeferred: this._uploadLengthDeferred,
+      uploadSize: this.options.uploadSize,
+    })
+    if (!preparedUploadSizePlan.ok) {
+      throw new Error(preparedUploadSizePlan.message)
     }
+    this._size = preparedUploadSizePlan.size
 
     // If the upload was configured to use multiple requests or if we resume from
     // an upload which used multiple requests, we start a parallel upload.

@@ -172,8 +172,11 @@ export const TUS_FLOW_POLICY = {
   messages: {
     configuredUploadSizeMismatch:
       'upload was configured with a size of {expectedSize} bytes, but the source is done after {actualSize} bytes',
+    cannotDeriveUploadSize:
+      "tus: cannot automatically derive upload's size from input. Specify it manually using the `uploadSize` option or use the `uploadLengthDeferred` option",
     createMissingEndpoint: 'tus: unable to create upload because no endpoint is provided',
     createMissingSize: 'tus: expected _size to be set',
+    invalidUploadSize: 'tus: cannot convert `uploadSize` option into a number',
     invalidChunkOffset: 'tus: invalid or missing offset value',
     invalidResumeLength: 'tus: invalid or missing length value',
     invalidResumeOffset: 'tus: invalid Upload-Offset header',
@@ -287,6 +290,10 @@ export type TusResumeOffsetResponsePlan =
 export type TusCreateUploadValidationResult =
   | { ok: false; message: string; reason: 'missingEndpoint' | 'missingSize' }
   | { ok: true }
+
+export type TusPreparedUploadSizePlan =
+  | { ok: false; message: string; reason: 'cannotDeriveUploadSize' | 'invalidUploadSize' }
+  | { ok: true; size: number | null }
 
 export type TusDeferredUploadLengthPlan =
   | { shouldDeclareLength: false }
@@ -492,6 +499,43 @@ export function tusCreateUploadCompleteValue({
   uploadDataDuringCreation: boolean
 }): boolean | undefined {
   return uploadDataDuringCreation ? undefined : false
+}
+
+export function tusPlanPreparedUploadSize({
+  sourceSize,
+  uploadLengthDeferred,
+  uploadSize,
+}: {
+  sourceSize: number | null | undefined
+  uploadLengthDeferred: boolean
+  uploadSize: unknown
+}): TusPreparedUploadSizePlan {
+  if (uploadLengthDeferred) {
+    return { ok: true, size: null }
+  }
+
+  if (uploadSize != null) {
+    const size = Number(uploadSize)
+    if (Number.isNaN(size)) {
+      return {
+        ok: false,
+        message: TUS_FLOW_POLICY.messages.invalidUploadSize,
+        reason: 'invalidUploadSize',
+      }
+    }
+
+    return { ok: true, size }
+  }
+
+  if (sourceSize == null) {
+    return {
+      ok: false,
+      message: TUS_FLOW_POLICY.messages.cannotDeriveUploadSize,
+      reason: 'cannotDeriveUploadSize',
+    }
+  }
+
+  return { ok: true, size: sourceSize }
 }
 
 export function tusCreatedUploadCompletesWithoutPatch({ size }: { size: number | null }): boolean {
