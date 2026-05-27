@@ -320,6 +320,17 @@ export type TusTerminateResponsePlan =
   | { action: 'complete' }
   | { action: 'fail'; message: string; reason: 'unexpectedStatus' }
 
+export type TusRetryAfterErrorPlan =
+  | { action: 'emitError'; retryAttempt: number }
+  | { action: 'evaluatePolicy'; retryAttempt: number }
+  | {
+      action: 'retry'
+      delay: number
+      nextRetryAttempt: number
+      offsetBeforeRetry: number
+      retryAttempt: number
+    }
+
 function tusFormatFlowMessage(template: string, values: Record<string, string | number>): string {
   let message = template
   for (const [name, value] of Object.entries(values)) {
@@ -672,6 +683,46 @@ export function tusShouldResetRetryAttempt({
   offsetBeforeRetry: number
 }): boolean {
   return offset > offsetBeforeRetry
+}
+
+export function tusPlanRetryAfterError({
+  isNetworkError,
+  offset,
+  offsetBeforeRetry,
+  retryAttempt,
+  retryDelays,
+  shouldRetry,
+}: {
+  isNetworkError: boolean
+  offset: number
+  offsetBeforeRetry: number
+  retryAttempt: number
+  retryDelays: readonly number[] | null
+  shouldRetry?: boolean
+}): TusRetryAfterErrorPlan {
+  const effectiveRetryAttempt = tusShouldResetRetryAttempt({ offset, offsetBeforeRetry })
+    ? 0
+    : retryAttempt
+
+  if (retryDelays == null || effectiveRetryAttempt >= retryDelays.length || !isNetworkError) {
+    return { action: 'emitError', retryAttempt: effectiveRetryAttempt }
+  }
+
+  if (shouldRetry == null) {
+    return { action: 'evaluatePolicy', retryAttempt: effectiveRetryAttempt }
+  }
+
+  if (!shouldRetry) {
+    return { action: 'emitError', retryAttempt: effectiveRetryAttempt }
+  }
+
+  return {
+    action: 'retry',
+    delay: retryDelays[effectiveRetryAttempt],
+    nextRetryAttempt: effectiveRetryAttempt + 1,
+    offsetBeforeRetry: offset,
+    retryAttempt: effectiveRetryAttempt,
+  }
 }
 
 export function tusShouldStoreUpload({

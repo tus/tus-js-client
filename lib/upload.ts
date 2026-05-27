@@ -28,6 +28,7 @@ import {
   tusPatchUploadRequestPlan,
   tusPlanResumeOffsetResponse,
   tusPlanResumeResponseStatus,
+  tusPlanRetryAfterError,
   tusPlanSingleUploadStart,
   tusPlanTerminateResponse,
   tusPlanUploadChunkResponse,
@@ -38,7 +39,6 @@ import {
   tusReadUploadCreationResponse,
   tusReadUploadOffsetResponse,
   tusRequestIdHeaders,
-  tusShouldResetRetryAttempt,
   tusShouldRetryStatus,
   tusShouldSendUploadBodyDuringCreation,
   tusTerminateUploadRequestPlan,
@@ -486,30 +486,36 @@ export class BaseUpload {
     // Do not retry if explicitly aborted
     if (this._aborted) return
 
-    // Check if we should retry, when enabled, before sending the error to the user.
-    if (this.options.retryDelays != null) {
-      // We will reset the attempt counter if
-      // - we were already able to connect to the server (offset != null) and
-      // - we were able to upload a small chunk of data to the server
-      if (
-        tusShouldResetRetryAttempt({
-          offset: this._offset,
-          offsetBeforeRetry: this._offsetBeforeRetry,
-        })
-      ) {
-        this._retryAttempt = 0
-      }
+    const retryableErr = getRetryableError(err)
+    const retryInput = {
+      isNetworkError: retryableErr != null,
+      offset: this._offset,
+      offsetBeforeRetry: this._offsetBeforeRetry,
+      retryDelays: this.options.retryDelays,
+    }
+    let retryPlan = tusPlanRetryAfterError({
+      ...retryInput,
+      retryAttempt: this._retryAttempt,
+    })
+    this._retryAttempt = retryPlan.retryAttempt
 
-      if (shouldRetry(err, this._retryAttempt, this.options)) {
-        const delay = this.options.retryDelays[this._retryAttempt++]
+    if (retryPlan.action === 'evaluatePolicy' && retryableErr != null) {
+      retryPlan = tusPlanRetryAfterError({
+        ...retryInput,
+        retryAttempt: retryPlan.retryAttempt,
+        shouldRetry: shouldRetryByPolicy(retryableErr, retryPlan.retryAttempt, this.options),
+      })
+      this._retryAttempt = retryPlan.retryAttempt
+    }
 
-        this._offsetBeforeRetry = this._offset
+    if (retryPlan.action === 'retry') {
+      this._retryAttempt = retryPlan.nextRetryAttempt
+      this._offsetBeforeRetry = retryPlan.offsetBeforeRetry
 
-        this._retryTimeout = setTimeout(() => {
-          this.start()
-        }, delay)
-        return
-      }
+      this._retryTimeout = setTimeout(() => {
+        this.start()
+      }, retryPlan.delay)
+      return
     }
 
     // If we are not retrying, emit the error to the user.
@@ -1050,35 +1056,22 @@ function isOnline(): boolean {
 }
 
 /**
- * Checks whether or not it is ok to retry a request.
- * @param {Error|DetailedError} err the error returned from the last request
- * @param {number} retryAttempt the number of times the request has already been retried
- * @param {object} options tus Upload options
- *
- * @api private
+ * Extract errors that originated from a request. Only these can safely be retried.
  */
-function shouldRetry(
-  err: Error | DetailedError,
+function getRetryableError(err: Error): DetailedError | null {
+  if (err instanceof DetailedError && err.originalRequest != null) {
+    return err
+  }
+
+  return null
+}
+
+function shouldRetryByPolicy(
+  err: DetailedError,
   retryAttempt: number,
   options: UploadOptions,
 ): boolean {
-  // We only attempt a retry if
-  // - retryDelays option is set
-  // - we didn't exceed the maxium number of retries, yet, and
-  // - this error was caused by a request or it's response and
-  // - the error has a retryable response status, or
-  // a onShouldRetry is specified and returns true
-  // - the browser does not indicate that we are offline
-  const isNetworkError = 'originalRequest' in err && err.originalRequest != null
-  if (
-    options.retryDelays == null ||
-    retryAttempt >= options.retryDelays.length ||
-    !isNetworkError
-  ) {
-    return false
-  }
-
-  if (options && typeof options.onShouldRetry === 'function') {
+  if (typeof options.onShouldRetry === 'function') {
     return options.onShouldRetry(err, retryAttempt, options)
   }
 
@@ -1173,21 +1166,38 @@ export async function terminate(url: string, options: UploadOptions): Promise<vo
         ? err
         : new DetailedError('tus: failed to terminate upload', err, req)
 
-    if (!shouldRetry(detailedErr, 0, options)) {
+    const retryableErr = getRetryableError(detailedErr)
+    const retryDelays = options.retryDelays ?? null
+    let retryPlan = tusPlanRetryAfterError({
+      isNetworkError: retryableErr != null,
+      offset: 0,
+      offsetBeforeRetry: 0,
+      retryAttempt: 0,
+      retryDelays,
+    })
+
+    if (retryPlan.action === 'evaluatePolicy' && retryableErr != null) {
+      retryPlan = tusPlanRetryAfterError({
+        isNetworkError: true,
+        offset: 0,
+        offsetBeforeRetry: 0,
+        retryAttempt: retryPlan.retryAttempt,
+        retryDelays,
+        shouldRetry: shouldRetryByPolicy(retryableErr, retryPlan.retryAttempt, options),
+      })
+    }
+
+    if (retryPlan.action !== 'retry') {
       throw detailedErr
     }
 
-    // Instead of keeping track of the retry attempts, we remove the first element from the delays
-    // array. If the array is empty, all retry attempts are used up and we will bubble up the error.
-    // We recursively call the terminate function will removing elements from the retryDelays array.
-    const delay = options.retryDelays[0]
-    const remainingDelays = options.retryDelays.slice(1)
+    const remainingDelays = retryDelays?.slice(retryPlan.nextRetryAttempt) ?? []
     const newOptions = {
       ...options,
       retryDelays: remainingDelays,
     }
 
-    await wait(delay)
+    await wait(retryPlan.delay)
     await terminate(url, newOptions)
   }
 }
