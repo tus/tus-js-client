@@ -271,6 +271,19 @@ export type TusResumeResponseStatusPlan =
     }
   | { action: 'readOffset' }
 
+export type TusResumeOffsetResponsePlan =
+  | {
+      action: 'continue'
+      length: number | null
+      offset: number
+      uploadLengthDeferred: boolean
+    }
+  | {
+      action: 'fail'
+      message: string
+      reason: 'invalidLength' | 'invalidOffset' | 'missingOffset' | 'unexpectedStatus'
+    }
+
 export type TusCreateUploadValidationResult =
   | { ok: false; message: string; reason: 'missingEndpoint' | 'missingSize' }
   | { ok: true }
@@ -302,6 +315,10 @@ export type TusUploadChunkResponsePlan =
       message: string
       reason: 'invalidOffset' | 'missingOffset' | 'unexpectedStatus'
     }
+
+export type TusTerminateResponsePlan =
+  | { action: 'complete' }
+  | { action: 'fail'; message: string; reason: 'unexpectedStatus' }
 
 function tusFormatFlowMessage(template: string, values: Record<string, string | number>): string {
   let message = template
@@ -535,6 +552,51 @@ export function tusPlanResumeResponseStatus({
   return { action: 'create', removeStoredUpload }
 }
 
+export function tusPlanResumeOffsetResponse({
+  response,
+}: {
+  response: TusUploadOffsetResponseReadResult
+}): TusResumeOffsetResponsePlan {
+  if (!response.ok && response.reason === 'unexpectedStatus') {
+    return {
+      action: 'fail',
+      message: TUS_FLOW_POLICY.messages.unexpectedResumeResponse,
+      reason: response.reason,
+    }
+  }
+
+  if (!response.ok && response.reason === 'missingOffset') {
+    return {
+      action: 'fail',
+      message: TUS_FLOW_POLICY.messages.missingResumeOffset,
+      reason: response.reason,
+    }
+  }
+
+  if (!response.ok && response.reason === 'invalidOffset') {
+    return {
+      action: 'fail',
+      message: TUS_FLOW_POLICY.messages.invalidResumeOffset,
+      reason: response.reason,
+    }
+  }
+
+  if (!response.ok) {
+    return {
+      action: 'fail',
+      message: TUS_FLOW_POLICY.messages.invalidResumeLength,
+      reason: response.reason,
+    }
+  }
+
+  return {
+    action: 'continue',
+    length: response.length,
+    offset: response.offset,
+    uploadLengthDeferred: response.uploadLengthDeferred,
+  }
+}
+
 export function tusUploadIsCompleteAfterOffset({
   length,
   offset,
@@ -721,6 +783,18 @@ export function tusShouldRetryStatus(status: number): boolean {
   return (
     !tusIsClientErrorStatus(status) || TUS_RETRY_POLICY.retryableClientStatusCodes.includes(status)
   )
+}
+
+export function tusPlanTerminateResponse({ status }: { status: number }): TusTerminateResponsePlan {
+  if (tusExpectedResponseStatusForOperation(TUS_OPERATION_IDS.TERMINATE_TUS_UPLOAD, status)) {
+    return { action: 'complete' }
+  }
+
+  return {
+    action: 'fail',
+    message: TUS_FLOW_POLICY.messages.unexpectedTerminateResponse,
+    reason: 'unexpectedStatus',
+  }
 }
 
 export function tusExpectedResponseStatusForOperation(

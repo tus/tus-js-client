@@ -22,13 +22,14 @@ import {
   tusCreateUploadCompleteValue,
   tusCreateUploadRequestPlan,
   tusDeferredUploadLengthPlan,
-  tusExpectedResponseStatusForOperation,
   tusFinalUploadRequestPlan,
   tusGetUploadOffsetRequestPlan,
   tusPartialUploadHeaders,
   tusPatchUploadRequestPlan,
+  tusPlanResumeOffsetResponse,
   tusPlanResumeResponseStatus,
   tusPlanSingleUploadStart,
+  tusPlanTerminateResponse,
   tusPlanUploadChunkResponse,
   tusPlanUploadCompletionAfterOffset,
   tusPlanUploadCreationResponse,
@@ -711,27 +712,16 @@ export class BaseUpload {
       protocol: this.options.protocol,
       status,
     })
-    if (!offsetResponse.ok && offsetResponse.reason === 'unexpectedStatus') {
-      throw new DetailedError(
-        TUS_FLOW_POLICY.messages.unexpectedResumeResponse,
-        undefined,
-        req,
-        res,
-      )
-    }
-    if (!offsetResponse.ok && offsetResponse.reason === 'missingOffset') {
-      throw new DetailedError(TUS_FLOW_POLICY.messages.missingResumeOffset, undefined, req, res)
-    }
-    if (!offsetResponse.ok && offsetResponse.reason === 'invalidOffset') {
-      throw new DetailedError(TUS_FLOW_POLICY.messages.invalidResumeOffset, undefined, req, res)
-    }
-    if (!offsetResponse.ok) {
-      throw new DetailedError(TUS_FLOW_POLICY.messages.invalidResumeLength, undefined, req, res)
+    const offsetResponsePlan = tusPlanResumeOffsetResponse({
+      response: offsetResponse,
+    })
+    if (offsetResponsePlan.action === 'fail') {
+      throw new DetailedError(offsetResponsePlan.message, undefined, req, res)
     }
 
-    const offset = offsetResponse.offset
-    const length = offsetResponse.length
-    this._uploadLengthDeferred = offsetResponse.uploadLengthDeferred
+    const offset = offsetResponsePlan.offset
+    const length = offsetResponsePlan.length
+    this._uploadLengthDeferred = offsetResponsePlan.uploadLengthDeferred
 
     if (typeof this.options.onUploadUrlAvailable === 'function') {
       await this.options.onUploadUrlAvailable()
@@ -1167,16 +1157,12 @@ export async function terminate(url: string, options: UploadOptions): Promise<vo
 
   try {
     const res = await sendRequest(req, undefined, options)
-    if (tusExpectedResponseStatusForOperation(plan.operationId, res.getStatus())) {
+    const responsePlan = tusPlanTerminateResponse({ status: res.getStatus() })
+    if (responsePlan.action === 'complete') {
       return
     }
 
-    throw new DetailedError(
-      TUS_FLOW_POLICY.messages.unexpectedTerminateResponse,
-      undefined,
-      req,
-      res,
-    )
+    throw new DetailedError(responsePlan.message, undefined, req, res)
   } catch (err) {
     if (!(err instanceof Error)) {
       throw new Error(`tus: value thrown that is not an error: ${err}`)
