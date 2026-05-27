@@ -459,6 +459,29 @@ export const tusClientFeatures = [
   },
   {
     conformance: {
+      scenarioIds: ['uploadBodyHeaders'],
+      status: 'covered-by-generated-scenario',
+    },
+    description:
+      'Send protocol-specific upload body headers whenever the client transmits file bytes.',
+    featureId: 'uploadBodyHeaders',
+    flow: [
+      {
+        kind: 'primitive',
+        primitive: 'send-upload-body-headers',
+        summary: 'Attach the protocol-specific upload body content type when a request has bytes.',
+      },
+      {
+        kind: 'operation',
+        operationId: 'patchTusUpload',
+        summary: 'Upload bytes with the protocol-specific body headers.',
+      },
+    ],
+    operationIds: ['createTusUpload', 'patchTusUpload'],
+    primitives: ['send-upload-body-headers'],
+  },
+  {
+    conformance: {
       scenarioIds: ['overridePatchMethod'],
       status: 'covered-by-generated-scenario',
     },
@@ -874,6 +897,55 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'creationWithUpload',
+  },
+  {
+    behavior: 'upload-body-headers',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/upload-body-headers-contract',
+    },
+    featureId: 'uploadBodyHeaders',
+    input: {
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      kind: 'blob',
+      metadata: {
+        filename: 'hello.txt',
+      },
+    },
+    operationIds: ['createTusUpload', 'patchTusUpload'],
+    primitives: ['send-upload-body-headers'],
+    requests: [
+      {
+        headers: {
+          'Upload-Length': '11',
+        },
+        operationId: 'createTusUpload',
+        response: {
+          headers: {
+            Location: 'https://tus.io/uploads/upload-body-headers-contract',
+          },
+          statusCode: 201,
+        },
+        url: 'endpoint',
+      },
+      {
+        bodySize: 11,
+        headers: {
+          'Content-Type': 'application/offset+octet-stream',
+          'Upload-Offset': '0',
+        },
+        operationId: 'patchTusUpload',
+        response: {
+          headers: {
+            'Upload-Offset': '11',
+          },
+          statusCode: 204,
+        },
+        url: 'upload',
+      },
+    ],
+    scenarioId: 'uploadBodyHeaders',
   },
   {
     behavior: 'resume-from-previous-upload',

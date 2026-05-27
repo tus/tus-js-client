@@ -109,7 +109,7 @@ export const TUS_PROTOCOL_REQUEST_HEADERS: Record<string, Record<string, string>
   },
 }
 
-export const TUS_PROTOCOL_CHUNK_CONTENT_TYPES: Record<string, string> = {
+export const TUS_PROTOCOL_UPLOAD_BODY_CONTENT_TYPES: Record<string, string> = {
   'ietf-draft-05': 'application/partial-upload',
   'tus-v1': 'application/offset+octet-stream',
 }
@@ -162,6 +162,10 @@ export const TUS_RETRY_POLICY = {
   lockedStatusCode: 423,
   retryableClientStatusCodes: [409, 423],
   successStatusCategory: 200,
+}
+
+export const TUS_UPLOAD_BODY = {
+  contentTypeHeaderName: 'Content-Type',
 }
 
 export const TUS_FLOW_POLICY = {
@@ -684,8 +688,8 @@ export function tusSupportsProtocol(protocol: string): boolean {
   return TUS_SUPPORTED_PROTOCOLS.includes(protocol)
 }
 
-export function tusChunkContentTypeForProtocol(protocol: string): string | undefined {
-  return TUS_PROTOCOL_CHUNK_CONTENT_TYPES[protocol]
+export function tusUploadBodyContentTypeForProtocol(protocol: string): string | undefined {
+  return TUS_PROTOCOL_UPLOAD_BODY_CONTENT_TYPES[protocol]
 }
 
 export function tusUploadCompleteHeaderForProtocol(
@@ -815,10 +819,10 @@ export function tusUploadBodyHeaders({
   done: boolean
   protocol: string
 }): Record<string, string> {
-  const contentType = tusChunkContentTypeForProtocol(protocol)
+  const contentType = tusUploadBodyContentTypeForProtocol(protocol)
 
   return {
-    ...(contentType ? { [TUS_HEADERS.CONTENT_TYPE]: contentType } : {}),
+    ...(contentType ? { [TUS_UPLOAD_BODY.contentTypeHeaderName]: contentType } : {}),
     ...tusUploadCompleteHeaders({ done, protocol }),
   }
 }

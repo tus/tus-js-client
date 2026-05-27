@@ -315,6 +315,7 @@ describe('generated TUS protocol contract', () => {
     expect(tusClientConformanceScenarios.map((scenario) => scenario.scenarioId)).toEqual([
       'singleUploadLifecycle',
       'creationWithUpload',
+      'uploadBodyHeaders',
       'resumeFromPreviousUpload',
       'deferredLengthUpload',
       'overridePatchMethod',
