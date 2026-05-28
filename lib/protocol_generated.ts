@@ -178,6 +178,13 @@ export const TUS_UPLOAD_BODY = {
 }
 
 export const TUS_FLOW_POLICY = {
+  eventHooks: {
+    uploadUrlAvailable: {
+      createUpload: 'after-url-known-before-storage',
+      parallelFinalUpload: 'not-emitted',
+      resumeUpload: 'after-url-known-before-storage',
+    },
+  },
   fileSources: {
     commonTypes: [
       'File',
@@ -535,6 +542,15 @@ export interface TusRequestLifecycleHookPlan {
   beforeRequestHook: boolean
 }
 
+export type TusUploadUrlAvailableHookContext =
+  | 'createUpload'
+  | 'parallelFinalUpload'
+  | 'resumeUpload'
+
+export interface TusUploadUrlAvailableHookPlan {
+  shouldCall: boolean
+}
+
 export type TusFileSourceChunkSizeValidationResult =
   | { chunkSize: number; ok: true }
   | { message: string; ok: false; reason: 'missingFiniteChunkSize' }
@@ -855,6 +871,38 @@ export function tusDefaultRetryPolicyDecision({
   tusAssertRequestLifecyclePolicySupported()
 
   return tusShouldRetryStatus(status) && isOnline
+}
+
+function tusAssertUploadUrlAvailableHookPolicySupported(): void {
+  const policy = TUS_FLOW_POLICY.eventHooks.uploadUrlAvailable
+
+  if (policy.createUpload !== 'after-url-known-before-storage') {
+    throw new Error(`tus: unsupported create upload URL hook policy ${policy.createUpload}`)
+  }
+
+  if (policy.resumeUpload !== 'after-url-known-before-storage') {
+    throw new Error(`tus: unsupported resume upload URL hook policy ${policy.resumeUpload}`)
+  }
+
+  if (policy.parallelFinalUpload !== 'not-emitted') {
+    throw new Error(
+      `tus: unsupported parallel final upload URL hook policy ${policy.parallelFinalUpload}`,
+    )
+  }
+}
+
+export function tusPlanUploadUrlAvailableHook({
+  context,
+  hasHook,
+}: {
+  context: TusUploadUrlAvailableHookContext
+  hasHook: boolean
+}): TusUploadUrlAvailableHookPlan {
+  tusAssertUploadUrlAvailableHookPolicySupported()
+
+  return {
+    shouldCall: hasHook && TUS_FLOW_POLICY.eventHooks.uploadUrlAvailable[context] !== 'not-emitted',
+  }
 }
 
 export function tusCommonSupportedFileSourceTypes(): readonly string[] {

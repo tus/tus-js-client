@@ -15,6 +15,7 @@ import type {
 } from './options.js'
 import {
   type TusRequestPlan,
+  type TusUploadUrlAvailableHookContext,
   tusCheckConfiguredUploadSize,
   tusChunkEnd,
   tusCreateUploadRequestPlan,
@@ -50,6 +51,7 @@ import {
   tusPlanUploadCreationRequest,
   tusPlanUploadCreationResponse,
   tusPlanUploadStorage,
+  tusPlanUploadUrlAvailableHook,
   tusReadUploadChunkResponse,
   tusReadUploadCreationResponse,
   tusReadUploadOffsetResponse,
@@ -554,6 +556,17 @@ export class BaseUpload {
     }
   }
 
+  private async _emitUploadUrlAvailable(context: TusUploadUrlAvailableHookContext): Promise<void> {
+    const hookPlan = tusPlanUploadUrlAvailableHook({
+      context,
+      hasHook: typeof this.options.onUploadUrlAvailable === 'function',
+    })
+
+    if (hookPlan.shouldCall && typeof this.options.onUploadUrlAvailable === 'function') {
+      await this.options.onUploadUrlAvailable()
+    }
+  }
+
   /**
    * Create a new upload using the creation extension by sending a POST
    * request to the endpoint. After successful creation the file will be
@@ -624,9 +637,7 @@ export class BaseUpload {
     })
     log(tusPlanCreatedUploadLog({ uploadUrl: this.url }).message)
 
-    if (typeof this.options.onUploadUrlAvailable === 'function') {
-      await this.options.onUploadUrlAvailable()
-    }
+    await this._emitUploadUrlAvailable('createUpload')
 
     if (creationResponsePlan.action === 'complete') {
       // Nothing to upload and file was successfully created
@@ -712,9 +723,7 @@ export class BaseUpload {
     const length = offsetResponsePlan.length
     this._uploadLengthDeferred = offsetResponsePlan.uploadLengthDeferred
 
-    if (typeof this.options.onUploadUrlAvailable === 'function') {
-      await this.options.onUploadUrlAvailable()
-    }
+    await this._emitUploadUrlAvailable('resumeUpload')
 
     await this._saveUploadInUrlStorage()
 
