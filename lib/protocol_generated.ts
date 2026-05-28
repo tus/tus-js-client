@@ -386,6 +386,9 @@ export const TUS_FLOW_POLICY = {
     retry: {
       customDecision: 'custom-callback-before-default-decision',
       defaultDecision: 'retryable-status-and-online',
+      error: {
+        retryableWhen: 'request-context-present',
+      },
       evaluationTrigger: 'generated-plan-evaluate-policy',
       onlineSignal: {
         defaultWhenUnavailable: true,
@@ -1041,6 +1044,10 @@ function tusAssertRequestLifecyclePolicySupported(): void {
     throw new Error(`tus: unsupported default retry decision ${policy.retry.defaultDecision}`)
   }
 
+  if (policy.retry.error.retryableWhen !== 'request-context-present') {
+    throw new Error(`tus: unsupported retryable error policy ${policy.retry.error.retryableWhen}`)
+  }
+
   if (policy.retry.onlineSignal.source !== 'sdk-platform-online-status') {
     throw new Error(`tus: unsupported retry online signal ${policy.retry.onlineSignal.source}`)
   }
@@ -1090,6 +1097,16 @@ export function tusShouldEvaluateRetryPolicy({
   tusAssertRequestLifecyclePolicySupported()
 
   return retryPlanAction === 'evaluatePolicy' && hasRetryableError
+}
+
+export function tusShouldTreatRequestErrorAsRetryable({
+  hasRequestContext,
+}: {
+  hasRequestContext: boolean
+}): boolean {
+  tusAssertRequestLifecyclePolicySupported()
+
+  return hasRequestContext
 }
 
 export function tusShouldUseCustomRetryPolicy({

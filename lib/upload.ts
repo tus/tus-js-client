@@ -59,6 +59,7 @@ import {
   tusShouldEvaluateRetryPolicy,
   tusShouldRemoveStoredUploadOnSuccess,
   tusShouldSendUploadBodyDuringCreation,
+  tusShouldTreatRequestErrorAsRetryable,
   tusShouldUseCustomRetryPolicy,
   tusTerminateUploadRequestPlan,
   tusUploadBodyHeaders,
@@ -1064,7 +1065,10 @@ function isOnline(): boolean {
  * Extract errors that originated from a request. Only these can safely be retried.
  */
 function getRetryableError(err: Error): DetailedError | null {
-  if (err instanceof DetailedError && err.originalRequest != null) {
+  if (
+    err instanceof DetailedError &&
+    tusShouldTreatRequestErrorAsRetryable({ hasRequestContext: err.originalRequest != null })
+  ) {
     return err
   }
 
