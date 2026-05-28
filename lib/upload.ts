@@ -19,6 +19,7 @@ import {
   tusChunkEnd,
   tusCreateUploadRequestPlan,
   tusDefaultClientOptions,
+  tusDefaultRetryPolicyDecision,
   tusDeferredUploadLengthPlan,
   tusFinalUploadRequestPlan,
   tusGetUploadOffsetRequestPlan,
@@ -35,6 +36,7 @@ import {
   tusPlanPreparedUploadSize,
   tusPlanRemovedResumeOptionWarning,
   tusPlanRequestHeaders,
+  tusPlanRequestLifecycleHooks,
   tusPlanResumeOffsetResponse,
   tusPlanResumeResponseStatus,
   tusPlanResumeUploadRequest,
@@ -52,8 +54,9 @@ import {
   tusReadUploadCreationResponse,
   tusReadUploadOffsetResponse,
   tusResolveUploadLocation,
-  tusShouldRetryStatus,
+  tusShouldEvaluateRetryPolicy,
   tusShouldSendUploadBodyDuringCreation,
+  tusShouldUseCustomRetryPolicy,
   tusTerminateUploadRequestPlan,
   tusUploadBodyHeaders,
   tusUploadLengthHeaders,
@@ -471,7 +474,13 @@ export class BaseUpload {
     })
     this._retryAttempt = retryPlan.retryAttempt
 
-    if (retryPlan.action === 'evaluatePolicy' && retryableErr != null) {
+    if (
+      tusShouldEvaluateRetryPolicy({
+        hasRetryableError: retryableErr != null,
+        retryPlanAction: retryPlan.action,
+      }) &&
+      retryableErr != null
+    ) {
       retryPlan = tusPlanRetryAfterError({
         ...retryInput,
         retryAttempt: retryPlan.retryAttempt,
@@ -992,13 +1001,18 @@ async function sendRequest(
   body: SliceType | undefined,
   options: UploadOptions,
 ): Promise<HttpResponse> {
-  if (typeof options.onBeforeRequest === 'function') {
+  const lifecyclePlan = tusPlanRequestLifecycleHooks({
+    hasAfterResponseHook: typeof options.onAfterResponse === 'function',
+    hasBeforeRequestHook: typeof options.onBeforeRequest === 'function',
+  })
+
+  if (lifecyclePlan.beforeRequestHook && typeof options.onBeforeRequest === 'function') {
     await options.onBeforeRequest(req)
   }
 
   const res = await req.send(body)
 
-  if (typeof options.onAfterResponse === 'function') {
+  if (lifecyclePlan.afterResponseHook && typeof options.onAfterResponse === 'function') {
     await options.onAfterResponse(req, res)
   }
 
@@ -1040,7 +1054,12 @@ function shouldRetryByPolicy(
   retryAttempt: number,
   options: UploadOptions,
 ): boolean {
-  if (typeof options.onShouldRetry === 'function') {
+  if (
+    tusShouldUseCustomRetryPolicy({
+      hasCustomRetryPolicy: typeof options.onShouldRetry === 'function',
+    }) &&
+    typeof options.onShouldRetry === 'function'
+  ) {
     return options.onShouldRetry(err, retryAttempt, options)
   }
 
@@ -1054,7 +1073,7 @@ function shouldRetryByPolicy(
  */
 function defaultOnShouldRetry(err: DetailedError): boolean {
   const status = err.originalResponse ? err.originalResponse.getStatus() : 0
-  return tusShouldRetryStatus(status) && isOnline()
+  return tusDefaultRetryPolicyDecision({ isOnline: isOnline(), status })
 }
 
 /**
@@ -1119,7 +1138,13 @@ export async function terminate(url: string, options: UploadOptions): Promise<vo
       retryDelays,
     })
 
-    if (retryPlan.action === 'evaluatePolicy' && retryableErr != null) {
+    if (
+      tusShouldEvaluateRetryPolicy({
+        hasRetryableError: retryableErr != null,
+        retryPlanAction: retryPlan.action,
+      }) &&
+      retryableErr != null
+    ) {
       retryPlan = tusPlanRetryAfterError({
         isNetworkError: true,
         offset: 0,

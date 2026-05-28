@@ -294,6 +294,19 @@ export const TUS_FLOW_POLICY = {
     layers: ['operation', 'custom', 'request-id'],
     requestIdSource: 'sdk-generated-uuid',
   },
+  requestLifecycle: {
+    hooks: {
+      afterResponse: 'after-successful-transport-response',
+      beforeRequest: 'before-transport-send',
+    },
+    retry: {
+      customDecision: 'custom-callback-before-default-decision',
+      defaultDecision: 'retryable-status-and-online',
+      evaluationTrigger: 'generated-plan-evaluate-policy',
+      onlineSignal: 'sdk-platform-online-status',
+      timer: 'sdk-platform-timer',
+    },
+  },
   urlStorage: {
     namespace: 'tus',
     separator: '::',
@@ -515,6 +528,11 @@ export interface TusClientDefaultOptions {
   storeFingerprintForResuming: boolean
   uploadDataDuringCreation: boolean
   uploadLengthDeferred: boolean
+}
+
+export interface TusRequestLifecycleHookPlan {
+  afterResponseHook: boolean
+  beforeRequestHook: boolean
 }
 
 export type TusFileSourceChunkSizeValidationResult =
@@ -756,6 +774,87 @@ export function tusResolveUploadLocation({
   }
 
   return resolveRelativeUrl(requestUrl, location)
+}
+
+function tusAssertRequestLifecyclePolicySupported(): void {
+  const policy = TUS_FLOW_POLICY.requestLifecycle
+
+  if (policy.hooks.beforeRequest !== 'before-transport-send') {
+    throw new Error(`tus: unsupported before-request hook policy ${policy.hooks.beforeRequest}`)
+  }
+
+  if (policy.hooks.afterResponse !== 'after-successful-transport-response') {
+    throw new Error(`tus: unsupported after-response hook policy ${policy.hooks.afterResponse}`)
+  }
+
+  if (policy.retry.evaluationTrigger !== 'generated-plan-evaluate-policy') {
+    throw new Error(`tus: unsupported retry policy trigger ${policy.retry.evaluationTrigger}`)
+  }
+
+  if (policy.retry.customDecision !== 'custom-callback-before-default-decision') {
+    throw new Error(`tus: unsupported custom retry decision ${policy.retry.customDecision}`)
+  }
+
+  if (policy.retry.defaultDecision !== 'retryable-status-and-online') {
+    throw new Error(`tus: unsupported default retry decision ${policy.retry.defaultDecision}`)
+  }
+
+  if (policy.retry.onlineSignal !== 'sdk-platform-online-status') {
+    throw new Error(`tus: unsupported retry online signal ${policy.retry.onlineSignal}`)
+  }
+
+  if (policy.retry.timer !== 'sdk-platform-timer') {
+    throw new Error(`tus: unsupported retry timer policy ${policy.retry.timer}`)
+  }
+}
+
+export function tusPlanRequestLifecycleHooks({
+  hasAfterResponseHook,
+  hasBeforeRequestHook,
+}: {
+  hasAfterResponseHook: boolean
+  hasBeforeRequestHook: boolean
+}): TusRequestLifecycleHookPlan {
+  tusAssertRequestLifecyclePolicySupported()
+
+  return {
+    afterResponseHook: hasAfterResponseHook,
+    beforeRequestHook: hasBeforeRequestHook,
+  }
+}
+
+export function tusShouldEvaluateRetryPolicy({
+  hasRetryableError,
+  retryPlanAction,
+}: {
+  hasRetryableError: boolean
+  retryPlanAction: TusRetryAfterErrorPlan['action']
+}): boolean {
+  tusAssertRequestLifecyclePolicySupported()
+
+  return retryPlanAction === 'evaluatePolicy' && hasRetryableError
+}
+
+export function tusShouldUseCustomRetryPolicy({
+  hasCustomRetryPolicy,
+}: {
+  hasCustomRetryPolicy: boolean
+}): boolean {
+  tusAssertRequestLifecyclePolicySupported()
+
+  return hasCustomRetryPolicy
+}
+
+export function tusDefaultRetryPolicyDecision({
+  isOnline,
+  status,
+}: {
+  isOnline: boolean
+  status: number
+}): boolean {
+  tusAssertRequestLifecyclePolicySupported()
+
+  return tusShouldRetryStatus(status) && isOnline
 }
 
 export function tusCommonSupportedFileSourceTypes(): readonly string[] {
