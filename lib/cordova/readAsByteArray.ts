@@ -1,3 +1,5 @@
+import { tusCordovaInvalidArrayBufferResultMessage } from '../protocol_generated.js'
+
 /**
  * readAsByteArray converts a File/Blob object to a Uint8Array.
  * This function is only used on the Apache Cordova platform.
@@ -10,7 +12,11 @@ export function readAsByteArray(chunk: Blob): Promise<Uint8Array> {
     const reader = new FileReader()
     reader.onload = () => {
       if (!(reader.result instanceof ArrayBuffer)) {
-        reject(new Error(`invalid result types for readAsArrayBuffer: ${typeof reader.result}`))
+        reject(
+          new Error(
+            tusCordovaInvalidArrayBufferResultMessage({ resultType: typeof reader.result }),
+          ),
+        )
         return
       }
       const value = new Uint8Array(reader.result)

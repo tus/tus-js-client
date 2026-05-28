@@ -218,6 +218,7 @@ export const TUS_FLOW_POLICY = {
       'ReadableStream (Web Streams)',
     ],
     messages: {
+      cordovaInvalidArrayBufferResult: 'invalid result types for readAsArrayBuffer: {resultType}',
       nodeStreamBackwardsRead: 'cannot slice from position which we already seeked away',
       nodeStreamChunkSizeRequired:
         'cannot create source for stream without a finite value for the `chunkSize` option; specify a chunkSize to control the memory consumption',
@@ -1281,6 +1282,19 @@ export function tusNodeStreamBackwardsReadMessage(): string {
 
 export function tusNodeStreamStartOutsideBufferMessage(): string {
   return TUS_FLOW_POLICY.fileSources.messages.nodeStreamStartOutsideBuffer
+}
+
+export function tusCordovaInvalidArrayBufferResultMessage({
+  resultType,
+}: {
+  resultType: string
+}): string {
+  return tusFormatFlowMessage(
+    TUS_FLOW_POLICY.fileSources.messages.cordovaInvalidArrayBufferResult,
+    {
+      resultType,
+    },
+  )
 }
 
 function tusAssertHttpStackPolicySupported(): void {
