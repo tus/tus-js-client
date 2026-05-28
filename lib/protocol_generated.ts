@@ -207,6 +207,12 @@ export const TUS_FLOW_POLICY = {
     unsupportedProtocolPrefix: 'tus: unsupported protocol ',
   },
   minimumParallelUploads: 2,
+  parallelPartialUpload: {
+    headerKind: 'partial-upload',
+    metadataSource: 'metadataForPartialUploads',
+    nestedParallelUploads: 'disabled',
+    urlStorage: 'parent-managed',
+  },
   parallelUploadSplit: {
     strategy: 'contiguous-floor-size-last-remainder',
   },
@@ -308,6 +314,16 @@ export type TusParallelUploadPart = TusParallelUploadBoundary & { uploadUrl: str
 export type TusParallelUploadPartsPlan =
   | { ok: false; message: string; reason: 'missingSize' }
   | { ok: true; parts: TusParallelUploadPart[]; totalSize: number }
+
+export interface TusParallelPartialUploadOptionsPlan {
+  headers: Record<string, string>
+  metadata: Record<string, string>
+  parallelUploadBoundaries: null
+  parallelUploads: number
+  removeFingerprintOnSuccess: boolean
+  storeFingerprintForResuming: boolean
+  uploadUrl: string | null
+}
 
 export type TusDeferredUploadLengthPlan =
   | { shouldDeclareLength: false }
@@ -625,6 +641,53 @@ export function tusPlanParallelUploadParts({
       uploadUrl: parallelUploadUrls?.[index] || null,
     })),
     totalSize: size,
+  }
+}
+
+function tusAssertParallelPartialUploadPolicySupported(): void {
+  const policy = TUS_FLOW_POLICY.parallelPartialUpload
+
+  if (policy.headerKind !== 'partial-upload') {
+    throw new Error(`tus: unsupported partial upload header kind ${policy.headerKind}`)
+  }
+
+  if (policy.metadataSource !== 'metadataForPartialUploads') {
+    throw new Error(`tus: unsupported partial upload metadata source ${policy.metadataSource}`)
+  }
+
+  if (policy.nestedParallelUploads !== 'disabled') {
+    throw new Error(
+      `tus: unsupported nested parallel upload policy ${policy.nestedParallelUploads}`,
+    )
+  }
+
+  if (policy.urlStorage !== 'parent-managed') {
+    throw new Error(`tus: unsupported partial upload URL storage policy ${policy.urlStorage}`)
+  }
+}
+
+export function tusPlanParallelPartialUploadOptions({
+  headers,
+  metadataForPartialUploads,
+  uploadUrl,
+}: {
+  headers: Record<string, string>
+  metadataForPartialUploads: Record<string, string>
+  uploadUrl: string | null
+}): TusParallelPartialUploadOptionsPlan {
+  tusAssertParallelPartialUploadPolicySupported()
+
+  return {
+    headers: {
+      ...headers,
+      ...tusPartialUploadHeaders(),
+    },
+    metadata: metadataForPartialUploads,
+    parallelUploadBoundaries: null,
+    parallelUploads: 1,
+    removeFingerprintOnSuccess: false,
+    storeFingerprintForResuming: false,
+    uploadUrl: uploadUrl || null,
   }
 }
 

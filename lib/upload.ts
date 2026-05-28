@@ -24,8 +24,8 @@ import {
   tusDeferredUploadLengthPlan,
   tusFinalUploadRequestPlan,
   tusGetUploadOffsetRequestPlan,
-  tusPartialUploadHeaders,
   tusPatchUploadRequestPlan,
+  tusPlanParallelPartialUploadOptions,
   tusPlanParallelUploadParts,
   tusPlanPreparedUploadMode,
   tusPlanPreparedUploadSize,
@@ -279,25 +279,15 @@ export class BaseUpload {
       const { value } = await this._source.slice(part.start, part.end)
 
       return new Promise<void>((resolve, reject) => {
-        // Merge with the user supplied options but overwrite some values.
+        const partialUploadOptions = tusPlanParallelPartialUploadOptions({
+          headers: this.options.headers,
+          metadataForPartialUploads: this.options.metadataForPartialUploads,
+          uploadUrl: part.uploadUrl,
+        })
+
         const options = {
           ...this.options,
-          // If available, the partial upload should be resumed from a previous URL.
-          uploadUrl: part.uploadUrl || null,
-          // We take manually care of resuming for partial uploads, so they should
-          // not be stored in the URL storage.
-          storeFingerprintForResuming: false,
-          removeFingerprintOnSuccess: false,
-          // Reset the parallelUploads option to not cause recursion.
-          parallelUploads: 1,
-          // Reset this option as we are not doing a parallel upload.
-          parallelUploadBoundaries: null,
-          metadata: this.options.metadataForPartialUploads,
-          // Add the header to indicate the this is a partial upload.
-          headers: {
-            ...this.options.headers,
-            ...tusPartialUploadHeaders(),
-          },
+          ...partialUploadOptions,
           // Reject or resolve the promise if the upload errors or completes.
           onSuccess: resolve,
           onError: reject,
