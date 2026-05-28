@@ -1,4 +1,9 @@
 import type { PreviousUpload, UrlStorage } from '../options.js'
+import {
+  tusUrlStorageAllUploadsPrefix,
+  tusUrlStorageFingerprintPrefix,
+  tusUrlStorageKey,
+} from '../protocol_generated.js'
 
 let hasStorage = false
 try {
@@ -29,12 +34,12 @@ export const canStoreURLs = hasStorage
 
 export class WebStorageUrlStorage implements UrlStorage {
   findAllUploads(): Promise<PreviousUpload[]> {
-    const results = this._findEntries('tus::')
+    const results = this._findEntries(tusUrlStorageAllUploadsPrefix())
     return Promise.resolve(results)
   }
 
   findUploadsByFingerprint(fingerprint: string): Promise<PreviousUpload[]> {
-    const results = this._findEntries(`tus::${fingerprint}::`)
+    const results = this._findEntries(tusUrlStorageFingerprintPrefix({ fingerprint }))
     return Promise.resolve(results)
   }
 
@@ -45,7 +50,7 @@ export class WebStorageUrlStorage implements UrlStorage {
 
   addUpload(fingerprint: string, upload: PreviousUpload): Promise<string> {
     const id = Math.round(Math.random() * 1e12)
-    const key = `tus::${fingerprint}::${id}`
+    const key = tusUrlStorageKey({ fingerprint, id })
 
     localStorage.setItem(key, JSON.stringify(upload))
     return Promise.resolve(key)

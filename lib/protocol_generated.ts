@@ -231,6 +231,10 @@ export const TUS_FLOW_POLICY = {
   parallelUploadSplit: {
     strategy: 'contiguous-floor-size-last-remainder',
   },
+  urlStorage: {
+    namespace: 'tus',
+    separator: '::',
+  },
 }
 
 export type TusNumericHeaderReadResult =
@@ -592,6 +596,24 @@ export function tusPlanTerminateUploadRequest({
     requestErrorMessage: TUS_FLOW_POLICY.messages.terminateUploadRequestFailed,
     uploadUrl,
   }
+}
+
+export function tusUrlStorageAllUploadsPrefix(): string {
+  return `${TUS_FLOW_POLICY.urlStorage.namespace}${TUS_FLOW_POLICY.urlStorage.separator}`
+}
+
+export function tusUrlStorageFingerprintPrefix({ fingerprint }: { fingerprint: string }): string {
+  return `${tusUrlStorageAllUploadsPrefix()}${fingerprint}${TUS_FLOW_POLICY.urlStorage.separator}`
+}
+
+export function tusUrlStorageKey({
+  fingerprint,
+  id,
+}: {
+  fingerprint: string
+  id: number | string
+}): string {
+  return `${tusUrlStorageFingerprintPrefix({ fingerprint })}${id}`
 }
 
 export function tusValidateCreateUpload({

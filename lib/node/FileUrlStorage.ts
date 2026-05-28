@@ -1,6 +1,11 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { lock } from 'proper-lockfile'
 import type { PreviousUpload, UrlStorage } from '../options.js'
+import {
+  tusUrlStorageAllUploadsPrefix,
+  tusUrlStorageFingerprintPrefix,
+  tusUrlStorageKey,
+} from '../protocol_generated.js'
 
 export const canStoreURLs = true
 
@@ -12,11 +17,11 @@ export class FileUrlStorage implements UrlStorage {
   }
 
   async findAllUploads(): Promise<PreviousUpload[]> {
-    return await this._getItems('tus::')
+    return await this._getItems(tusUrlStorageAllUploadsPrefix())
   }
 
   async findUploadsByFingerprint(fingerprint: string): Promise<PreviousUpload[]> {
-    return await this._getItems(`tus::${fingerprint}`)
+    return await this._getItems(tusUrlStorageFingerprintPrefix({ fingerprint }))
   }
 
   async removeUpload(urlStorageKey: string): Promise<void> {
@@ -25,7 +30,7 @@ export class FileUrlStorage implements UrlStorage {
 
   async addUpload(fingerprint: string, upload: PreviousUpload): Promise<string> {
     const id = Math.round(Math.random() * 1e12)
-    const key = `tus::${fingerprint}::${id}`
+    const key = tusUrlStorageKey({ fingerprint, id })
 
     await this._setItem(key, upload)
     return key
