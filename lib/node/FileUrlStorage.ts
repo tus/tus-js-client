@@ -4,6 +4,7 @@ import type { PreviousUpload, UrlStorage } from '../options.js'
 import {
   tusUrlStorageAllUploadsPrefix,
   tusUrlStorageFingerprintPrefix,
+  tusUrlStorageId,
   tusUrlStorageKey,
 } from '../protocol_generated.js'
 
@@ -29,7 +30,7 @@ export class FileUrlStorage implements UrlStorage {
   }
 
   async addUpload(fingerprint: string, upload: PreviousUpload): Promise<string> {
-    const id = Math.round(Math.random() * 1e12)
+    const id = tusUrlStorageId({ randomValue: Math.random() })
     const key = tusUrlStorageKey({ fingerprint, id })
 
     await this._setItem(key, upload)

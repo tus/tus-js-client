@@ -341,6 +341,14 @@ export const TUS_FLOW_POLICY = {
     },
   },
   urlStorage: {
+    id: {
+      multiplier: 1000000000000,
+      strategy: 'rounded-random-number',
+    },
+    messages: {
+      missingItem: "didn't find item for key {key}",
+      missingKey: "didn't find key for item {index}",
+    },
     namespace: 'tus',
     record: {
       creationTime: 'sdk-current-date-string',
@@ -349,6 +357,11 @@ export const TUS_FLOW_POLICY = {
     },
     removeOnSuccess: 'when-option-enabled',
     separator: '::',
+    webStorage: {
+      malformedEntry: 'ignore',
+      probeKey: 'tusSupport',
+      unavailableDomExceptionNames: ['QuotaExceededError', 'SecurityError'],
+    },
   },
 }
 
@@ -1305,6 +1318,50 @@ export function tusUrlStorageKey({
   id: number | string
 }): string {
   return `${tusUrlStorageFingerprintPrefix({ fingerprint })}${id}`
+}
+
+export function tusUrlStorageId({ randomValue }: { randomValue: number }): number {
+  const policy = TUS_FLOW_POLICY.urlStorage.id
+  if (policy.strategy !== 'rounded-random-number') {
+    throw new Error(`tus: unsupported URL storage ID policy ${policy.strategy}`)
+  }
+
+  return Math.round(randomValue * policy.multiplier)
+}
+
+export function tusWebStorageProbeKey(): string {
+  return TUS_FLOW_POLICY.urlStorage.webStorage.probeKey
+}
+
+export function tusIsWebStorageUnavailableError({
+  domExceptionName,
+}: {
+  domExceptionName: string
+}): boolean {
+  return TUS_FLOW_POLICY.urlStorage.webStorage.unavailableDomExceptionNames.includes(
+    domExceptionName,
+  )
+}
+
+export function tusShouldIgnoreMalformedStoredUpload(): boolean {
+  const policy = TUS_FLOW_POLICY.urlStorage.webStorage.malformedEntry
+  if (policy === 'ignore') {
+    return true
+  }
+
+  throw new Error(`tus: unsupported malformed stored upload policy ${policy}`)
+}
+
+export function tusUrlStorageMissingKeyMessage({ index }: { index: number }): string {
+  return tusFormatFlowMessage(TUS_FLOW_POLICY.urlStorage.messages.missingKey, {
+    index,
+  })
+}
+
+export function tusUrlStorageMissingItemMessage({ key }: { key: string }): string {
+  return tusFormatFlowMessage(TUS_FLOW_POLICY.urlStorage.messages.missingItem, {
+    key,
+  })
 }
 
 function tusAssertUrlStorageRecordPolicySupported(): void {
