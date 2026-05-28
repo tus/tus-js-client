@@ -180,6 +180,13 @@ export const TUS_UPLOAD_BODY = {
 export const TUS_FLOW_POLICY = {
   abort: {
     removeStoredUrlAfterTermination: 'after-successful-termination',
+    sequence: [
+      'mark-aborted',
+      'abort-parallel-uploads',
+      'abort-current-request',
+      'clear-retry-timer',
+      'terminate-upload-if-requested',
+    ],
     terminateUpload: 'when-requested-and-upload-url-known',
   },
   eventHooks: {
@@ -543,9 +550,16 @@ export type TusRemovedResumeOptionWarningPlan =
   | { message: string; shouldWarn: true }
   | { shouldWarn: false }
 
-export type TusAbortTerminationPlan =
-  | { action: 'skip' }
-  | { action: 'terminate'; removeStoredUpload: true; uploadUrl: string }
+export type TusAbortRuntimeAction =
+  | { action: 'abortCurrentRequest' }
+  | { action: 'abortParallelUploads'; shouldTerminate: boolean }
+  | { action: 'clearRetryTimer' }
+  | { action: 'markAborted' }
+  | { action: 'terminateUpload'; removeStoredUpload: true; uploadUrl: string }
+
+export interface TusAbortPlan {
+  actions: TusAbortRuntimeAction[]
+}
 
 export interface TusLogMessagePlan {
   message: string
@@ -905,6 +919,19 @@ export function tusDefaultRetryPolicyDecision({
 
 function tusAssertAbortPolicySupported(): void {
   const policy = TUS_FLOW_POLICY.abort
+  const supportedActions = [
+    'mark-aborted',
+    'abort-parallel-uploads',
+    'abort-current-request',
+    'clear-retry-timer',
+    'terminate-upload-if-requested',
+  ]
+
+  for (const action of policy.sequence) {
+    if (!supportedActions.includes(action)) {
+      throw new Error(`tus: unsupported abort sequence action ${action}`)
+    }
+  }
 
   if (policy.terminateUpload !== 'when-requested-and-upload-url-known') {
     throw new Error(`tus: unsupported abort termination policy ${policy.terminateUpload}`)
@@ -917,24 +944,60 @@ function tusAssertAbortPolicySupported(): void {
   }
 }
 
-export function tusPlanAbortTermination({
+export function tusPlanAbort({
+  hasCurrentRequest,
+  hasParallelUploads,
+  hasRetryTimer,
   shouldTerminate,
   uploadUrl,
 }: {
+  hasCurrentRequest: boolean
+  hasParallelUploads: boolean
+  hasRetryTimer: boolean
   shouldTerminate: boolean
   uploadUrl: string | null
-}): TusAbortTerminationPlan {
+}): TusAbortPlan {
   tusAssertAbortPolicySupported()
 
-  if (!shouldTerminate || uploadUrl == null) {
-    return { action: 'skip' }
+  const actions: TusAbortRuntimeAction[] = []
+  for (const policyAction of TUS_FLOW_POLICY.abort.sequence) {
+    if (policyAction === 'mark-aborted') {
+      actions.push({ action: 'markAborted' })
+      continue
+    }
+
+    if (policyAction === 'abort-parallel-uploads') {
+      if (hasParallelUploads) {
+        actions.push({ action: 'abortParallelUploads', shouldTerminate })
+      }
+      continue
+    }
+
+    if (policyAction === 'abort-current-request') {
+      if (hasCurrentRequest) {
+        actions.push({ action: 'abortCurrentRequest' })
+      }
+      continue
+    }
+
+    if (policyAction === 'clear-retry-timer') {
+      if (hasRetryTimer) {
+        actions.push({ action: 'clearRetryTimer' })
+      }
+      continue
+    }
+
+    if (policyAction === 'terminate-upload-if-requested') {
+      if (shouldTerminate && uploadUrl != null) {
+        actions.push({ action: 'terminateUpload', removeStoredUpload: true, uploadUrl })
+      }
+      continue
+    }
+
+    throw new Error(`tus: unsupported abort sequence action ${policyAction}`)
   }
 
-  return {
-    action: 'terminate',
-    removeStoredUpload: true,
-    uploadUrl,
-  }
+  return { actions }
 }
 
 function tusAssertUploadUrlAvailableHookPolicySupported(): void {

@@ -26,7 +26,7 @@ import {
   tusGetUploadOffsetRequestPlan,
   tusNonErrorThrownValueMessage,
   tusPatchUploadRequestPlan,
-  tusPlanAbortTermination,
+  tusPlanAbort,
   tusPlanCreatedUploadLog,
   tusPlanFinalUploadCreation,
   tusPlanFingerprint,
@@ -422,36 +422,50 @@ export class BaseUpload {
    * @return {Promise} The Promise will be resolved/rejected when the requests finish.
    */
   async abort(shouldTerminate = false): Promise<void> {
-    // Set the aborted flag before any `await`s, so no new requests are started.
-    this._aborted = true
-
-    // Stop any parallel partial uploads, that have been started in _startParallelUploads.
-    if (this._parallelUploads != null) {
-      for (const upload of this._parallelUploads) {
-        await upload.abort(shouldTerminate)
-      }
-    }
-
-    // Stop any current running request.
-    if (this._req != null) {
-      await this._req.abort()
-      // Note: We do not close the file source here, so the user can resume in the future.
-    }
-
-    // Stop any timeout used for initiating a retry.
-    if (this._retryTimeout != null) {
-      clearTimeout(this._retryTimeout)
-      this._retryTimeout = undefined
-    }
-
-    const abortTerminationPlan = tusPlanAbortTermination({
+    const abortPlan = tusPlanAbort({
+      hasCurrentRequest: this._req != null,
+      hasParallelUploads: this._parallelUploads != null,
+      hasRetryTimer: this._retryTimeout != null,
       shouldTerminate,
       uploadUrl: this.url,
     })
-    if (abortTerminationPlan.action === 'terminate') {
-      await terminate(abortTerminationPlan.uploadUrl, this.options)
-      if (abortTerminationPlan.removeStoredUpload) {
-        await this._removeFromUrlStorage()
+
+    for (const action of abortPlan.actions) {
+      if (action.action === 'markAborted') {
+        this._aborted = true
+        continue
+      }
+
+      if (action.action === 'abortParallelUploads') {
+        if (this._parallelUploads != null) {
+          for (const upload of this._parallelUploads) {
+            await upload.abort(action.shouldTerminate)
+          }
+        }
+        continue
+      }
+
+      if (action.action === 'abortCurrentRequest') {
+        if (this._req != null) {
+          await this._req.abort()
+          // Note: We do not close the file source here, so the user can resume in the future.
+        }
+        continue
+      }
+
+      if (action.action === 'clearRetryTimer') {
+        if (this._retryTimeout != null) {
+          clearTimeout(this._retryTimeout)
+          this._retryTimeout = undefined
+        }
+        continue
+      }
+
+      if (action.action === 'terminateUpload') {
+        await terminate(action.uploadUrl, this.options)
+        if (action.removeStoredUpload) {
+          await this._removeFromUrlStorage()
+        }
       }
     }
   }
