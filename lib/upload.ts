@@ -20,6 +20,7 @@ import {
   tusChunkEnd,
   tusCreateUploadRequestPlan,
   tusDefaultClientOptions,
+  tusDefaultRetryOnlineStatus,
   tusDefaultRetryPolicyDecision,
   tusDeferredUploadLengthPlan,
   tusFinalUploadRequestPlan,
@@ -1059,15 +1060,11 @@ async function sendRequest(
  * @api private
  */
 function isOnline(): boolean {
-  let online = true
   // Note: We don't reference `window` here because the navigator object also exists
   // in a Web Worker's context.
   // -disable-next-line no-undef
-  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-    online = false
-  }
-
-  return online
+  const platformOnline = typeof navigator !== 'undefined' ? navigator.onLine : undefined
+  return tusDefaultRetryOnlineStatus({ platformOnline })
 }
 
 /**

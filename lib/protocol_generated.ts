@@ -384,7 +384,11 @@ export const TUS_FLOW_POLICY = {
       customDecision: 'custom-callback-before-default-decision',
       defaultDecision: 'retryable-status-and-online',
       evaluationTrigger: 'generated-plan-evaluate-policy',
-      onlineSignal: 'sdk-platform-online-status',
+      onlineSignal: {
+        defaultWhenUnavailable: true,
+        offlineWhenPlatformOnlineIsFalse: true,
+        source: 'sdk-platform-online-status',
+      },
       timer: 'sdk-platform-timer',
     },
   },
@@ -1021,13 +1025,28 @@ function tusAssertRequestLifecyclePolicySupported(): void {
     throw new Error(`tus: unsupported default retry decision ${policy.retry.defaultDecision}`)
   }
 
-  if (policy.retry.onlineSignal !== 'sdk-platform-online-status') {
-    throw new Error(`tus: unsupported retry online signal ${policy.retry.onlineSignal}`)
+  if (policy.retry.onlineSignal.source !== 'sdk-platform-online-status') {
+    throw new Error(`tus: unsupported retry online signal ${policy.retry.onlineSignal.source}`)
   }
 
   if (policy.retry.timer !== 'sdk-platform-timer') {
     throw new Error(`tus: unsupported retry timer policy ${policy.retry.timer}`)
   }
+}
+
+export function tusDefaultRetryOnlineStatus({
+  platformOnline,
+}: {
+  platformOnline: boolean | undefined
+}): boolean {
+  tusAssertRequestLifecyclePolicySupported()
+
+  const policy = TUS_FLOW_POLICY.requestLifecycle.retry.onlineSignal
+  if (platformOnline === false && policy.offlineWhenPlatformOnlineIsFalse) {
+    return false
+  }
+
+  return policy.defaultWhenUnavailable
 }
 
 export function tusPlanRequestLifecycleHooks({
