@@ -14,11 +14,11 @@ import type {
   UploadOptions,
 } from './options.js'
 import {
-  TUS_DEFAULT_CLIENT_PROTOCOL,
   type TusRequestPlan,
   tusCheckConfiguredUploadSize,
   tusChunkEnd,
   tusCreateUploadRequestPlan,
+  tusDefaultClientOptions,
   tusDeferredUploadLengthPlan,
   tusFinalUploadRequestPlan,
   tusGetUploadOffsetRequestPlan,
@@ -64,8 +64,6 @@ export const defaultOptions = {
   endpoint: undefined,
 
   uploadUrl: undefined,
-  metadata: {},
-  metadataForPartialUploads: {},
   fingerprint: undefined,
   uploadSize: undefined,
 
@@ -75,27 +73,17 @@ export const defaultOptions = {
   onError: undefined,
   onUploadUrlAvailable: undefined,
 
-  overridePatchMethod: false,
-  headers: {},
-  addRequestId: false,
   onBeforeRequest: undefined,
   onAfterResponse: undefined,
   onShouldRetry: defaultOnShouldRetry,
 
-  chunkSize: Number.POSITIVE_INFINITY,
-  retryDelays: [0, 1000, 3000, 5000],
-  parallelUploads: 1,
   parallelUploadBoundaries: undefined,
-  storeFingerprintForResuming: true,
-  removeFingerprintOnSuccess: false,
-  uploadLengthDeferred: false,
-  uploadDataDuringCreation: false,
 
   urlStorage: undefined,
   fileReader: undefined,
   httpStack: undefined,
 
-  protocol: TUS_DEFAULT_CLIENT_PROTOCOL as UploadOptions['protocol'],
+  ...tusDefaultClientOptions(),
 }
 
 export class BaseUpload {

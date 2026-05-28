@@ -262,6 +262,22 @@ export const TUS_FLOW_POLICY = {
     unsupportedProtocolPrefix: 'tus: unsupported protocol ',
   },
   minimumParallelUploads: 2,
+  optionDefaults: {
+    addRequestId: false,
+    chunkSize: {
+      kind: 'unbounded',
+    },
+    headers: {},
+    metadata: {},
+    metadataForPartialUploads: {},
+    overridePatchMethod: false,
+    parallelUploads: 1,
+    removeFingerprintOnSuccess: false,
+    retryDelays: [0, 1000, 3000, 5000],
+    storeFingerprintForResuming: true,
+    uploadDataDuringCreation: false,
+    uploadLengthDeferred: false,
+  },
   parallelPartialUpload: {
     headerKind: 'partial-upload',
     metadataSource: 'metadataForPartialUploads',
@@ -478,6 +494,22 @@ export interface TusLogMessagePlan {
   message: string
 }
 
+export interface TusClientDefaultOptions {
+  addRequestId: boolean
+  chunkSize: number
+  headers: Record<string, string>
+  metadata: Record<string, string>
+  metadataForPartialUploads: Record<string, string>
+  overridePatchMethod: boolean
+  parallelUploads: number
+  protocol: TusClientProtocol
+  removeFingerprintOnSuccess: boolean
+  retryDelays: number[]
+  storeFingerprintForResuming: boolean
+  uploadDataDuringCreation: boolean
+  uploadLengthDeferred: boolean
+}
+
 export type TusFileSourceChunkSizeValidationResult =
   | { chunkSize: number; ok: true }
   | { message: string; ok: false; reason: 'missingFiniteChunkSize' }
@@ -630,6 +662,44 @@ export function tusReactNativeUriBlobFetchFailedMessage({ error }: { error: unkn
   return tusFormatFlowMessage(TUS_FLOW_POLICY.messages.reactNativeUriBlobFetchFailed, {
     error: String(error),
   })
+}
+
+export function tusDefaultChunkSize(): number {
+  const chunkSize = TUS_FLOW_POLICY.optionDefaults.chunkSize
+  if (chunkSize.kind === 'unbounded') {
+    return Number.POSITIVE_INFINITY
+  }
+
+  const bytes = 'value' in chunkSize ? Number(chunkSize.value) : Number.NaN
+  if (chunkSize.kind === 'bytes' && Number.isFinite(bytes)) {
+    return bytes
+  }
+
+  throw new Error(`tus: unsupported default chunk size policy ${JSON.stringify(chunkSize)}`)
+}
+
+export function tusDefaultRetryDelays(): number[] {
+  return [...TUS_FLOW_POLICY.optionDefaults.retryDelays]
+}
+
+export function tusDefaultClientOptions(): TusClientDefaultOptions {
+  const defaults = TUS_FLOW_POLICY.optionDefaults
+
+  return {
+    addRequestId: defaults.addRequestId,
+    chunkSize: tusDefaultChunkSize(),
+    headers: { ...defaults.headers },
+    metadata: { ...defaults.metadata },
+    metadataForPartialUploads: { ...defaults.metadataForPartialUploads },
+    overridePatchMethod: defaults.overridePatchMethod,
+    parallelUploads: defaults.parallelUploads,
+    protocol: TUS_DEFAULT_CLIENT_PROTOCOL,
+    removeFingerprintOnSuccess: defaults.removeFingerprintOnSuccess,
+    retryDelays: tusDefaultRetryDelays(),
+    storeFingerprintForResuming: defaults.storeFingerprintForResuming,
+    uploadDataDuringCreation: defaults.uploadDataDuringCreation,
+    uploadLengthDeferred: defaults.uploadLengthDeferred,
+  }
 }
 
 export function tusCommonSupportedFileSourceTypes(): readonly string[] {
