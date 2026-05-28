@@ -1,6 +1,3 @@
-// TODO: Package url-parse is CommonJS. Can we replace this with a ESM package that
-// provides WHATWG URL? Then we can get rid of @rollup/plugin-commonjs.
-import URL from 'url-parse'
 import { DetailedError } from './DetailedError.js'
 import { log } from './logger.js'
 import type {
@@ -373,7 +370,6 @@ export class BaseUpload {
     this.url = tusResolveUploadLocation({
       location: creationResponsePlan.location,
       requestUrl: finalUploadCreationPlan.endpoint,
-      resolveRelativeUrl,
     })
     log(tusPlanCreatedUploadLog({ uploadUrl: this.url }).message)
 
@@ -657,7 +653,6 @@ export class BaseUpload {
     this.url = tusResolveUploadLocation({
       location: creationResponsePlan.location,
       requestUrl: creationRequestPlan.endpoint,
-      resolveRelativeUrl,
     })
     log(tusPlanCreatedUploadLog({ uploadUrl: this.url }).message)
 
@@ -1096,16 +1091,6 @@ function shouldRetryByPolicy(
 function defaultOnShouldRetry(err: DetailedError): boolean {
   const status = err.originalResponse ? err.originalResponse.getStatus() : 0
   return tusDefaultRetryPolicyDecision({ isOnline: isOnline(), status })
-}
-
-/**
- * Resolve a relative link given the origin as source. For example,
- * if a HTTP request to http://example.com/files/ returns a Location
- * header with the value /upload/abc, the resolved URL will be:
- * http://example.com/upload/abc
- */
-function resolveRelativeUrl(baseUrl: string, relativeOrAbsoluteUrl: string): string {
-  return new URL(relativeOrAbsoluteUrl, baseUrl).toString()
 }
 
 function wait(delay: number) {

@@ -3,6 +3,7 @@
 // belongs in the protocol contract generator so all TUS clients stay in sync.
 
 import { Base64 } from 'js-base64'
+import URL from 'url-parse'
 
 export const TUS_DEFAULT_PROTOCOL_VERSION = '1.0.0'
 
@@ -987,21 +988,23 @@ export function tusPlanRequestHeaders({
   }
 }
 
+export function tusResolveRelativeUrl(baseUrl: string, relativeOrAbsoluteUrl: string): string {
+  return new URL(relativeOrAbsoluteUrl, baseUrl).toString()
+}
+
 export function tusResolveUploadLocation({
   location,
   requestUrl,
-  resolveRelativeUrl,
 }: {
   location: string
   requestUrl: string
-  resolveRelativeUrl: (baseUrl: string, relativeOrAbsoluteUrl: string) => string
 }): string {
   const policy = TUS_FLOW_POLICY.locationResolution
   if (policy.strategy !== 'relative-to-creation-request-url') {
     throw new Error(`tus: unsupported Location resolution strategy ${policy.strategy}`)
   }
 
-  return resolveRelativeUrl(requestUrl, location)
+  return tusResolveRelativeUrl(requestUrl, location)
 }
 
 function tusAssertRequestLifecyclePolicySupported(): void {
