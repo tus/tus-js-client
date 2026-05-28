@@ -227,6 +227,36 @@ export const TUS_FLOW_POLICY = {
     },
     nodeExtraTypes: ['fs.ReadStream (Node.js)', 'stream.Readable (Node.js)'],
   },
+  fingerprints: {
+    browserBlob: {
+      fields: ['prefix', 'name', 'type', 'size', 'lastModified', 'endpoint'],
+      prefix: 'tus-br',
+      separator: '-',
+    },
+    nodeBuffer: {
+      fields: ['prefix', 'contentHash', 'size', 'endpoint'],
+      hashAlgorithm: 'md5',
+      prefix: 'node-buffer',
+      sampleBytes: 65536,
+      separator: '-',
+    },
+    nodeFile: {
+      fields: ['prefix', 'absolutePath', 'size', 'mtimeMs', 'endpoint'],
+      path: 'absolute',
+      prefix: 'node-file',
+      separator: '-',
+    },
+    reactNative: {
+      emptyName: 'noname',
+      emptySize: 'nosize',
+      exifHash: 'javascript-string-hash-code',
+      fields: ['prefix', 'name', 'size', 'exifHash', 'endpoint'],
+      noExif: 'noexif',
+      prefix: 'tus-rn',
+      separator: '/',
+    },
+    unsupportedInput: 'null',
+  },
   httpStacks: {
     browserStackNodeReadableBody: 'unsupported',
     messages: {
@@ -456,6 +486,39 @@ export type TusResumeUploadRequestPlan =
 export type TusFingerprintPlan =
   | { ok: false; message: string; reason: 'missingFingerprint' }
   | { fingerprint: string; ok: true }
+
+export interface TusBrowserBlobFingerprintInput {
+  endpoint: string | undefined
+  lastModified: number | string | undefined
+  name: string | undefined
+  size: number | string | undefined
+  type: string | undefined
+}
+
+export interface TusReactNativeFingerprintInput {
+  endpoint: string | undefined
+  exifJson: string | null
+  name: string | undefined
+  size: string | undefined
+}
+
+export interface TusNodeBufferFingerprintPlan {
+  hashAlgorithm: 'md5'
+  sampleBytes: number
+}
+
+export interface TusNodeBufferFingerprintInput {
+  contentHash: string
+  endpoint: string | undefined
+  size: number
+}
+
+export interface TusNodeFileFingerprintInput {
+  absolutePath: string
+  endpoint: string | undefined
+  mtimeMs: number
+  size: number
+}
 
 export type TusParallelUploadSlicePlan =
   | { ok: false; message: string; reason: 'missingValue' }
@@ -1274,6 +1337,146 @@ export function tusPlanFingerprint({
   }
 
   return { fingerprint, ok: true }
+}
+
+function tusFingerprintPart(value: number | string | null | undefined): string {
+  return value == null ? '' : String(value)
+}
+
+function tusAssertFingerprintFields({
+  actualFields,
+  expectedFields,
+  policyName,
+}: {
+  actualFields: readonly string[]
+  expectedFields: readonly string[]
+  policyName: string
+}): void {
+  if (actualFields.join('|') !== expectedFields.join('|')) {
+    throw new Error(`tus: unsupported ${policyName} fingerprint fields ${actualFields.join('|')}`)
+  }
+}
+
+export function tusBrowserBlobFingerprint({
+  endpoint,
+  lastModified,
+  name,
+  size,
+  type,
+}: TusBrowserBlobFingerprintInput): string {
+  const policy = TUS_FLOW_POLICY.fingerprints.browserBlob
+  tusAssertFingerprintFields({
+    actualFields: policy.fields,
+    expectedFields: ['prefix', 'name', 'type', 'size', 'lastModified', 'endpoint'],
+    policyName: 'browser Blob',
+  })
+
+  return [policy.prefix, name, type, size, lastModified, endpoint]
+    .map(tusFingerprintPart)
+    .join(policy.separator)
+}
+
+export function tusReactNativeExifHash({ exifJson }: { exifJson: string }): number {
+  if (TUS_FLOW_POLICY.fingerprints.reactNative.exifHash !== 'javascript-string-hash-code') {
+    throw new Error(
+      `tus: unsupported React Native EXIF hash policy ${TUS_FLOW_POLICY.fingerprints.reactNative.exifHash}`,
+    )
+  }
+
+  let hash = 0
+  for (let index = 0; index < exifJson.length; index += 1) {
+    hash = (hash << 5) - hash + exifJson.charCodeAt(index)
+    hash |= 0
+  }
+
+  return hash
+}
+
+export function tusReactNativeFingerprint({
+  endpoint,
+  exifJson,
+  name,
+  size,
+}: TusReactNativeFingerprintInput): string {
+  const policy = TUS_FLOW_POLICY.fingerprints.reactNative
+  tusAssertFingerprintFields({
+    actualFields: policy.fields,
+    expectedFields: ['prefix', 'name', 'size', 'exifHash', 'endpoint'],
+    policyName: 'React Native',
+  })
+
+  return [
+    policy.prefix,
+    name || policy.emptyName,
+    size || policy.emptySize,
+    exifJson == null ? policy.noExif : tusReactNativeExifHash({ exifJson }),
+    endpoint,
+  ]
+    .map(tusFingerprintPart)
+    .join(policy.separator)
+}
+
+export function tusPlanNodeBufferFingerprint({
+  size,
+}: {
+  size: number
+}): TusNodeBufferFingerprintPlan {
+  const policy = TUS_FLOW_POLICY.fingerprints.nodeBuffer
+  tusAssertFingerprintFields({
+    actualFields: policy.fields,
+    expectedFields: ['prefix', 'contentHash', 'size', 'endpoint'],
+    policyName: 'Node buffer',
+  })
+
+  if (policy.hashAlgorithm !== 'md5') {
+    throw new Error(`tus: unsupported Node buffer fingerprint hash ${policy.hashAlgorithm}`)
+  }
+
+  return {
+    hashAlgorithm: policy.hashAlgorithm,
+    sampleBytes: Math.min(policy.sampleBytes, size),
+  }
+}
+
+export function tusNodeBufferFingerprint({
+  contentHash,
+  endpoint,
+  size,
+}: TusNodeBufferFingerprintInput): string {
+  const policy = TUS_FLOW_POLICY.fingerprints.nodeBuffer
+  return [policy.prefix, contentHash, size, endpoint].map(tusFingerprintPart).join(policy.separator)
+}
+
+export function tusNodeFileFingerprint({
+  absolutePath,
+  endpoint,
+  mtimeMs,
+  size,
+}: TusNodeFileFingerprintInput): string {
+  const policy = TUS_FLOW_POLICY.fingerprints.nodeFile
+  tusAssertFingerprintFields({
+    actualFields: policy.fields,
+    expectedFields: ['prefix', 'absolutePath', 'size', 'mtimeMs', 'endpoint'],
+    policyName: 'Node file',
+  })
+
+  if (policy.path !== 'absolute') {
+    throw new Error(`tus: unsupported Node file fingerprint path policy ${policy.path}`)
+  }
+
+  return [policy.prefix, absolutePath, size, mtimeMs, endpoint]
+    .map(tusFingerprintPart)
+    .join(policy.separator)
+}
+
+export function tusUnsupportedInputFingerprint(): null {
+  if (TUS_FLOW_POLICY.fingerprints.unsupportedInput !== 'null') {
+    throw new Error(
+      `tus: unsupported fallback fingerprint policy ${TUS_FLOW_POLICY.fingerprints.unsupportedInput}`,
+    )
+  }
+
+  return null
 }
 
 export function tusPlanParallelUploadSlice({
