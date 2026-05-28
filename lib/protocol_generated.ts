@@ -186,9 +186,13 @@ export const TUS_FLOW_POLICY = {
     createMissingEndpoint: 'tus: unable to create upload because no endpoint is provided',
     createMissingSize: 'tus: expected _size to be set',
     createUploadRequestFailed: 'tus: failed to create upload',
+    createdUpload: 'Created upload at {uploadUrl}',
     finalUploadMissingPartialUrls: 'tus: Expected _parallelUploadUrls to be set',
     finalUploadRequestFailed: 'tus: failed to concatenate parallel uploads',
+    fingerprintCalculated: 'Calculated fingerprint: {fingerprint}',
     fingerprintUnavailable: 'tus: unable to calculate fingerprint for this input file',
+    fingerprintUnavailableForStorage:
+      'No fingerprint was calculated meaning that the upload cannot be stored in the URL storage.',
     invalidUploadSize: 'tus: cannot convert `uploadSize` option into a number',
     invalidChunkOffset: 'tus: invalid or missing offset value',
     invalidResumeLength: 'tus: invalid or missing length value',
@@ -439,6 +443,10 @@ export type TusRemovedResumeOptionWarningPlan =
   | { message: string; shouldWarn: true }
   | { shouldWarn: false }
 
+export interface TusLogMessagePlan {
+  message: string
+}
+
 function tusFormatFlowMessage(template: string, values: Record<string, string | number>): string {
   let message = template
   for (const [name, value] of Object.entries(values)) {
@@ -546,6 +554,30 @@ export function tusPlanRemovedResumeOptionWarning({
   return {
     message: TUS_FLOW_POLICY.messages.removedResumeOption,
     shouldWarn: true,
+  }
+}
+
+export function tusPlanPreparedFingerprintLog({
+  fingerprint,
+}: {
+  fingerprint: string | null
+}): TusLogMessagePlan {
+  if (fingerprint == null) {
+    return { message: TUS_FLOW_POLICY.messages.fingerprintUnavailableForStorage }
+  }
+
+  return {
+    message: tusFormatFlowMessage(TUS_FLOW_POLICY.messages.fingerprintCalculated, {
+      fingerprint,
+    }),
+  }
+}
+
+export function tusPlanCreatedUploadLog({ uploadUrl }: { uploadUrl: string }): TusLogMessagePlan {
+  return {
+    message: tusFormatFlowMessage(TUS_FLOW_POLICY.messages.createdUpload, {
+      uploadUrl,
+    }),
   }
 }
 

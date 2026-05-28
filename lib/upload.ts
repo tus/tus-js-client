@@ -23,11 +23,13 @@ import {
   tusFinalUploadRequestPlan,
   tusGetUploadOffsetRequestPlan,
   tusPatchUploadRequestPlan,
+  tusPlanCreatedUploadLog,
   tusPlanFinalUploadCreation,
   tusPlanFingerprint,
   tusPlanParallelPartialUploadOptions,
   tusPlanParallelUploadParts,
   tusPlanParallelUploadSlice,
+  tusPlanPreparedFingerprintLog,
   tusPlanPreparedUploadMode,
   tusPlanPreparedUploadSize,
   tusPlanRemovedResumeOptionWarning,
@@ -217,13 +219,7 @@ export class BaseUpload {
 
   private async _prepareAndStartUpload(): Promise<void> {
     this._fingerprint = await this.options.fingerprint(this.file, this.options)
-    if (this._fingerprint == null) {
-      log(
-        'No fingerprint was calculated meaning that the upload cannot be stored in the URL storage.',
-      )
-    } else {
-      log(`Calculated fingerprint: ${this._fingerprint}`)
-    }
+    log(tusPlanPreparedFingerprintLog({ fingerprint: this._fingerprint }).message)
 
     if (this._source == null) {
       this._source = await this.options.fileReader.openFile(this.file, this.options.chunkSize)
@@ -378,7 +374,7 @@ export class BaseUpload {
     }
 
     this.url = resolveUrl(finalUploadCreationPlan.endpoint, creationResponsePlan.location)
-    log(`Created upload at ${this.url}`)
+    log(tusPlanCreatedUploadLog({ uploadUrl: this.url }).message)
 
     await this._emitSuccess(res)
   }
@@ -619,7 +615,7 @@ export class BaseUpload {
     }
 
     this.url = resolveUrl(creationRequestPlan.endpoint, creationResponsePlan.location)
-    log(`Created upload at ${this.url}`)
+    log(tusPlanCreatedUploadLog({ uploadUrl: this.url }).message)
 
     if (typeof this.options.onUploadUrlAvailable === 'function') {
       await this.options.onUploadUrlAvailable()
