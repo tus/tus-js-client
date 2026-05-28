@@ -222,6 +222,18 @@ export const TUS_FLOW_POLICY = {
     },
     nodeExtraTypes: ['fs.ReadStream (Node.js)', 'stream.Readable (Node.js)'],
   },
+  httpStacks: {
+    browserStackNodeReadableBody: 'unsupported',
+    messages: {
+      browserStackNodeReadableBodyUnsupported:
+        'Using a Node.js readable stream as HTTP request body is not supported using the {stackName} HTTP stack.',
+      nodeStackMissingStatusCode: 'no status code available yet',
+      nodeStackUnsupportedBodyType:
+        'Unsupported HTTP request body type in Node.js HTTP stack: {bodyType} (constructor: {constructorName})',
+    },
+    nodeStackMissingStatusCode: 'throw',
+    nodeStackUnsupportedBodyType: 'throw',
+  },
   locationResolution: {
     strategy: 'relative-to-creation-request-url',
   },
@@ -1106,6 +1118,62 @@ export function tusNodeStreamBackwardsReadMessage(): string {
 
 export function tusNodeStreamStartOutsideBufferMessage(): string {
   return TUS_FLOW_POLICY.fileSources.messages.nodeStreamStartOutsideBuffer
+}
+
+function tusAssertHttpStackPolicySupported(): void {
+  const policy = TUS_FLOW_POLICY.httpStacks
+
+  if (policy.browserStackNodeReadableBody !== 'unsupported') {
+    throw new Error(
+      `tus: unsupported browser HTTP stack Node readable body policy ${policy.browserStackNodeReadableBody}`,
+    )
+  }
+
+  if (policy.nodeStackUnsupportedBodyType !== 'throw') {
+    throw new Error(
+      `tus: unsupported Node HTTP stack body type policy ${policy.nodeStackUnsupportedBodyType}`,
+    )
+  }
+
+  if (policy.nodeStackMissingStatusCode !== 'throw') {
+    throw new Error(
+      `tus: unsupported Node HTTP stack status code policy ${policy.nodeStackMissingStatusCode}`,
+    )
+  }
+}
+
+export function tusHttpStackNodeReadableBodyUnsupportedMessage({
+  stackName,
+}: {
+  stackName: string
+}): string {
+  tusAssertHttpStackPolicySupported()
+
+  return tusFormatFlowMessage(
+    TUS_FLOW_POLICY.httpStacks.messages.browserStackNodeReadableBodyUnsupported,
+    { stackName },
+  )
+}
+
+export function tusNodeHttpStackUnsupportedBodyTypeMessage({
+  bodyType,
+  constructorName,
+}: {
+  bodyType: string
+  constructorName: string
+}): string {
+  tusAssertHttpStackPolicySupported()
+
+  return tusFormatFlowMessage(TUS_FLOW_POLICY.httpStacks.messages.nodeStackUnsupportedBodyType, {
+    bodyType,
+    constructorName,
+  })
+}
+
+export function tusNodeHttpStackMissingStatusCodeMessage(): string {
+  tusAssertHttpStackPolicySupported()
+
+  return TUS_FLOW_POLICY.httpStacks.messages.nodeStackMissingStatusCode
 }
 
 export function tusPlanSingleUploadStart({

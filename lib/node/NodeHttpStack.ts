@@ -10,6 +10,10 @@ import type {
   HttpStack,
   SliceType,
 } from '../options.js'
+import {
+  tusNodeHttpStackMissingStatusCodeMessage,
+  tusNodeHttpStackUnsupportedBodyTypeMessage,
+} from '../protocol_generated.js'
 
 export class NodeHttpStack implements HttpStack {
   private _requestOptions: http.RequestOptions
@@ -80,9 +84,10 @@ class Request implements HttpRequest {
         nodeBody = body
       } else {
         throw new Error(
-          // @ts-expect-error According to the types, this case cannot happen. But
-          // we still want to try logging the constructor if this code is reached by accident.
-          `Unsupported HTTP request body type in Node.js HTTP stack: ${typeof body} (constructor: ${body?.constructor?.name})`,
+          tusNodeHttpStackUnsupportedBodyTypeMessage({
+            bodyType: typeof body,
+            constructorName: getConstructorName(body),
+          }),
         )
       }
     }
@@ -166,7 +171,7 @@ class Response implements HttpResponse {
 
   getStatus() {
     if (this._response.statusCode === undefined) {
-      throw new Error('no status code available yet')
+      throw new Error(tusNodeHttpStackMissingStatusCodeMessage())
     }
     return this._response.statusCode
   }
@@ -186,6 +191,14 @@ class Response implements HttpResponse {
   getUnderlyingObject() {
     return this._response
   }
+}
+
+function getConstructorName(value: unknown): string {
+  if ((typeof value !== 'object' && typeof value !== 'function') || value === null) {
+    return 'undefined'
+  }
+
+  return value.constructor.name
 }
 
 // ProgressEmitter is a simple PassThrough-style transform stream which keeps
