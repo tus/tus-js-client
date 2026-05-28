@@ -59,6 +59,7 @@ import {
   tusShouldEvaluateRetryPolicy,
   tusShouldRemoveStoredUploadOnSuccess,
   tusShouldSendUploadBodyDuringCreation,
+  tusShouldSuppressErrorAfterAbort,
   tusShouldTreatRequestErrorAsRetryable,
   tusShouldUseCustomRetryPolicy,
   tusTerminateUploadRequestPlan,
@@ -469,8 +470,7 @@ export class BaseUpload {
   }
 
   private _emitError(err: Error): void {
-    // Do not emit errors, e.g. from aborted HTTP requests, if the upload has been stopped.
-    if (this._aborted) return
+    if (tusShouldSuppressErrorAfterAbort({ aborted: this._aborted })) return
 
     if (typeof this.options.onError === 'function') {
       this.options.onError(err)

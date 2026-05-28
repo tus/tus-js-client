@@ -195,6 +195,7 @@ export const TUS_FLOW_POLICY = {
       'clear-retry-timer',
       'terminate-upload-if-requested',
     ],
+    suppressErrorAfterAbort: true,
     terminateUpload: 'when-requested-and-upload-url-known',
   },
   detailedErrors: {
@@ -1160,6 +1161,12 @@ function tusAssertAbortPolicySupported(): void {
   if (policy.error.type !== 'DOMException') {
     throw new Error(`tus: unsupported abort error type ${policy.error.type}`)
   }
+}
+
+export function tusShouldSuppressErrorAfterAbort({ aborted }: { aborted: boolean }): boolean {
+  tusAssertAbortPolicySupported()
+
+  return TUS_FLOW_POLICY.abort.suppressErrorAfterAbort && aborted
 }
 
 export function tusAbortErrorDescriptor(): TusAbortErrorDescriptor {
