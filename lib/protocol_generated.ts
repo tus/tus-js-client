@@ -2,6 +2,8 @@
 // please report the issue instead of editing this file by hand; the source fix
 // belongs in the protocol contract generator so all TUS clients stay in sync.
 
+import { Base64 } from 'js-base64'
+
 export const TUS_DEFAULT_PROTOCOL_VERSION = '1.0.0'
 
 export const TUS_DEFAULT_CLIENT_PROTOCOL = 'tus-v1'
@@ -2495,23 +2497,27 @@ export function tusFinalUploadConcatValue(uploadUrls: readonly string[]): string
   return `${TUS_CONCATENATION.finalPrefix}${uploadUrls.join(TUS_CONCATENATION.uploadUrlSeparator)}`
 }
 
-export function tusEncodeMetadata(
-  metadata: Record<string, string>,
-  encodeMetadataValue: (value: string) => string,
-): string {
+export function tusEncodeMetadataValue(value: string): string {
+  if (TUS_METADATA_ENCODING.valueEncoding !== 'base64') {
+    throw new Error(
+      `tus: unsupported metadata value encoding ${TUS_METADATA_ENCODING.valueEncoding}`,
+    )
+  }
+
+  return Base64.encode(value)
+}
+
+export function tusEncodeMetadata(metadata: Record<string, string>): string {
   return Object.entries(metadata)
     .map(
       ([key, value]) =>
-        `${key}${TUS_METADATA_ENCODING.keyValueSeparator}${encodeMetadataValue(String(value))}`,
+        `${key}${TUS_METADATA_ENCODING.keyValueSeparator}${tusEncodeMetadataValue(String(value))}`,
     )
     .join(TUS_METADATA_ENCODING.entrySeparator)
 }
 
-export function tusMetadataHeaders(
-  metadata: Record<string, string>,
-  encodeMetadataValue: (value: string) => string,
-): Record<string, string> {
-  const encodedMetadata = tusEncodeMetadata(metadata, encodeMetadataValue)
+export function tusMetadataHeaders(metadata: Record<string, string>): Record<string, string> {
+  const encodedMetadata = tusEncodeMetadata(metadata)
   if (encodedMetadata === '') {
     return {}
   }
@@ -2522,12 +2528,10 @@ export function tusMetadataHeaders(
 }
 
 export function tusCreateUploadHeaders({
-  encodeMetadataValue,
   metadata,
   size,
   uploadLengthDeferred,
 }: {
-  encodeMetadataValue: (value: string) => string
   metadata: Record<string, string>
   size: number | null
   uploadLengthDeferred: boolean
@@ -2538,7 +2542,7 @@ export function tusCreateUploadHeaders({
       : size == null
         ? {}
         : { [TUS_HEADERS.UPLOAD_LENGTH]: `${size}` }),
-    ...tusMetadataHeaders(metadata, encodeMetadataValue),
+    ...tusMetadataHeaders(metadata),
   }
 }
 
@@ -2562,17 +2566,15 @@ export function tusUploadLengthHeaders({ size }: { size: number }): Record<strin
 }
 
 export function tusFinalUploadHeaders({
-  encodeMetadataValue,
   metadata,
   uploadUrls,
 }: {
-  encodeMetadataValue: (value: string) => string
   metadata: Record<string, string>
   uploadUrls: readonly string[]
 }): Record<string, string> {
   return {
     [TUS_HEADERS.UPLOAD_CONCAT]: tusFinalUploadConcatValue(uploadUrls),
-    ...tusMetadataHeaders(metadata, encodeMetadataValue),
+    ...tusMetadataHeaders(metadata),
   }
 }
 
@@ -2606,7 +2608,6 @@ export function tusUploadBodyHeaders({
 }
 
 export function tusCreateUploadRequestPlan({
-  encodeMetadataValue,
   endpoint,
   metadata,
   protocol,
@@ -2614,7 +2615,6 @@ export function tusCreateUploadRequestPlan({
   uploadComplete,
   uploadLengthDeferred,
 }: {
-  encodeMetadataValue: (value: string) => string
   endpoint: string
   metadata: Record<string, string>
   protocol: string
@@ -2625,7 +2625,6 @@ export function tusCreateUploadRequestPlan({
   return tusRequestPlanForOperation({
     headers: {
       ...tusCreateUploadHeaders({
-        encodeMetadataValue,
         metadata,
         size,
         uploadLengthDeferred,
@@ -2641,13 +2640,11 @@ export function tusCreateUploadRequestPlan({
 }
 
 export function tusFinalUploadRequestPlan({
-  encodeMetadataValue,
   endpoint,
   metadata,
   protocol,
   uploadUrls,
 }: {
-  encodeMetadataValue: (value: string) => string
   endpoint: string
   metadata: Record<string, string>
   protocol: string
@@ -2655,7 +2652,6 @@ export function tusFinalUploadRequestPlan({
 }): TusRequestPlan {
   return tusRequestPlanForOperation({
     headers: tusFinalUploadHeaders({
-      encodeMetadataValue,
       metadata,
       uploadUrls,
     }),

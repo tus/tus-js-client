@@ -1,4 +1,3 @@
-import { Base64 } from 'js-base64'
 // TODO: Package url-parse is CommonJS. Can we replace this with a ESM package that
 // provides WHATWG URL? Then we can get rid of @rollup/plugin-commonjs.
 import URL from 'url-parse'
@@ -342,7 +341,6 @@ export class BaseUpload {
     const req = this._openRequest(
       tusFinalUploadRequestPlan({
         endpoint: finalUploadCreationPlan.endpoint,
-        encodeMetadataValue,
         metadata: this.options.metadata,
         protocol: this.options.protocol,
         uploadUrls: finalUploadCreationPlan.uploadUrls,
@@ -615,7 +613,6 @@ export class BaseUpload {
     const req = this._openRequest(
       tusCreateUploadRequestPlan({
         endpoint: creationRequestPlan.endpoint,
-        encodeMetadataValue,
         metadata: this.options.metadata,
         protocol: this.options.protocol,
         size: this._size,
@@ -987,10 +984,6 @@ export class BaseUpload {
   _sendRequest(req: HttpRequest, body?: SliceType): Promise<HttpResponse> {
     return sendRequest(req, body, this.options)
   }
-}
-
-function encodeMetadataValue(value: string): string {
-  return Base64.encode(value)
 }
 
 function setRequestHeaders(req: HttpRequest, headers: Record<string, string>): void {
