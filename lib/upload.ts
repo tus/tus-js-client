@@ -31,6 +31,7 @@ import {
   tusPlanPreparedUploadSize,
   tusPlanResumeOffsetResponse,
   tusPlanResumeResponseStatus,
+  tusPlanResumeUploadRequest,
   tusPlanRetryAfterError,
   tusPlanSingleUploadStart,
   tusPlanTerminateResponse,
@@ -643,13 +644,16 @@ export class BaseUpload {
    * @api private
    */
   private async _resumeUpload(): Promise<void> {
-    if (this.url == null) {
-      throw new Error(TUS_FLOW_POLICY.messages.missingPatchUrl)
+    const resumeRequestPlan = tusPlanResumeUploadRequest({
+      uploadUrl: this.url,
+    })
+    if (!resumeRequestPlan.ok) {
+      throw new Error(resumeRequestPlan.message)
     }
     const req = this._openRequest(
       tusGetUploadOffsetRequestPlan({
         protocol: this.options.protocol,
-        uploadUrl: this.url,
+        uploadUrl: resumeRequestPlan.uploadUrl,
       }),
     )
 
@@ -661,7 +665,7 @@ export class BaseUpload {
         throw new Error(`tus: value thrown that is not an error: ${err}`)
       }
 
-      throw new DetailedError('tus: failed to resume upload', err, req, undefined)
+      throw new DetailedError(resumeRequestPlan.requestErrorMessage, err, req, undefined)
     }
 
     const status = res.getStatus()

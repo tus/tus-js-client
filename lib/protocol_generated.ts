@@ -199,6 +199,7 @@ export const TUS_FLOW_POLICY = {
       'tus: cannot use the `uploadSize` option when parallelUploads is enabled',
     parallelUploadsWithUploadUrl:
       'tus: cannot use the `uploadUrl` option when parallelUploads is enabled',
+    resumeUploadRequestFailed: 'tus: failed to resume upload',
     resumeWithoutEndpoint:
       'tus: unable to resume upload (new upload cannot be created without an endpoint)',
     retryDelaysNotArray: 'tus: the `retryDelays` option must either be an array or null',
@@ -299,6 +300,10 @@ export type TusResumeOffsetResponsePlan =
       message: string
       reason: 'invalidLength' | 'invalidOffset' | 'missingOffset' | 'unexpectedStatus'
     }
+
+export type TusResumeUploadRequestPlan =
+  | { ok: false; message: string; reason: 'missingUploadUrl' }
+  | { ok: true; requestErrorMessage: string; uploadUrl: string }
 
 export type TusCreateUploadValidationResult =
   | { ok: false; message: string; reason: 'missingEndpoint' | 'missingSize' }
@@ -512,6 +517,26 @@ export function tusPlanSingleUploadStart({
   }
 
   return { action: 'create', logMessage: 'Creating a new upload' }
+}
+
+export function tusPlanResumeUploadRequest({
+  uploadUrl,
+}: {
+  uploadUrl: string | null | undefined
+}): TusResumeUploadRequestPlan {
+  if (uploadUrl == null) {
+    return {
+      ok: false,
+      message: TUS_FLOW_POLICY.messages.missingPatchUrl,
+      reason: 'missingUploadUrl',
+    }
+  }
+
+  return {
+    ok: true,
+    requestErrorMessage: TUS_FLOW_POLICY.messages.resumeUploadRequestFailed,
+    uploadUrl,
+  }
 }
 
 export function tusValidateCreateUpload({
