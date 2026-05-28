@@ -178,6 +178,10 @@ export const TUS_UPLOAD_BODY = {
 }
 
 export const TUS_FLOW_POLICY = {
+  abort: {
+    removeStoredUrlAfterTermination: 'after-successful-termination',
+    terminateUpload: 'when-requested-and-upload-url-known',
+  },
   eventHooks: {
     uploadUrlAvailable: {
       createUpload: 'after-url-known-before-storage',
@@ -324,6 +328,7 @@ export const TUS_FLOW_POLICY = {
       missingUrl: 'fail',
       storedUrlKind: 'single-or-parallel-upload-url',
     },
+    removeOnSuccess: 'when-option-enabled',
     separator: '::',
   },
 }
@@ -537,6 +542,10 @@ export type TusRetryAfterErrorPlan =
 export type TusRemovedResumeOptionWarningPlan =
   | { message: string; shouldWarn: true }
   | { shouldWarn: false }
+
+export type TusAbortTerminationPlan =
+  | { action: 'skip' }
+  | { action: 'terminate'; removeStoredUpload: true; uploadUrl: string }
 
 export interface TusLogMessagePlan {
   message: string
@@ -894,6 +903,40 @@ export function tusDefaultRetryPolicyDecision({
   return tusShouldRetryStatus(status) && isOnline
 }
 
+function tusAssertAbortPolicySupported(): void {
+  const policy = TUS_FLOW_POLICY.abort
+
+  if (policy.terminateUpload !== 'when-requested-and-upload-url-known') {
+    throw new Error(`tus: unsupported abort termination policy ${policy.terminateUpload}`)
+  }
+
+  if (policy.removeStoredUrlAfterTermination !== 'after-successful-termination') {
+    throw new Error(
+      `tus: unsupported abort storage cleanup policy ${policy.removeStoredUrlAfterTermination}`,
+    )
+  }
+}
+
+export function tusPlanAbortTermination({
+  shouldTerminate,
+  uploadUrl,
+}: {
+  shouldTerminate: boolean
+  uploadUrl: string | null
+}): TusAbortTerminationPlan {
+  tusAssertAbortPolicySupported()
+
+  if (!shouldTerminate || uploadUrl == null) {
+    return { action: 'skip' }
+  }
+
+  return {
+    action: 'terminate',
+    removeStoredUpload: true,
+    uploadUrl,
+  }
+}
+
 function tusAssertUploadUrlAvailableHookPolicySupported(): void {
   const policy = TUS_FLOW_POLICY.eventHooks.uploadUrlAvailable
 
@@ -1147,6 +1190,24 @@ function tusAssertUrlStorageRecordPolicySupported(): void {
   if (policy.storedUrlKind !== 'single-or-parallel-upload-url') {
     throw new Error(`tus: unsupported URL storage URL kind policy ${policy.storedUrlKind}`)
   }
+}
+
+function tusAssertUrlStorageCleanupPolicySupported(): void {
+  if (TUS_FLOW_POLICY.urlStorage.removeOnSuccess !== 'when-option-enabled') {
+    throw new Error(
+      `tus: unsupported URL storage success cleanup policy ${TUS_FLOW_POLICY.urlStorage.removeOnSuccess}`,
+    )
+  }
+}
+
+export function tusShouldRemoveStoredUploadOnSuccess({
+  removeFingerprintOnSuccess,
+}: {
+  removeFingerprintOnSuccess: boolean
+}): boolean {
+  tusAssertUrlStorageCleanupPolicySupported()
+
+  return removeFingerprintOnSuccess
 }
 
 export function tusPlanStoredUploadRecord({

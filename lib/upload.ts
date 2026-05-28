@@ -26,6 +26,7 @@ import {
   tusGetUploadOffsetRequestPlan,
   tusNonErrorThrownValueMessage,
   tusPatchUploadRequestPlan,
+  tusPlanAbortTermination,
   tusPlanCreatedUploadLog,
   tusPlanFinalUploadCreation,
   tusPlanFingerprint,
@@ -58,6 +59,7 @@ import {
   tusReadUploadOffsetResponse,
   tusResolveUploadLocation,
   tusShouldEvaluateRetryPolicy,
+  tusShouldRemoveStoredUploadOnSuccess,
   tusShouldSendUploadBodyDuringCreation,
   tusShouldUseCustomRetryPolicy,
   tusTerminateUploadRequestPlan,
@@ -442,10 +444,15 @@ export class BaseUpload {
       this._retryTimeout = undefined
     }
 
-    if (shouldTerminate && this.url != null) {
-      await terminate(this.url, this.options)
-      // Remove entry from the URL storage since the upload URL is no longer valid.
-      await this._removeFromUrlStorage()
+    const abortTerminationPlan = tusPlanAbortTermination({
+      shouldTerminate,
+      uploadUrl: this.url,
+    })
+    if (abortTerminationPlan.action === 'terminate') {
+      await terminate(abortTerminationPlan.uploadUrl, this.options)
+      if (abortTerminationPlan.removeStoredUpload) {
+        await this._removeFromUrlStorage()
+      }
     }
   }
 
@@ -513,7 +520,11 @@ export class BaseUpload {
    * @api private
    */
   private async _emitSuccess(lastResponse: HttpResponse): Promise<void> {
-    if (this.options.removeFingerprintOnSuccess) {
+    if (
+      tusShouldRemoveStoredUploadOnSuccess({
+        removeFingerprintOnSuccess: this.options.removeFingerprintOnSuccess,
+      })
+    ) {
       // Remove stored fingerprint and corresponding endpoint. This causes
       // new uploads of the same file to be treated as a different file.
       await this._removeFromUrlStorage()
