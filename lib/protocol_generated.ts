@@ -206,6 +206,21 @@ export const TUS_FLOW_POLICY = {
       ', originated from request (method: {method}, url: {url}, response code: {status}, response text: {body}, request id: {requestId})',
   },
   eventHooks: {
+    chunkComplete: {
+      afterChunkAccepted: 'accepted-chunk-size-and-offset',
+    },
+    progress: {
+      afterChunkAccepted: 'accepted-offset',
+      afterResumeAlreadyComplete: 'upload-length',
+      beforeRequestBody: 'current-offset',
+      duringRequest: 'start-offset-plus-transmitted-bytes',
+      parallelPartProgress: 'aggregated-part-progress',
+    },
+    success: {
+      closeSource: 'after-hook-when-source-open',
+      emit: 'after-upload-complete',
+      removeStoredUrl: 'before-hook-when-option-enabled',
+    },
     uploadUrlAvailable: {
       createUpload: 'after-url-known-before-storage',
       parallelFinalUpload: 'not-emitted',
@@ -715,6 +730,65 @@ export type TusUploadUrlAvailableHookContext =
   | 'resumeUpload'
 
 export interface TusUploadUrlAvailableHookPlan {
+  shouldCall: boolean
+}
+
+export type TusProgressEventPlanInput =
+  | {
+      bytesTotal: number | null
+      hasHook: boolean
+      phase: 'afterChunkAccepted'
+      uploadOffset: number
+    }
+  | {
+      bytesTotal: number | null
+      currentOffset: number
+      hasHook: boolean
+      phase: 'beforeRequestBody'
+    }
+  | {
+      bytesTotal: number | null
+      hasHook: boolean
+      phase: 'duringRequest'
+      startOffset: number
+      transmittedBytes: number
+    }
+  | {
+      bytesTotal: number | null
+      hasHook: boolean
+      phase: 'parallelPartProgress'
+      totalProgress: number
+    }
+  | {
+      hasHook: boolean
+      phase: 'afterResumeAlreadyComplete'
+      uploadLength: number
+    }
+
+export interface TusProgressEventPlan {
+  bytesSent: number
+  bytesTotal: number | null
+  shouldCall: boolean
+}
+
+export type TusChunkCompleteEventPlanInput = {
+  bytesAccepted: number
+  bytesTotal: number | null
+  chunkSize: number
+  hasHook: boolean
+  phase: 'afterChunkAccepted'
+}
+
+export interface TusChunkCompleteEventPlan {
+  bytesAccepted: number
+  bytesTotal: number | null
+  chunkSize: number
+  shouldCall: boolean
+}
+
+export interface TusSuccessEventPlan {
+  closeSource: boolean
+  removeStoredUpload: boolean
   shouldCall: boolean
 }
 
@@ -1264,6 +1338,139 @@ export function tusPlanUploadUrlAvailableHook({
 
   return {
     shouldCall: hasHook && TUS_FLOW_POLICY.eventHooks.uploadUrlAvailable[context] !== 'not-emitted',
+  }
+}
+
+function tusAssertEventHookPolicySupported(): void {
+  tusAssertUploadUrlAvailableHookPolicySupported()
+
+  const policy = TUS_FLOW_POLICY.eventHooks
+  if (policy.progress.afterChunkAccepted !== 'accepted-offset') {
+    throw new Error(
+      `tus: unsupported chunk-accepted progress hook policy ${policy.progress.afterChunkAccepted}`,
+    )
+  }
+
+  if (policy.progress.afterResumeAlreadyComplete !== 'upload-length') {
+    throw new Error(
+      `tus: unsupported completed-resume progress hook policy ${policy.progress.afterResumeAlreadyComplete}`,
+    )
+  }
+
+  if (policy.progress.beforeRequestBody !== 'current-offset') {
+    throw new Error(
+      `tus: unsupported request-body progress hook policy ${policy.progress.beforeRequestBody}`,
+    )
+  }
+
+  if (policy.progress.duringRequest !== 'start-offset-plus-transmitted-bytes') {
+    throw new Error(
+      `tus: unsupported request progress hook policy ${policy.progress.duringRequest}`,
+    )
+  }
+
+  if (policy.progress.parallelPartProgress !== 'aggregated-part-progress') {
+    throw new Error(
+      `tus: unsupported parallel progress hook policy ${policy.progress.parallelPartProgress}`,
+    )
+  }
+
+  if (policy.chunkComplete.afterChunkAccepted !== 'accepted-chunk-size-and-offset') {
+    throw new Error(
+      `tus: unsupported chunk-complete hook policy ${policy.chunkComplete.afterChunkAccepted}`,
+    )
+  }
+
+  if (policy.success.closeSource !== 'after-hook-when-source-open') {
+    throw new Error(`tus: unsupported success source-close policy ${policy.success.closeSource}`)
+  }
+
+  if (policy.success.emit !== 'after-upload-complete') {
+    throw new Error(`tus: unsupported success hook policy ${policy.success.emit}`)
+  }
+
+  if (policy.success.removeStoredUrl !== 'before-hook-when-option-enabled') {
+    throw new Error(
+      `tus: unsupported success storage cleanup policy ${policy.success.removeStoredUrl}`,
+    )
+  }
+}
+
+export function tusPlanProgressEvent(input: TusProgressEventPlanInput): TusProgressEventPlan {
+  tusAssertEventHookPolicySupported()
+
+  if (input.phase === 'afterChunkAccepted') {
+    return {
+      bytesSent: input.uploadOffset,
+      bytesTotal: input.bytesTotal,
+      shouldCall: input.hasHook,
+    }
+  }
+
+  if (input.phase === 'afterResumeAlreadyComplete') {
+    return {
+      bytesSent: input.uploadLength,
+      bytesTotal: input.uploadLength,
+      shouldCall: input.hasHook,
+    }
+  }
+
+  if (input.phase === 'beforeRequestBody') {
+    return {
+      bytesSent: input.currentOffset,
+      bytesTotal: input.bytesTotal,
+      shouldCall: input.hasHook,
+    }
+  }
+
+  if (input.phase === 'duringRequest') {
+    return {
+      bytesSent: input.startOffset + input.transmittedBytes,
+      bytesTotal: input.bytesTotal,
+      shouldCall: input.hasHook,
+    }
+  }
+
+  if (input.phase === 'parallelPartProgress') {
+    return {
+      bytesSent: input.totalProgress,
+      bytesTotal: input.bytesTotal,
+      shouldCall: input.hasHook,
+    }
+  }
+
+  const exhaustive: never = input
+  throw new Error(`tus: unsupported progress event phase ${JSON.stringify(exhaustive)}`)
+}
+
+export function tusPlanChunkCompleteEvent(
+  input: TusChunkCompleteEventPlanInput,
+): TusChunkCompleteEventPlan {
+  tusAssertEventHookPolicySupported()
+
+  return {
+    bytesAccepted: input.bytesAccepted,
+    bytesTotal: input.bytesTotal,
+    chunkSize: input.chunkSize,
+    shouldCall: input.hasHook,
+  }
+}
+
+export function tusPlanSuccessEvent({
+  hasHook,
+  hasSource,
+  removeFingerprintOnSuccess,
+}: {
+  hasHook: boolean
+  hasSource: boolean
+  removeFingerprintOnSuccess: boolean
+}): TusSuccessEventPlan {
+  tusAssertEventHookPolicySupported()
+
+  return {
+    closeSource: hasSource,
+    removeStoredUpload: tusShouldRemoveStoredUploadOnSuccess({ removeFingerprintOnSuccess }),
+    shouldCall: hasHook,
   }
 }
 

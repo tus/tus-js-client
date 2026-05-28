@@ -10,6 +10,8 @@ import type {
   UploadOptions,
 } from './options.js'
 import {
+  type TusChunkCompleteEventPlanInput,
+  type TusProgressEventPlanInput,
   type TusRequestPlan,
   type TusUploadUrlAvailableHookContext,
   tusCheckConfiguredUploadSize,
@@ -24,6 +26,7 @@ import {
   tusNonErrorThrownValueMessage,
   tusPatchUploadRequestPlan,
   tusPlanAbort,
+  tusPlanChunkCompleteEvent,
   tusPlanCreatedUploadLog,
   tusPlanFinalUploadCreation,
   tusPlanFingerprint,
@@ -33,6 +36,7 @@ import {
   tusPlanPreparedFingerprintLog,
   tusPlanPreparedUploadMode,
   tusPlanPreparedUploadSize,
+  tusPlanProgressEvent,
   tusPlanRemovedResumeOptionWarning,
   tusPlanRequestHeaders,
   tusPlanRequestId,
@@ -43,6 +47,7 @@ import {
   tusPlanRetryAfterError,
   tusPlanSingleUploadStart,
   tusPlanStoredUploadRecord,
+  tusPlanSuccessEvent,
   tusPlanTerminateResponse,
   tusPlanTerminateUploadRequest,
   tusPlanUploadChunkRequest,
@@ -57,7 +62,6 @@ import {
   tusReadUploadOffsetResponse,
   tusResolveUploadLocation,
   tusShouldEvaluateRetryPolicy,
-  tusShouldRemoveStoredUploadOnSuccess,
   tusShouldSendUploadBodyDuringCreation,
   tusShouldSuppressErrorAfterAbort,
   tusShouldTreatRequestErrorAsRetryable,
@@ -297,7 +301,12 @@ export class BaseUpload {
           onProgress: (newPartProgress: number) => {
             totalProgress = totalProgress - lastPartProgress + newPartProgress
             lastPartProgress = newPartProgress
-            this._emitProgress(totalProgress, totalSize)
+            this._emitProgress({
+              bytesTotal: totalSize,
+              hasHook: typeof this.options.onProgress === 'function',
+              phase: 'parallelPartProgress',
+              totalProgress,
+            })
           },
           // Wait until every partial upload has an upload URL, so we can add
           // them to the URL storage.
@@ -532,18 +541,24 @@ export class BaseUpload {
    * @api private
    */
   private async _emitSuccess(lastResponse: HttpResponse): Promise<void> {
-    if (
-      tusShouldRemoveStoredUploadOnSuccess({
-        removeFingerprintOnSuccess: this.options.removeFingerprintOnSuccess,
-      })
-    ) {
+    const eventPlan = tusPlanSuccessEvent({
+      hasHook: typeof this.options.onSuccess === 'function',
+      hasSource: this._source != null,
+      removeFingerprintOnSuccess: this.options.removeFingerprintOnSuccess,
+    })
+
+    if (eventPlan.removeStoredUpload) {
       // Remove stored fingerprint and corresponding endpoint. This causes
       // new uploads of the same file to be treated as a different file.
       await this._removeFromUrlStorage()
     }
 
-    if (typeof this.options.onSuccess === 'function') {
+    if (eventPlan.shouldCall && typeof this.options.onSuccess === 'function') {
       this.options.onSuccess({ lastResponse })
+    }
+
+    if (eventPlan.closeSource) {
+      this._source?.close()
     }
   }
 
@@ -555,9 +570,10 @@ export class BaseUpload {
    * @param {number|null} bytesTotal Total number of bytes to be sent to the server.
    * @api private
    */
-  private _emitProgress(bytesSent: number, bytesTotal: number | null): void {
-    if (typeof this.options.onProgress === 'function') {
-      this.options.onProgress(bytesSent, bytesTotal)
+  private _emitProgress(input: TusProgressEventPlanInput): void {
+    const eventPlan = tusPlanProgressEvent(input)
+    if (eventPlan.shouldCall && typeof this.options.onProgress === 'function') {
+      this.options.onProgress(eventPlan.bytesSent, eventPlan.bytesTotal)
     }
   }
 
@@ -570,13 +586,14 @@ export class BaseUpload {
    * @param {number|null} bytesTotal Total number of bytes to be sent to the server.
    * @api private
    */
-  private _emitChunkComplete(
-    chunkSize: number,
-    bytesAccepted: number,
-    bytesTotal: number | null,
-  ): void {
-    if (typeof this.options.onChunkComplete === 'function') {
-      this.options.onChunkComplete(chunkSize, bytesAccepted, bytesTotal)
+  private _emitChunkComplete(input: TusChunkCompleteEventPlanInput): void {
+    const eventPlan = tusPlanChunkCompleteEvent(input)
+    if (eventPlan.shouldCall && typeof this.options.onChunkComplete === 'function') {
+      this.options.onChunkComplete(
+        eventPlan.chunkSize,
+        eventPlan.bytesAccepted,
+        eventPlan.bytesTotal,
+      )
     }
   }
 
@@ -664,7 +681,6 @@ export class BaseUpload {
     if (creationResponsePlan.action === 'complete') {
       // Nothing to upload and file was successfully created
       await this._emitSuccess(res)
-      if (this._source) this._source.close()
       return
     }
 
@@ -753,7 +769,11 @@ export class BaseUpload {
     // data to the server
     const completionPlan = tusPlanUploadCompletionAfterOffset({ length, offset })
     if (completionPlan.complete) {
-      this._emitProgress(completionPlan.length, completionPlan.length)
+      this._emitProgress({
+        hasHook: typeof this.options.onProgress === 'function',
+        phase: 'afterResumeAlreadyComplete',
+        uploadLength: completionPlan.length,
+      })
       await this._emitSuccess(res)
       return
     }
@@ -830,7 +850,13 @@ export class BaseUpload {
     })
 
     req.setProgressHandler((bytesSent) => {
-      this._emitProgress(start + bytesSent, this._size)
+      this._emitProgress({
+        bytesTotal: this._size,
+        hasHook: typeof this.options.onProgress === 'function',
+        phase: 'duringRequest',
+        startOffset: start,
+        transmittedBytes: bytesSent,
+      })
     })
 
     // TODO: What happens if abort is called during slice?
@@ -872,7 +898,12 @@ export class BaseUpload {
       return await this._sendRequest(req)
     }
 
-    this._emitProgress(this._offset, this._size)
+    this._emitProgress({
+      bytesTotal: this._size,
+      currentOffset: this._offset,
+      hasHook: typeof this.options.onProgress === 'function',
+      phase: 'beforeRequestBody',
+    })
     return await this._sendRequest(req, value)
   }
 
@@ -895,15 +926,25 @@ export class BaseUpload {
       throw new DetailedError(chunkResponsePlan.message, undefined, req, res)
     }
 
-    this._emitProgress(chunkResponsePlan.offset, this._size)
-    this._emitChunkComplete(chunkResponsePlan.chunkSize, chunkResponsePlan.offset, this._size)
+    this._emitProgress({
+      bytesTotal: this._size,
+      hasHook: typeof this.options.onProgress === 'function',
+      phase: 'afterChunkAccepted',
+      uploadOffset: chunkResponsePlan.offset,
+    })
+    this._emitChunkComplete({
+      bytesAccepted: chunkResponsePlan.offset,
+      bytesTotal: this._size,
+      chunkSize: chunkResponsePlan.chunkSize,
+      hasHook: typeof this.options.onChunkComplete === 'function',
+      phase: 'afterChunkAccepted',
+    })
 
     this._offset = chunkResponsePlan.offset
 
     if (chunkResponsePlan.action === 'complete') {
       // Yay, finally done :)
       await this._emitSuccess(res)
-      if (this._source) this._source.close()
       return
     }
 
