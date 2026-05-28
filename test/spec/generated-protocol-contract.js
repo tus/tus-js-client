@@ -633,8 +633,8 @@ export const tusClientFeatures = [
   },
   {
     conformance: {
-      scenarioIds: [],
-      status: 'needs-generated-scenario',
+      scenarioIds: ['requestLifecycleHooks', 'retryPatchAfterOffsetRecovery'],
+      status: 'covered-by-generated-scenario',
     },
     description: 'Run before-request, after-response, and custom retry hooks around transport.',
     featureId: 'requestLifecycleHooks',
@@ -1288,7 +1288,13 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/retry-contract',
     },
-    events: [],
+    events: [
+      {
+        decision: true,
+        kind: 'should-retry',
+        retryAttempt: 0,
+      },
+    ],
     featureId: 'retryOffsetRecovery',
     input: {
       content: 'hello world',
@@ -1353,6 +1359,52 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'retryPatchAfterOffsetRecovery',
+  },
+  {
+    behavior: 'request-lifecycle-hooks',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/request-hooks-contract',
+    },
+    events: [
+      {
+        kind: 'before-request',
+        requestIndex: 0,
+      },
+      {
+        kind: 'after-response',
+        requestIndex: 0,
+      },
+      {
+        kind: 'success',
+      },
+      {
+        kind: 'source-close',
+      },
+    ],
+    featureId: 'requestLifecycleHooks',
+    input: {
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      kind: 'blob',
+      uploadUrl: 'https://tus.io/uploads/request-hooks-contract',
+    },
+    operationIds: ['getTusUploadOffset'],
+    primitives: ['run-request-hooks'],
+    requests: [
+      {
+        operationId: 'getTusUploadOffset',
+        response: {
+          headers: {
+            'Upload-Length': '11',
+            'Upload-Offset': '11',
+          },
+          statusCode: 200,
+        },
+        url: 'upload',
+      },
+    ],
+    scenarioId: 'requestLifecycleHooks',
   },
   {
     behavior: 'terminate-with-retry',

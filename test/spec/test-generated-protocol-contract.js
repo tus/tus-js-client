@@ -189,7 +189,18 @@ function makeEventRecordingFileReader(fileReader, observedEvents) {
   }
 }
 
-function eventMatchesExpectation(actual, expected) {
+function requestExpectationForEvent(scenario, event) {
+  const request = scenario.requests[event.requestIndex]
+  if (!request) {
+    throw new Error(
+      `Generated scenario ${scenario.scenarioId} event points at missing request index ${event.requestIndex}`,
+    )
+  }
+
+  return request
+}
+
+function eventMatchesExpectation(scenario, actual, expected) {
   if (actual.kind !== expected.kind) {
     return false
   }
@@ -206,6 +217,28 @@ function eventMatchesExpectation(actual, expected) {
     )
   }
 
+  if (expected.kind === 'before-request' || expected.kind === 'after-response') {
+    const request = requestExpectationForEvent(scenario, expected)
+    const operation = getProtocolOperation(request.operationId)
+    if (
+      actual.requestIndex !== expected.requestIndex ||
+      actual.method !== (request.method ?? operation.method) ||
+      actual.url !== expectedUrlForScenarioRequest(scenario, request)
+    ) {
+      return false
+    }
+
+    if (expected.kind === 'after-response') {
+      return actual.statusCode === request.response.statusCode
+    }
+
+    return true
+  }
+
+  if (expected.kind === 'should-retry') {
+    return actual.decision === expected.decision && actual.retryAttempt === expected.retryAttempt
+  }
+
   return true
 }
 
@@ -215,7 +248,7 @@ function expectScenarioEvents(scenario, observedEvents) {
   for (const expectedEvent of scenario.events) {
     const matchedIndex = observedEvents.findIndex(
       (actualEvent, index) =>
-        index >= searchStart && eventMatchesExpectation(actualEvent, expectedEvent),
+        index >= searchStart && eventMatchesExpectation(scenario, actualEvent, expectedEvent),
     )
 
     expect(matchedIndex)
@@ -277,6 +310,9 @@ function expectScenarioRequest(req, scenario, request) {
 async function startScenarioUpload(scenario, testStack) {
   let upload
   let terminatePromise
+  let afterResponseRequestIndex = 0
+  let beforeRequestIndex = 0
+  let retryDecisionIndex = 0
   const observedEvents = []
   const onError = waitableFunction('onError')
   const onSuccess = waitableFunction('onSuccess')
@@ -293,6 +329,31 @@ async function startScenarioUpload(scenario, testStack) {
     },
   }
 
+  if (scenarioWantsEvent(scenario, 'before-request')) {
+    options.onBeforeRequest = (req) => {
+      observedEvents.push({
+        kind: 'before-request',
+        method: req.getMethod(),
+        requestIndex: beforeRequestIndex,
+        url: req.getURL(),
+      })
+      beforeRequestIndex += 1
+    }
+  }
+
+  if (scenarioWantsEvent(scenario, 'after-response')) {
+    options.onAfterResponse = (req, res) => {
+      observedEvents.push({
+        kind: 'after-response',
+        method: req.getMethod(),
+        requestIndex: afterResponseRequestIndex,
+        statusCode: res.getStatus(),
+        url: req.getURL(),
+      })
+      afterResponseRequestIndex += 1
+    }
+  }
+
   if (scenarioWantsEvent(scenario, 'progress')) {
     options.onProgress = (bytesSent, bytesTotal) => {
       observedEvents.push({ bytesSent, bytesTotal, kind: 'progress' })
@@ -307,6 +368,27 @@ async function startScenarioUpload(scenario, testStack) {
 
   if (scenarioWantsEvent(scenario, 'source-close')) {
     options.fileReader = makeEventRecordingFileReader(defaultOptions.fileReader, observedEvents)
+  }
+
+  if (scenarioWantsEvent(scenario, 'should-retry')) {
+    options.onShouldRetry = (_error, retryAttempt) => {
+      const event = scenario.events.filter((candidate) => candidate.kind === 'should-retry')[
+        retryDecisionIndex
+      ]
+      if (!event) {
+        throw new Error(
+          `Generated scenario ${scenario.scenarioId} received unexpected retry decision request ${retryDecisionIndex}`,
+        )
+      }
+
+      observedEvents.push({
+        decision: event.decision,
+        kind: 'should-retry',
+        retryAttempt,
+      })
+      retryDecisionIndex += 1
+      return event.decision
+    }
   }
 
   if (scenario.input.chunkSize != null) {
@@ -421,6 +503,7 @@ describe('generated TUS protocol contract', () => {
       'overridePatchMethod',
       'parallelUploadConcat',
       'retryPatchAfterOffsetRecovery',
+      'requestLifecycleHooks',
       'terminateWithRetry',
     ])
   })
