@@ -973,10 +973,6 @@ export function tusPlanRequestHeaders({
     throw new Error(`tus: unsupported request header layer policy ${policy.layers.join('|')}`)
   }
 
-  if (policy.requestIdSource !== 'sdk-generated-uuid') {
-    throw new Error(`tus: unsupported request ID source ${policy.requestIdSource}`)
-  }
-
   if (addRequestId && !requestId) {
     throw new Error('tus: request ID is required when addRequestId is enabled')
   }
@@ -986,6 +982,21 @@ export function tusPlanRequestHeaders({
     ...customHeaders,
     ...(addRequestId && requestId ? tusRequestIdHeaders(requestId) : {}),
   }
+}
+
+export function tusPlanRequestId({
+  addRequestId,
+  generateRequestId,
+}: {
+  addRequestId: boolean
+  generateRequestId: () => string
+}): string | undefined {
+  const policy = TUS_FLOW_POLICY.requestHeaders
+  if (policy.requestIdSource !== 'sdk-generated-uuid') {
+    throw new Error(`tus: unsupported request ID source ${policy.requestIdSource}`)
+  }
+
+  return addRequestId ? generateRequestId() : undefined
 }
 
 export function tusResolveRelativeUrl(baseUrl: string, relativeOrAbsoluteUrl: string): string {

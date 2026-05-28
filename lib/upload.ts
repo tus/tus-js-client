@@ -35,6 +35,7 @@ import {
   tusPlanPreparedUploadSize,
   tusPlanRemovedResumeOptionWarning,
   tusPlanRequestHeaders,
+  tusPlanRequestId,
   tusPlanRequestLifecycleHooks,
   tusPlanResumeOffsetResponse,
   tusPlanResumeResponseStatus,
@@ -997,7 +998,10 @@ function setRequestHeaders(req: HttpRequest, headers: Record<string, string>): v
  */
 function openRequest(plan: TusRequestPlan, options: UploadOptions): HttpRequest {
   const req = options.httpStack.createRequest(plan.method, plan.url)
-  const requestId = options.addRequestId ? uuid() : undefined
+  const requestId = tusPlanRequestId({
+    addRequestId: options.addRequestId,
+    generateRequestId: uuid,
+  })
 
   setRequestHeaders(
     req,
