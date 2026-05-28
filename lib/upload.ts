@@ -30,6 +30,7 @@ import {
   tusPlanParallelUploadSlice,
   tusPlanPreparedUploadMode,
   tusPlanPreparedUploadSize,
+  tusPlanRemovedResumeOptionWarning,
   tusPlanResumeOffsetResponse,
   tusPlanResumeResponseStatus,
   tusPlanResumeUploadRequest,
@@ -148,11 +149,11 @@ export class BaseUpload {
   private _uploadLengthDeferred: boolean
 
   constructor(file: UploadInput, options: UploadOptions) {
-    // Warn about removed options from previous versions
-    if ('resume' in options) {
-      console.log(
-        'tus: The `resume` option has been removed in tus-js-client v2. Please use the URL storage API instead.',
-      )
+    const removedResumeOptionWarning = tusPlanRemovedResumeOptionWarning({
+      hasResumeOption: 'resume' in options,
+    })
+    if (removedResumeOptionWarning.shouldWarn) {
+      console.log(removedResumeOptionWarning.message)
     }
 
     // The default options will already be added from the wrapper classes.

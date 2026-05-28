@@ -198,6 +198,8 @@ export const TUS_FLOW_POLICY = {
     missingInput: 'tus: no file or stream to upload provided',
     missingPatchUrl: 'tus: Expected url to be set',
     missingResumeOffset: 'tus: missing Upload-Offset header',
+    removedResumeOption:
+      'tus: The `resume` option has been removed in tus-js-client v2. Please use the URL storage API instead.',
     parallelBoundariesLengthMismatch:
       'tus: the `parallelUploadBoundaries` must have the same length as the value of `parallelUploads`',
     parallelBoundariesWithoutParallelUploads:
@@ -433,6 +435,10 @@ export type TusRetryAfterErrorPlan =
       retryAttempt: number
     }
 
+export type TusRemovedResumeOptionWarningPlan =
+  | { message: string; shouldWarn: true }
+  | { shouldWarn: false }
+
 function tusFormatFlowMessage(template: string, values: Record<string, string | number>): string {
   let message = template
   for (const [name, value] of Object.entries(values)) {
@@ -526,6 +532,21 @@ export function tusValidateUploadStart({
   }
 
   return { ok: true }
+}
+
+export function tusPlanRemovedResumeOptionWarning({
+  hasResumeOption,
+}: {
+  hasResumeOption: boolean
+}): TusRemovedResumeOptionWarningPlan {
+  if (!hasResumeOption) {
+    return { shouldWarn: false }
+  }
+
+  return {
+    message: TUS_FLOW_POLICY.messages.removedResumeOption,
+    shouldWarn: true,
+  }
 }
 
 export function tusPlanSingleUploadStart({
