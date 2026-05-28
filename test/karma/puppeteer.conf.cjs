@@ -15,5 +15,9 @@ module.exports = (config) => {
     // start these browsers
     // available browser launchers: https://www.npmjs.com/search?q=keywords:karma-launcher
     browsers: ['ChromeHeadless'],
+
+    // Chrome on shared GitHub runners can pause long enough for Karma's default
+    // 30s activity timeout to disconnect the browser even though specs are still passing.
+    browserNoActivityTimeout: 120000,
   })
 }
