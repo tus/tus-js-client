@@ -1742,6 +1742,12 @@ export function tusShouldRemoveStoredUploadOnSuccess({
   return removeFingerprintOnSuccess
 }
 
+export function tusUrlStorageCreationTime({ now }: { now: Date }): string {
+  tusAssertUrlStorageRecordPolicySupported()
+
+  return now.toString()
+}
+
 export function tusPlanStoredUploadRecord({
   creationTime,
   fingerprint,

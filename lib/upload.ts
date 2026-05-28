@@ -62,6 +62,7 @@ import {
   tusTerminateUploadRequestPlan,
   tusUploadBodyHeaders,
   tusUploadLengthHeaders,
+  tusUrlStorageCreationTime,
   tusValidateUploadStart,
 } from './protocol_generated.js'
 import { uuid } from './uuid.js'
@@ -951,7 +952,7 @@ export class BaseUpload {
     }
 
     const recordPlan = tusPlanStoredUploadRecord({
-      creationTime: new Date().toString(),
+      creationTime: tusUrlStorageCreationTime({ now: new Date() }),
       fingerprint: storagePlan.fingerprint,
       metadata: this.options.metadata,
       parallelUploadUrls: this._parallelUploadUrls,
