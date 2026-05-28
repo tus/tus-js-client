@@ -1,4 +1,4 @@
-import { Upload } from 'tus-js-client'
+import { defaultOptions, Upload } from 'tus-js-client'
 import {
   tusClientConformanceScenarios,
   tusClientFeatures,
@@ -164,6 +164,72 @@ function makeStoredUploadStorage(storedUpload) {
   }
 }
 
+function scenarioWantsEvent(scenario, kind) {
+  return scenario.events.some((event) => event.kind === kind)
+}
+
+function makeEventRecordingFileReader(fileReader, observedEvents) {
+  return {
+    async openFile(input, chunkSize) {
+      const source = await fileReader.openFile(input, chunkSize)
+
+      return {
+        get size() {
+          return source.size
+        },
+        close() {
+          observedEvents.push({ kind: 'source-close' })
+          source.close()
+        },
+        slice(start, end) {
+          return source.slice(start, end)
+        },
+      }
+    },
+  }
+}
+
+function eventMatchesExpectation(actual, expected) {
+  if (actual.kind !== expected.kind) {
+    return false
+  }
+
+  if (expected.kind === 'progress') {
+    return actual.bytesSent === expected.bytesSent && actual.bytesTotal === expected.bytesTotal
+  }
+
+  if (expected.kind === 'chunk-complete') {
+    return (
+      actual.bytesAccepted === expected.bytesAccepted &&
+      actual.bytesTotal === expected.bytesTotal &&
+      actual.chunkSize === expected.chunkSize
+    )
+  }
+
+  return true
+}
+
+function expectScenarioEvents(scenario, observedEvents) {
+  let searchStart = 0
+
+  for (const expectedEvent of scenario.events) {
+    const matchedIndex = observedEvents.findIndex(
+      (actualEvent, index) =>
+        index >= searchStart && eventMatchesExpectation(actualEvent, expectedEvent),
+    )
+
+    expect(matchedIndex)
+      .withContext(
+        `Expected generated scenario ${scenario.scenarioId} to emit ${JSON.stringify(
+          expectedEvent,
+        )} after event index ${searchStart - 1}; observed ${JSON.stringify(observedEvents)}`,
+      )
+      .not.toBe(-1)
+
+    searchStart = matchedIndex + 1
+  }
+}
+
 function expectedUrlForScenarioRequest(scenario, request) {
   if (request.url === 'endpoint') {
     return scenario.input.endpointUrl
@@ -211,12 +277,36 @@ function expectScenarioRequest(req, scenario, request) {
 async function startScenarioUpload(scenario, testStack) {
   let upload
   let terminatePromise
+  const observedEvents = []
+  const onError = waitableFunction('onError')
+  const onSuccess = waitableFunction('onSuccess')
   const options = {
     endpoint: scenario.input.endpointUrl,
     httpStack: testStack,
     metadata: scenario.input.metadata ?? {},
-    onError: waitableFunction('onError'),
-    onSuccess: waitableFunction('onSuccess'),
+    onError,
+    onSuccess(payload) {
+      if (scenarioWantsEvent(scenario, 'success')) {
+        observedEvents.push({ kind: 'success' })
+      }
+      onSuccess(payload)
+    },
+  }
+
+  if (scenarioWantsEvent(scenario, 'progress')) {
+    options.onProgress = (bytesSent, bytesTotal) => {
+      observedEvents.push({ bytesSent, bytesTotal, kind: 'progress' })
+    }
+  }
+
+  if (scenarioWantsEvent(scenario, 'upload-url-available')) {
+    options.onUploadUrlAvailable = () => {
+      observedEvents.push({ kind: 'upload-url-available' })
+    }
+  }
+
+  if (scenarioWantsEvent(scenario, 'source-close')) {
+    options.fileReader = makeEventRecordingFileReader(defaultOptions.fileReader, observedEvents)
   }
 
   if (scenario.input.chunkSize != null) {
@@ -261,8 +351,15 @@ async function startScenarioUpload(scenario, testStack) {
   }
 
   if (scenario.behavior === 'terminate-with-retry') {
-    options.onChunkComplete = () => {
+    options.onChunkComplete = (chunkSize, bytesAccepted, bytesTotal) => {
+      if (scenarioWantsEvent(scenario, 'chunk-complete')) {
+        observedEvents.push({ bytesAccepted, bytesTotal, chunkSize, kind: 'chunk-complete' })
+      }
       terminatePromise = upload.abort(true)
+    }
+  } else if (scenarioWantsEvent(scenario, 'chunk-complete')) {
+    options.onChunkComplete = (chunkSize, bytesAccepted, bytesTotal) => {
+      observedEvents.push({ bytesAccepted, bytesTotal, chunkSize, kind: 'chunk-complete' })
     }
   }
 
@@ -276,7 +373,7 @@ async function startScenarioUpload(scenario, testStack) {
 
   upload.start()
 
-  return { options, terminatePromise: () => terminatePromise, upload }
+  return { observedEvents, onError, onSuccess, terminatePromise: () => terminatePromise, upload }
 }
 
 async function runGeneratedConformanceScenario(scenario) {
@@ -284,7 +381,8 @@ async function runGeneratedConformanceScenario(scenario) {
   expect(feature.primitives).toEqual(jasmine.arrayContaining(scenario.primitives))
 
   const testStack = new TestHttpStack()
-  const { options, terminatePromise, upload } = await startScenarioUpload(scenario, testStack)
+  const { observedEvents, onError, onSuccess, terminatePromise, upload } =
+    await startScenarioUpload(scenario, testStack)
 
   for (const request of scenario.requests) {
     const req = await testStack.nextRequest()
@@ -294,14 +392,16 @@ async function runGeneratedConformanceScenario(scenario) {
   if (scenario.completion.kind === 'terminated') {
     await terminatePromise()
     expect(upload.url).toBe(scenario.completion.uploadUrl)
-    expect(options.onSuccess).not.toHaveBeenCalled()
-    expect(options.onError).not.toHaveBeenCalled()
+    expect(onSuccess).not.toHaveBeenCalled()
+    expect(onError).not.toHaveBeenCalled()
+    expectScenarioEvents(scenario, observedEvents)
     return
   }
 
-  await options.onSuccess.toBeCalled()
+  await onSuccess.toBeCalled()
   expect(upload.url).toBe(scenario.completion.uploadUrl)
-  expect(options.onError).not.toHaveBeenCalled()
+  expect(onError).not.toHaveBeenCalled()
+  expectScenarioEvents(scenario, observedEvents)
 }
 
 describe('generated TUS protocol contract', () => {

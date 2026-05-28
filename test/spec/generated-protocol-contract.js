@@ -606,8 +606,8 @@ export const tusClientFeatures = [
   },
   {
     conformance: {
-      scenarioIds: [],
-      status: 'needs-generated-scenario',
+      scenarioIds: ['singleUploadLifecycle', 'creationWithUpload', 'resumeFromPreviousUpload'],
+      status: 'covered-by-generated-scenario',
     },
     description: 'Expose progress and accepted-chunk callbacks from runtime upload activity.',
     featureId: 'uploadCallbacks',
@@ -811,6 +811,33 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/generated-contract',
     },
+    events: [
+      {
+        kind: 'upload-url-available',
+      },
+      {
+        bytesSent: 0,
+        bytesTotal: 11,
+        kind: 'progress',
+      },
+      {
+        bytesSent: 11,
+        bytesTotal: 11,
+        kind: 'progress',
+      },
+      {
+        bytesAccepted: 11,
+        bytesTotal: 11,
+        chunkSize: 11,
+        kind: 'chunk-complete',
+      },
+      {
+        kind: 'success',
+      },
+      {
+        kind: 'source-close',
+      },
+    ],
     featureId: 'singleUploadLifecycle',
     input: {
       content: 'hello world',
@@ -866,6 +893,27 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/creation-with-upload-contract',
     },
+    events: [
+      {
+        bytesSent: 0,
+        bytesTotal: 11,
+        kind: 'progress',
+      },
+      {
+        bytesSent: 11,
+        bytesTotal: 11,
+        kind: 'progress',
+      },
+      {
+        kind: 'upload-url-available',
+      },
+      {
+        kind: 'success',
+      },
+      {
+        kind: 'source-close',
+      },
+    ],
     featureId: 'creationWithUpload',
     input: {
       content: 'hello world',
@@ -904,6 +952,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/upload-body-headers-contract',
     },
+    events: [],
     featureId: 'uploadBodyHeaders',
     input: {
       content: 'hello world',
@@ -953,6 +1002,33 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/resume-contract',
     },
+    events: [
+      {
+        kind: 'upload-url-available',
+      },
+      {
+        bytesSent: 5,
+        bytesTotal: 11,
+        kind: 'progress',
+      },
+      {
+        bytesSent: 11,
+        bytesTotal: 11,
+        kind: 'progress',
+      },
+      {
+        bytesAccepted: 11,
+        bytesTotal: 11,
+        chunkSize: 6,
+        kind: 'chunk-complete',
+      },
+      {
+        kind: 'success',
+      },
+      {
+        kind: 'source-close',
+      },
+    ],
     featureId: 'resumeUpload',
     input: {
       content: 'hello world',
@@ -1000,6 +1076,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/deferred-contract',
     },
+    events: [],
     featureId: 'deferredLengthUpload',
     input: {
       chunkSize: 100,
@@ -1052,6 +1129,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/override-contract',
     },
+    events: [],
     featureId: 'overridePatchMethod',
     input: {
       content: 'hello world',
@@ -1102,6 +1180,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/parallel-final',
     },
+    events: [],
     featureId: 'parallelUploadConcat',
     input: {
       content: 'hello world',
@@ -1209,6 +1288,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/retry-contract',
     },
+    events: [],
     featureId: 'retryOffsetRecovery',
     input: {
       content: 'hello world',
@@ -1280,6 +1360,7 @@ export const tusClientConformanceScenarios = [
       kind: 'terminated',
       uploadUrl: 'https://tus.io/uploads/terminate-contract',
     },
+    events: [],
     featureId: 'terminateUpload',
     input: {
       chunkSize: 5,
