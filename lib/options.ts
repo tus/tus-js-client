@@ -1,9 +1,12 @@
 import type { Readable as NodeReadableStream } from 'node:stream'
 import type { DetailedError } from './DetailedError.js'
+import type { TusClientProtocol } from './protocol_generated.js'
 
-export const PROTOCOL_TUS_V1 = 'tus-v1'
-export const PROTOCOL_IETF_DRAFT_03 = 'ietf-draft-03'
-export const PROTOCOL_IETF_DRAFT_05 = 'ietf-draft-05'
+export {
+  PROTOCOL_IETF_DRAFT_03,
+  PROTOCOL_IETF_DRAFT_05,
+  PROTOCOL_TUS_V1,
+} from './protocol_generated.js'
 
 /**
  * ReactNativeFile describes the structure that is returned from the
@@ -83,7 +86,7 @@ export interface UploadOptions {
   fileReader: FileReader
   httpStack: HttpStack
 
-  protocol: typeof PROTOCOL_TUS_V1 | typeof PROTOCOL_IETF_DRAFT_03 | typeof PROTOCOL_IETF_DRAFT_05
+  protocol: TusClientProtocol
 }
 
 export interface OnSuccessPayload {

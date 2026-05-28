@@ -6,6 +6,15 @@ export const TUS_DEFAULT_PROTOCOL_VERSION = '1.0.0'
 
 export const TUS_DEFAULT_CLIENT_PROTOCOL = 'tus-v1'
 
+export const PROTOCOL_TUS_V1 = 'tus-v1'
+export const PROTOCOL_IETF_DRAFT_03 = 'ietf-draft-03'
+export const PROTOCOL_IETF_DRAFT_05 = 'ietf-draft-05'
+
+export type TusClientProtocol =
+  | typeof PROTOCOL_TUS_V1
+  | typeof PROTOCOL_IETF_DRAFT_03
+  | typeof PROTOCOL_IETF_DRAFT_05
+
 export const TUS_HTTP_METHODS = {
   DELETE: 'DELETE',
   GET: 'GET',
