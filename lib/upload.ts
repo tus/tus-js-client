@@ -19,7 +19,6 @@ import {
   type TusRequestPlan,
   tusCheckConfiguredUploadSize,
   tusChunkEnd,
-  tusCreateUploadCompleteValue,
   tusCreateUploadRequestPlan,
   tusDeferredUploadLengthPlan,
   tusFinalUploadRequestPlan,
@@ -37,6 +36,7 @@ import {
   tusPlanTerminateResponse,
   tusPlanUploadChunkResponse,
   tusPlanUploadCompletionAfterOffset,
+  tusPlanUploadCreationRequest,
   tusPlanUploadCreationResponse,
   tusPlanUploadStorage,
   tusReadUploadChunkResponse,
@@ -48,7 +48,6 @@ import {
   tusTerminateUploadRequestPlan,
   tusUploadBodyHeaders,
   tusUploadLengthHeaders,
-  tusValidateCreateUpload,
   tusValidateUploadStart,
 } from './protocol_generated.js'
 import { uuid } from './uuid.js'
@@ -557,29 +556,24 @@ export class BaseUpload {
    * @api private
    */
   private async _createUpload(): Promise<void> {
-    const endpoint = this.options.endpoint
-    const validation = tusValidateCreateUpload({
-      hasEndpoint: endpoint != null,
+    const creationRequestPlan = tusPlanUploadCreationRequest({
+      endpoint: this.options.endpoint,
       size: this._size,
+      uploadDataDuringCreation: this.options.uploadDataDuringCreation,
       uploadLengthDeferred: this._uploadLengthDeferred,
     })
-    if (!validation.ok) {
-      throw new Error(validation.message)
-    }
-    if (endpoint == null) {
-      throw new Error(TUS_FLOW_POLICY.messages.createMissingEndpoint)
+    if (!creationRequestPlan.ok) {
+      throw new Error(creationRequestPlan.message)
     }
 
     const req = this._openRequest(
       tusCreateUploadRequestPlan({
-        endpoint,
+        endpoint: creationRequestPlan.endpoint,
         encodeMetadataValue,
         metadata: this.options.metadata,
         protocol: this.options.protocol,
         size: this._size,
-        uploadComplete: tusCreateUploadCompleteValue({
-          uploadDataDuringCreation: this.options.uploadDataDuringCreation,
-        }),
+        uploadComplete: creationRequestPlan.uploadComplete,
         uploadLengthDeferred: this._uploadLengthDeferred,
       }),
     )
@@ -602,7 +596,7 @@ export class BaseUpload {
         throw new Error(`tus: value thrown that is not an error: ${err}`)
       }
 
-      throw new DetailedError('tus: failed to create upload', err, req, undefined)
+      throw new DetailedError(creationRequestPlan.requestErrorMessage, err, req, undefined)
     }
 
     const creationResponsePlan = tusPlanUploadCreationResponse({
@@ -617,7 +611,7 @@ export class BaseUpload {
       throw new DetailedError(creationResponsePlan.message, undefined, req, res)
     }
 
-    this.url = resolveUrl(endpoint, creationResponsePlan.location)
+    this.url = resolveUrl(creationRequestPlan.endpoint, creationResponsePlan.location)
     log(`Created upload at ${this.url}`)
 
     if (typeof this.options.onUploadUrlAvailable === 'function') {

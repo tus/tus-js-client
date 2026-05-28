@@ -176,6 +176,7 @@ export const TUS_FLOW_POLICY = {
       "tus: cannot automatically derive upload's size from input. Specify it manually using the `uploadSize` option or use the `uploadLengthDeferred` option",
     createMissingEndpoint: 'tus: unable to create upload because no endpoint is provided',
     createMissingSize: 'tus: expected _size to be set',
+    createUploadRequestFailed: 'tus: failed to create upload',
     finalUploadMissingPartialUrls: 'tus: Expected _parallelUploadUrls to be set',
     finalUploadRequestFailed: 'tus: failed to concatenate parallel uploads',
     invalidUploadSize: 'tus: cannot convert `uploadSize` option into a number',
@@ -302,6 +303,15 @@ export type TusResumeOffsetResponsePlan =
 export type TusCreateUploadValidationResult =
   | { ok: false; message: string; reason: 'missingEndpoint' | 'missingSize' }
   | { ok: true }
+
+export type TusUploadCreationRequestPlan =
+  | { ok: false; message: string; reason: 'missingEndpoint' | 'missingSize' }
+  | {
+      endpoint: string
+      ok: true
+      requestErrorMessage: string
+      uploadComplete: boolean | undefined
+    }
 
 export type TusPreparedUploadSizePlan =
   | { ok: false; message: string; reason: 'cannotDeriveUploadSize' | 'invalidUploadSize' }
@@ -544,6 +554,42 @@ export function tusCreateUploadCompleteValue({
   uploadDataDuringCreation: boolean
 }): boolean | undefined {
   return uploadDataDuringCreation ? undefined : false
+}
+
+export function tusPlanUploadCreationRequest({
+  endpoint,
+  size,
+  uploadDataDuringCreation,
+  uploadLengthDeferred,
+}: {
+  endpoint: string | null | undefined
+  size: number | null
+  uploadDataDuringCreation: boolean
+  uploadLengthDeferred: boolean
+}): TusUploadCreationRequestPlan {
+  const validation = tusValidateCreateUpload({
+    hasEndpoint: endpoint != null,
+    size,
+    uploadLengthDeferred,
+  })
+  if (!validation.ok) {
+    return validation
+  }
+
+  if (endpoint == null) {
+    return {
+      ok: false,
+      message: TUS_FLOW_POLICY.messages.createMissingEndpoint,
+      reason: 'missingEndpoint',
+    }
+  }
+
+  return {
+    endpoint,
+    ok: true,
+    requestErrorMessage: TUS_FLOW_POLICY.messages.createUploadRequestFailed,
+    uploadComplete: tusCreateUploadCompleteValue({ uploadDataDuringCreation }),
+  }
 }
 
 export function tusPlanPreparedUploadSize({
