@@ -204,6 +204,9 @@ export const TUS_FLOW_POLICY = {
     },
     nodeExtraTypes: ['fs.ReadStream (Node.js)', 'stream.Readable (Node.js)'],
   },
+  locationResolution: {
+    strategy: 'relative-to-creation-request-url',
+  },
   messages: {
     configuredUploadSizeMismatch:
       'upload was configured with a size of {expectedSize} bytes, but the source is done after {actualSize} bytes',
@@ -736,6 +739,23 @@ export function tusPlanRequestHeaders({
     ...customHeaders,
     ...(addRequestId && requestId ? tusRequestIdHeaders(requestId) : {}),
   }
+}
+
+export function tusResolveUploadLocation({
+  location,
+  requestUrl,
+  resolveRelativeUrl,
+}: {
+  location: string
+  requestUrl: string
+  resolveRelativeUrl: (baseUrl: string, relativeOrAbsoluteUrl: string) => string
+}): string {
+  const policy = TUS_FLOW_POLICY.locationResolution
+  if (policy.strategy !== 'relative-to-creation-request-url') {
+    throw new Error(`tus: unsupported Location resolution strategy ${policy.strategy}`)
+  }
+
+  return resolveRelativeUrl(requestUrl, location)
 }
 
 export function tusCommonSupportedFileSourceTypes(): readonly string[] {

@@ -51,6 +51,7 @@ import {
   tusReadUploadChunkResponse,
   tusReadUploadCreationResponse,
   tusReadUploadOffsetResponse,
+  tusResolveUploadLocation,
   tusShouldRetryStatus,
   tusShouldSendUploadBodyDuringCreation,
   tusTerminateUploadRequestPlan,
@@ -362,7 +363,11 @@ export class BaseUpload {
       throw new DetailedError(creationResponsePlan.message, undefined, req, res)
     }
 
-    this.url = resolveUrl(finalUploadCreationPlan.endpoint, creationResponsePlan.location)
+    this.url = tusResolveUploadLocation({
+      location: creationResponsePlan.location,
+      requestUrl: finalUploadCreationPlan.endpoint,
+      resolveRelativeUrl,
+    })
     log(tusPlanCreatedUploadLog({ uploadUrl: this.url }).message)
 
     await this._emitSuccess(res)
@@ -603,7 +608,11 @@ export class BaseUpload {
       throw new DetailedError(creationResponsePlan.message, undefined, req, res)
     }
 
-    this.url = resolveUrl(creationRequestPlan.endpoint, creationResponsePlan.location)
+    this.url = tusResolveUploadLocation({
+      location: creationResponsePlan.location,
+      requestUrl: creationRequestPlan.endpoint,
+      resolveRelativeUrl,
+    })
     log(tusPlanCreatedUploadLog({ uploadUrl: this.url }).message)
 
     if (typeof this.options.onUploadUrlAvailable === 'function') {
@@ -1054,8 +1063,8 @@ function defaultOnShouldRetry(err: DetailedError): boolean {
  * header with the value /upload/abc, the resolved URL will be:
  * http://example.com/upload/abc
  */
-function resolveUrl(origin: string, link: string): string {
-  return new URL(link, origin).toString()
+function resolveRelativeUrl(baseUrl: string, relativeOrAbsoluteUrl: string): string {
+  return new URL(relativeOrAbsoluteUrl, baseUrl).toString()
 }
 
 function wait(delay: number) {
