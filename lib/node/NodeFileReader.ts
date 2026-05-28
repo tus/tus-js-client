@@ -1,11 +1,13 @@
 import { createReadStream } from 'node:fs'
 import isStream from 'is-stream'
 
-import {
-  openFile as openBaseFile,
-  supportedTypes as supportedBaseTypes,
-} from '../commonFileReader.js'
+import { openFile as openBaseFile } from '../commonFileReader.js'
 import type { FileReader, PathReference, UploadInput } from '../options.js'
+import {
+  tusNodeSupportedFileSourceTypes,
+  tusUnsupportedSourceTypeMessage,
+  tusValidateNodeStreamChunkSize,
+} from '../protocol_generated.js'
 import { NodeStreamFileSource } from './sources/NodeStreamFileSource.js'
 import { getFileSourceFromPath } from './sources/PathFileSource.js'
 
@@ -25,12 +27,11 @@ export class NodeFileReader implements FileReader {
     }
 
     if (isStream.readable(input)) {
-      chunkSize = Number(chunkSize)
-      if (!Number.isFinite(chunkSize)) {
-        throw new Error(
-          'cannot create source for stream without a finite value for the `chunkSize` option; specify a chunkSize to control the memory consumption',
-        )
+      const chunkSizeValidation = tusValidateNodeStreamChunkSize({ chunkSize })
+      if (!chunkSizeValidation.ok) {
+        throw new Error(chunkSizeValidation.message)
       }
+
       return Promise.resolve(new NodeStreamFileSource(input))
     }
 
@@ -38,7 +39,9 @@ export class NodeFileReader implements FileReader {
     if (fileSource) return Promise.resolve(fileSource)
 
     throw new Error(
-      `in this environment the source object may only be an instance of: ${supportedBaseTypes.join(', ')}, fs.ReadStream (Node.js), stream.Readable (Node.js)`,
+      tusUnsupportedSourceTypeMessage({
+        supportedTypes: tusNodeSupportedFileSourceTypes(),
+      }),
     )
   }
 }

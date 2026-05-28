@@ -1,5 +1,9 @@
 import type { Readable } from 'node:stream'
 import type { FileSource } from '../../options.js'
+import {
+  tusNodeStreamBackwardsReadMessage,
+  tusNodeStreamStartOutsideBufferMessage,
+} from '../../protocol_generated.js'
 
 /**
  * readChunk reads a chunk with the given size from the given
@@ -78,11 +82,11 @@ export class NodeStreamFileSource implements FileSource {
     // Fail fast if the caller requests a proportion of the data which is not
     // available any more.
     if (start < this._bufPos) {
-      throw new Error('cannot slice from position which we already seeked away')
+      throw new Error(tusNodeStreamBackwardsReadMessage())
     }
 
     if (start > this._bufPos + this._buf.length) {
-      throw new Error('slice start is outside of buffer (currently not implemented)')
+      throw new Error(tusNodeStreamStartOutsideBufferMessage())
     }
 
     if (this._error) {

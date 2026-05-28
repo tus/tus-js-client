@@ -1,4 +1,8 @@
 import type { FileSource, UploadInput } from './options.js'
+import {
+  tusCommonSupportedFileSourceTypes,
+  tusValidateWebStreamChunkSize,
+} from './protocol_generated.js'
 import { ArrayBufferViewFileSource } from './sources/ArrayBufferViewFileSource.js'
 import { BlobFileSource } from './sources/BlobFileSource.js'
 import { WebStreamFileSource } from './sources/WebStreamFileSource.js'
@@ -34,11 +38,9 @@ export function openFile(input: UploadInput, chunkSize: number): FileSource | nu
   }
 
   if (input instanceof ReadableStream) {
-    chunkSize = Number(chunkSize)
-    if (!Number.isFinite(chunkSize)) {
-      throw new Error(
-        'cannot create source for stream without a finite value for the `chunkSize` option',
-      )
+    const chunkSizeValidation = tusValidateWebStreamChunkSize({ chunkSize })
+    if (!chunkSizeValidation.ok) {
+      throw new Error(chunkSizeValidation.message)
     }
 
     return new WebStreamFileSource(input)
@@ -47,11 +49,4 @@ export function openFile(input: UploadInput, chunkSize: number): FileSource | nu
   return null
 }
 
-export const supportedTypes = [
-  'File',
-  'Blob',
-  'ArrayBuffer',
-  'SharedArrayBuffer',
-  'ArrayBufferView',
-  'ReadableStream (Web Streams)',
-]
+export const supportedTypes = tusCommonSupportedFileSourceTypes()

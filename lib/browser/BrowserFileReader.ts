@@ -1,11 +1,10 @@
-import {
-  openFile as openBaseFile,
-  supportedTypes as supportedBaseTypes,
-} from '../commonFileReader.js'
+import { openFile as openBaseFile } from '../commonFileReader.js'
 import type { FileReader, FileSource, UploadInput } from '../options.js'
 import {
+  tusCommonSupportedFileSourceTypes,
   tusReactNativeUriBlobFetchFailedMessage,
   tusReactNativeUriUnsupportedMessage,
+  tusUnsupportedSourceTypeMessage,
 } from '../protocol_generated.js'
 import { isReactNativeFile, isReactNativePlatform } from '../reactnative/isReactNative.js'
 import { uriToBlob } from '../reactnative/uriToBlob.js'
@@ -34,7 +33,9 @@ export class BrowserFileReader implements FileReader {
     if (fileSource) return fileSource
 
     throw new Error(
-      `in this environment the source object may only be an instance of: ${supportedBaseTypes.join(', ')}`,
+      tusUnsupportedSourceTypeMessage({
+        supportedTypes: tusCommonSupportedFileSourceTypes(),
+      }),
     )
   }
 }

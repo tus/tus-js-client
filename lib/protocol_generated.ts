@@ -178,6 +178,32 @@ export const TUS_UPLOAD_BODY = {
 }
 
 export const TUS_FLOW_POLICY = {
+  fileSources: {
+    commonTypes: [
+      'File',
+      'Blob',
+      'ArrayBuffer',
+      'SharedArrayBuffer',
+      'ArrayBufferView',
+      'ReadableStream (Web Streams)',
+    ],
+    messages: {
+      nodeStreamBackwardsRead: 'cannot slice from position which we already seeked away',
+      nodeStreamChunkSizeRequired:
+        'cannot create source for stream without a finite value for the `chunkSize` option; specify a chunkSize to control the memory consumption',
+      nodeStreamStartOutsideBuffer: 'slice start is outside of buffer (currently not implemented)',
+      unsupportedSourceType:
+        'in this environment the source object may only be an instance of: {supportedTypes}',
+      webStreamAlreadyLocked:
+        'Readable stream is already locked to reader. tus-js-client cannot obtain a new reader.',
+      webStreamBackwardsRead: "Requested data is before the reader's current offset",
+      webStreamChunkSizeRequired:
+        'cannot create source for stream without a finite value for the `chunkSize` option',
+      webStreamMissingBuffer: 'cannot _getDataFromBuffer because _buffer is unset',
+      webStreamUnknownDataType: 'Unknown data type',
+    },
+    nodeExtraTypes: ['fs.ReadStream (Node.js)', 'stream.Readable (Node.js)'],
+  },
   messages: {
     configuredUploadSizeMismatch:
       'upload was configured with a size of {expectedSize} bytes, but the source is done after {actualSize} bytes',
@@ -452,6 +478,10 @@ export interface TusLogMessagePlan {
   message: string
 }
 
+export type TusFileSourceChunkSizeValidationResult =
+  | { chunkSize: number; ok: true }
+  | { message: string; ok: false; reason: 'missingFiniteChunkSize' }
+
 function tusFormatFlowMessage(template: string, values: Record<string, string | number>): string {
   let message = template
   for (const [name, value] of Object.entries(values)) {
@@ -600,6 +630,82 @@ export function tusReactNativeUriBlobFetchFailedMessage({ error }: { error: unkn
   return tusFormatFlowMessage(TUS_FLOW_POLICY.messages.reactNativeUriBlobFetchFailed, {
     error: String(error),
   })
+}
+
+export function tusCommonSupportedFileSourceTypes(): readonly string[] {
+  return [...TUS_FLOW_POLICY.fileSources.commonTypes]
+}
+
+export function tusNodeSupportedFileSourceTypes(): readonly string[] {
+  return [...TUS_FLOW_POLICY.fileSources.commonTypes, ...TUS_FLOW_POLICY.fileSources.nodeExtraTypes]
+}
+
+export function tusUnsupportedSourceTypeMessage({
+  supportedTypes,
+}: {
+  supportedTypes: readonly string[]
+}): string {
+  return tusFormatFlowMessage(TUS_FLOW_POLICY.fileSources.messages.unsupportedSourceType, {
+    supportedTypes: supportedTypes.join(', '),
+  })
+}
+
+export function tusValidateWebStreamChunkSize({
+  chunkSize,
+}: {
+  chunkSize: unknown
+}): TusFileSourceChunkSizeValidationResult {
+  const normalizedChunkSize = Number(chunkSize)
+  if (!Number.isFinite(normalizedChunkSize)) {
+    return {
+      message: TUS_FLOW_POLICY.fileSources.messages.webStreamChunkSizeRequired,
+      ok: false,
+      reason: 'missingFiniteChunkSize',
+    }
+  }
+
+  return { chunkSize: normalizedChunkSize, ok: true }
+}
+
+export function tusValidateNodeStreamChunkSize({
+  chunkSize,
+}: {
+  chunkSize: unknown
+}): TusFileSourceChunkSizeValidationResult {
+  const normalizedChunkSize = Number(chunkSize)
+  if (!Number.isFinite(normalizedChunkSize)) {
+    return {
+      message: TUS_FLOW_POLICY.fileSources.messages.nodeStreamChunkSizeRequired,
+      ok: false,
+      reason: 'missingFiniteChunkSize',
+    }
+  }
+
+  return { chunkSize: normalizedChunkSize, ok: true }
+}
+
+export function tusWebStreamUnknownDataTypeMessage(): string {
+  return TUS_FLOW_POLICY.fileSources.messages.webStreamUnknownDataType
+}
+
+export function tusWebStreamAlreadyLockedMessage(): string {
+  return TUS_FLOW_POLICY.fileSources.messages.webStreamAlreadyLocked
+}
+
+export function tusWebStreamBackwardsReadMessage(): string {
+  return TUS_FLOW_POLICY.fileSources.messages.webStreamBackwardsRead
+}
+
+export function tusWebStreamMissingBufferMessage(): string {
+  return TUS_FLOW_POLICY.fileSources.messages.webStreamMissingBuffer
+}
+
+export function tusNodeStreamBackwardsReadMessage(): string {
+  return TUS_FLOW_POLICY.fileSources.messages.nodeStreamBackwardsRead
+}
+
+export function tusNodeStreamStartOutsideBufferMessage(): string {
+  return TUS_FLOW_POLICY.fileSources.messages.nodeStreamStartOutsideBuffer
 }
 
 export function tusPlanSingleUploadStart({
