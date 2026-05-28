@@ -34,6 +34,7 @@ import {
   tusPlanPreparedUploadMode,
   tusPlanPreparedUploadSize,
   tusPlanRemovedResumeOptionWarning,
+  tusPlanRequestHeaders,
   tusPlanResumeOffsetResponse,
   tusPlanResumeResponseStatus,
   tusPlanResumeUploadRequest,
@@ -50,7 +51,6 @@ import {
   tusReadUploadChunkResponse,
   tusReadUploadCreationResponse,
   tusReadUploadOffsetResponse,
-  tusRequestIdHeaders,
   tusShouldRetryStatus,
   tusShouldSendUploadBodyDuringCreation,
   tusTerminateUploadRequestPlan,
@@ -957,21 +957,17 @@ function setRequestHeaders(req: HttpRequest, headers: Record<string, string>): v
  */
 function openRequest(plan: TusRequestPlan, options: UploadOptions): HttpRequest {
   const req = options.httpStack.createRequest(plan.method, plan.url)
+  const requestId = options.addRequestId ? uuid() : undefined
 
-  setRequestHeaders(req, plan.headers)
-
-  const headers = options.headers || {}
-
-  for (const [name, value] of Object.entries(headers)) {
-    req.setHeader(name, value)
-  }
-
-  if (options.addRequestId) {
-    const requestId = uuid()
-    for (const [name, value] of Object.entries(tusRequestIdHeaders(requestId))) {
-      req.setHeader(name, value)
-    }
-  }
+  setRequestHeaders(
+    req,
+    tusPlanRequestHeaders({
+      addRequestId: options.addRequestId,
+      customHeaders: options.headers || {},
+      operationHeaders: plan.headers,
+      requestId,
+    }),
+  )
 
   return req
 }

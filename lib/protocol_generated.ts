@@ -287,6 +287,10 @@ export const TUS_FLOW_POLICY = {
   parallelUploadSplit: {
     strategy: 'contiguous-floor-size-last-remainder',
   },
+  requestHeaders: {
+    layers: ['operation', 'custom', 'request-id'],
+    requestIdSource: 'sdk-generated-uuid',
+  },
   urlStorage: {
     namespace: 'tus',
     separator: '::',
@@ -699,6 +703,38 @@ export function tusDefaultClientOptions(): TusClientDefaultOptions {
     storeFingerprintForResuming: defaults.storeFingerprintForResuming,
     uploadDataDuringCreation: defaults.uploadDataDuringCreation,
     uploadLengthDeferred: defaults.uploadLengthDeferred,
+  }
+}
+
+export function tusPlanRequestHeaders({
+  addRequestId,
+  customHeaders = {},
+  operationHeaders,
+  requestId,
+}: {
+  addRequestId: boolean
+  customHeaders?: Record<string, string>
+  operationHeaders: Record<string, string>
+  requestId?: string
+}): Record<string, string> {
+  const policy = TUS_FLOW_POLICY.requestHeaders
+  const supportedLayerOrder = 'operation|custom|request-id'
+  if (policy.layers.join('|') !== supportedLayerOrder) {
+    throw new Error(`tus: unsupported request header layer policy ${policy.layers.join('|')}`)
+  }
+
+  if (policy.requestIdSource !== 'sdk-generated-uuid') {
+    throw new Error(`tus: unsupported request ID source ${policy.requestIdSource}`)
+  }
+
+  if (addRequestId && !requestId) {
+    throw new Error('tus: request ID is required when addRequestId is enabled')
+  }
+
+  return {
+    ...operationHeaders,
+    ...customHeaders,
+    ...(addRequestId && requestId ? tusRequestIdHeaders(requestId) : {}),
   }
 }
 
