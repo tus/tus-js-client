@@ -212,6 +212,7 @@ export const TUS_FLOW_POLICY = {
     resumeWithoutEndpoint:
       'tus: unable to resume upload (new upload cannot be created without an endpoint)',
     retryDelaysNotArray: 'tus: the `retryDelays` option must either be an array or null',
+    terminateUploadRequestFailed: 'tus: failed to terminate upload',
     unexpectedChunkResponse: 'tus: unexpected response while uploading chunk',
     unexpectedCreateResponse: 'tus: unexpected response while creating upload',
     unexpectedResumeResponse: 'tus: unexpected response while resuming upload',
@@ -318,6 +319,11 @@ export type TusResumeUploadRequestPlan =
 export type TusUploadChunkRequestPlan =
   | { ok: false; message: string; reason: 'missingUploadUrl' }
   | { ok: true; requestErrorMessage: string; uploadUrl: string }
+
+export interface TusTerminateUploadRequestPlan {
+  requestErrorMessage: string
+  uploadUrl: string
+}
 
 export type TusCreateUploadValidationResult =
   | { ok: false; message: string; reason: 'missingEndpoint' | 'missingSize' }
@@ -573,6 +579,17 @@ export function tusPlanUploadChunkRequest({
     requestErrorMessage: tusFormatFlowMessage(TUS_FLOW_POLICY.messages.uploadChunkRequestFailed, {
       offset,
     }),
+    uploadUrl,
+  }
+}
+
+export function tusPlanTerminateUploadRequest({
+  uploadUrl,
+}: {
+  uploadUrl: string
+}): TusTerminateUploadRequestPlan {
+  return {
+    requestErrorMessage: TUS_FLOW_POLICY.messages.terminateUploadRequestFailed,
     uploadUrl,
   }
 }

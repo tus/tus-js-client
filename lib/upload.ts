@@ -34,6 +34,7 @@ import {
   tusPlanRetryAfterError,
   tusPlanSingleUploadStart,
   tusPlanTerminateResponse,
+  tusPlanTerminateUploadRequest,
   tusPlanUploadChunkRequest,
   tusPlanUploadChunkResponse,
   tusPlanUploadCompletionAfterOffset,
@@ -1088,9 +1089,10 @@ function wait(delay: number) {
  * @return {Promise} The Promise will be resolved/rejected when the requests finish.
  */
 export async function terminate(url: string, options: UploadOptions): Promise<void> {
+  const terminateRequestPlan = tusPlanTerminateUploadRequest({ uploadUrl: url })
   const plan = tusTerminateUploadRequestPlan({
     protocol: options.protocol,
-    uploadUrl: url,
+    uploadUrl: terminateRequestPlan.uploadUrl,
   })
   const req = openRequest(plan, options)
 
@@ -1110,7 +1112,7 @@ export async function terminate(url: string, options: UploadOptions): Promise<vo
     const detailedErr =
       err instanceof DetailedError
         ? err
-        : new DetailedError('tus: failed to terminate upload', err, req)
+        : new DetailedError(terminateRequestPlan.requestErrorMessage, err, req)
 
     const retryableErr = getRetryableError(detailedErr)
     const retryDelays = options.retryDelays ?? null
