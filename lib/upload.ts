@@ -26,6 +26,7 @@ import {
   tusGetUploadOffsetRequestPlan,
   tusPartialUploadHeaders,
   tusPatchUploadRequestPlan,
+  tusPlanParallelUploadParts,
   tusPlanPreparedUploadMode,
   tusPlanPreparedUploadSize,
   tusPlanResumeOffsetResponse,
@@ -252,29 +253,19 @@ export class BaseUpload {
    * @api private
    */
   private async _startParallelUpload(): Promise<void> {
-    const totalSize = this._size
-    let totalProgress = 0
-    this._parallelUploads = []
-
-    const partCount =
-      this._parallelUploadUrls != null
-        ? this._parallelUploadUrls.length
-        : this.options.parallelUploads
-
-    if (this._size == null) {
-      throw new Error('tus: Expected _size to be set')
+    const parallelUploadPartsPlan = tusPlanParallelUploadParts({
+      parallelUploadBoundaries: this.options.parallelUploadBoundaries,
+      parallelUploads: this.options.parallelUploads,
+      parallelUploadUrls: this._parallelUploadUrls,
+      size: this._size,
+    })
+    if (!parallelUploadPartsPlan.ok) {
+      throw new Error(parallelUploadPartsPlan.message)
     }
 
-    // The input file will be split into multiple slices which are uploaded in separate
-    // requests. Here we get the start and end position for the slices.
-    const partsBoundaries =
-      this.options.parallelUploadBoundaries ?? splitSizeIntoParts(this._size, partCount)
-
-    // Attach URLs from previous uploads, if available.
-    const parts = partsBoundaries.map((part, index) => ({
-      ...part,
-      uploadUrl: this._parallelUploadUrls?.[index] || null,
-    }))
+    const { parts, totalSize } = parallelUploadPartsPlan
+    let totalProgress = 0
+    this._parallelUploads = []
 
     // Create an empty list for storing the upload URLs
     this._parallelUploadUrls = new Array(parts.length)
@@ -315,9 +306,6 @@ export class BaseUpload {
           onProgress: (newPartProgress: number) => {
             totalProgress = totalProgress - lastPartProgress + newPartProgress
             lastPartProgress = newPartProgress
-            if (totalSize == null) {
-              throw new Error('tus: Expected totalSize to be set')
-            }
             this._emitProgress(totalProgress, totalSize)
           },
           // Wait until every partial upload has an upload URL, so we can add
@@ -1093,33 +1081,6 @@ function defaultOnShouldRetry(err: DetailedError): boolean {
  */
 function resolveUrl(origin: string, link: string): string {
   return new URL(link, origin).toString()
-}
-
-type Part = { start: number; end: number }
-
-/**
- * Calculate the start and end positions for the parts if an upload
- * is split into multiple parallel requests.
- *
- * @param {number} totalSize The byte size of the upload, which will be split.
- * @param {number} partCount The number in how many parts the upload will be split.
- * @return {Part[]}
- * @api private
- */
-function splitSizeIntoParts(totalSize: number, partCount: number): Part[] {
-  const partSize = Math.floor(totalSize / partCount)
-  const parts: Part[] = []
-
-  for (let i = 0; i < partCount; i++) {
-    parts.push({
-      start: partSize * i,
-      end: partSize * (i + 1),
-    })
-  }
-
-  parts[partCount - 1].end = totalSize
-
-  return parts
 }
 
 function wait(delay: number) {

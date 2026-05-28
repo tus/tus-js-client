@@ -189,6 +189,7 @@ export const TUS_FLOW_POLICY = {
       'tus: the `parallelUploadBoundaries` must have the same length as the value of `parallelUploads`',
     parallelBoundariesWithoutParallelUploads:
       'tus: cannot use the `parallelUploadBoundaries` option when `parallelUploads` is disabled',
+    parallelUploadMissingSize: 'tus: Expected _size to be set',
     parallelUploadsWithDeferredLength:
       'tus: cannot use the `uploadLengthDeferred` option when parallelUploads is enabled',
     parallelUploadsWithUploadSize:
@@ -206,6 +207,9 @@ export const TUS_FLOW_POLICY = {
     unsupportedProtocolPrefix: 'tus: unsupported protocol ',
   },
   minimumParallelUploads: 2,
+  parallelUploadSplit: {
+    strategy: 'contiguous-floor-size-last-remainder',
+  },
 }
 
 export type TusNumericHeaderReadResult =
@@ -296,6 +300,14 @@ export type TusPreparedUploadSizePlan =
   | { ok: true; size: number | null }
 
 export type TusPreparedUploadModePlan = { action: 'parallel' } | { action: 'single' }
+
+export type TusParallelUploadBoundary = { end: number; start: number }
+
+export type TusParallelUploadPart = TusParallelUploadBoundary & { uploadUrl: string | null }
+
+export type TusParallelUploadPartsPlan =
+  | { ok: false; message: string; reason: 'missingSize' }
+  | { ok: true; parts: TusParallelUploadPart[]; totalSize: number }
 
 export type TusDeferredUploadLengthPlan =
   | { shouldDeclareLength: false }
@@ -552,6 +564,68 @@ export function tusPlanPreparedUploadMode({
   }
 
   return { action: 'single' }
+}
+
+function tusSplitSizeIntoParallelUploadBoundaries({
+  partCount,
+  totalSize,
+}: {
+  partCount: number
+  totalSize: number
+}): TusParallelUploadBoundary[] {
+  if (TUS_FLOW_POLICY.parallelUploadSplit.strategy !== 'contiguous-floor-size-last-remainder') {
+    throw new Error(
+      `tus: unsupported parallel upload split strategy ${TUS_FLOW_POLICY.parallelUploadSplit.strategy}`,
+    )
+  }
+
+  const partSize = Math.floor(totalSize / partCount)
+  const parts: TusParallelUploadBoundary[] = []
+
+  for (let index = 0; index < partCount; index += 1) {
+    parts.push({
+      end: partSize * (index + 1),
+      start: partSize * index,
+    })
+  }
+
+  parts[partCount - 1].end = totalSize
+
+  return parts
+}
+
+export function tusPlanParallelUploadParts({
+  parallelUploadBoundaries,
+  parallelUploads,
+  parallelUploadUrls,
+  size,
+}: {
+  parallelUploadBoundaries: readonly TusParallelUploadBoundary[] | null | undefined
+  parallelUploads: number
+  parallelUploadUrls: readonly string[] | null | undefined
+  size: number | null
+}): TusParallelUploadPartsPlan {
+  if (size == null) {
+    return {
+      ok: false,
+      message: TUS_FLOW_POLICY.messages.parallelUploadMissingSize,
+      reason: 'missingSize',
+    }
+  }
+
+  const partCount = parallelUploadUrls != null ? parallelUploadUrls.length : parallelUploads
+  const boundaries =
+    parallelUploadBoundaries ??
+    tusSplitSizeIntoParallelUploadBoundaries({ partCount, totalSize: size })
+
+  return {
+    ok: true,
+    parts: boundaries.map((part, index) => ({
+      ...part,
+      uploadUrl: parallelUploadUrls?.[index] || null,
+    })),
+    totalSize: size,
+  }
 }
 
 export function tusCreatedUploadCompletesWithoutPatch({ size }: { size: number | null }): boolean {
