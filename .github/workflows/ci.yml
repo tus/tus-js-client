@@ -44,7 +44,18 @@ jobs:
         if: matrix.suite == 'puppeteer'
         run: |
           rm -rf ~/.cache/puppeteer/chrome
-          npx puppeteer browsers install chrome
+          chrome_build="$(
+            node <<'NODE'
+          const executablePath = require('puppeteer').executablePath()
+          const match = executablePath.match(/chrome\/[^/]+-([^/]+)/)
+          if (!match) {
+            throw new Error(`Could not infer Puppeteer Chrome build from ${executablePath}`)
+          }
+          process.stdout.write(match[1])
+          NODE
+          )"
+          npx puppeteer browsers install "chrome@$chrome_build"
+          test -x "$(node -e "process.stdout.write(require('puppeteer').executablePath())")"
       - name: Build
         run: npm run build
       - name: Test
