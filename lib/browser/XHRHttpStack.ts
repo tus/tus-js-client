@@ -6,7 +6,10 @@ import type {
   HttpStack,
   SliceType,
 } from '../options.js'
-import { tusHttpStackNodeReadableBodyUnsupportedMessage } from '../protocol_generated.js'
+import {
+  tusAbortErrorDescriptor,
+  tusHttpStackNodeReadableBodyUnsupportedMessage,
+} from '../protocol_generated.js'
 
 export class XHRHttpStack implements HttpStack {
   createRequest(method: string, url: string): HttpRequest {
@@ -83,7 +86,8 @@ class XHRRequest implements HttpRequest {
       }
 
       this._xhr.onabort = () => {
-        reject(new DOMException('Request was aborted', 'AbortError'))
+        const error = tusAbortErrorDescriptor()
+        reject(new DOMException(error.message, error.name))
       }
 
       this._xhr.send(body)

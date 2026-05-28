@@ -11,6 +11,7 @@ import type {
   SliceType,
 } from '../options.js'
 import {
+  tusAbortErrorDescriptor,
   tusNodeHttpStackMissingStatusCodeMessage,
   tusNodeHttpStackUnsupportedBodyTypeMessage,
 } from '../protocol_generated.js'
@@ -149,8 +150,10 @@ class Request implements HttpRequest {
 
   abort() {
     // Note: The destroy() method will trigger an `error` event with the provided error.
-    if (this._request != null)
-      this._request.destroy(new DOMException('Request was aborted', 'AbortError'))
+    if (this._request != null) {
+      const error = tusAbortErrorDescriptor()
+      this._request.destroy(new DOMException(error.message, error.name))
+    }
     return Promise.resolve()
   }
 

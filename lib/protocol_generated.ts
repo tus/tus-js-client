@@ -179,6 +179,11 @@ export const TUS_UPLOAD_BODY = {
 
 export const TUS_FLOW_POLICY = {
   abort: {
+    error: {
+      message: 'Request was aborted',
+      name: 'AbortError',
+      type: 'DOMException',
+    },
     removeStoredUrlAfterTermination: 'after-successful-termination',
     sequence: [
       'mark-aborted',
@@ -586,6 +591,12 @@ export interface TusAbortPlan {
   actions: TusAbortRuntimeAction[]
 }
 
+export interface TusAbortErrorDescriptor {
+  message: string
+  name: string
+  type: 'DOMException'
+}
+
 export interface TusLogMessagePlan {
   message: string
 }
@@ -966,6 +977,20 @@ function tusAssertAbortPolicySupported(): void {
     throw new Error(
       `tus: unsupported abort storage cleanup policy ${policy.removeStoredUrlAfterTermination}`,
     )
+  }
+
+  if (policy.error.type !== 'DOMException') {
+    throw new Error(`tus: unsupported abort error type ${policy.error.type}`)
+  }
+}
+
+export function tusAbortErrorDescriptor(): TusAbortErrorDescriptor {
+  tusAssertAbortPolicySupported()
+
+  return {
+    message: TUS_FLOW_POLICY.abort.error.message,
+    name: TUS_FLOW_POLICY.abort.error.name,
+    type: 'DOMException',
   }
 }
 
