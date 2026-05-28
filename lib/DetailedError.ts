@@ -1,4 +1,5 @@
 import type { HttpRequest, HttpResponse } from './options.js'
+import { TUS_REQUEST_ID_HEADER_NAME } from './protocol_generated.js'
 
 export class DetailedError extends Error {
   originalRequest?: HttpRequest
@@ -19,7 +20,7 @@ export class DetailedError extends Error {
     }
 
     if (req != null) {
-      const requestId = req.getHeader('X-Request-ID') || 'n/a'
+      const requestId = req.getHeader(TUS_REQUEST_ID_HEADER_NAME) || 'n/a'
       const method = req.getMethod()
       const url = req.getURL()
       const status = res ? res.getStatus() : 'n/a'
