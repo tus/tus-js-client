@@ -24,8 +24,10 @@ import {
   tusGetUploadOffsetRequestPlan,
   tusPatchUploadRequestPlan,
   tusPlanFinalUploadCreation,
+  tusPlanFingerprint,
   tusPlanParallelPartialUploadOptions,
   tusPlanParallelUploadParts,
+  tusPlanParallelUploadSlice,
   tusPlanPreparedUploadMode,
   tusPlanPreparedUploadSize,
   tusPlanResumeOffsetResponse,
@@ -167,11 +169,12 @@ export class BaseUpload {
 
   async findPreviousUploads(): Promise<PreviousUpload[]> {
     const fingerprint = await this.options.fingerprint(this.file, this.options)
-    if (!fingerprint) {
-      throw new Error('tus: unable to calculate fingerprint for this input file')
+    const fingerprintPlan = tusPlanFingerprint({ fingerprint })
+    if (!fingerprintPlan.ok) {
+      throw new Error(fingerprintPlan.message)
     }
 
-    return await this.options.urlStorage.findUploadsByFingerprint(fingerprint)
+    return await this.options.urlStorage.findUploadsByFingerprint(fingerprintPlan.fingerprint)
   }
 
   resumeFromPreviousUpload(previousUpload: PreviousUpload): void {
@@ -313,8 +316,9 @@ export class BaseUpload {
           },
         }
 
-        if (value == null) {
-          reject(new Error('tus: no value returned while slicing file for parallel uploads'))
+        const slicePlan = tusPlanParallelUploadSlice({ hasValue: value != null })
+        if (!slicePlan.ok) {
+          reject(new Error(slicePlan.message))
           return
         }
 

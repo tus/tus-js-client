@@ -188,6 +188,7 @@ export const TUS_FLOW_POLICY = {
     createUploadRequestFailed: 'tus: failed to create upload',
     finalUploadMissingPartialUrls: 'tus: Expected _parallelUploadUrls to be set',
     finalUploadRequestFailed: 'tus: failed to concatenate parallel uploads',
+    fingerprintUnavailable: 'tus: unable to calculate fingerprint for this input file',
     invalidUploadSize: 'tus: cannot convert `uploadSize` option into a number',
     invalidChunkOffset: 'tus: invalid or missing offset value',
     invalidResumeLength: 'tus: invalid or missing length value',
@@ -208,6 +209,8 @@ export const TUS_FLOW_POLICY = {
       'tus: cannot use the `uploadSize` option when parallelUploads is enabled',
     parallelUploadsWithUploadUrl:
       'tus: cannot use the `uploadUrl` option when parallelUploads is enabled',
+    parallelUploadSliceMissingValue:
+      'tus: no value returned while slicing file for parallel uploads',
     resumeUploadRequestFailed: 'tus: failed to resume upload',
     resumeWithoutEndpoint:
       'tus: unable to resume upload (new upload cannot be created without an endpoint)',
@@ -319,6 +322,14 @@ export type TusResumeOffsetResponsePlan =
 export type TusResumeUploadRequestPlan =
   | { ok: false; message: string; reason: 'missingUploadUrl' }
   | { ok: true; requestErrorMessage: string; uploadUrl: string }
+
+export type TusFingerprintPlan =
+  | { ok: false; message: string; reason: 'missingFingerprint' }
+  | { fingerprint: string; ok: true }
+
+export type TusParallelUploadSlicePlan =
+  | { ok: false; message: string; reason: 'missingValue' }
+  | { ok: true }
 
 export type TusUploadChunkRequestPlan =
   | { ok: false; message: string; reason: 'missingUploadUrl' }
@@ -561,6 +572,38 @@ export function tusPlanResumeUploadRequest({
     requestErrorMessage: TUS_FLOW_POLICY.messages.resumeUploadRequestFailed,
     uploadUrl,
   }
+}
+
+export function tusPlanFingerprint({
+  fingerprint,
+}: {
+  fingerprint: string | null | undefined
+}): TusFingerprintPlan {
+  if (!fingerprint) {
+    return {
+      ok: false,
+      message: TUS_FLOW_POLICY.messages.fingerprintUnavailable,
+      reason: 'missingFingerprint',
+    }
+  }
+
+  return { fingerprint, ok: true }
+}
+
+export function tusPlanParallelUploadSlice({
+  hasValue,
+}: {
+  hasValue: boolean
+}): TusParallelUploadSlicePlan {
+  if (!hasValue) {
+    return {
+      ok: false,
+      message: TUS_FLOW_POLICY.messages.parallelUploadSliceMissingValue,
+      reason: 'missingValue',
+    }
+  }
+
+  return { ok: true }
 }
 
 export function tusPlanUploadChunkRequest({
