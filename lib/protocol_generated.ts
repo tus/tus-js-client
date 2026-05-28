@@ -198,6 +198,7 @@ export const TUS_FLOW_POLICY = {
     invalidResumeLength: 'tus: invalid or missing length value',
     invalidResumeOffset: 'tus: invalid Upload-Offset header',
     lockedUpload: 'tus: upload is currently locked; retry later',
+    nonErrorThrownValue: 'tus: value thrown that is not an error: {value}',
     missingEndpointOrUploadUrl: 'tus: neither an endpoint or an upload URL is provided',
     missingInput: 'tus: no file or stream to upload provided',
     missingPatchUrl: 'tus: Expected url to be set',
@@ -579,6 +580,12 @@ export function tusPlanCreatedUploadLog({ uploadUrl }: { uploadUrl: string }): T
       uploadUrl,
     }),
   }
+}
+
+export function tusNonErrorThrownValueMessage({ value }: { value: unknown }): string {
+  return tusFormatFlowMessage(TUS_FLOW_POLICY.messages.nonErrorThrownValue, {
+    value: String(value),
+  })
 }
 
 export function tusPlanSingleUploadStart({

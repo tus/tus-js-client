@@ -22,6 +22,7 @@ import {
   tusDeferredUploadLengthPlan,
   tusFinalUploadRequestPlan,
   tusGetUploadOffsetRequestPlan,
+  tusNonErrorThrownValueMessage,
   tusPatchUploadRequestPlan,
   tusPlanCreatedUploadLog,
   tusPlanFinalUploadCreation,
@@ -208,7 +209,7 @@ export class BaseUpload {
     // Its supposed to return immediately and start the upload in the background.
     this._prepareAndStartUpload().catch((err) => {
       if (!(err instanceof Error)) {
-        throw new Error(`tus: value thrown that is not an error: ${err}`)
+        throw new Error(tusNonErrorThrownValueMessage({ value: err }))
       }
 
       // Errors from the actual upload requests will bubble up to here, where
@@ -355,7 +356,7 @@ export class BaseUpload {
       res = await this._sendRequest(req)
     } catch (err) {
       if (!(err instanceof Error)) {
-        throw new Error(`tus: value thrown that is not an error: ${err}`)
+        throw new Error(tusNonErrorThrownValueMessage({ value: err }))
       }
 
       throw new DetailedError(finalUploadCreationPlan.requestErrorMessage, err, req, undefined)
@@ -596,7 +597,7 @@ export class BaseUpload {
       }
     } catch (err) {
       if (!(err instanceof Error)) {
-        throw new Error(`tus: value thrown that is not an error: ${err}`)
+        throw new Error(tusNonErrorThrownValueMessage({ value: err }))
       }
 
       throw new DetailedError(creationRequestPlan.requestErrorMessage, err, req, undefined)
@@ -664,7 +665,7 @@ export class BaseUpload {
       res = await this._sendRequest(req)
     } catch (err) {
       if (!(err instanceof Error)) {
-        throw new Error(`tus: value thrown that is not an error: ${err}`)
+        throw new Error(tusNonErrorThrownValueMessage({ value: err }))
       }
 
       throw new DetailedError(resumeRequestPlan.requestErrorMessage, err, req, undefined)
@@ -767,7 +768,7 @@ export class BaseUpload {
       }
 
       if (!(err instanceof Error)) {
-        throw new Error(`tus: value thrown that is not an error: ${err}`)
+        throw new Error(tusNonErrorThrownValueMessage({ value: err }))
       }
 
       throw new DetailedError(chunkRequestPlan.requestErrorMessage, err, req, undefined)
@@ -1107,7 +1108,7 @@ export async function terminate(url: string, options: UploadOptions): Promise<vo
     throw new DetailedError(responsePlan.message, undefined, req, res)
   } catch (err) {
     if (!(err instanceof Error)) {
-      throw new Error(`tus: value thrown that is not an error: ${err}`)
+      throw new Error(tusNonErrorThrownValueMessage({ value: err }))
     }
 
     const detailedErr =
