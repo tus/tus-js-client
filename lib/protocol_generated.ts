@@ -262,6 +262,9 @@ export const TUS_FLOW_POLICY = {
     resumeWithoutEndpoint:
       'tus: unable to resume upload (new upload cannot be created without an endpoint)',
     retryDelaysNotArray: 'tus: the `retryDelays` option must either be an array or null',
+    storageMissingParallelUploadUrls:
+      'tus: cannot store parallel upload because no partial upload URLs are available',
+    storageMissingUploadUrl: 'tus: cannot store upload because no upload URL is available',
     terminateUploadRequestFailed: 'tus: failed to terminate upload',
     unexpectedChunkResponse: 'tus: unexpected response while uploading chunk',
     unexpectedCreateResponse: 'tus: unexpected response while creating upload',
@@ -316,6 +319,11 @@ export const TUS_FLOW_POLICY = {
   },
   urlStorage: {
     namespace: 'tus',
+    record: {
+      creationTime: 'sdk-current-date-string',
+      missingUrl: 'fail',
+      storedUrlKind: 'single-or-parallel-upload-url',
+    },
     separator: '::',
   },
 }
@@ -481,6 +489,19 @@ export type TusConfiguredUploadSizeCheck = { ok: true } | { message: string; ok:
 export type TusUploadStoragePlan =
   | { shouldStore: false }
   | { fingerprint: string; shouldStore: true }
+
+export interface TusStoredUploadRecord {
+  creationTime: string
+  metadata: Record<string, string>
+  parallelUploadUrls?: string[]
+  size: number | null
+  uploadUrl?: string
+  urlStorageKey: string
+}
+
+export type TusStoredUploadRecordPlan =
+  | { ok: false; message: string; reason: 'missingParallelUploadUrls' | 'missingUploadUrl' }
+  | { ok: true; upload: TusStoredUploadRecord }
 
 export type TusUploadCreationFollowUp = 'none' | 'patchIfNonempty'
 
@@ -1110,6 +1131,82 @@ export function tusUrlStorageKey({
   id: number | string
 }): string {
   return `${tusUrlStorageFingerprintPrefix({ fingerprint })}${id}`
+}
+
+function tusAssertUrlStorageRecordPolicySupported(): void {
+  const policy = TUS_FLOW_POLICY.urlStorage.record
+
+  if (policy.creationTime !== 'sdk-current-date-string') {
+    throw new Error(`tus: unsupported URL storage creation time policy ${policy.creationTime}`)
+  }
+
+  if (policy.missingUrl !== 'fail') {
+    throw new Error(`tus: unsupported URL storage missing URL policy ${policy.missingUrl}`)
+  }
+
+  if (policy.storedUrlKind !== 'single-or-parallel-upload-url') {
+    throw new Error(`tus: unsupported URL storage URL kind policy ${policy.storedUrlKind}`)
+  }
+}
+
+export function tusPlanStoredUploadRecord({
+  creationTime,
+  fingerprint,
+  metadata,
+  parallelUploadUrls,
+  size,
+  uploadUrl,
+  useParallelUploadUrls,
+}: {
+  creationTime: string
+  fingerprint: string
+  metadata: Record<string, string>
+  parallelUploadUrls?: string[]
+  size: number | null
+  uploadUrl: string | null
+  useParallelUploadUrls: boolean
+}): TusStoredUploadRecordPlan {
+  tusAssertUrlStorageRecordPolicySupported()
+
+  if (useParallelUploadUrls) {
+    if (parallelUploadUrls == null) {
+      return {
+        ok: false,
+        message: TUS_FLOW_POLICY.messages.storageMissingParallelUploadUrls,
+        reason: 'missingParallelUploadUrls',
+      }
+    }
+
+    return {
+      ok: true,
+      upload: {
+        creationTime,
+        metadata,
+        parallelUploadUrls,
+        size,
+        urlStorageKey: fingerprint,
+      },
+    }
+  }
+
+  if (uploadUrl == null) {
+    return {
+      ok: false,
+      message: TUS_FLOW_POLICY.messages.storageMissingUploadUrl,
+      reason: 'missingUploadUrl',
+    }
+  }
+
+  return {
+    ok: true,
+    upload: {
+      creationTime,
+      metadata,
+      size,
+      uploadUrl,
+      urlStorageKey: fingerprint,
+    },
+  }
 }
 
 export function tusValidateCreateUpload({

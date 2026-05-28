@@ -43,6 +43,7 @@ import {
   tusPlanResumeUploadRequest,
   tusPlanRetryAfterError,
   tusPlanSingleUploadStart,
+  tusPlanStoredUploadRecord,
   tusPlanTerminateResponse,
   tusPlanTerminateUploadRequest,
   tusPlanUploadChunkRequest,
@@ -931,25 +932,22 @@ export class BaseUpload {
       return
     }
 
-    const storedUpload: PreviousUpload = {
-      size: this._size,
-      metadata: this.options.metadata,
+    const recordPlan = tusPlanStoredUploadRecord({
       creationTime: new Date().toString(),
-      urlStorageKey: storagePlan.fingerprint,
-    }
-
-    if (this._parallelUploads) {
-      // Save multiple URLs if the parallelUploads option is used ...
-      storedUpload.parallelUploadUrls = this._parallelUploadUrls
-    } else {
-      // ... otherwise we just save the one available URL.
-      // @ts-expect-error We still have to figure out the null/undefined situation.
-      storedUpload.uploadUrl = this.url
+      fingerprint: storagePlan.fingerprint,
+      metadata: this.options.metadata,
+      parallelUploadUrls: this._parallelUploadUrls,
+      size: this._size,
+      uploadUrl: this.url,
+      useParallelUploadUrls: this._parallelUploads != null,
+    })
+    if (!recordPlan.ok) {
+      throw new Error(recordPlan.message)
     }
 
     const urlStorageKey = await this.options.urlStorage.addUpload(
       storagePlan.fingerprint,
-      storedUpload,
+      recordPlan.upload,
     )
     // TODO: Emit a waring if urlStorageKey is undefined. Should we even allow this?
     this._urlStorageKey = urlStorageKey
