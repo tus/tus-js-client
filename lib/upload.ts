@@ -25,6 +25,7 @@ import {
   tusFinalUploadRequestPlan,
   tusGetUploadOffsetRequestPlan,
   tusPatchUploadRequestPlan,
+  tusPlanFinalUploadCreation,
   tusPlanParallelPartialUploadOptions,
   tusPlanParallelUploadParts,
   tusPlanPreparedUploadMode,
@@ -330,20 +331,20 @@ export class BaseUpload {
     // creating the final upload.
     await Promise.all(uploads)
 
-    const endpoint = this.options.endpoint
-    if (endpoint == null) {
-      throw new Error(TUS_FLOW_POLICY.messages.createMissingEndpoint)
-    }
-    if (!this._parallelUploadUrls) {
-      throw new Error('tus: Expected _parallelUploadUrls to be set')
+    const finalUploadCreationPlan = tusPlanFinalUploadCreation({
+      endpoint: this.options.endpoint,
+      partialUploadUrls: this._parallelUploadUrls,
+    })
+    if (!finalUploadCreationPlan.ok) {
+      throw new Error(finalUploadCreationPlan.message)
     }
     const req = this._openRequest(
       tusFinalUploadRequestPlan({
-        endpoint,
+        endpoint: finalUploadCreationPlan.endpoint,
         encodeMetadataValue,
         metadata: this.options.metadata,
         protocol: this.options.protocol,
-        uploadUrls: this._parallelUploadUrls,
+        uploadUrls: finalUploadCreationPlan.uploadUrls,
       }),
     )
 
@@ -355,7 +356,7 @@ export class BaseUpload {
         throw new Error(`tus: value thrown that is not an error: ${err}`)
       }
 
-      throw new DetailedError('tus: failed to concatenate parallel uploads', err, req, undefined)
+      throw new DetailedError(finalUploadCreationPlan.requestErrorMessage, err, req, undefined)
     }
 
     const creationResponsePlan = tusPlanUploadCreationResponse({
@@ -370,7 +371,7 @@ export class BaseUpload {
       throw new DetailedError(creationResponsePlan.message, undefined, req, res)
     }
 
-    this.url = resolveUrl(endpoint, creationResponsePlan.location)
+    this.url = resolveUrl(finalUploadCreationPlan.endpoint, creationResponsePlan.location)
     log(`Created upload at ${this.url}`)
 
     await this._emitSuccess(res)

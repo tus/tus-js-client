@@ -176,6 +176,8 @@ export const TUS_FLOW_POLICY = {
       "tus: cannot automatically derive upload's size from input. Specify it manually using the `uploadSize` option or use the `uploadLengthDeferred` option",
     createMissingEndpoint: 'tus: unable to create upload because no endpoint is provided',
     createMissingSize: 'tus: expected _size to be set',
+    finalUploadMissingPartialUrls: 'tus: Expected _parallelUploadUrls to be set',
+    finalUploadRequestFailed: 'tus: failed to concatenate parallel uploads',
     invalidUploadSize: 'tus: cannot convert `uploadSize` option into a number',
     invalidChunkOffset: 'tus: invalid or missing offset value',
     invalidResumeLength: 'tus: invalid or missing length value',
@@ -324,6 +326,19 @@ export interface TusParallelPartialUploadOptionsPlan {
   storeFingerprintForResuming: boolean
   uploadUrl: string | null
 }
+
+export type TusFinalUploadCreationPlan =
+  | {
+      ok: false
+      message: string
+      reason: 'missingEndpoint' | 'missingPartialUploadUrls'
+    }
+  | {
+      endpoint: string
+      ok: true
+      requestErrorMessage: string
+      uploadUrls: readonly string[]
+    }
 
 export type TusDeferredUploadLengthPlan =
   | { shouldDeclareLength: false }
@@ -688,6 +703,37 @@ export function tusPlanParallelPartialUploadOptions({
     removeFingerprintOnSuccess: false,
     storeFingerprintForResuming: false,
     uploadUrl: uploadUrl || null,
+  }
+}
+
+export function tusPlanFinalUploadCreation({
+  endpoint,
+  partialUploadUrls,
+}: {
+  endpoint: string | null | undefined
+  partialUploadUrls: readonly string[] | null | undefined
+}): TusFinalUploadCreationPlan {
+  if (endpoint == null) {
+    return {
+      ok: false,
+      message: TUS_FLOW_POLICY.messages.createMissingEndpoint,
+      reason: 'missingEndpoint',
+    }
+  }
+
+  if (partialUploadUrls == null) {
+    return {
+      ok: false,
+      message: TUS_FLOW_POLICY.messages.finalUploadMissingPartialUrls,
+      reason: 'missingPartialUploadUrls',
+    }
+  }
+
+  return {
+    endpoint,
+    ok: true,
+    requestErrorMessage: TUS_FLOW_POLICY.messages.finalUploadRequestFailed,
+    uploadUrls: partialUploadUrls,
   }
 }
 
