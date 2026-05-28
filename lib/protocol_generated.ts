@@ -194,6 +194,13 @@ export const TUS_FLOW_POLICY = {
     ],
     terminateUpload: 'when-requested-and-upload-url-known',
   },
+  detailedErrors: {
+    causedByTemplate: ', caused by {cause}',
+    emptyResponseBody: '',
+    missingValue: 'n/a',
+    requestContextTemplate:
+      ', originated from request (method: {method}, url: {url}, response code: {status}, response text: {body}, request id: {requestId})',
+  },
   eventHooks: {
     uploadUrlAvailable: {
       createUpload: 'after-url-known-before-storage',
@@ -709,10 +716,54 @@ export interface TusHttpStackProgressThrottle {
   trailing: boolean
 }
 
+export interface TusDetailedErrorRequestContext {
+  body: number | string
+  method: string
+  requestId: number | string
+  status: number | string
+  url: string
+}
+
 function tusFormatFlowMessage(template: string, values: Record<string, string | number>): string {
   let message = template
   for (const [name, value] of Object.entries(values)) {
     message = message.split(`{${name}}`).join(String(value))
+  }
+
+  return message
+}
+
+export function tusDetailedErrorMissingValue(): string {
+  return TUS_FLOW_POLICY.detailedErrors.missingValue
+}
+
+export function tusDetailedErrorEmptyResponseBody(): string {
+  return TUS_FLOW_POLICY.detailedErrors.emptyResponseBody
+}
+
+export function tusDetailedErrorMessage({
+  baseMessage,
+  cause,
+  requestContext,
+}: {
+  baseMessage: string
+  cause?: string
+  requestContext?: TusDetailedErrorRequestContext
+}): string {
+  let message = baseMessage
+
+  if (cause != null) {
+    message += tusFormatFlowMessage(TUS_FLOW_POLICY.detailedErrors.causedByTemplate, { cause })
+  }
+
+  if (requestContext != null) {
+    message += tusFormatFlowMessage(TUS_FLOW_POLICY.detailedErrors.requestContextTemplate, {
+      body: requestContext.body,
+      method: requestContext.method,
+      requestId: requestContext.requestId,
+      status: requestContext.status,
+      url: requestContext.url,
+    })
   }
 
   return message

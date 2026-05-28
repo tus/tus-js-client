@@ -1,5 +1,11 @@
 import type { HttpRequest, HttpResponse } from './options.js'
-import { TUS_REQUEST_ID_HEADER_NAME } from './protocol_generated.js'
+import type { TusDetailedErrorRequestContext } from './protocol_generated.js'
+import {
+  TUS_REQUEST_ID_HEADER_NAME,
+  tusDetailedErrorEmptyResponseBody,
+  tusDetailedErrorMessage,
+  tusDetailedErrorMissingValue,
+} from './protocol_generated.js'
 
 export class DetailedError extends Error {
   originalRequest?: HttpRequest
@@ -15,18 +21,23 @@ export class DetailedError extends Error {
     this.originalResponse = res
     this.causingError = causingErr
 
-    if (causingErr != null) {
-      message += `, caused by ${causingErr.toString()}`
+    let requestContext: TusDetailedErrorRequestContext | undefined
+    if (req != null) {
+      requestContext = {
+        body: res
+          ? res.getBody() || tusDetailedErrorEmptyResponseBody()
+          : tusDetailedErrorMissingValue(),
+        method: req.getMethod(),
+        requestId: req.getHeader(TUS_REQUEST_ID_HEADER_NAME) || tusDetailedErrorMissingValue(),
+        status: res ? res.getStatus() : tusDetailedErrorMissingValue(),
+        url: req.getURL(),
+      }
     }
 
-    if (req != null) {
-      const requestId = req.getHeader(TUS_REQUEST_ID_HEADER_NAME) || 'n/a'
-      const method = req.getMethod()
-      const url = req.getURL()
-      const status = res ? res.getStatus() : 'n/a'
-      const body = res ? res.getBody() || '' : 'n/a'
-      message += `, originated from request (method: ${method}, url: ${url}, response code: ${status}, response text: ${body}, request id: ${requestId})`
-    }
-    this.message = message
+    this.message = tusDetailedErrorMessage({
+      baseMessage: message,
+      cause: causingErr?.toString(),
+      requestContext,
+    })
   }
 }
