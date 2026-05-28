@@ -3,6 +3,10 @@ import {
   supportedTypes as supportedBaseTypes,
 } from '../commonFileReader.js'
 import type { FileReader, FileSource, UploadInput } from '../options.js'
+import {
+  tusReactNativeUriBlobFetchFailedMessage,
+  tusReactNativeUriUnsupportedMessage,
+} from '../protocol_generated.js'
 import { isReactNativeFile, isReactNativePlatform } from '../reactnative/isReactNative.js'
 import { uriToBlob } from '../reactnative/uriToBlob.js'
 import { BlobFileSource } from '../sources/BlobFileSource.js'
@@ -15,16 +19,14 @@ export class BrowserFileReader implements FileReader {
     // the file blob, before uploading with tus.
     if (isReactNativeFile(input)) {
       if (!isReactNativePlatform()) {
-        throw new Error('tus: file objects with `uri` property is only supported in React Native')
+        throw new Error(tusReactNativeUriUnsupportedMessage())
       }
 
       try {
         const blob = await uriToBlob(input.uri)
         return new BlobFileSource(blob)
       } catch (err) {
-        throw new Error(
-          `tus: cannot fetch \`file.uri\` as Blob, make sure the uri is correct and accessible. ${err}`,
-        )
+        throw new Error(tusReactNativeUriBlobFetchFailedMessage({ error: err }))
       }
     }
 

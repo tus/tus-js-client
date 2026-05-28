@@ -218,6 +218,10 @@ export const TUS_FLOW_POLICY = {
       'tus: cannot use the `uploadUrl` option when parallelUploads is enabled',
     parallelUploadSliceMissingValue:
       'tus: no value returned while slicing file for parallel uploads',
+    reactNativeUriBlobFetchFailed:
+      'tus: cannot fetch `file.uri` as Blob, make sure the uri is correct and accessible. {error}',
+    reactNativeUriUnsupported:
+      'tus: file objects with `uri` property is only supported in React Native',
     resumeUploadRequestFailed: 'tus: failed to resume upload',
     resumeWithoutEndpoint:
       'tus: unable to resume upload (new upload cannot be created without an endpoint)',
@@ -585,6 +589,16 @@ export function tusPlanCreatedUploadLog({ uploadUrl }: { uploadUrl: string }): T
 export function tusNonErrorThrownValueMessage({ value }: { value: unknown }): string {
   return tusFormatFlowMessage(TUS_FLOW_POLICY.messages.nonErrorThrownValue, {
     value: String(value),
+  })
+}
+
+export function tusReactNativeUriUnsupportedMessage(): string {
+  return TUS_FLOW_POLICY.messages.reactNativeUriUnsupported
+}
+
+export function tusReactNativeUriBlobFetchFailedMessage({ error }: { error: unknown }): string {
+  return tusFormatFlowMessage(TUS_FLOW_POLICY.messages.reactNativeUriBlobFetchFailed, {
+    error: String(error),
   })
 }
 
