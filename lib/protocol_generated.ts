@@ -267,6 +267,11 @@ export const TUS_FLOW_POLICY = {
         'Unsupported HTTP request body type in Node.js HTTP stack: {bodyType} (constructor: {constructorName})',
     },
     nodeStackMissingStatusCode: 'throw',
+    progressThrottle: {
+      leading: true,
+      milliseconds: 100,
+      trailing: false,
+    },
     nodeStackUnsupportedBodyType: 'throw',
   },
   locationResolution: {
@@ -697,6 +702,12 @@ export interface TusUploadUrlAvailableHookPlan {
 export type TusFileSourceChunkSizeValidationResult =
   | { chunkSize: number; ok: true }
   | { message: string; ok: false; reason: 'missingFiniteChunkSize' }
+
+export interface TusHttpStackProgressThrottle {
+  leading: boolean
+  milliseconds: number
+  trailing: boolean
+}
 
 function tusFormatFlowMessage(template: string, values: Record<string, string | number>): string {
   let message = template
@@ -1241,6 +1252,12 @@ function tusAssertHttpStackPolicySupported(): void {
       `tus: unsupported Node HTTP stack status code policy ${policy.nodeStackMissingStatusCode}`,
     )
   }
+
+  if (!Number.isFinite(policy.progressThrottle.milliseconds)) {
+    throw new Error(
+      `tus: unsupported HTTP progress throttle ${policy.progressThrottle.milliseconds}`,
+    )
+  }
 }
 
 export function tusHttpStackNodeReadableBodyUnsupportedMessage({
@@ -1275,6 +1292,16 @@ export function tusNodeHttpStackMissingStatusCodeMessage(): string {
   tusAssertHttpStackPolicySupported()
 
   return TUS_FLOW_POLICY.httpStacks.messages.nodeStackMissingStatusCode
+}
+
+export function tusHttpStackProgressThrottle(): TusHttpStackProgressThrottle {
+  tusAssertHttpStackPolicySupported()
+
+  return {
+    leading: TUS_FLOW_POLICY.httpStacks.progressThrottle.leading,
+    milliseconds: TUS_FLOW_POLICY.httpStacks.progressThrottle.milliseconds,
+    trailing: TUS_FLOW_POLICY.httpStacks.progressThrottle.trailing,
+  }
 }
 
 export function tusPlanSingleUploadStart({

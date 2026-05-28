@@ -12,6 +12,7 @@ import type {
 } from '../options.js'
 import {
   tusAbortErrorDescriptor,
+  tusHttpStackProgressThrottle,
   tusNodeHttpStackMissingStatusCodeMessage,
   tusNodeHttpStackUnsupportedBodyTypeMessage,
 } from '../protocol_generated.js'
@@ -220,9 +221,10 @@ class ProgressEmitter extends Transform {
     // these calls can occur frequently, especially when you have a good
     // connection to the remote server. Therefore, we are throtteling them to
     // prevent accessive function calls.
-    this._onprogress = throttle(onprogress, 100, {
-      leading: true,
-      trailing: false,
+    const throttlePolicy = tusHttpStackProgressThrottle()
+    this._onprogress = throttle(onprogress, throttlePolicy.milliseconds, {
+      leading: throttlePolicy.leading,
+      trailing: throttlePolicy.trailing,
     })
   }
 
@@ -251,9 +253,10 @@ function writeBufferToStreamWithProgress(
   source: Uint8Array,
   onprogress: HttpProgressHandler,
 ) {
-  onprogress = throttle(onprogress, 100, {
-    leading: true,
-    trailing: false,
+  const throttlePolicy = tusHttpStackProgressThrottle()
+  onprogress = throttle(onprogress, throttlePolicy.milliseconds, {
+    leading: throttlePolicy.leading,
+    trailing: throttlePolicy.trailing,
   })
 
   let offset = 0
