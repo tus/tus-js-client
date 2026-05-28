@@ -15,7 +15,6 @@ import type {
 } from './options.js'
 import {
   TUS_DEFAULT_CLIENT_PROTOCOL,
-  TUS_FLOW_POLICY,
   type TusRequestPlan,
   tusCheckConfiguredUploadSize,
   tusChunkEnd,
@@ -35,6 +34,7 @@ import {
   tusPlanRetryAfterError,
   tusPlanSingleUploadStart,
   tusPlanTerminateResponse,
+  tusPlanUploadChunkRequest,
   tusPlanUploadChunkResponse,
   tusPlanUploadCompletionAfterOffset,
   tusPlanUploadCreationRequest,
@@ -739,15 +739,19 @@ export class BaseUpload {
 
     let req: HttpRequest
 
-    if (this.url == null) {
-      throw new Error(TUS_FLOW_POLICY.messages.missingPatchUrl)
+    const chunkRequestPlan = tusPlanUploadChunkRequest({
+      offset: this._offset,
+      uploadUrl: this.url,
+    })
+    if (!chunkRequestPlan.ok) {
+      throw new Error(chunkRequestPlan.message)
     }
     req = this._openRequest(
       tusPatchUploadRequestPlan({
         offset: this._offset,
         overridePatchMethod: this.options.overridePatchMethod,
         protocol: this.options.protocol,
-        uploadUrl: this.url,
+        uploadUrl: chunkRequestPlan.uploadUrl,
       }),
     )
 
@@ -764,12 +768,7 @@ export class BaseUpload {
         throw new Error(`tus: value thrown that is not an error: ${err}`)
       }
 
-      throw new DetailedError(
-        `tus: failed to upload chunk at offset ${this._offset}`,
-        err,
-        req,
-        undefined,
-      )
+      throw new DetailedError(chunkRequestPlan.requestErrorMessage, err, req, undefined)
     }
 
     await this._handleUploadResponse(req, res)

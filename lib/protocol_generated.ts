@@ -207,6 +207,7 @@ export const TUS_FLOW_POLICY = {
     unexpectedCreateResponse: 'tus: unexpected response while creating upload',
     unexpectedResumeResponse: 'tus: unexpected response while resuming upload',
     unexpectedTerminateResponse: 'tus: unexpected response while terminating upload',
+    uploadChunkRequestFailed: 'tus: failed to upload chunk at offset {offset}',
     uploadLocationMissing: 'tus: invalid or missing Location header',
     unsupportedProtocolPrefix: 'tus: unsupported protocol ',
   },
@@ -302,6 +303,10 @@ export type TusResumeOffsetResponsePlan =
     }
 
 export type TusResumeUploadRequestPlan =
+  | { ok: false; message: string; reason: 'missingUploadUrl' }
+  | { ok: true; requestErrorMessage: string; uploadUrl: string }
+
+export type TusUploadChunkRequestPlan =
   | { ok: false; message: string; reason: 'missingUploadUrl' }
   | { ok: true; requestErrorMessage: string; uploadUrl: string }
 
@@ -535,6 +540,30 @@ export function tusPlanResumeUploadRequest({
   return {
     ok: true,
     requestErrorMessage: TUS_FLOW_POLICY.messages.resumeUploadRequestFailed,
+    uploadUrl,
+  }
+}
+
+export function tusPlanUploadChunkRequest({
+  offset,
+  uploadUrl,
+}: {
+  offset: number
+  uploadUrl: string | null | undefined
+}): TusUploadChunkRequestPlan {
+  if (uploadUrl == null) {
+    return {
+      ok: false,
+      message: TUS_FLOW_POLICY.messages.missingPatchUrl,
+      reason: 'missingUploadUrl',
+    }
+  }
+
+  return {
+    ok: true,
+    requestErrorMessage: tusFormatFlowMessage(TUS_FLOW_POLICY.messages.uploadChunkRequestFailed, {
+      offset,
+    }),
     uploadUrl,
   }
 }
