@@ -325,6 +325,10 @@ function eventMatchesExpectation(scenario, actual, expected) {
     return actual.decision === expected.decision && actual.retryAttempt === expected.retryAttempt
   }
 
+  if (expected.kind === 'retry-schedule') {
+    return actual.delay === expected.delay
+  }
+
   if (expected.kind === 'url-storage-add') {
     return actual.fingerprint === expected.fingerprint && actual.uploadUrl === expected.uploadUrl
   }
@@ -436,6 +440,7 @@ async function startScenarioUpload(scenario, testStack) {
   let beforeRequestIndex = 0
   let retryDecisionIndex = 0
   const observedEvents = []
+  const restoreRetryTimerRecorder = installRetryTimerRecorder(scenario, observedEvents)
   const onError = waitableFunction('onError')
   const onSuccess = waitableFunction('onSuccess')
   const options = {
@@ -611,7 +616,30 @@ async function startScenarioUpload(scenario, testStack) {
 
   upload.start()
 
-  return { observedEvents, onError, onSuccess, terminatePromise: () => terminatePromise, upload }
+  return {
+    observedEvents,
+    onError,
+    onSuccess,
+    restoreRetryTimerRecorder,
+    terminatePromise: () => terminatePromise,
+    upload,
+  }
+}
+
+function installRetryTimerRecorder(scenario, observedEvents) {
+  if (!scenarioWantsEvent(scenario, 'retry-schedule')) {
+    return () => {}
+  }
+
+  const originalSetTimeout = globalThis.setTimeout
+  globalThis.setTimeout = (handler, delay, ...args) => {
+    observedEvents.push({ delay, kind: 'retry-schedule' })
+    return originalSetTimeout(handler, delay, ...args)
+  }
+
+  return () => {
+    globalThis.setTimeout = originalSetTimeout
+  }
 }
 
 async function runGeneratedConformanceScenario(scenario) {
@@ -619,42 +647,52 @@ async function runGeneratedConformanceScenario(scenario) {
   expect(feature.primitives).toEqual(jasmine.arrayContaining(scenario.primitives))
 
   const testStack = new TestHttpStack()
-  const { observedEvents, onError, onSuccess, terminatePromise, upload } =
-    await startScenarioUpload(scenario, testStack)
+  const {
+    observedEvents,
+    onError,
+    onSuccess,
+    restoreRetryTimerRecorder,
+    terminatePromise,
+    upload,
+  } = await startScenarioUpload(scenario, testStack)
 
-  for (const [requestIndex, request] of scenario.requests.entries()) {
-    const req = await testStack.nextRequest()
-    expectScenarioRequest(req, scenario, request)
+  try {
+    for (const [requestIndex, request] of scenario.requests.entries()) {
+      const req = await testStack.nextRequest()
+      expectScenarioRequest(req, scenario, request)
 
-    if (request.abort) {
-      await abortScenarioRequest(req, scenario, request, requestIndex, observedEvents, upload)
-    } else if (!request.response) {
-      throw new Error(
-        `Generated scenario ${scenario.scenarioId} request ${requestIndex} has no response and is not marked abort`,
-      )
+      if (request.abort) {
+        await abortScenarioRequest(req, scenario, request, requestIndex, observedEvents, upload)
+      } else if (!request.response) {
+        throw new Error(
+          `Generated scenario ${scenario.scenarioId} request ${requestIndex} has no response and is not marked abort`,
+        )
+      }
     }
-  }
 
-  if (scenario.completion.kind === 'aborted') {
-    expect(onSuccess).not.toHaveBeenCalled()
-    expect(onError).not.toHaveBeenCalled()
-    expectScenarioEvents(scenario, observedEvents)
-    return
-  }
+    if (scenario.completion.kind === 'aborted') {
+      expect(onSuccess).not.toHaveBeenCalled()
+      expect(onError).not.toHaveBeenCalled()
+      expectScenarioEvents(scenario, observedEvents)
+      return
+    }
 
-  if (scenario.completion.kind === 'terminated') {
-    await terminatePromise()
+    if (scenario.completion.kind === 'terminated') {
+      await terminatePromise()
+      expect(upload.url).toBe(scenario.completion.uploadUrl)
+      expect(onSuccess).not.toHaveBeenCalled()
+      expect(onError).not.toHaveBeenCalled()
+      expectScenarioEvents(scenario, observedEvents)
+      return
+    }
+
+    await onSuccess.toBeCalled()
     expect(upload.url).toBe(scenario.completion.uploadUrl)
-    expect(onSuccess).not.toHaveBeenCalled()
     expect(onError).not.toHaveBeenCalled()
     expectScenarioEvents(scenario, observedEvents)
-    return
+  } finally {
+    restoreRetryTimerRecorder()
   }
-
-  await onSuccess.toBeCalled()
-  expect(upload.url).toBe(scenario.completion.uploadUrl)
-  expect(onError).not.toHaveBeenCalled()
-  expectScenarioEvents(scenario, observedEvents)
 }
 
 describe('generated TUS protocol contract', () => {

@@ -520,7 +520,7 @@ export class BaseUpload {
       this._retryAttempt = retryPlan.retryAttempt
     }
 
-    if (retryPlan.action === 'retry') {
+    if (retryPlan.action === 'scheduleRetry') {
       this._retryAttempt = retryPlan.nextRetryAttempt
       this._offsetBeforeRetry = retryPlan.offsetBeforeRetry
 
@@ -1212,14 +1212,13 @@ export async function terminate(url: string, options: UploadOptions): Promise<vo
       })
     }
 
-    if (retryPlan.action !== 'retry') {
+    if (retryPlan.action !== 'scheduleRetry') {
       throw detailedErr
     }
 
-    const remainingDelays = retryDelays?.slice(retryPlan.nextRetryAttempt) ?? []
     const newOptions = {
       ...options,
-      retryDelays: remainingDelays,
+      retryDelays: retryPlan.remainingRetryDelays,
     }
 
     await wait(retryPlan.delay)

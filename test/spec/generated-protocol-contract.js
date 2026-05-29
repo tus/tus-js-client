@@ -567,6 +567,32 @@ export const tusClientFeatures = [
   },
   {
     conformance: {
+      scenarioIds: ['retryPatchAfterOffsetRecovery'],
+      status: 'covered-by-generated-scenario',
+    },
+    description: 'Schedule retry timers and reset retry attempts after accepted progress.',
+    featureId: 'retryStateTransitions',
+    flow: [
+      {
+        kind: 'primitive',
+        primitive: 'schedule-retry-timer',
+        summary: 'Consume the current retry delay and restart the upload after that timer fires.',
+      },
+      {
+        kind: 'primitive',
+        primitive: 'reset-retry-attempt-after-progress',
+        summary: 'Reset retry attempts once a later retry observes server-side offset progress.',
+      },
+    ],
+    operationIds: ['getTusUploadOffset', 'patchTusUpload'],
+    primitives: [
+      'retry-with-backoff',
+      'schedule-retry-timer',
+      'reset-retry-attempt-after-progress',
+    ],
+  },
+  {
+    conformance: {
       scenarioIds: ['terminateWithRetry'],
       status: 'covered-by-generated-scenario',
     },
@@ -1719,6 +1745,19 @@ export const tusClientConformanceScenarios = [
         kind: 'should-retry',
         retryAttempt: 0,
       },
+      {
+        delay: 0,
+        kind: 'retry-schedule',
+      },
+      {
+        decision: true,
+        kind: 'should-retry',
+        retryAttempt: 0,
+      },
+      {
+        delay: 0,
+        kind: 'retry-schedule',
+      },
     ],
     featureId: 'retryOffsetRecovery',
     input: {
@@ -1728,9 +1767,16 @@ export const tusClientConformanceScenarios = [
       metadata: {
         filename: 'hello.txt',
       },
-      retryDelays: [0, 0],
+      retryDelays: [0],
     },
-    operationIds: ['createTusUpload', 'patchTusUpload', 'getTusUploadOffset', 'patchTusUpload'],
+    operationIds: [
+      'createTusUpload',
+      'patchTusUpload',
+      'getTusUploadOffset',
+      'patchTusUpload',
+      'getTusUploadOffset',
+      'patchTusUpload',
+    ],
     primitives: ['retry-with-backoff', 'recover-offset-after-error'],
     requests: [
       {
@@ -1762,16 +1808,38 @@ export const tusClientConformanceScenarios = [
         response: {
           headers: {
             'Upload-Length': '11',
-            'Upload-Offset': '0',
+            'Upload-Offset': '5',
           },
           statusCode: 200,
         },
         url: 'upload',
       },
       {
-        bodySize: 11,
+        bodySize: 6,
         headers: {
-          'Upload-Offset': '0',
+          'Upload-Offset': '5',
+        },
+        operationId: 'patchTusUpload',
+        response: {
+          statusCode: 500,
+        },
+        url: 'upload',
+      },
+      {
+        operationId: 'getTusUploadOffset',
+        response: {
+          headers: {
+            'Upload-Length': '11',
+            'Upload-Offset': '5',
+          },
+          statusCode: 200,
+        },
+        url: 'upload',
+      },
+      {
+        bodySize: 6,
+        headers: {
+          'Upload-Offset': '5',
         },
         operationId: 'patchTusUpload',
         response: {

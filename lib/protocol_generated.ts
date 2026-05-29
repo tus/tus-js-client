@@ -400,18 +400,31 @@ export const TUS_FLOW_POLICY = {
       beforeRequest: 'before-transport-send',
     },
     retry: {
+      attemptCounter: {
+        increment: 'after-retry-scheduled',
+        reset: 'when-offset-advanced-since-last-retry',
+      },
       customDecision: 'custom-callback-before-default-decision',
+      delaySource: 'retry-delays-indexed-by-attempt',
       defaultDecision: 'retryable-status-and-online',
       error: {
         retryableWhen: 'request-context-present',
       },
       evaluationTrigger: 'generated-plan-evaluate-policy',
+      failure: {
+        exhaustedDelays: 'emit-error',
+        nonRetryableError: 'emit-error',
+        policyRejected: 'emit-error',
+      },
       onlineSignal: {
         defaultWhenUnavailable: true,
         offlineWhenPlatformOnlineIsFalse: true,
         source: 'sdk-platform-online-status',
       },
-      timer: 'sdk-platform-timer',
+      timer: {
+        restart: 'start-upload-after-delay',
+        source: 'sdk-platform-timer',
+      },
     },
   },
   urlStorage: {
@@ -671,10 +684,11 @@ export type TusRetryAfterErrorPlan =
   | { action: 'emitError'; retryAttempt: number }
   | { action: 'evaluatePolicy'; retryAttempt: number }
   | {
-      action: 'retry'
+      action: 'scheduleRetry'
       delay: number
       nextRetryAttempt: number
       offsetBeforeRetry: number
+      remainingRetryDelays: number[]
       retryAttempt: number
     }
 
@@ -1119,16 +1133,50 @@ function tusAssertRequestLifecyclePolicySupported(): void {
     throw new Error(`tus: unsupported default retry decision ${policy.retry.defaultDecision}`)
   }
 
-  if (policy.retry.error.retryableWhen !== 'request-context-present') {
-    throw new Error(`tus: unsupported retryable error policy ${policy.retry.error.retryableWhen}`)
-  }
-
   if (policy.retry.onlineSignal.source !== 'sdk-platform-online-status') {
     throw new Error(`tus: unsupported retry online signal ${policy.retry.onlineSignal.source}`)
   }
 
-  if (policy.retry.timer !== 'sdk-platform-timer') {
-    throw new Error(`tus: unsupported retry timer policy ${policy.retry.timer}`)
+  if (policy.retry.error.retryableWhen !== 'request-context-present') {
+    throw new Error(`tus: unsupported retryable error policy ${policy.retry.error.retryableWhen}`)
+  }
+
+  if (policy.retry.failure.nonRetryableError !== 'emit-error') {
+    throw new Error(
+      `tus: unsupported non-retryable-error policy ${policy.retry.failure.nonRetryableError}`,
+    )
+  }
+
+  if (policy.retry.failure.exhaustedDelays !== 'emit-error') {
+    throw new Error(
+      `tus: unsupported exhausted retry delay policy ${policy.retry.failure.exhaustedDelays}`,
+    )
+  }
+
+  if (policy.retry.failure.policyRejected !== 'emit-error') {
+    throw new Error(`tus: unsupported rejected retry policy ${policy.retry.failure.policyRejected}`)
+  }
+
+  if (policy.retry.delaySource !== 'retry-delays-indexed-by-attempt') {
+    throw new Error(`tus: unsupported retry delay source ${policy.retry.delaySource}`)
+  }
+
+  if (policy.retry.attemptCounter.reset !== 'when-offset-advanced-since-last-retry') {
+    throw new Error(`tus: unsupported retry reset policy ${policy.retry.attemptCounter.reset}`)
+  }
+
+  if (policy.retry.attemptCounter.increment !== 'after-retry-scheduled') {
+    throw new Error(
+      `tus: unsupported retry increment policy ${policy.retry.attemptCounter.increment}`,
+    )
+  }
+
+  if (policy.retry.timer.source !== 'sdk-platform-timer') {
+    throw new Error(`tus: unsupported retry timer source ${policy.retry.timer.source}`)
+  }
+
+  if (policy.retry.timer.restart !== 'start-upload-after-delay') {
+    throw new Error(`tus: unsupported retry timer restart ${policy.retry.timer.restart}`)
   }
 }
 
@@ -2507,6 +2555,8 @@ export function tusShouldResetRetryAttempt({
   offset: number
   offsetBeforeRetry: number
 }): boolean {
+  tusAssertRequestLifecyclePolicySupported()
+
   return offset > offsetBeforeRetry
 }
 
@@ -2542,10 +2592,11 @@ export function tusPlanRetryAfterError({
   }
 
   return {
-    action: 'retry',
+    action: 'scheduleRetry',
     delay: retryDelays[effectiveRetryAttempt],
     nextRetryAttempt: effectiveRetryAttempt + 1,
     offsetBeforeRetry: offset,
+    remainingRetryDelays: [...retryDelays.slice(effectiveRetryAttempt + 1)],
     retryAttempt: effectiveRetryAttempt,
   }
 }
