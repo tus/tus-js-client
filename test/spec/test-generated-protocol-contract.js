@@ -5,7 +5,7 @@ import {
   tusProtocolOperations,
   tusWireVersions,
 } from './generated-protocol-contract.js'
-import { getBlob, TestHttpStack, waitableFunction } from './helpers/utils.js'
+import { getBlob, TestHttpStack, wait, waitableFunction } from './helpers/utils.js'
 
 function getProtocolOperation(operationId) {
   const operation = tusProtocolOperations.find((candidate) => candidate.operationId === operationId)
@@ -229,10 +229,26 @@ function eventMatchesExpectation(scenario, actual, expected) {
     }
 
     if (expected.kind === 'after-response') {
+      if (!request.response) {
+        throw new Error(
+          `Generated scenario ${scenario.scenarioId} after-response event points at request ${expected.requestIndex} without a response`,
+        )
+      }
+
       return actual.statusCode === request.response.statusCode
     }
 
     return true
+  }
+
+  if (expected.kind === 'request-abort') {
+    const request = requestExpectationForEvent(scenario, expected)
+    const operation = getProtocolOperation(request.operationId)
+    return (
+      actual.requestIndex === expected.requestIndex &&
+      actual.method === (request.method ?? operation.method) &&
+      actual.url === expectedUrlForScenarioRequest(scenario, request)
+    )
   }
 
   if (expected.kind === 'should-retry') {
@@ -301,10 +317,34 @@ function expectScenarioRequest(req, scenario, request) {
     expect(req.bodySize).toBe(request.bodySize)
   }
 
+  if (!request.response) {
+    return
+  }
+
   req.respondWith({
     status: request.response.statusCode,
     responseHeaders: scenarioResponseHeadersFor(operation, request.response),
   })
+}
+
+async function abortScenarioRequest(req, scenario, request, requestIndex, observedEvents, upload) {
+  const operation = getProtocolOperation(request.operationId)
+  const originalAbort = req.abort.bind(req)
+  req.abort = () => {
+    observedEvents.push({
+      kind: 'request-abort',
+      method: req.method,
+      requestIndex,
+      url: req.url,
+    })
+    return originalAbort()
+  }
+
+  await upload.abort(false)
+  await wait(0)
+
+  expect(req.method).toBe(request.method ?? operation.method)
+  expect(req.url).toBe(expectedUrlForScenarioRequest(scenario, request))
 }
 
 async function startScenarioUpload(scenario, testStack) {
@@ -466,9 +506,24 @@ async function runGeneratedConformanceScenario(scenario) {
   const { observedEvents, onError, onSuccess, terminatePromise, upload } =
     await startScenarioUpload(scenario, testStack)
 
-  for (const request of scenario.requests) {
+  for (const [requestIndex, request] of scenario.requests.entries()) {
     const req = await testStack.nextRequest()
     expectScenarioRequest(req, scenario, request)
+
+    if (request.abort) {
+      await abortScenarioRequest(req, scenario, request, requestIndex, observedEvents, upload)
+    } else if (!request.response) {
+      throw new Error(
+        `Generated scenario ${scenario.scenarioId} request ${requestIndex} has no response and is not marked abort`,
+      )
+    }
+  }
+
+  if (scenario.completion.kind === 'aborted') {
+    expect(onSuccess).not.toHaveBeenCalled()
+    expect(onError).not.toHaveBeenCalled()
+    expectScenarioEvents(scenario, observedEvents)
+    return
   }
 
   if (scenario.completion.kind === 'terminated') {
@@ -504,6 +559,7 @@ describe('generated TUS protocol contract', () => {
       'parallelUploadConcat',
       'retryPatchAfterOffsetRecovery',
       'requestLifecycleHooks',
+      'abortUpload',
       'terminateWithRetry',
     ])
   })

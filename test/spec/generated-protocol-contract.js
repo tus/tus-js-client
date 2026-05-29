@@ -589,8 +589,8 @@ export const tusClientFeatures = [
   },
   {
     conformance: {
-      scenarioIds: [],
-      status: 'needs-generated-scenario',
+      scenarioIds: ['abortUpload'],
+      status: 'covered-by-generated-scenario',
     },
     description: 'Abort the active request, pending retry timer, and any partial uploads.',
     featureId: 'abortUpload',
@@ -1405,6 +1405,40 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'requestLifecycleHooks',
+  },
+  {
+    behavior: 'abort-upload',
+    completion: {
+      kind: 'aborted',
+    },
+    events: [
+      {
+        kind: 'request-abort',
+        requestIndex: 0,
+      },
+    ],
+    featureId: 'abortUpload',
+    input: {
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      kind: 'blob',
+      metadata: {
+        filename: 'hello.txt',
+      },
+    },
+    operationIds: ['createTusUpload'],
+    primitives: ['abort-current-request'],
+    requests: [
+      {
+        abort: true,
+        headers: {
+          'Upload-Length': '11',
+        },
+        operationId: 'createTusUpload',
+        url: 'endpoint',
+      },
+    ],
+    scenarioId: 'abortUpload',
   },
   {
     behavior: 'terminate-with-retry',
