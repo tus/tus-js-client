@@ -70,6 +70,10 @@ function requestMatchesHeaderVariant(requestHeaders, variant) {
 function expectRequestMatchesOperation(req, operation, request) {
   expect(req.method).toBe(request.method ?? operation.method)
 
+  if (request.headerMode === 'exact') {
+    return
+  }
+
   const expectedContentType = request.headers?.['Content-Type'] ?? operation.request.contentType
   if (expectedContentType) {
     expect(req.requestHeaders['Content-Type']).toBe(expectedContentType)
@@ -117,6 +121,10 @@ function responseHeadersFor(response, overrides = {}) {
 }
 
 function scenarioResponseHeadersFor(operation, response) {
+  if (response.headerMode === 'exact') {
+    return response.headers ?? {}
+  }
+
   const operationResponse = getOperationResponse(operation, response.statusCode)
   if (!operationResponse) {
     return response.headers ?? {}
@@ -542,6 +550,10 @@ async function startScenarioUpload(scenario, testStack) {
     options.retryDelays = scenario.input.retryDelays
   }
 
+  if (scenario.input.protocol != null) {
+    options.protocol = scenario.input.protocol
+  }
+
   if (scenario.input.uploadSize != null) {
     options.uploadSize = scenario.input.uploadSize
   }
@@ -710,6 +722,8 @@ describe('generated TUS protocol contract', () => {
     expect(tusClientConformanceScenarios.map((scenario) => scenario.scenarioId)).toEqual([
       'singleUploadLifecycle',
       'creationWithUpload',
+      'ietfDraft05CreationWithUpload',
+      'ietfDraft03ResumeWithoutKnownLength',
       'uploadBodyHeaders',
       'resumeFromPreviousUpload',
       'relativeLocationResolution',

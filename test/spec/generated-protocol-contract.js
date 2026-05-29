@@ -768,8 +768,8 @@ export const tusClientFeatures = [
   },
   {
     conformance: {
-      scenarioIds: [],
-      status: 'needs-generated-scenario',
+      scenarioIds: ['ietfDraft05CreationWithUpload', 'ietfDraft03ResumeWithoutKnownLength'],
+      status: 'covered-by-generated-scenario',
     },
     description: 'Select between tus v1 and supported IETF draft client protocol modes.',
     featureId: 'protocolVersionSelection',
@@ -987,6 +987,154 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'creationWithUpload',
+  },
+  {
+    behavior: 'creation-with-upload',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/ietf-draft-05-contract',
+    },
+    events: [
+      {
+        bytesSent: 0,
+        bytesTotal: 11,
+        kind: 'progress',
+      },
+      {
+        bytesSent: 11,
+        bytesTotal: 11,
+        kind: 'progress',
+      },
+      {
+        kind: 'upload-url-available',
+      },
+      {
+        kind: 'success',
+      },
+      {
+        kind: 'source-close',
+      },
+    ],
+    featureId: 'protocolVersionSelection',
+    input: {
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      kind: 'blob',
+      metadata: {
+        filename: 'hello.txt',
+      },
+      protocol: 'ietf-draft-05',
+      uploadDataDuringCreation: true,
+    },
+    operationIds: ['createTusUpload'],
+    primitives: ['select-client-protocol'],
+    requests: [
+      {
+        absentHeaders: ['Tus-Resumable'],
+        bodySize: 11,
+        headerMode: 'exact',
+        headers: {
+          'Content-Type': 'application/partial-upload',
+          'Upload-Complete': '?1',
+          'Upload-Draft-Interop-Version': '6',
+          'Upload-Length': '11',
+        },
+        operationId: 'createTusUpload',
+        response: {
+          headerMode: 'exact',
+          headers: {
+            Location: 'https://tus.io/uploads/ietf-draft-05-contract',
+            'Upload-Offset': '11',
+          },
+          statusCode: 201,
+        },
+        url: 'endpoint',
+      },
+    ],
+    scenarioId: 'ietfDraft05CreationWithUpload',
+  },
+  {
+    behavior: 'upload-body-headers',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/ietf-draft-03-resume-contract',
+    },
+    events: [
+      {
+        kind: 'upload-url-available',
+      },
+      {
+        bytesSent: 5,
+        bytesTotal: 11,
+        kind: 'progress',
+      },
+      {
+        bytesSent: 11,
+        bytesTotal: 11,
+        kind: 'progress',
+      },
+      {
+        bytesAccepted: 11,
+        bytesTotal: 11,
+        chunkSize: 6,
+        kind: 'chunk-complete',
+      },
+      {
+        kind: 'success',
+      },
+      {
+        kind: 'source-close',
+      },
+    ],
+    featureId: 'protocolVersionSelection',
+    input: {
+      chunkSize: 6,
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      kind: 'blob',
+      protocol: 'ietf-draft-03',
+      uploadUrl: 'https://tus.io/uploads/ietf-draft-03-resume-contract',
+    },
+    operationIds: ['getTusUploadOffset', 'patchTusUpload'],
+    primitives: ['select-client-protocol'],
+    requests: [
+      {
+        absentHeaders: ['Tus-Resumable'],
+        headerMode: 'exact',
+        headers: {
+          'Upload-Draft-Interop-Version': '5',
+        },
+        operationId: 'getTusUploadOffset',
+        response: {
+          headerMode: 'exact',
+          headers: {
+            'Upload-Offset': '5',
+          },
+          statusCode: 200,
+        },
+        url: 'upload',
+      },
+      {
+        absentHeaders: ['Content-Type', 'Tus-Resumable'],
+        bodySize: 6,
+        headerMode: 'exact',
+        headers: {
+          'Upload-Complete': '?1',
+          'Upload-Draft-Interop-Version': '5',
+          'Upload-Offset': '5',
+        },
+        operationId: 'patchTusUpload',
+        response: {
+          headerMode: 'exact',
+          headers: {
+            'Upload-Offset': '11',
+          },
+          statusCode: 204,
+        },
+        url: 'upload',
+      },
+    ],
+    scenarioId: 'ietfDraft03ResumeWithoutKnownLength',
   },
   {
     behavior: 'upload-body-headers',
