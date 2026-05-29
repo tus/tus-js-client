@@ -829,8 +829,8 @@ export const tusClientFeatures = [
   },
   {
     conformance: {
-      scenarioIds: [],
-      status: 'needs-generated-scenario',
+      scenarioIds: ['detailedCreateResponseError', 'detailedCreateRequestError'],
+      status: 'covered-by-generated-scenario',
     },
     description: 'Attach request, response, status, body, and request ID context to errors.',
     featureId: 'detailedErrors',
@@ -1340,6 +1340,89 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     scenarioId: 'startValidationParallelBoundariesLengthMismatch',
+  },
+  {
+    behavior: 'detailed-error',
+    completion: {
+      kind: 'error',
+      message:
+        'tus: unexpected response while creating upload, originated from request (method: POST, url: https://tus.io/uploads, response code: 500, response text: server_error, request id: contract-request-id)',
+      reason: 'unexpectedCreateResponse',
+    },
+    events: [],
+    featureId: 'detailedErrors',
+    input: {
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      headers: {
+        'X-Request-ID': 'contract-request-id',
+      },
+      kind: 'blob',
+      metadata: {
+        filename: 'hello.txt',
+      },
+      rawOptions: {
+        retryDelays: null,
+      },
+    },
+    operationIds: ['createTusUpload'],
+    primitives: ['report-detailed-errors'],
+    requests: [
+      {
+        headers: {
+          'Upload-Length': '11',
+          'X-Request-ID': 'contract-request-id',
+        },
+        operationId: 'createTusUpload',
+        response: {
+          body: 'server_error',
+          statusCode: 500,
+        },
+        url: 'endpoint',
+      },
+    ],
+    scenarioId: 'detailedCreateResponseError',
+  },
+  {
+    behavior: 'detailed-error',
+    completion: {
+      kind: 'error',
+      message:
+        'tus: failed to create upload, caused by Error: socket down, originated from request (method: POST, url: https://tus.io/uploads, response code: n/a, response text: n/a, request id: contract-request-id)',
+      reason: 'createUploadRequestFailed',
+    },
+    events: [],
+    featureId: 'detailedErrors',
+    input: {
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      headers: {
+        'X-Request-ID': 'contract-request-id',
+      },
+      kind: 'blob',
+      metadata: {
+        filename: 'hello.txt',
+      },
+      rawOptions: {
+        retryDelays: null,
+      },
+    },
+    operationIds: ['createTusUpload'],
+    primitives: ['report-detailed-errors'],
+    requests: [
+      {
+        error: {
+          message: 'socket down',
+        },
+        headers: {
+          'Upload-Length': '11',
+          'X-Request-ID': 'contract-request-id',
+        },
+        operationId: 'createTusUpload',
+        url: 'endpoint',
+      },
+    ],
+    scenarioId: 'detailedCreateRequestError',
   },
   {
     behavior: 'upload-body-headers',

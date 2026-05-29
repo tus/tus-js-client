@@ -422,6 +422,7 @@ function expectScenarioRequest(req, scenario, request) {
   req.respondWith({
     status: request.response.statusCode,
     responseHeaders: scenarioResponseHeadersFor(operation, request.response),
+    responseText: request.response.body ?? '',
   })
 }
 
@@ -540,6 +541,10 @@ async function startScenarioUpload(scenario, testStack) {
 
   if (scenario.input.metadataForPartialUploads != null) {
     options.metadataForPartialUploads = scenario.input.metadataForPartialUploads
+  }
+
+  if (scenario.input.headers != null) {
+    options.headers = scenario.input.headers
   }
 
   if (scenario.input.overridePatchMethod != null) {
@@ -685,9 +690,11 @@ async function runGeneratedConformanceScenario(scenario) {
 
       if (request.abort) {
         await abortScenarioRequest(req, scenario, request, requestIndex, observedEvents, upload)
+      } else if (request.error) {
+        req.responseError(new Error(request.error.message))
       } else if (!request.response) {
         throw new Error(
-          `Generated scenario ${scenario.scenarioId} request ${requestIndex} has no response and is not marked abort`,
+          `Generated scenario ${scenario.scenarioId} request ${requestIndex} has no response, error, or abort`,
         )
       }
     }
@@ -752,6 +759,8 @@ describe('generated TUS protocol contract', () => {
       'startValidationParallelUploadsWithDeferredLength',
       'startValidationParallelBoundariesWithoutParallelUploads',
       'startValidationParallelBoundariesLengthMismatch',
+      'detailedCreateResponseError',
+      'detailedCreateRequestError',
       'uploadBodyHeaders',
       'resumeFromPreviousUpload',
       'relativeLocationResolution',
