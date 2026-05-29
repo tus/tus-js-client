@@ -603,6 +603,7 @@ describe('generated TUS protocol contract', () => {
       'creationWithUpload',
       'uploadBodyHeaders',
       'resumeFromPreviousUpload',
+      'relativeLocationResolution',
       'deferredLengthUpload',
       'overridePatchMethod',
       'parallelUploadConcat',

@@ -753,8 +753,8 @@ export const tusClientFeatures = [
   },
   {
     conformance: {
-      scenarioIds: [],
-      status: 'needs-generated-scenario',
+      scenarioIds: ['relativeLocationResolution'],
+      status: 'covered-by-generated-scenario',
     },
     description: 'Normalize relative Location headers against the request endpoint.',
     featureId: 'relativeLocationResolution',
@@ -1098,6 +1098,81 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'resumeFromPreviousUpload',
+  },
+  {
+    behavior: 'relative-location-resolution',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/files/relative-contract',
+    },
+    events: [
+      {
+        kind: 'upload-url-available',
+      },
+      {
+        bytesSent: 0,
+        bytesTotal: 11,
+        kind: 'progress',
+      },
+      {
+        bytesSent: 11,
+        bytesTotal: 11,
+        kind: 'progress',
+      },
+      {
+        bytesAccepted: 11,
+        bytesTotal: 11,
+        chunkSize: 11,
+        kind: 'chunk-complete',
+      },
+      {
+        kind: 'success',
+      },
+      {
+        kind: 'source-close',
+      },
+    ],
+    featureId: 'relativeLocationResolution',
+    input: {
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/files/',
+      kind: 'blob',
+      metadata: {
+        filename: 'hello.txt',
+      },
+    },
+    operationIds: ['createTusUpload', 'patchTusUpload'],
+    primitives: ['resolve-relative-location'],
+    requests: [
+      {
+        headers: {
+          'Upload-Length': '11',
+        },
+        operationId: 'createTusUpload',
+        response: {
+          headers: {
+            Location: 'relative-contract',
+          },
+          statusCode: 201,
+        },
+        url: 'endpoint',
+      },
+      {
+        bodySize: 11,
+        headers: {
+          'Upload-Offset': '0',
+        },
+        operationId: 'patchTusUpload',
+        response: {
+          headers: {
+            'Upload-Offset': '11',
+          },
+          statusCode: 204,
+        },
+        url: 'upload',
+      },
+    ],
+    scenarioId: 'relativeLocationResolution',
   },
   {
     behavior: 'deferred-length-upload',
