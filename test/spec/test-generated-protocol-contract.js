@@ -45,6 +45,22 @@ function getDefaultWireVersion() {
   return versions[0].value
 }
 
+function getGeneratedConformanceRuntime() {
+  if (typeof window !== 'undefined' && window.document) {
+    return 'browser'
+  }
+
+  if (typeof globalThis.Deno !== 'undefined') {
+    return 'deno'
+  }
+
+  return 'node'
+}
+
+function scenarioAppliesToCurrentRuntime(scenario) {
+  return !scenario.runtimes || scenario.runtimes.includes(getGeneratedConformanceRuntime())
+}
+
 function requestMatchesHeaderVariant(requestHeaders, variant) {
   return variant.fields
     .filter((field) => field.required)
@@ -125,13 +141,40 @@ function createReadableStream(content) {
   })
 }
 
-function createScenarioInput(input) {
+function contentBytes(content) {
+  return new TextEncoder().encode(content)
+}
+
+async function createScenarioInput(input) {
   if (input.kind === 'blob') {
     return getBlob(input.content)
   }
 
-  if (input.kind === 'readable-stream') {
+  if (input.kind === 'array-buffer') {
+    const bytes = contentBytes(input.content)
+    return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+  }
+
+  if (input.kind === 'array-buffer-view') {
+    return contentBytes(input.content)
+  }
+
+  if (input.kind === 'web-readable-stream') {
     return createReadableStream(input.content)
+  }
+
+  if (input.kind === 'node-readable-stream') {
+    const { Readable } = await import('node:stream')
+    return Readable.from([Buffer.from(contentBytes(input.content))])
+  }
+
+  if (input.kind === 'node-path-reference') {
+    const { writeFile } = await import('node:fs/promises')
+    const { tmpdir } = await import('node:os')
+    const path = await import('node:path')
+    const filePath = path.join(tmpdir(), 'tus-js-client-generated-contract-input.bin')
+    await writeFile(filePath, contentBytes(input.content))
+    return { path: filePath }
   }
 
   throw new Error(`Unsupported generated TUS scenario input kind: ${input.kind}`)
@@ -179,10 +222,18 @@ function scenarioWantsEvent(scenario, kind) {
   return scenario.events.some((event) => event.kind === kind)
 }
 
-function makeEventRecordingFileReader(fileReader, observedEvents) {
+function makeEventRecordingFileReader(fileReader, scenario, observedEvents) {
   return {
     async openFile(input, chunkSize) {
       const source = await fileReader.openFile(input, chunkSize)
+
+      if (scenarioWantsEvent(scenario, 'source-open')) {
+        observedEvents.push({
+          inputKind: scenario.input.kind,
+          kind: 'source-open',
+          size: source.size,
+        })
+      }
 
       return {
         get size() {
@@ -260,6 +311,10 @@ function eventMatchesExpectation(scenario, actual, expected) {
       actual.method === (request.method ?? operation.method) &&
       actual.url === expectedUrlForScenarioRequest(scenario, request)
     )
+  }
+
+  if (expected.kind === 'source-open') {
+    return actual.inputKind === expected.inputKind && actual.size === expected.size
   }
 
   if (expected.kind === 'fingerprint') {
@@ -433,8 +488,12 @@ async function startScenarioUpload(scenario, testStack) {
     }
   }
 
-  if (scenarioWantsEvent(scenario, 'source-close')) {
-    options.fileReader = makeEventRecordingFileReader(defaultOptions.fileReader, observedEvents)
+  if (scenarioWantsEvent(scenario, 'source-open') || scenarioWantsEvent(scenario, 'source-close')) {
+    options.fileReader = makeEventRecordingFileReader(
+      defaultOptions.fileReader,
+      scenario,
+      observedEvents,
+    )
   }
 
   if (scenarioWantsEvent(scenario, 'should-retry')) {
@@ -478,6 +537,10 @@ async function startScenarioUpload(scenario, testStack) {
     options.retryDelays = scenario.input.retryDelays
   }
 
+  if (scenario.input.uploadSize != null) {
+    options.uploadSize = scenario.input.uploadSize
+  }
+
   if (scenario.input.removeFingerprintOnSuccess != null) {
     options.removeFingerprintOnSuccess = scenario.input.removeFingerprintOnSuccess
   }
@@ -502,7 +565,11 @@ async function startScenarioUpload(scenario, testStack) {
     scenario.input.fingerprint !== undefined
       ? scenario.input.fingerprint
       : scenario.input.storedUpload?.fingerprint
-  if (scenarioFingerprint !== undefined || scenario.input.kind === 'readable-stream') {
+  if (
+    scenarioFingerprint !== undefined ||
+    scenario.input.kind === 'web-readable-stream' ||
+    scenario.input.kind === 'node-readable-stream'
+  ) {
     options.fingerprint = jasmine.createSpy('fingerprint').and.callFake(() => {
       const fingerprint = scenarioFingerprint ?? null
       if (scenarioWantsEvent(scenario, 'fingerprint')) {
@@ -534,7 +601,7 @@ async function startScenarioUpload(scenario, testStack) {
     }
   }
 
-  upload = new Upload(createScenarioInput(scenario.input), options)
+  upload = new Upload(await createScenarioInput(scenario.input), options)
 
   if (scenario.behavior === 'resume-from-previous-upload') {
     const previousUploads = await upload.findPreviousUploads()
@@ -592,6 +659,10 @@ async function runGeneratedConformanceScenario(scenario) {
 
 describe('generated TUS protocol contract', () => {
   for (const scenario of tusClientConformanceScenarios) {
+    if (!scenarioAppliesToCurrentRuntime(scenario)) {
+      continue
+    }
+
     it(`drives ${scenario.scenarioId} from the generated contract`, async () => {
       await runGeneratedConformanceScenario(getClientConformanceScenario(scenario.scenarioId))
     })
@@ -604,6 +675,11 @@ describe('generated TUS protocol contract', () => {
       'uploadBodyHeaders',
       'resumeFromPreviousUpload',
       'relativeLocationResolution',
+      'arrayBufferInput',
+      'arrayBufferViewInput',
+      'webReadableStreamInput',
+      'nodeReadableStreamInput',
+      'nodePathInput',
       'deferredLengthUpload',
       'overridePatchMethod',
       'parallelUploadConcat',

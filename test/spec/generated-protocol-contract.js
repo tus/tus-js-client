@@ -682,8 +682,14 @@ export const tusClientFeatures = [
   },
   {
     conformance: {
-      scenarioIds: [],
-      status: 'needs-generated-scenario',
+      scenarioIds: [
+        'arrayBufferInput',
+        'arrayBufferViewInput',
+        'webReadableStreamInput',
+        'nodeReadableStreamInput',
+        'nodePathInput',
+      ],
+      status: 'covered-by-generated-scenario',
     },
     description: 'Support the reference client input/source families across runtimes.',
     featureId: 'inputSources',
@@ -1175,6 +1181,321 @@ export const tusClientConformanceScenarios = [
     scenarioId: 'relativeLocationResolution',
   },
   {
+    behavior: 'array-buffer-input',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/array-buffer-contract',
+    },
+    events: [
+      {
+        inputKind: 'array-buffer',
+        kind: 'source-open',
+        size: 11,
+      },
+      {
+        kind: 'success',
+      },
+      {
+        kind: 'source-close',
+      },
+    ],
+    featureId: 'inputSources',
+    input: {
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      kind: 'array-buffer',
+      metadata: {
+        filename: 'hello.txt',
+      },
+    },
+    operationIds: ['createTusUpload', 'patchTusUpload'],
+    primitives: ['read-browser-file'],
+    requests: [
+      {
+        headers: {
+          'Upload-Length': '11',
+        },
+        operationId: 'createTusUpload',
+        response: {
+          headers: {
+            Location: 'https://tus.io/uploads/array-buffer-contract',
+          },
+          statusCode: 201,
+        },
+        url: 'endpoint',
+      },
+      {
+        bodySize: 11,
+        headers: {
+          'Upload-Offset': '0',
+        },
+        operationId: 'patchTusUpload',
+        response: {
+          headers: {
+            'Upload-Offset': '11',
+          },
+          statusCode: 204,
+        },
+        url: 'upload',
+      },
+    ],
+    scenarioId: 'arrayBufferInput',
+  },
+  {
+    behavior: 'array-buffer-view-input',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/array-buffer-view-contract',
+    },
+    events: [
+      {
+        inputKind: 'array-buffer-view',
+        kind: 'source-open',
+        size: 11,
+      },
+      {
+        kind: 'success',
+      },
+      {
+        kind: 'source-close',
+      },
+    ],
+    featureId: 'inputSources',
+    input: {
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      kind: 'array-buffer-view',
+      metadata: {
+        filename: 'hello.txt',
+      },
+    },
+    operationIds: ['createTusUpload', 'patchTusUpload'],
+    primitives: ['read-browser-file'],
+    requests: [
+      {
+        headers: {
+          'Upload-Length': '11',
+        },
+        operationId: 'createTusUpload',
+        response: {
+          headers: {
+            Location: 'https://tus.io/uploads/array-buffer-view-contract',
+          },
+          statusCode: 201,
+        },
+        url: 'endpoint',
+      },
+      {
+        bodySize: 11,
+        headers: {
+          'Upload-Offset': '0',
+        },
+        operationId: 'patchTusUpload',
+        response: {
+          headers: {
+            'Upload-Offset': '11',
+          },
+          statusCode: 204,
+        },
+        url: 'upload',
+      },
+    ],
+    scenarioId: 'arrayBufferViewInput',
+  },
+  {
+    behavior: 'web-readable-stream-input',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/web-stream-contract',
+    },
+    events: [
+      {
+        inputKind: 'web-readable-stream',
+        kind: 'source-open',
+        size: null,
+      },
+      {
+        kind: 'success',
+      },
+      {
+        kind: 'source-close',
+      },
+    ],
+    featureId: 'inputSources',
+    input: {
+      chunkSize: 100,
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      kind: 'web-readable-stream',
+      metadata: {
+        filename: 'hello.txt',
+      },
+      uploadLengthDeferred: true,
+    },
+    operationIds: ['createTusUpload', 'patchTusUpload'],
+    primitives: ['read-web-stream'],
+    requests: [
+      {
+        absentHeaders: ['Upload-Length'],
+        headers: {
+          'Upload-Defer-Length': '1',
+        },
+        operationId: 'createTusUpload',
+        response: {
+          headers: {
+            Location: 'https://tus.io/uploads/web-stream-contract',
+          },
+          statusCode: 201,
+        },
+        url: 'endpoint',
+      },
+      {
+        bodySize: 11,
+        headers: {
+          'Upload-Length': '11',
+          'Upload-Offset': '0',
+        },
+        operationId: 'patchTusUpload',
+        response: {
+          headers: {
+            'Upload-Offset': '11',
+          },
+          statusCode: 204,
+        },
+        url: 'upload',
+      },
+    ],
+    scenarioId: 'webReadableStreamInput',
+  },
+  {
+    behavior: 'node-readable-stream-input',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/node-stream-contract',
+    },
+    events: [
+      {
+        inputKind: 'node-readable-stream',
+        kind: 'source-open',
+        size: null,
+      },
+      {
+        kind: 'success',
+      },
+      {
+        kind: 'source-close',
+      },
+    ],
+    featureId: 'inputSources',
+    input: {
+      chunkSize: 100,
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      kind: 'node-readable-stream',
+      metadata: {
+        filename: 'hello.txt',
+      },
+      uploadLengthDeferred: true,
+    },
+    operationIds: ['createTusUpload', 'patchTusUpload'],
+    primitives: ['read-node-stream'],
+    requests: [
+      {
+        absentHeaders: ['Upload-Length'],
+        headers: {
+          'Upload-Defer-Length': '1',
+        },
+        operationId: 'createTusUpload',
+        response: {
+          headers: {
+            Location: 'https://tus.io/uploads/node-stream-contract',
+          },
+          statusCode: 201,
+        },
+        url: 'endpoint',
+      },
+      {
+        bodySize: 11,
+        headers: {
+          'Upload-Length': '11',
+          'Upload-Offset': '0',
+        },
+        operationId: 'patchTusUpload',
+        response: {
+          headers: {
+            'Upload-Offset': '11',
+          },
+          statusCode: 204,
+        },
+        url: 'upload',
+      },
+    ],
+    runtimes: ['node'],
+    scenarioId: 'nodeReadableStreamInput',
+  },
+  {
+    behavior: 'node-path-input',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/node-path-contract',
+    },
+    events: [
+      {
+        inputKind: 'node-path-reference',
+        kind: 'source-open',
+        size: 11,
+      },
+      {
+        kind: 'success',
+      },
+      {
+        kind: 'source-close',
+      },
+    ],
+    featureId: 'inputSources',
+    input: {
+      content: 'hello world',
+      endpointUrl: 'https://tus.io/uploads',
+      kind: 'node-path-reference',
+      metadata: {
+        filename: 'hello.txt',
+      },
+    },
+    operationIds: ['createTusUpload', 'patchTusUpload'],
+    primitives: ['read-node-file'],
+    requests: [
+      {
+        headers: {
+          'Upload-Length': '11',
+        },
+        operationId: 'createTusUpload',
+        response: {
+          headers: {
+            Location: 'https://tus.io/uploads/node-path-contract',
+          },
+          statusCode: 201,
+        },
+        url: 'endpoint',
+      },
+      {
+        bodySize: 11,
+        headers: {
+          'Upload-Offset': '0',
+        },
+        operationId: 'patchTusUpload',
+        response: {
+          headers: {
+            'Upload-Offset': '11',
+          },
+          statusCode: 204,
+        },
+        url: 'upload',
+      },
+    ],
+    runtimes: ['node'],
+    scenarioId: 'nodePathInput',
+  },
+  {
     behavior: 'deferred-length-upload',
     completion: {
       kind: 'success',
@@ -1186,7 +1507,7 @@ export const tusClientConformanceScenarios = [
       chunkSize: 100,
       content: 'hello world',
       endpointUrl: 'https://tus.io/uploads',
-      kind: 'readable-stream',
+      kind: 'web-readable-stream',
       metadata: {
         filename: 'hello.txt',
       },
