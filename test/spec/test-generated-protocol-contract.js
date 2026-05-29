@@ -137,28 +137,39 @@ function createScenarioInput(input) {
   throw new Error(`Unsupported generated TUS scenario input kind: ${input.kind}`)
 }
 
-function makeStoredUploadStorage(storedUpload) {
+function storedUploadKey(storedUpload) {
+  return storedUpload.urlStorageKey ?? storedUpload.fingerprint
+}
+
+function storedUploadRecord(storedUpload) {
+  return {
+    creationTime: new Date(0).toString(),
+    metadata: {},
+    size: null,
+    uploadUrl: storedUpload.uploadUrl,
+    urlStorageKey: storedUploadKey(storedUpload),
+  }
+}
+
+function makeEventRecordingUrlStorage(storedUpload, observedEvents) {
   return {
     findAllUploads() {
-      return Promise.resolve([
-        {
-          creationTime: new Date(0).toString(),
-          metadata: {},
-          size: null,
-          uploadUrl: storedUpload.uploadUrl,
-          urlStorageKey: storedUpload.fingerprint,
-        },
-      ])
+      return Promise.resolve(storedUpload ? [storedUploadRecord(storedUpload)] : [])
     },
     findUploadsByFingerprint(fingerprint) {
-      expect(fingerprint).toBe(storedUpload.fingerprint)
-      return this.findAllUploads()
+      const uploads =
+        storedUpload && storedUpload.fingerprint === fingerprint
+          ? [storedUploadRecord(storedUpload)]
+          : []
+      observedEvents.push({ count: uploads.length, fingerprint, kind: 'url-storage-find' })
+      return Promise.resolve(uploads)
     },
-    addUpload() {
-      return Promise.resolve(storedUpload.fingerprint)
+    addUpload(fingerprint, upload) {
+      observedEvents.push({ fingerprint, kind: 'url-storage-add', uploadUrl: upload.uploadUrl })
+      return Promise.resolve(upload.urlStorageKey ?? `${fingerprint}-generated-key`)
     },
     removeUpload(urlStorageKey) {
-      expect(urlStorageKey).toBe(storedUpload.fingerprint)
+      observedEvents.push({ kind: 'url-storage-remove', urlStorageKey })
       return Promise.resolve()
     },
   }
@@ -251,8 +262,24 @@ function eventMatchesExpectation(scenario, actual, expected) {
     )
   }
 
+  if (expected.kind === 'fingerprint') {
+    return actual.fingerprint === expected.fingerprint
+  }
+
   if (expected.kind === 'should-retry') {
     return actual.decision === expected.decision && actual.retryAttempt === expected.retryAttempt
+  }
+
+  if (expected.kind === 'url-storage-add') {
+    return actual.fingerprint === expected.fingerprint && actual.uploadUrl === expected.uploadUrl
+  }
+
+  if (expected.kind === 'url-storage-find') {
+    return actual.count === expected.count && actual.fingerprint === expected.fingerprint
+  }
+
+  if (expected.kind === 'url-storage-remove') {
+    return actual.urlStorageKey === expected.urlStorageKey
   }
 
   return true
@@ -451,6 +478,14 @@ async function startScenarioUpload(scenario, testStack) {
     options.retryDelays = scenario.input.retryDelays
   }
 
+  if (scenario.input.removeFingerprintOnSuccess != null) {
+    options.removeFingerprintOnSuccess = scenario.input.removeFingerprintOnSuccess
+  }
+
+  if (scenario.input.storeFingerprintForResuming != null) {
+    options.storeFingerprintForResuming = scenario.input.storeFingerprintForResuming
+  }
+
   if (scenario.input.uploadDataDuringCreation != null) {
     options.uploadDataDuringCreation = scenario.input.uploadDataDuringCreation
   }
@@ -463,13 +498,27 @@ async function startScenarioUpload(scenario, testStack) {
     options.uploadUrl = scenario.input.uploadUrl
   }
 
-  if (scenario.input.storedUpload != null) {
-    options.fingerprint = jasmine
-      .createSpy('fingerprint')
-      .and.resolveTo(scenario.input.storedUpload.fingerprint)
-    options.urlStorage = makeStoredUploadStorage(scenario.input.storedUpload)
-  } else if (scenario.input.kind === 'readable-stream') {
-    options.fingerprint = jasmine.createSpy('fingerprint').and.resolveTo(null)
+  const scenarioFingerprint =
+    scenario.input.fingerprint !== undefined
+      ? scenario.input.fingerprint
+      : scenario.input.storedUpload?.fingerprint
+  if (scenarioFingerprint !== undefined || scenario.input.kind === 'readable-stream') {
+    options.fingerprint = jasmine.createSpy('fingerprint').and.callFake(() => {
+      const fingerprint = scenarioFingerprint ?? null
+      if (scenarioWantsEvent(scenario, 'fingerprint')) {
+        observedEvents.push({ fingerprint, kind: 'fingerprint' })
+      }
+      return Promise.resolve(fingerprint)
+    })
+  }
+
+  if (
+    scenario.input.storedUpload != null ||
+    scenarioWantsEvent(scenario, 'url-storage-add') ||
+    scenarioWantsEvent(scenario, 'url-storage-find') ||
+    scenarioWantsEvent(scenario, 'url-storage-remove')
+  ) {
+    options.urlStorage = makeEventRecordingUrlStorage(scenario.input.storedUpload, observedEvents)
   }
 
   if (scenario.behavior === 'terminate-with-retry') {

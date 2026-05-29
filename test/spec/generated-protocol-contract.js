@@ -655,8 +655,8 @@ export const tusClientFeatures = [
   },
   {
     conformance: {
-      scenarioIds: [],
-      status: 'needs-generated-scenario',
+      scenarioIds: ['singleUploadLifecycle', 'resumeFromPreviousUpload'],
+      status: 'covered-by-generated-scenario',
     },
     description: 'Persist, find, resume, and optionally remove upload URLs by fingerprint.',
     featureId: 'resumeUrlStorage',
@@ -813,7 +813,16 @@ export const tusClientConformanceScenarios = [
     },
     events: [
       {
+        fingerprint: 'contract-single-fingerprint',
+        kind: 'fingerprint',
+      },
+      {
         kind: 'upload-url-available',
+      },
+      {
+        fingerprint: 'contract-single-fingerprint',
+        kind: 'url-storage-add',
+        uploadUrl: 'https://tus.io/uploads/generated-contract',
       },
       {
         bytesSent: 0,
@@ -842,6 +851,7 @@ export const tusClientConformanceScenarios = [
     input: {
       content: 'hello world',
       endpointUrl: 'https://tus.io/uploads',
+      fingerprint: 'contract-single-fingerprint',
       kind: 'blob',
       metadata: {
         filename: 'hello.txt',
@@ -1004,6 +1014,19 @@ export const tusClientConformanceScenarios = [
     },
     events: [
       {
+        fingerprint: 'contract-resume-fingerprint',
+        kind: 'fingerprint',
+      },
+      {
+        count: 1,
+        fingerprint: 'contract-resume-fingerprint',
+        kind: 'url-storage-find',
+      },
+      {
+        fingerprint: 'contract-resume-fingerprint',
+        kind: 'fingerprint',
+      },
+      {
         kind: 'upload-url-available',
       },
       {
@@ -1023,6 +1046,10 @@ export const tusClientConformanceScenarios = [
         kind: 'chunk-complete',
       },
       {
+        kind: 'url-storage-remove',
+        urlStorageKey: 'tus::contract-resume-fingerprint::1337',
+      },
+      {
         kind: 'success',
       },
       {
@@ -1034,9 +1061,11 @@ export const tusClientConformanceScenarios = [
       content: 'hello world',
       endpointUrl: 'https://tus.io/uploads',
       kind: 'blob',
+      removeFingerprintOnSuccess: true,
       storedUpload: {
         fingerprint: 'contract-resume-fingerprint',
         uploadUrl: 'https://tus.io/uploads/resume-contract',
+        urlStorageKey: 'tus::contract-resume-fingerprint::1337',
       },
     },
     operationIds: ['getTusUploadOffset', 'patchTusUpload'],
