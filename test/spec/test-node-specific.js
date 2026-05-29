@@ -11,7 +11,8 @@ import { canStoreURLs, Upload } from 'tus-js-client'
 import { FileUrlStorage } from 'tus-js-client/node/FileUrlStorage'
 import { NodeHttpStack } from 'tus-js-client/node/NodeHttpStack'
 import { NodeStreamFileSource } from 'tus-js-client/node/sources/NodeStreamFileSource'
-import { assertUrlStorage } from './helpers/assertUrlStorage.js'
+import { tusClientUrlStorageConformanceScenarios } from './generated-protocol-contract.js'
+import { assertUrlStorage, findUrlStorageScenario } from './helpers/assertUrlStorage.js'
 import { TestHttpStack, waitableFunction } from './helpers/utils.js'
 
 describe('tus', () => {
@@ -409,7 +410,10 @@ describe('tus', () => {
     it('should allow storing and retrieving uploads', async () => {
       const storagePath = temp.path()
       const storage = new FileUrlStorage(storagePath)
-      await assertUrlStorage(storage)
+      await assertUrlStorage(
+        storage,
+        findUrlStorageScenario(tusClientUrlStorageConformanceScenarios, 'fileUrlStorageBackend'),
+      )
     })
   })
 

@@ -1,5 +1,6 @@
 import { defaultOptions, Upload } from 'tus-js-client'
-import { assertUrlStorage } from './helpers/assertUrlStorage.js'
+import { tusClientUrlStorageConformanceScenarios } from './generated-protocol-contract.js'
+import { assertUrlStorage, findUrlStorageScenario } from './helpers/assertUrlStorage.js'
 import { TestHttpStack, wait, waitableFunction } from './helpers/utils.js'
 
 describe('tus', () => {
@@ -370,7 +371,13 @@ describe('tus', () => {
 
   describe('#LocalStorageUrlStorage', () => {
     it('should allow storing and retrieving uploads', async () => {
-      await assertUrlStorage(defaultOptions.urlStorage)
+      await assertUrlStorage(
+        defaultOptions.urlStorage,
+        findUrlStorageScenario(
+          tusClientUrlStorageConformanceScenarios,
+          'webStorageUrlStorageBackend',
+        ),
+      )
     })
   })
 })

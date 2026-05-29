@@ -746,8 +746,8 @@ export const tusClientFeatures = [
   },
   {
     conformance: {
-      scenarioIds: [],
-      status: 'needs-generated-scenario',
+      scenarioIds: ['webStorageUrlStorageBackend', 'fileUrlStorageBackend'],
+      status: 'covered-by-generated-scenario',
     },
     description: 'Support browser and file-backed URL storage implementations.',
     featureId: 'urlStorageBackends',
@@ -1997,5 +1997,178 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'terminateWithRetry',
+  },
+]
+
+export const tusClientUrlStorageConformanceScenarios = [
+  {
+    actions: [
+      {
+        kind: 'assert-empty',
+      },
+      {
+        expectedKeyPrefix: 'tus::contract-storage-a::',
+        fingerprint: 'contract-storage-a',
+        keyRef: 'a1',
+        kind: 'add-upload',
+        upload: {
+          id: 1,
+          metadata: {
+            filename: 'a1.txt',
+          },
+          size: 11,
+          uploadUrl: 'https://tus.io/uploads/storage-a1',
+        },
+      },
+      {
+        expectedKeyPrefix: 'tus::contract-storage-a::',
+        fingerprint: 'contract-storage-a',
+        keyRef: 'a2',
+        kind: 'add-upload',
+        upload: {
+          id: 2,
+          metadata: {
+            filename: 'a2.txt',
+          },
+          size: 12,
+          uploadUrl: 'https://tus.io/uploads/storage-a2',
+        },
+      },
+      {
+        expectedKeyPrefix: 'tus::contract-storage-b::',
+        fingerprint: 'contract-storage-b',
+        keyRef: 'b1',
+        kind: 'add-upload',
+        upload: {
+          id: 3,
+          metadata: {
+            filename: 'b1.txt',
+          },
+          size: 13,
+          uploadUrl: 'https://tus.io/uploads/storage-b1',
+        },
+      },
+      {
+        expectedKeyRefs: ['a1', 'a2'],
+        fingerprint: 'contract-storage-a',
+        kind: 'find-by-fingerprint',
+      },
+      {
+        expectedKeyRefs: ['b1'],
+        fingerprint: 'contract-storage-b',
+        kind: 'find-by-fingerprint',
+      },
+      {
+        expectedKeyRefs: ['a1', 'a2', 'b1'],
+        kind: 'find-all',
+      },
+      {
+        keyRef: 'a2',
+        kind: 'remove-upload',
+      },
+      {
+        keyRef: 'b1',
+        kind: 'remove-upload',
+      },
+      {
+        expectedKeyRefs: ['a1'],
+        fingerprint: 'contract-storage-a',
+        kind: 'find-by-fingerprint',
+      },
+      {
+        expectedKeyRefs: [],
+        fingerprint: 'contract-storage-b',
+        kind: 'find-by-fingerprint',
+      },
+    ],
+    backend: 'web-storage',
+    featureId: 'urlStorageBackends',
+    runtimes: ['browser'],
+    scenarioId: 'webStorageUrlStorageBackend',
+  },
+  {
+    actions: [
+      {
+        kind: 'assert-empty',
+      },
+      {
+        expectedKeyPrefix: 'tus::contract-storage-a::',
+        fingerprint: 'contract-storage-a',
+        keyRef: 'a1',
+        kind: 'add-upload',
+        upload: {
+          id: 1,
+          metadata: {
+            filename: 'a1.txt',
+          },
+          size: 11,
+          uploadUrl: 'https://tus.io/uploads/storage-a1',
+        },
+      },
+      {
+        expectedKeyPrefix: 'tus::contract-storage-a::',
+        fingerprint: 'contract-storage-a',
+        keyRef: 'a2',
+        kind: 'add-upload',
+        upload: {
+          id: 2,
+          metadata: {
+            filename: 'a2.txt',
+          },
+          size: 12,
+          uploadUrl: 'https://tus.io/uploads/storage-a2',
+        },
+      },
+      {
+        expectedKeyPrefix: 'tus::contract-storage-b::',
+        fingerprint: 'contract-storage-b',
+        keyRef: 'b1',
+        kind: 'add-upload',
+        upload: {
+          id: 3,
+          metadata: {
+            filename: 'b1.txt',
+          },
+          size: 13,
+          uploadUrl: 'https://tus.io/uploads/storage-b1',
+        },
+      },
+      {
+        expectedKeyRefs: ['a1', 'a2'],
+        fingerprint: 'contract-storage-a',
+        kind: 'find-by-fingerprint',
+      },
+      {
+        expectedKeyRefs: ['b1'],
+        fingerprint: 'contract-storage-b',
+        kind: 'find-by-fingerprint',
+      },
+      {
+        expectedKeyRefs: ['a1', 'a2', 'b1'],
+        kind: 'find-all',
+      },
+      {
+        keyRef: 'a2',
+        kind: 'remove-upload',
+      },
+      {
+        keyRef: 'b1',
+        kind: 'remove-upload',
+      },
+      {
+        expectedKeyRefs: ['a1'],
+        fingerprint: 'contract-storage-a',
+        kind: 'find-by-fingerprint',
+      },
+      {
+        expectedKeyRefs: [],
+        fingerprint: 'contract-storage-b',
+        kind: 'find-by-fingerprint',
+      },
+    ],
+    backend: 'file-storage',
+    featureId: 'urlStorageBackends',
+    runtimes: ['deno', 'node'],
+    scenarioId: 'fileUrlStorageBackend',
   },
 ]
