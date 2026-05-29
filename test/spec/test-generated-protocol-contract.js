@@ -154,6 +154,10 @@ function contentBytes(content) {
 }
 
 async function createScenarioInput(input) {
+  if (input.kind === 'none') {
+    return null
+  }
+
   if (input.kind === 'blob') {
     return getBlob(input.content)
   }
@@ -546,6 +550,10 @@ async function startScenarioUpload(scenario, testStack) {
     options.parallelUploads = scenario.input.parallelUploads
   }
 
+  if (scenario.input.parallelUploadBoundaries != null) {
+    options.parallelUploadBoundaries = scenario.input.parallelUploadBoundaries
+  }
+
   if (scenario.input.retryDelays != null) {
     options.retryDelays = scenario.input.retryDelays
   }
@@ -577,6 +585,8 @@ async function startScenarioUpload(scenario, testStack) {
   if (scenario.input.uploadUrl != null) {
     options.uploadUrl = scenario.input.uploadUrl
   }
+
+  Object.assign(options, scenario.input.rawOptions ?? {})
 
   const scenarioFingerprint =
     scenario.input.fingerprint !== undefined
@@ -698,6 +708,15 @@ async function runGeneratedConformanceScenario(scenario) {
       return
     }
 
+    if (scenario.completion.kind === 'error') {
+      const err = await onError.toBeCalled()
+      expect(err.message).toBe(scenario.completion.message)
+      expect(onSuccess).not.toHaveBeenCalled()
+      expect(await Promise.race([testStack.nextRequest(), wait(0)])).toBe('timed out')
+      expectScenarioEvents(scenario, observedEvents)
+      return
+    }
+
     await onSuccess.toBeCalled()
     expect(upload.url).toBe(scenario.completion.uploadUrl)
     expect(onError).not.toHaveBeenCalled()
@@ -724,6 +743,15 @@ describe('generated TUS protocol contract', () => {
       'creationWithUpload',
       'ietfDraft05CreationWithUpload',
       'ietfDraft03ResumeWithoutKnownLength',
+      'startValidationMissingInput',
+      'startValidationMissingEndpointOrUploadUrl',
+      'startValidationUnsupportedProtocol',
+      'startValidationRetryDelaysNotArray',
+      'startValidationParallelUploadsWithUploadUrl',
+      'startValidationParallelUploadsWithUploadSize',
+      'startValidationParallelUploadsWithDeferredLength',
+      'startValidationParallelBoundariesWithoutParallelUploads',
+      'startValidationParallelBoundariesLengthMismatch',
       'uploadBodyHeaders',
       'resumeFromPreviousUpload',
       'relativeLocationResolution',
