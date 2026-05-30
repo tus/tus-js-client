@@ -1,5 +1,7 @@
 # Installation
 
+> **Note:** tus-js-client v5+ is ESM-only. If you need CommonJS support, please use [tus-js-client v4](https://github.com/tus/tus-js-client/tree/v4.0.0).
+
 There are two ways to install tus-js-client:
 
 ## Install from NPM (recommended)
@@ -10,16 +12,16 @@ Install the package using a package manager, such as `npm` or `yarn`:
 $ npm install --save tus-js-client
 ```
 
-After that, you can load the package:
-
-```js
-var tus = require('tus-js-client')
-```
-
-If your bundler supports ES Modules, you can use:
+After that, you can import the package using ES Modules:
 
 ```js
 import * as tus from 'tus-js-client'
+```
+
+Or import specific exports:
+
+```js
+import { Upload } from 'tus-js-client'
 ```
 
 ## Embed using a script tag
@@ -53,8 +55,8 @@ One general requirement is that the JavaScript environment must support [Promise
 When polyfilling, load the polyfill _before_ loading tus-js-client:
 
 ```js
-require('core-js/features/promise')
-var tus = require('tus-js-client')
+import 'core-js/features/promise'
+import * as tus from 'tus-js-client'
 ```
 
 ## Browser support
