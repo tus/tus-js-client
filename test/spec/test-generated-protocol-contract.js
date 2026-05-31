@@ -336,10 +336,9 @@ function expectedEventKey(scenario, event) {
 function expectScenarioEvents(scenario, observedEvents) {
   const expectedEventKeys = scenario.events.map((event) => expectedEventKey(scenario, event))
   const observedEventKeys = observedEvents.map(observedEventKey)
+  const eventPolicy = scenario.eventPolicy ?? { matching: 'exact' }
 
-  if (
-    scenario.events.some((event) => event.kind === 'progress' || event.kind === 'chunk-complete')
-  ) {
+  if (eventPolicy.matching === 'ordered-subsequence') {
     let searchStart = 0
 
     for (const expectedEventKey of expectedEventKeys) {
@@ -360,13 +359,20 @@ function expectScenarioEvents(scenario, observedEvents) {
     return
   }
 
-  expect(observedEventKeys)
-    .withContext(
-      `Expected generated scenario ${scenario.scenarioId} runtime event keys to match exactly; observed events ${JSON.stringify(
-        observedEvents,
-      )}`,
-    )
-    .toEqual(expectedEventKeys)
+  if (eventPolicy.matching === 'exact') {
+    expect(observedEventKeys)
+      .withContext(
+        `Expected generated scenario ${scenario.scenarioId} runtime event keys to match exactly; observed events ${JSON.stringify(
+          observedEvents,
+        )}`,
+      )
+      .toEqual(expectedEventKeys)
+    return
+  }
+
+  throw new Error(
+    `Unsupported generated event policy for ${scenario.scenarioId}: ${JSON.stringify(eventPolicy)}`,
+  )
 }
 
 function expectedUrlForScenarioRequest(scenario, request) {

@@ -928,6 +928,11 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+    eventPolicy: {
+      matching: 'ordered-subsequence',
+      progress: 'milestone',
+      transportProgress: 'may-emit-extra-samples',
+    },
     featureId: 'singleUploadLifecycle',
     input: {
       content: 'hello world',
@@ -1010,6 +1015,11 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+    eventPolicy: {
+      matching: 'ordered-subsequence',
+      progress: 'milestone',
+      transportProgress: 'may-emit-extra-samples',
+    },
     featureId: 'creationWithUpload',
     input: {
       content: 'hello world',
@@ -1112,6 +1122,11 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+    eventPolicy: {
+      matching: 'ordered-subsequence',
+      progress: 'milestone',
+      transportProgress: 'may-emit-extra-samples',
+    },
     featureId: 'creationWithUpload',
     input: {
       chunkSize: 5,
@@ -1209,6 +1224,11 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+    eventPolicy: {
+      matching: 'ordered-subsequence',
+      progress: 'milestone',
+      transportProgress: 'may-emit-extra-samples',
+    },
     featureId: 'protocolVersionSelection',
     input: {
       content: 'hello world',
@@ -1286,6 +1306,11 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+    eventPolicy: {
+      matching: 'ordered-subsequence',
+      progress: 'milestone',
+      transportProgress: 'may-emit-extra-samples',
+    },
     featureId: 'protocolVersionSelection',
     input: {
       chunkSize: 6,
@@ -1804,6 +1829,11 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+    eventPolicy: {
+      matching: 'ordered-subsequence',
+      progress: 'milestone',
+      transportProgress: 'may-emit-extra-samples',
+    },
     featureId: 'resumeUpload',
     input: {
       content: 'hello world',
@@ -1886,6 +1916,11 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+    eventPolicy: {
+      matching: 'ordered-subsequence',
+      progress: 'milestone',
+      transportProgress: 'may-emit-extra-samples',
+    },
     featureId: 'relativeLocationResolution',
     input: {
       content: 'hello world',
@@ -2297,6 +2332,11 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+    eventPolicy: {
+      matching: 'ordered-subsequence',
+      progress: 'milestone',
+      transportProgress: 'may-emit-extra-samples',
+    },
     featureId: 'deferredLengthUpload',
     input: {
       chunkSize: 100,
@@ -2428,6 +2468,11 @@ export const tusClientConformanceScenarios = [
         key: 'chunk-complete:6:11:11',
       },
     ],
+    eventPolicy: {
+      matching: 'ordered-subsequence',
+      progress: 'milestone',
+      transportProgress: 'may-emit-extra-samples',
+    },
     featureId: 'parallelUploadConcat',
     input: {
       content: 'hello world',
