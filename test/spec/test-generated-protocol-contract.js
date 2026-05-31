@@ -263,118 +263,110 @@ function makeEventRecordingFileReader(fileReader, scenario, observedEvents) {
   }
 }
 
-function requestExpectationForEvent(scenario, event) {
-  const request = scenario.requests[event.requestIndex]
-  if (!request) {
-    throw new Error(
-      `Generated scenario ${scenario.scenarioId} event points at missing request index ${event.requestIndex}`,
-    )
-  }
-
-  return request
+function formatEventValue(value) {
+  return value == null ? 'null' : String(value)
 }
 
-function eventMatchesExpectation(scenario, actual, expected) {
-  if (actual.kind !== expected.kind) {
-    return false
+function observedEventKey(event) {
+  if (event.kind === 'progress') {
+    return `progress:${event.bytesSent}:${formatEventValue(event.bytesTotal)}`
   }
 
-  if (expected.kind === 'progress') {
-    return actual.bytesSent === expected.bytesSent && actual.bytesTotal === expected.bytesTotal
+  if (event.kind === 'chunk-complete') {
+    return `chunk-complete:${event.chunkSize}:${event.bytesAccepted}:${formatEventValue(
+      event.bytesTotal,
+    )}`
   }
 
-  if (expected.kind === 'chunk-complete') {
-    return (
-      actual.bytesAccepted === expected.bytesAccepted &&
-      actual.bytesTotal === expected.bytesTotal &&
-      actual.chunkSize === expected.chunkSize
+  if (event.kind === 'before-request') {
+    return `before-request:${event.requestIndex}`
+  }
+
+  if (event.kind === 'after-response') {
+    return `after-response:${event.requestIndex}`
+  }
+
+  if (event.kind === 'request-abort') {
+    return `request-abort:${event.requestIndex}`
+  }
+
+  if (event.kind === 'source-open') {
+    return `source-open:${event.inputKind}:${formatEventValue(event.size)}`
+  }
+
+  if (event.kind === 'fingerprint') {
+    return `fingerprint:${formatEventValue(event.fingerprint)}`
+  }
+
+  if (event.kind === 'should-retry') {
+    return `should-retry:${event.retryAttempt}:${event.decision}`
+  }
+
+  if (event.kind === 'retry-schedule') {
+    return `retry-schedule:${event.delay}`
+  }
+
+  if (event.kind === 'url-storage-add') {
+    return `url-storage-add:${event.fingerprint}:${event.uploadUrl}`
+  }
+
+  if (event.kind === 'url-storage-find') {
+    return `url-storage-find:${event.fingerprint}:${event.count}`
+  }
+
+  if (event.kind === 'url-storage-remove') {
+    return `url-storage-remove:${event.urlStorageKey}`
+  }
+
+  return event.kind
+}
+
+function expectedEventKey(scenario, event) {
+  if (event.key == null) {
+    throw new Error(
+      `Generated scenario ${scenario.scenarioId} has an event without a generated key: ${JSON.stringify(
+        event,
+      )}`,
     )
   }
 
-  if (expected.kind === 'before-request' || expected.kind === 'after-response') {
-    const request = requestExpectationForEvent(scenario, expected)
-    const operation = getProtocolOperation(request.operationId)
-    if (
-      actual.requestIndex !== expected.requestIndex ||
-      actual.method !== (request.method ?? operation.method) ||
-      actual.url !== expectedUrlForScenarioRequest(scenario, request)
-    ) {
-      return false
-    }
-
-    if (expected.kind === 'after-response') {
-      if (!request.response) {
-        throw new Error(
-          `Generated scenario ${scenario.scenarioId} after-response event points at request ${expected.requestIndex} without a response`,
-        )
-      }
-
-      return actual.statusCode === request.response.statusCode
-    }
-
-    return true
-  }
-
-  if (expected.kind === 'request-abort') {
-    const request = requestExpectationForEvent(scenario, expected)
-    const operation = getProtocolOperation(request.operationId)
-    return (
-      actual.requestIndex === expected.requestIndex &&
-      actual.method === (request.method ?? operation.method) &&
-      actual.url === expectedUrlForScenarioRequest(scenario, request)
-    )
-  }
-
-  if (expected.kind === 'source-open') {
-    return actual.inputKind === expected.inputKind && actual.size === expected.size
-  }
-
-  if (expected.kind === 'fingerprint') {
-    return actual.fingerprint === expected.fingerprint
-  }
-
-  if (expected.kind === 'should-retry') {
-    return actual.decision === expected.decision && actual.retryAttempt === expected.retryAttempt
-  }
-
-  if (expected.kind === 'retry-schedule') {
-    return actual.delay === expected.delay
-  }
-
-  if (expected.kind === 'url-storage-add') {
-    return actual.fingerprint === expected.fingerprint && actual.uploadUrl === expected.uploadUrl
-  }
-
-  if (expected.kind === 'url-storage-find') {
-    return actual.count === expected.count && actual.fingerprint === expected.fingerprint
-  }
-
-  if (expected.kind === 'url-storage-remove') {
-    return actual.urlStorageKey === expected.urlStorageKey
-  }
-
-  return true
+  return event.key
 }
 
 function expectScenarioEvents(scenario, observedEvents) {
-  let searchStart = 0
+  const expectedEventKeys = scenario.events.map((event) => expectedEventKey(scenario, event))
+  const observedEventKeys = observedEvents.map(observedEventKey)
 
-  for (const expectedEvent of scenario.events) {
-    const matchedIndex = observedEvents.findIndex(
-      (actualEvent, index) =>
-        index >= searchStart && eventMatchesExpectation(scenario, actualEvent, expectedEvent),
-    )
+  if (
+    scenario.events.some((event) => event.kind === 'progress' || event.kind === 'chunk-complete')
+  ) {
+    let searchStart = 0
 
-    expect(matchedIndex)
-      .withContext(
-        `Expected generated scenario ${scenario.scenarioId} to emit ${JSON.stringify(
-          expectedEvent,
-        )} after event index ${searchStart - 1}; observed ${JSON.stringify(observedEvents)}`,
+    for (const expectedEventKey of expectedEventKeys) {
+      const matchedIndex = observedEventKeys.findIndex(
+        (actualEventKey, index) => index >= searchStart && actualEventKey === expectedEventKey,
       )
-      .not.toBe(-1)
 
-    searchStart = matchedIndex + 1
+      expect(matchedIndex)
+        .withContext(
+          `Expected generated scenario ${scenario.scenarioId} to emit ${expectedEventKey} after event index ${
+            searchStart - 1
+          }; observed keys ${JSON.stringify(observedEventKeys)}`,
+        )
+        .not.toBe(-1)
+
+      searchStart = matchedIndex + 1
+    }
+    return
   }
+
+  expect(observedEventKeys)
+    .withContext(
+      `Expected generated scenario ${scenario.scenarioId} runtime event keys to match exactly; observed events ${JSON.stringify(
+        observedEvents,
+      )}`,
+    )
+    .toEqual(expectedEventKeys)
 }
 
 function expectedUrlForScenarioRequest(scenario, request) {
