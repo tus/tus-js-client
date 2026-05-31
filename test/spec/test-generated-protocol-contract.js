@@ -439,11 +439,13 @@ async function abortScenarioRequest(req, scenario, request, requestIndex, observ
     return originalAbort()
   }
 
-  await upload.abort(false)
+  const abortPromise = upload.abort(Boolean(scenario.input.terminateUploadOnAbort))
   await wait(0)
 
   expect(req.method).toBe(request.method ?? operation.method)
   expect(req.url).toBe(expectedUrlForScenarioRequest(scenario, request))
+
+  return abortPromise
 }
 
 async function startScenarioUpload(scenario, testStack) {
@@ -682,6 +684,7 @@ async function runGeneratedConformanceScenario(scenario) {
     terminatePromise,
     upload,
   } = await startScenarioUpload(scenario, testStack)
+  const abortPromises = []
 
   try {
     for (const [requestIndex, request] of scenario.requests.entries()) {
@@ -689,7 +692,9 @@ async function runGeneratedConformanceScenario(scenario) {
       expectScenarioRequest(req, scenario, request)
 
       if (request.abort) {
-        await abortScenarioRequest(req, scenario, request, requestIndex, observedEvents, upload)
+        abortPromises.push(
+          abortScenarioRequest(req, scenario, request, requestIndex, observedEvents, upload),
+        )
       } else if (request.error) {
         req.responseError(new Error(request.error.message))
       } else if (!request.response) {
@@ -700,6 +705,7 @@ async function runGeneratedConformanceScenario(scenario) {
     }
 
     if (scenario.completion.kind === 'aborted') {
+      await Promise.all(abortPromises)
       expect(onSuccess).not.toHaveBeenCalled()
       expect(onError).not.toHaveBeenCalled()
       expectScenarioEvents(scenario, observedEvents)
@@ -748,6 +754,7 @@ describe('generated TUS protocol contract', () => {
     expect(tusClientConformanceScenarios.map((scenario) => scenario.scenarioId)).toEqual([
       'singleUploadLifecycle',
       'creationWithUpload',
+      'creationWithUploadPartialChunk',
       'ietfDraft05CreationWithUpload',
       'ietfDraft03ResumeWithoutKnownLength',
       'startValidationMissingInput',
@@ -757,11 +764,13 @@ describe('generated TUS protocol contract', () => {
       'startValidationParallelUploadsWithUploadUrl',
       'startValidationParallelUploadsWithUploadSize',
       'startValidationParallelUploadsWithDeferredLength',
+      'startValidationParallelUploadsWithUploadDataDuringCreation',
       'startValidationParallelBoundariesWithoutParallelUploads',
       'startValidationParallelBoundariesLengthMismatch',
       'detailedCreateResponseError',
       'detailedCreateRequestError',
       'uploadBodyHeaders',
+      'customRequestHeaders',
       'resumeFromPreviousUpload',
       'relativeLocationResolution',
       'arrayBufferInput',
@@ -772,9 +781,11 @@ describe('generated TUS protocol contract', () => {
       'deferredLengthUpload',
       'overridePatchMethod',
       'parallelUploadConcat',
+      'parallelUploadAbortCleanup',
       'retryPatchAfterOffsetRecovery',
       'requestLifecycleHooks',
       'abortUpload',
+      'abortUploadAfterStoredUrl',
       'terminateWithRetry',
     ])
   })

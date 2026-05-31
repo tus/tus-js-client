@@ -200,6 +200,7 @@ export class BaseUpload {
       parallelUploads: this.options.parallelUploads,
       protocol: this.options.protocol,
       retryDelays: this.options.retryDelays,
+      uploadDataDuringCreation: this.options.uploadDataDuringCreation,
       uploadLengthDeferred: this._uploadLengthDeferred,
     })
     if (!startValidation.ok) {
@@ -269,6 +270,7 @@ export class BaseUpload {
     }
 
     const { parts, totalSize } = parallelUploadPartsPlan
+    let totalAccepted = 0
     let totalProgress = 0
     this._parallelUploads = []
 
@@ -278,6 +280,7 @@ export class BaseUpload {
     // Generate a promise for each slice that will be resolve if the respective
     // upload is completed.
     const uploads = parts.map(async (part, index) => {
+      let lastPartAccepted = 0
       let lastPartProgress = 0
 
       // @ts-expect-error We know that `_source` is not null here.
@@ -306,6 +309,17 @@ export class BaseUpload {
               hasHook: typeof this.options.onProgress === 'function',
               phase: 'parallelPartProgress',
               totalProgress,
+            })
+          },
+          onChunkComplete: (chunkSize: number, bytesAccepted: number) => {
+            totalAccepted = totalAccepted - lastPartAccepted + bytesAccepted
+            lastPartAccepted = bytesAccepted
+            this._emitChunkComplete({
+              bytesAccepted: totalAccepted,
+              bytesTotal: totalSize,
+              chunkSize,
+              hasHook: typeof this.options.onChunkComplete === 'function',
+              phase: 'afterChunkAccepted',
             })
           },
           // Wait until every partial upload has an upload URL, so we can add

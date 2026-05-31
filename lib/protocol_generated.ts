@@ -197,6 +197,7 @@ export const TUS_FLOW_POLICY = {
     ],
     suppressErrorAfterAbort: true,
     terminateUpload: 'when-requested-and-upload-url-known',
+    terminateUploadContext: 'detached-from-aborted-request',
   },
   detailedErrors: {
     causedByTemplate: ', caused by {cause}',
@@ -338,6 +339,8 @@ export const TUS_FLOW_POLICY = {
     parallelUploadMissingSize: 'tus: Expected _size to be set',
     parallelUploadsWithDeferredLength:
       'tus: cannot use the `uploadLengthDeferred` option when parallelUploads is enabled',
+    parallelUploadsWithUploadDataDuringCreation:
+      'tus: cannot use the `uploadDataDuringCreation` option when parallelUploads is enabled',
     parallelUploadsWithUploadSize:
       'tus: cannot use the `uploadSize` option when parallelUploads is enabled',
     parallelUploadsWithUploadUrl:
@@ -483,6 +486,7 @@ export type TusUploadStartValidationReason =
   | 'parallelUploadsWithUploadUrl'
   | 'parallelUploadsWithUploadSize'
   | 'parallelUploadsWithDeferredLength'
+  | 'parallelUploadsWithUploadDataDuringCreation'
   | 'parallelBoundariesWithoutParallelUploads'
   | 'parallelBoundariesLengthMismatch'
 
@@ -500,6 +504,7 @@ export interface TusUploadStartValidationInput {
   parallelUploads: number
   protocol: string
   retryDelays: unknown
+  uploadDataDuringCreation: boolean
   uploadLengthDeferred: boolean
 }
 
@@ -886,6 +891,7 @@ export function tusValidateUploadStart({
   parallelUploads,
   protocol,
   retryDelays,
+  uploadDataDuringCreation,
   uploadLengthDeferred,
 }: TusUploadStartValidationInput): TusUploadStartValidationResult {
   if (!hasFile) {
@@ -932,6 +938,13 @@ export function tusValidateUploadStart({
       return tusUploadStartValidationError(
         'parallelUploadsWithDeferredLength',
         TUS_FLOW_POLICY.messages.parallelUploadsWithDeferredLength,
+      )
+    }
+
+    if (uploadDataDuringCreation) {
+      return tusUploadStartValidationError(
+        'parallelUploadsWithUploadDataDuringCreation',
+        TUS_FLOW_POLICY.messages.parallelUploadsWithUploadDataDuringCreation,
       )
     }
   }
