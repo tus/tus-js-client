@@ -877,6 +877,202 @@ export const tusClientFeatures = [
   },
 ]
 
+export const tusManagedUpload = {
+  capabilities: {
+    cleanup: {
+      policies: [
+        'remove-owned-source-after-success',
+        'remove-owned-source-after-cancel',
+        'retain-owned-source-after-permanent-failure',
+        'retain-source-after-retryable-failure',
+        'remove-managed-state-after-terminal-retention',
+      ],
+    },
+    failureClassification: {
+      permanentFailures: [
+        'source-unavailable',
+        'unretryable-protocol-error',
+        'retry-policy-exhausted',
+      ],
+      retryableFailures: ['retryable-protocol-error', 'io-error', 'network-unavailable'],
+    },
+    networkConstraints: {
+      options: ['any-network', 'unmetered-network'],
+    },
+    retryPolicy: {
+      controls: [
+        'max-attempts',
+        'deadline',
+        'progress-sensitive-budget',
+        'unbounded-until-permanent-failure',
+      ],
+      permanentFailure: 'stop-without-retry',
+      progressReset: 'reset-budget-after-accepted-offset-advances',
+    },
+    scheduling: {
+      strategies: ['foreground-task', 'process-lifetime-worker-pool', 'durable-os-scheduler'],
+    },
+    sourceDurability: {
+      ownedCopyCleanup: 'after-success-or-cancel',
+      strategies: ['copy-to-owned-storage', 'reference-original-source', 'memory-only'],
+    },
+    stateReporting: {
+      states: ['pending', 'running', 'succeeded', 'failed'],
+      terminalRetention: 'session-and-next-launch',
+      transientRetention: 'until-terminal',
+    },
+  },
+  conformance: {
+    scenarioIds: [
+      'managedUploadDurableRetry',
+      'managedUploadPermanentFailure',
+      'managedUploadNetworkConstraint',
+    ],
+    status: 'needs-generated-scenario',
+  },
+  description:
+    'Submit upload work that can make sources durable, schedule/resume execution, retry, report state, and clean up while reusing the raw TUS protocol features underneath.',
+  featureId: 'managedUpload',
+  flow: [
+    {
+      kind: 'managed-primitive',
+      primitive: 'accept-upload-submission',
+      summary: 'Accept source, metadata, headers, endpoint, and retry/scheduling policy.',
+    },
+    {
+      kind: 'managed-primitive',
+      primitive: 'make-source-durable',
+      summary: 'Keep the source readable according to the selected runtime durability strategy.',
+    },
+    {
+      kind: 'managed-primitive',
+      primitive: 'schedule-upload-work',
+      summary: 'Run upload work according to the runtime scheduler capability.',
+    },
+    {
+      featureId: 'singleUploadLifecycle',
+      kind: 'protocol-feature',
+      summary: 'Use the raw protocol upload lifecycle for each execution attempt.',
+    },
+    {
+      featureId: 'retryOffsetRecovery',
+      kind: 'protocol-feature',
+      summary: 'Use protocol retry and offset recovery before classifying terminal failure.',
+    },
+    {
+      kind: 'managed-primitive',
+      primitive: 'publish-upload-state',
+      summary: 'Expose pending, running, succeeded, and failed state snapshots.',
+    },
+    {
+      kind: 'managed-primitive',
+      primitive: 'cleanup-managed-upload',
+      summary: 'Remove owned sources and terminal state according to cleanup policy.',
+    },
+  ],
+  layer: 'feature-over-protocol',
+  primitives: [
+    'accept-upload-submission',
+    'make-source-durable',
+    'schedule-upload-work',
+    'run-protocol-upload',
+    'apply-managed-retry-policy',
+    'classify-failure',
+    'publish-upload-state',
+    'cleanup-managed-upload',
+  ],
+  protocolPrimitives: [
+    'store-resume-url',
+    'resume-from-previous-upload',
+    'recover-offset-after-error',
+    'retry-with-backoff',
+    'emit-progress',
+    'emit-chunk-complete',
+    'terminate-upload',
+  ],
+  runtimeProfiles: [
+    {
+      networkConstraints: ['any-network', 'unmetered-network'],
+      runtime: 'android',
+      scheduler: 'durable-os-scheduler',
+      sourceDurability: ['copy-to-owned-storage', 'reference-original-source'],
+      stateBackend: 'platform-key-value-store',
+    },
+    {
+      networkConstraints: ['any-network', 'unmetered-network'],
+      runtime: 'ios',
+      scheduler: 'durable-os-scheduler',
+      sourceDurability: ['copy-to-owned-storage', 'reference-original-source'],
+      stateBackend: 'platform-key-value-store',
+    },
+    {
+      networkConstraints: ['any-network'],
+      runtime: 'browser',
+      scheduler: 'foreground-task',
+      sourceDurability: ['reference-original-source', 'memory-only'],
+      stateBackend: 'web-storage',
+    },
+    {
+      networkConstraints: ['any-network'],
+      runtime: 'java',
+      scheduler: 'process-lifetime-worker-pool',
+      sourceDurability: ['copy-to-owned-storage', 'reference-original-source'],
+      stateBackend: 'filesystem',
+    },
+    {
+      networkConstraints: ['any-network'],
+      runtime: 'node',
+      scheduler: 'process-lifetime-worker-pool',
+      sourceDurability: ['copy-to-owned-storage', 'reference-original-source', 'memory-only'],
+      stateBackend: 'filesystem',
+    },
+    {
+      networkConstraints: ['any-network'],
+      runtime: 'react-native',
+      scheduler: 'foreground-task',
+      sourceDurability: ['reference-original-source', 'memory-only'],
+      stateBackend: 'platform-key-value-store',
+    },
+  ],
+  scenarios: [
+    {
+      requiredPrimitives: [
+        'accept-upload-submission',
+        'make-source-durable',
+        'schedule-upload-work',
+        'run-protocol-upload',
+        'apply-managed-retry-policy',
+        'publish-upload-state',
+        'cleanup-managed-upload',
+      ],
+      scenarioId: 'managedUploadDurableRetry',
+      summary:
+        'Submit a durable source, survive scheduler/process interruption, resume by stored upload URL, and finish with cleanup.',
+    },
+    {
+      requiredPrimitives: [
+        'accept-upload-submission',
+        'make-source-durable',
+        'schedule-upload-work',
+        'classify-failure',
+        'publish-upload-state',
+      ],
+      scenarioId: 'managedUploadPermanentFailure',
+      summary:
+        'Classify missing sources and unretryable protocol failures as terminal without further retry.',
+    },
+    {
+      requiredPrimitives: [
+        'accept-upload-submission',
+        'schedule-upload-work',
+        'publish-upload-state',
+      ],
+      scenarioId: 'managedUploadNetworkConstraint',
+      summary: 'Honor network constraints before starting or resuming upload work.',
+    },
+  ],
+}
+
 export const tusClientConformanceScenarios = [
   {
     behavior: 'single-upload-lifecycle',
