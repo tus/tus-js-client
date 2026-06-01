@@ -2489,6 +2489,17 @@ export const tusClientConformanceScenarios = [
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
+    execution: {
+      serverRequestGates: [
+        {
+          gateId: 'parallel-patches',
+          heldRequestIndexes: [2, 3],
+          kind: 'release-after-all-started',
+          releaseAfterRequestIndexes: [2, 3],
+          timeoutMs: 2000,
+        },
+      ],
+    },
     featureId: 'parallelUploadConcat',
     input: {
       content: 'hello world',
@@ -2602,6 +2613,17 @@ export const tusClientConformanceScenarios = [
         key: 'request-abort:3',
       },
     ],
+    execution: {
+      serverRequestGates: [
+        {
+          gateId: 'parallel-cleanup-patches',
+          heldRequestIndexes: [2, 3],
+          kind: 'release-after-all-started',
+          releaseAfterRequestIndexes: [2, 3],
+          timeoutMs: 2000,
+        },
+      ],
+    },
     featureId: 'parallelUploadConcat',
     input: {
       content: 'hello world',
