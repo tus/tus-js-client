@@ -235,6 +235,10 @@ function scenarioWantsEvent(scenario, kind) {
   return scenario.events.some((event) => event.kind === kind)
 }
 
+function scenarioExecutionActions(scenario, phase) {
+  return scenario.execution?.[phase] ?? []
+}
+
 function makeEventRecordingFileReader(fileReader, scenario, observedEvents) {
   return {
     async openFile(input, chunkSize) {
@@ -646,25 +650,40 @@ async function startScenarioUpload(scenario, testStack) {
     options.urlStorage = makeEventRecordingUrlStorage(scenario.input.storedUpload, observedEvents)
   }
 
-  if (scenario.behavior === 'terminate-with-retry') {
+  const onChunkCompleteActions = scenarioExecutionActions(scenario, 'onChunkComplete')
+  if (scenarioWantsEvent(scenario, 'chunk-complete') || onChunkCompleteActions.length > 0) {
     options.onChunkComplete = (chunkSize, bytesAccepted, bytesTotal) => {
       if (scenarioWantsEvent(scenario, 'chunk-complete')) {
         observedEvents.push({ bytesAccepted, bytesTotal, chunkSize, kind: 'chunk-complete' })
       }
-      terminatePromise = upload.abort(true)
-    }
-  } else if (scenarioWantsEvent(scenario, 'chunk-complete')) {
-    options.onChunkComplete = (chunkSize, bytesAccepted, bytesTotal) => {
-      observedEvents.push({ bytesAccepted, bytesTotal, chunkSize, kind: 'chunk-complete' })
+      for (const action of onChunkCompleteActions) {
+        if (action.kind === 'abort-upload') {
+          terminatePromise = upload.abort(action.terminateUpload)
+          continue
+        }
+
+        throw new Error(
+          `Unsupported generated onChunkComplete action for ${scenario.scenarioId}: ${action.kind}`,
+        )
+      }
     }
   }
 
   upload = new Upload(await createScenarioInput(scenario.input), options)
 
-  if (scenario.behavior === 'resume-from-previous-upload') {
-    const previousUploads = await upload.findPreviousUploads()
-    expect(previousUploads.length).toBe(1)
-    upload.resumeFromPreviousUpload(previousUploads[0])
+  for (const action of scenarioExecutionActions(scenario, 'beforeStart')) {
+    if (action.kind === 'resume-from-previous-upload') {
+      const previousUploads = await upload.findPreviousUploads()
+      expect(previousUploads.length).toBe(action.expectedPreviousUploadCount)
+      const previousUpload = previousUploads[action.selectedPreviousUploadIndex]
+      expect(previousUpload).toBeDefined()
+      upload.resumeFromPreviousUpload(previousUpload)
+      continue
+    }
+
+    throw new Error(
+      `Unsupported generated beforeStart action for ${scenario.scenarioId}: ${action.kind}`,
+    )
   }
 
   upload.start()

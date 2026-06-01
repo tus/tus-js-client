@@ -1841,6 +1841,15 @@ export const tusClientConformanceScenarios = [
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
+    execution: {
+      beforeStart: [
+        {
+          expectedPreviousUploadCount: 1,
+          kind: 'resume-from-previous-upload',
+          selectedPreviousUploadIndex: 0,
+        },
+      ],
+    },
     featureId: 'resumeUpload',
     input: {
       content: 'hello world',
@@ -3014,6 +3023,14 @@ export const tusClientConformanceScenarios = [
         key: 'retry-schedule:0',
       },
     ],
+    execution: {
+      onChunkComplete: [
+        {
+          kind: 'abort-upload',
+          terminateUpload: true,
+        },
+      ],
+    },
     featureId: 'terminateUpload',
     input: {
       chunkSize: 5,
