@@ -3074,6 +3074,61 @@ export const tusClientConformanceScenarios = [
   },
 ]
 
+export const tusClientScenarioProofCases = [
+  {
+    behavior: 'single-upload-lifecycle',
+    completionKind: 'success',
+    featureId: 'singleUploadLifecycle',
+    operationIds: ['createTusUpload', 'patchTusUpload'],
+    primitives: [
+      'open-input-source',
+      'fingerprint-input',
+      'store-resume-url',
+      'retry-with-backoff',
+      'emit-progress',
+      'abort-current-request',
+    ],
+    profile: 'urlStorageCreateFlow',
+    scenarioId: 'singleUploadLifecycle',
+  },
+  {
+    behavior: 'custom-request-headers',
+    completionKind: 'success',
+    featureId: 'customRequestHeaders',
+    operationIds: ['createTusUpload', 'patchTusUpload'],
+    primitives: ['apply-custom-request-headers'],
+    profile: 'customRequestHeaders',
+    scenarioId: 'customRequestHeaders',
+  },
+  {
+    behavior: 'override-patch-method',
+    completionKind: 'success',
+    featureId: 'overridePatchMethod',
+    operationIds: ['getTusUploadOffset', 'patchTusUpload'],
+    primitives: ['override-patch-method'],
+    profile: 'overridePatchMethod',
+    scenarioId: 'overridePatchMethod',
+  },
+  {
+    behavior: 'node-path-input',
+    completionKind: 'success',
+    featureId: 'inputSources',
+    operationIds: ['createTusUpload', 'patchTusUpload'],
+    primitives: ['read-node-file'],
+    profile: 'nodePathFileUpload',
+    scenarioId: 'nodePathInput',
+  },
+  {
+    behavior: 'resume-from-previous-upload',
+    completionKind: 'success',
+    featureId: 'resumeUpload',
+    operationIds: ['getTusUploadOffset', 'patchTusUpload'],
+    primitives: ['fingerprint-input', 'resume-from-previous-upload', 'store-resume-url'],
+    profile: 'resumeFromPreviousUpload',
+    scenarioId: 'resumeFromPreviousUpload',
+  },
+]
+
 export const tusClientUrlStorageConformanceScenarios = [
   {
     actions: [

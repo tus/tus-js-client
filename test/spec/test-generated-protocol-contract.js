@@ -2,6 +2,7 @@ import { defaultOptions, Upload } from 'tus-js-client'
 import {
   tusClientConformanceScenarios,
   tusClientFeatures,
+  tusClientScenarioProofCases,
   tusProtocolOperations,
   tusWireVersions,
 } from './generated-protocol-contract.js'
@@ -773,43 +774,17 @@ describe('generated TUS protocol contract', () => {
     })
   }
 
-  it('covers the expected first wave of generated conformance scenarios', () => {
-    expect(tusClientConformanceScenarios.map((scenario) => scenario.scenarioId)).toEqual([
-      'singleUploadLifecycle',
-      'creationWithUpload',
-      'creationWithUploadPartialChunk',
-      'ietfDraft05CreationWithUpload',
-      'ietfDraft03ResumeWithoutKnownLength',
-      'startValidationMissingInput',
-      'startValidationMissingEndpointOrUploadUrl',
-      'startValidationUnsupportedProtocol',
-      'startValidationRetryDelaysNotArray',
-      'startValidationParallelUploadsWithUploadUrl',
-      'startValidationParallelUploadsWithUploadSize',
-      'startValidationParallelUploadsWithDeferredLength',
-      'startValidationParallelUploadsWithUploadDataDuringCreation',
-      'startValidationParallelBoundariesWithoutParallelUploads',
-      'startValidationParallelBoundariesLengthMismatch',
-      'detailedCreateResponseError',
-      'detailedCreateRequestError',
-      'uploadBodyHeaders',
-      'customRequestHeaders',
-      'resumeFromPreviousUpload',
-      'relativeLocationResolution',
-      'arrayBufferInput',
-      'arrayBufferViewInput',
-      'webReadableStreamInput',
-      'nodeReadableStreamInput',
-      'nodePathInput',
-      'deferredLengthUpload',
-      'overridePatchMethod',
-      'parallelUploadConcat',
-      'parallelUploadAbortCleanup',
-      'retryPatchAfterOffsetRecovery',
-      'requestLifecycleHooks',
-      'abortUpload',
-      'abortUploadAfterStoredUrl',
-      'terminateWithRetry',
-    ])
+  it('preserves the generated proof-profile scenarios', () => {
+    for (const proofCase of tusClientScenarioProofCases) {
+      const scenario = getClientConformanceScenario(proofCase.scenarioId)
+      const feature = getClientFeature(proofCase.featureId)
+
+      expect(scenario.behavior).toBe(proofCase.behavior)
+      expect(scenario.completion.kind).toBe(proofCase.completionKind)
+      expect(scenario.featureId).toBe(proofCase.featureId)
+      expect(feature.conformance.scenarioIds).toContain(scenario.scenarioId)
+      expect(scenario.operationIds).toEqual(proofCase.operationIds)
+      expect(scenario.primitives).toEqual(proofCase.primitives)
+    }
   })
 })
