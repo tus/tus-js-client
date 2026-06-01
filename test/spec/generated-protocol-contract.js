@@ -3001,7 +3001,19 @@ export const tusClientConformanceScenarios = [
       kind: 'terminated',
       uploadUrl: 'https://tus.io/uploads/terminate-contract',
     },
-    events: [],
+    events: [
+      {
+        decision: true,
+        kind: 'should-retry',
+        retryAttempt: 0,
+        key: 'should-retry:0:true',
+      },
+      {
+        delay: 0,
+        kind: 'retry-schedule',
+        key: 'retry-schedule:0',
+      },
+    ],
     featureId: 'terminateUpload',
     input: {
       chunkSize: 5,
