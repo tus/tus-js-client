@@ -1036,6 +1036,99 @@ export const tusManagedUpload = {
   ],
   scenarios: [
     {
+      proof: {
+        attempts: [
+          {
+            attemptIndex: 0,
+            failure: {
+              afterAcceptedOffset: 7,
+              kind: 'io-error',
+            },
+            requests: [
+              {
+                bodySize: 0,
+                headers: {
+                  'Upload-Length': '14',
+                },
+                operationId: 'createTusUpload',
+                response: {
+                  headers: {
+                    Location: 'https://tus.io/uploads/managed-durable-retry',
+                  },
+                  statusCode: 201,
+                },
+                url: 'endpoint',
+              },
+              {
+                bodySize: 7,
+                headers: {
+                  'Upload-Offset': '0',
+                },
+                operationId: 'patchTusUpload',
+                response: {
+                  headers: {
+                    'Upload-Offset': '7',
+                  },
+                  statusCode: 204,
+                },
+                url: 'upload',
+              },
+            ],
+            stateAfterAttempt: 'failed',
+          },
+          {
+            attemptIndex: 1,
+            requests: [
+              {
+                headers: {},
+                operationId: 'getTusUploadOffset',
+                response: {
+                  headers: {
+                    'Upload-Length': '14',
+                    'Upload-Offset': '7',
+                  },
+                  statusCode: 200,
+                },
+                url: 'upload',
+              },
+              {
+                bodySize: 7,
+                headers: {
+                  'Upload-Offset': '7',
+                },
+                operationId: 'patchTusUpload',
+                response: {
+                  headers: {
+                    'Upload-Offset': '14',
+                  },
+                  statusCode: 204,
+                },
+                url: 'upload',
+              },
+            ],
+            stateAfterAttempt: 'succeeded',
+          },
+        ],
+        cleanup: {
+          ownedSource: 'remove-owned-source-after-success',
+          resumeUrl: 'remove-after-success',
+        },
+        input: {
+          chunkSize: 7,
+          content: 'hello managed!',
+          fingerprint: 'managed-durable-retry-fingerprint',
+          metadata: {
+            filename: 'managed.txt',
+          },
+          uploadPath: 'managed-durable-retry',
+        },
+        retryDelays: [0],
+        runtime: 'java',
+        scheduler: 'process-lifetime-worker-pool',
+        sourceDurability: 'copy-to-owned-storage',
+        stateBackend: 'filesystem',
+        states: ['pending', 'running', 'failed', 'running', 'succeeded'],
+      },
       requiredPrimitives: [
         'accept-upload-submission',
         'make-source-durable',
@@ -1077,6 +1170,99 @@ export const tusManagedUploadProofCases = [
   {
     featureId: 'managedUpload',
     layer: 'feature-over-protocol',
+    proof: {
+      attempts: [
+        {
+          attemptIndex: 0,
+          failure: {
+            afterAcceptedOffset: 7,
+            kind: 'io-error',
+          },
+          requests: [
+            {
+              bodySize: 0,
+              headers: {
+                'Upload-Length': '14',
+              },
+              operationId: 'createTusUpload',
+              response: {
+                headers: {
+                  Location: 'https://tus.io/uploads/managed-durable-retry',
+                },
+                statusCode: 201,
+              },
+              url: 'endpoint',
+            },
+            {
+              bodySize: 7,
+              headers: {
+                'Upload-Offset': '0',
+              },
+              operationId: 'patchTusUpload',
+              response: {
+                headers: {
+                  'Upload-Offset': '7',
+                },
+                statusCode: 204,
+              },
+              url: 'upload',
+            },
+          ],
+          stateAfterAttempt: 'failed',
+        },
+        {
+          attemptIndex: 1,
+          requests: [
+            {
+              headers: {},
+              operationId: 'getTusUploadOffset',
+              response: {
+                headers: {
+                  'Upload-Length': '14',
+                  'Upload-Offset': '7',
+                },
+                statusCode: 200,
+              },
+              url: 'upload',
+            },
+            {
+              bodySize: 7,
+              headers: {
+                'Upload-Offset': '7',
+              },
+              operationId: 'patchTusUpload',
+              response: {
+                headers: {
+                  'Upload-Offset': '14',
+                },
+                statusCode: 204,
+              },
+              url: 'upload',
+            },
+          ],
+          stateAfterAttempt: 'succeeded',
+        },
+      ],
+      cleanup: {
+        ownedSource: 'remove-owned-source-after-success',
+        resumeUrl: 'remove-after-success',
+      },
+      input: {
+        chunkSize: 7,
+        content: 'hello managed!',
+        fingerprint: 'managed-durable-retry-fingerprint',
+        metadata: {
+          filename: 'managed.txt',
+        },
+        uploadPath: 'managed-durable-retry',
+      },
+      retryDelays: [0],
+      runtime: 'java',
+      scheduler: 'process-lifetime-worker-pool',
+      sourceDurability: 'copy-to-owned-storage',
+      stateBackend: 'filesystem',
+      states: ['pending', 'running', 'failed', 'running', 'succeeded'],
+    },
     protocolFeatureIds: ['singleUploadLifecycle', 'retryOffsetRecovery'],
     requiredPrimitives: [
       'accept-upload-submission',
