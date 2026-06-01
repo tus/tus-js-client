@@ -2908,6 +2908,14 @@ export const tusClientConformanceScenarios = [
         key: 'request-abort:0',
       },
     ],
+    execution: {
+      onRequestStart: [
+        {
+          kind: 'cancel-upload',
+          requestIndex: 0,
+        },
+      ],
+    },
     featureId: 'abortUpload',
     input: {
       content: 'hello world',
@@ -2944,6 +2952,14 @@ export const tusClientConformanceScenarios = [
         key: 'request-abort:1',
       },
     ],
+    execution: {
+      onRequestStart: [
+        {
+          kind: 'cancel-upload',
+          requestIndex: 1,
+        },
+      ],
+    },
     featureId: 'abortUpload',
     input: {
       content: 'hello world',
