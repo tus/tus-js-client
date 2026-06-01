@@ -1073,6 +1073,51 @@ export const tusManagedUpload = {
   ],
 }
 
+export const tusManagedUploadProofCases = [
+  {
+    featureId: 'managedUpload',
+    layer: 'feature-over-protocol',
+    protocolFeatureIds: ['singleUploadLifecycle', 'retryOffsetRecovery'],
+    requiredPrimitives: [
+      'accept-upload-submission',
+      'make-source-durable',
+      'schedule-upload-work',
+      'run-protocol-upload',
+      'apply-managed-retry-policy',
+      'publish-upload-state',
+      'cleanup-managed-upload',
+    ],
+    runtimeProfiles: ['android', 'ios', 'browser', 'java', 'node', 'react-native'],
+    scenarioId: 'managedUploadDurableRetry',
+  },
+  {
+    featureId: 'managedUpload',
+    layer: 'feature-over-protocol',
+    protocolFeatureIds: ['singleUploadLifecycle', 'retryOffsetRecovery'],
+    requiredPrimitives: [
+      'accept-upload-submission',
+      'make-source-durable',
+      'schedule-upload-work',
+      'classify-failure',
+      'publish-upload-state',
+    ],
+    runtimeProfiles: ['android', 'ios', 'browser', 'java', 'node', 'react-native'],
+    scenarioId: 'managedUploadPermanentFailure',
+  },
+  {
+    featureId: 'managedUpload',
+    layer: 'feature-over-protocol',
+    protocolFeatureIds: ['singleUploadLifecycle', 'retryOffsetRecovery'],
+    requiredPrimitives: [
+      'accept-upload-submission',
+      'schedule-upload-work',
+      'publish-upload-state',
+    ],
+    runtimeProfiles: ['android', 'ios', 'browser', 'java', 'node', 'react-native'],
+    scenarioId: 'managedUploadNetworkConstraint',
+  },
+]
+
 export const tusClientConformanceScenarios = [
   {
     behavior: 'single-upload-lifecycle',

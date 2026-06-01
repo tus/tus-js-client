@@ -3,6 +3,8 @@ import {
   tusClientConformanceScenarios,
   tusClientFeatures,
   tusClientScenarioProofCases,
+  tusManagedUpload,
+  tusManagedUploadProofCases,
   tusProtocolOperations,
   tusWireVersions,
 } from './generated-protocol-contract.js'
@@ -32,6 +34,17 @@ function getClientConformanceScenario(scenarioId) {
   )
   if (!scenario) {
     throw new Error(`Missing generated TUS client conformance scenario: ${scenarioId}`)
+  }
+
+  return scenario
+}
+
+function getManagedUploadScenario(scenarioId) {
+  const scenario = tusManagedUpload.scenarios.find(
+    (candidate) => candidate.scenarioId === scenarioId,
+  )
+  if (!scenario) {
+    throw new Error(`Missing generated TUS managed-upload scenario: ${scenarioId}`)
   }
 
   return scenario
@@ -804,6 +817,25 @@ describe('generated TUS protocol contract', () => {
       expect(feature.conformance.scenarioIds).toContain(scenario.scenarioId)
       expect(scenario.operationIds).toEqual(proofCase.operationIds)
       expect(scenario.primitives).toEqual(proofCase.primitives)
+    }
+  })
+
+  it('preserves the generated managed-upload proof scenarios', () => {
+    for (const proofCase of tusManagedUploadProofCases) {
+      const scenario = getManagedUploadScenario(proofCase.scenarioId)
+
+      expect(tusManagedUpload.featureId).toBe(proofCase.featureId)
+      expect(tusManagedUpload.layer).toBe(proofCase.layer)
+      expect(scenario.requiredPrimitives).toEqual(proofCase.requiredPrimitives)
+      for (const primitive of proofCase.requiredPrimitives) {
+        expect(tusManagedUpload.primitives).toContain(primitive)
+      }
+      for (const featureId of proofCase.protocolFeatureIds) {
+        getClientFeature(featureId)
+      }
+      expect(tusManagedUpload.runtimeProfiles.map((profile) => profile.runtime)).toEqual(
+        proofCase.runtimeProfiles,
+      )
     }
   })
 })
