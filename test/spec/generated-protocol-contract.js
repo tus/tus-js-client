@@ -929,7 +929,7 @@ export const tusClientConformanceScenarios = [
       },
     ],
     eventPolicy: {
-      matching: 'ordered-subsequence',
+      matching: 'exact-except-extra-progress',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
@@ -1016,7 +1016,7 @@ export const tusClientConformanceScenarios = [
       },
     ],
     eventPolicy: {
-      matching: 'ordered-subsequence',
+      matching: 'exact-except-extra-progress',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
@@ -1076,6 +1076,13 @@ export const tusClientConformanceScenarios = [
         key: 'upload-url-available',
       },
       {
+        bytesAccepted: 5,
+        bytesTotal: 11,
+        chunkSize: 5,
+        kind: 'chunk-complete',
+        key: 'chunk-complete:5:5:11',
+      },
+      {
         bytesSent: 5,
         bytesTotal: 11,
         kind: 'progress',
@@ -1123,7 +1130,7 @@ export const tusClientConformanceScenarios = [
       },
     ],
     eventPolicy: {
-      matching: 'ordered-subsequence',
+      matching: 'exact-except-extra-progress',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
@@ -1225,7 +1232,7 @@ export const tusClientConformanceScenarios = [
       },
     ],
     eventPolicy: {
-      matching: 'ordered-subsequence',
+      matching: 'exact-except-extra-progress',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
@@ -1307,7 +1314,7 @@ export const tusClientConformanceScenarios = [
       },
     ],
     eventPolicy: {
-      matching: 'ordered-subsequence',
+      matching: 'exact-except-extra-progress',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
@@ -1830,7 +1837,7 @@ export const tusClientConformanceScenarios = [
       },
     ],
     eventPolicy: {
-      matching: 'ordered-subsequence',
+      matching: 'exact-except-extra-progress',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
@@ -1917,7 +1924,7 @@ export const tusClientConformanceScenarios = [
       },
     ],
     eventPolicy: {
-      matching: 'ordered-subsequence',
+      matching: 'exact-except-extra-progress',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
@@ -2333,7 +2340,7 @@ export const tusClientConformanceScenarios = [
       },
     ],
     eventPolicy: {
-      matching: 'ordered-subsequence',
+      matching: 'exact-except-extra-progress',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
@@ -2469,7 +2476,7 @@ export const tusClientConformanceScenarios = [
       },
     ],
     eventPolicy: {
-      matching: 'ordered-subsequence',
+      matching: 'exact-except-extra-progress',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },

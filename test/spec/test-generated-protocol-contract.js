@@ -333,29 +333,54 @@ function expectedEventKey(scenario, event) {
   return event.key
 }
 
+function isProgressEventKey(eventKey) {
+  return eventKey.startsWith('progress:')
+}
+
+function expectScenarioEventsExactExceptExtraProgress(
+  scenario,
+  observedEvents,
+  observedEventKeys,
+  expectedEventKeys,
+) {
+  let expectedIndex = 0
+
+  for (const observedEventKey of observedEventKeys) {
+    if (observedEventKey === expectedEventKeys[expectedIndex]) {
+      expectedIndex += 1
+      continue
+    }
+
+    expect(isProgressEventKey(observedEventKey))
+      .withContext(
+        `Expected generated scenario ${scenario.scenarioId} to only emit extra progress samples; observed events ${JSON.stringify(
+          observedEvents,
+        )}; expected keys ${JSON.stringify(expectedEventKeys)}`,
+      )
+      .toBe(true)
+  }
+
+  expect(expectedIndex)
+    .withContext(
+      `Expected generated scenario ${scenario.scenarioId} to emit every non-extra event; observed keys ${JSON.stringify(
+        observedEventKeys,
+      )}; expected keys ${JSON.stringify(expectedEventKeys)}`,
+    )
+    .toBe(expectedEventKeys.length)
+}
+
 function expectScenarioEvents(scenario, observedEvents) {
   const expectedEventKeys = scenario.events.map((event) => expectedEventKey(scenario, event))
   const observedEventKeys = observedEvents.map(observedEventKey)
   const eventPolicy = scenario.eventPolicy ?? { matching: 'exact' }
 
-  if (eventPolicy.matching === 'ordered-subsequence') {
-    let searchStart = 0
-
-    for (const expectedEventKey of expectedEventKeys) {
-      const matchedIndex = observedEventKeys.findIndex(
-        (actualEventKey, index) => index >= searchStart && actualEventKey === expectedEventKey,
-      )
-
-      expect(matchedIndex)
-        .withContext(
-          `Expected generated scenario ${scenario.scenarioId} to emit ${expectedEventKey} after event index ${
-            searchStart - 1
-          }; observed keys ${JSON.stringify(observedEventKeys)}`,
-        )
-        .not.toBe(-1)
-
-      searchStart = matchedIndex + 1
-    }
+  if (eventPolicy.matching === 'exact-except-extra-progress') {
+    expectScenarioEventsExactExceptExtraProgress(
+      scenario,
+      observedEvents,
+      observedEventKeys,
+      expectedEventKeys,
+    )
     return
   }
 
