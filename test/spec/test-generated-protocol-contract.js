@@ -743,7 +743,9 @@ async function runGeneratedConformanceScenario(scenario) {
   const abortPromises = []
 
   try {
-    for (const [requestIndex, request] of scenario.requests.entries()) {
+    for (const [scenarioRequestIndex, request] of scenario.requests.entries()) {
+      const requestIndex = request.requestIndex
+      expect(requestIndex).toBe(scenarioRequestIndex)
       const req = await testStack.nextRequest()
       expectScenarioRequest(req, scenario, request)
 
@@ -751,8 +753,8 @@ async function runGeneratedConformanceScenario(scenario) {
         abortPromises.push(
           abortScenarioRequest(req, scenario, request, requestIndex, observedEvents, upload),
         )
-      } else if (request.error) {
-        req.responseError(new Error(request.error.message))
+      } else if (request.errorMessage) {
+        req.responseError(new Error(request.errorMessage))
       } else if (!request.response) {
         throw new Error(
           `Generated scenario ${scenario.scenarioId} request ${requestIndex} has no response, error, or abort`,
