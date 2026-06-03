@@ -1848,50 +1848,6 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/generated-contract',
     },
-    events: [
-      {
-        fingerprint: 'contract-single-fingerprint',
-        kind: 'fingerprint',
-        key: 'fingerprint:contract-single-fingerprint',
-      },
-      {
-        kind: 'upload-url-available',
-        key: 'upload-url-available',
-      },
-      {
-        fingerprint: 'contract-single-fingerprint',
-        kind: 'url-storage-add',
-        uploadUrl: 'https://tus.io/uploads/generated-contract',
-        key: 'url-storage-add:contract-single-fingerprint:https://tus.io/uploads/generated-contract',
-      },
-      {
-        bytesSent: 0,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:0:11',
-      },
-      {
-        bytesSent: 11,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:11:11',
-      },
-      {
-        bytesAccepted: 11,
-        bytesTotal: 11,
-        chunkSize: 11,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:11:11:11',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -1971,14 +1927,22 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'singleUploadLifecycle',
-  },
-  {
-    behavior: 'creation-with-upload',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/creation-with-upload-contract',
-    },
     events: [
+      {
+        fingerprint: 'contract-single-fingerprint',
+        kind: 'fingerprint',
+        key: 'fingerprint:contract-single-fingerprint',
+      },
+      {
+        kind: 'upload-url-available',
+        key: 'upload-url-available',
+      },
+      {
+        fingerprint: 'contract-single-fingerprint',
+        kind: 'url-storage-add',
+        uploadUrl: 'https://tus.io/uploads/generated-contract',
+        key: 'url-storage-add:contract-single-fingerprint:https://tus.io/uploads/generated-contract',
+      },
       {
         bytesSent: 0,
         bytesTotal: 11,
@@ -1992,8 +1956,11 @@ export const tusClientConformanceScenarios = [
         key: 'progress:11:11',
       },
       {
-        kind: 'upload-url-available',
-        key: 'upload-url-available',
+        bytesAccepted: 11,
+        bytesTotal: 11,
+        chunkSize: 11,
+        kind: 'chunk-complete',
+        key: 'chunk-complete:11:11:11',
       },
       {
         kind: 'success',
@@ -2004,6 +1971,13 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+  },
+  {
+    behavior: 'creation-with-upload',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/creation-with-upload-contract',
+    },
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -2052,13 +2026,6 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'creationWithUpload',
-  },
-  {
-    behavior: 'creation-with-upload-partial-chunk',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/creation-with-upload-partial-contract',
-    },
     events: [
       {
         bytesSent: 0,
@@ -2067,59 +2034,14 @@ export const tusClientConformanceScenarios = [
         key: 'progress:0:11',
       },
       {
-        bytesSent: 5,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:5:11',
-      },
-      {
-        kind: 'upload-url-available',
-        key: 'upload-url-available',
-      },
-      {
-        bytesAccepted: 5,
-        bytesTotal: 11,
-        chunkSize: 5,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:5:5:11',
-      },
-      {
-        bytesSent: 5,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:5:11',
-      },
-      {
-        bytesSent: 10,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:10:11',
-      },
-      {
-        bytesAccepted: 10,
-        bytesTotal: 11,
-        chunkSize: 5,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:5:10:11',
-      },
-      {
-        bytesSent: 10,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:10:11',
-      },
-      {
         bytesSent: 11,
         bytesTotal: 11,
         kind: 'progress',
         key: 'progress:11:11',
       },
       {
-        bytesAccepted: 11,
-        bytesTotal: 11,
-        chunkSize: 1,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:1:11:11',
+        kind: 'upload-url-available',
+        key: 'upload-url-available',
       },
       {
         kind: 'success',
@@ -2130,6 +2052,13 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+  },
+  {
+    behavior: 'creation-with-upload-partial-chunk',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/creation-with-upload-partial-contract',
+    },
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -2233,13 +2162,6 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'creationWithUploadPartialChunk',
-  },
-  {
-    behavior: 'creation-with-upload',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/ietf-draft-05-contract',
-    },
     events: [
       {
         bytesSent: 0,
@@ -2248,14 +2170,59 @@ export const tusClientConformanceScenarios = [
         key: 'progress:0:11',
       },
       {
+        bytesSent: 5,
+        bytesTotal: 11,
+        kind: 'progress',
+        key: 'progress:5:11',
+      },
+      {
+        kind: 'upload-url-available',
+        key: 'upload-url-available',
+      },
+      {
+        bytesAccepted: 5,
+        bytesTotal: 11,
+        chunkSize: 5,
+        kind: 'chunk-complete',
+        key: 'chunk-complete:5:5:11',
+      },
+      {
+        bytesSent: 5,
+        bytesTotal: 11,
+        kind: 'progress',
+        key: 'progress:5:11',
+      },
+      {
+        bytesSent: 10,
+        bytesTotal: 11,
+        kind: 'progress',
+        key: 'progress:10:11',
+      },
+      {
+        bytesAccepted: 10,
+        bytesTotal: 11,
+        chunkSize: 5,
+        kind: 'chunk-complete',
+        key: 'chunk-complete:5:10:11',
+      },
+      {
+        bytesSent: 10,
+        bytesTotal: 11,
+        kind: 'progress',
+        key: 'progress:10:11',
+      },
+      {
         bytesSent: 11,
         bytesTotal: 11,
         kind: 'progress',
         key: 'progress:11:11',
       },
       {
-        kind: 'upload-url-available',
-        key: 'upload-url-available',
+        bytesAccepted: 11,
+        bytesTotal: 11,
+        chunkSize: 1,
+        kind: 'chunk-complete',
+        key: 'chunk-complete:1:11:11',
       },
       {
         kind: 'success',
@@ -2266,6 +2233,13 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+  },
+  {
+    behavior: 'creation-with-upload',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/ietf-draft-05-contract',
+    },
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -2317,23 +2291,12 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'ietfDraft05CreationWithUpload',
-  },
-  {
-    behavior: 'upload-body-headers',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/ietf-draft-03-resume-contract',
-    },
     events: [
       {
-        kind: 'upload-url-available',
-        key: 'upload-url-available',
-      },
-      {
-        bytesSent: 5,
+        bytesSent: 0,
         bytesTotal: 11,
         kind: 'progress',
-        key: 'progress:5:11',
+        key: 'progress:0:11',
       },
       {
         bytesSent: 11,
@@ -2342,11 +2305,8 @@ export const tusClientConformanceScenarios = [
         key: 'progress:11:11',
       },
       {
-        bytesAccepted: 11,
-        bytesTotal: 11,
-        chunkSize: 6,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:6:11:11',
+        kind: 'upload-url-available',
+        key: 'upload-url-available',
       },
       {
         kind: 'success',
@@ -2357,6 +2317,13 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+  },
+  {
+    behavior: 'upload-body-headers',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/ietf-draft-03-resume-contract',
+    },
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -2430,6 +2397,39 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'ietfDraft03ResumeWithoutKnownLength',
+    events: [
+      {
+        kind: 'upload-url-available',
+        key: 'upload-url-available',
+      },
+      {
+        bytesSent: 5,
+        bytesTotal: 11,
+        kind: 'progress',
+        key: 'progress:5:11',
+      },
+      {
+        bytesSent: 11,
+        bytesTotal: 11,
+        kind: 'progress',
+        key: 'progress:11:11',
+      },
+      {
+        bytesAccepted: 11,
+        bytesTotal: 11,
+        chunkSize: 6,
+        kind: 'chunk-complete',
+        key: 'chunk-complete:6:11:11',
+      },
+      {
+        kind: 'success',
+        key: 'success',
+      },
+      {
+        kind: 'source-close',
+        key: 'source-close',
+      },
+    ],
   },
   {
     behavior: 'start-option-validation',
@@ -2438,7 +2438,6 @@ export const tusClientConformanceScenarios = [
       message: 'tus: no file or stream to upload provided',
       reason: 'missingInput',
     },
-    events: [],
     featureId: 'startOptionValidation',
     input: {
       content: '',
@@ -2449,6 +2448,7 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     scenarioId: 'startValidationMissingInput',
+    events: [],
   },
   {
     behavior: 'start-option-validation',
@@ -2457,7 +2457,6 @@ export const tusClientConformanceScenarios = [
       message: 'tus: neither an endpoint or an upload URL is provided',
       reason: 'missingEndpointOrUploadUrl',
     },
-    events: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2467,6 +2466,7 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     scenarioId: 'startValidationMissingEndpointOrUploadUrl',
+    events: [],
   },
   {
     behavior: 'start-option-validation',
@@ -2475,7 +2475,6 @@ export const tusClientConformanceScenarios = [
       message: 'tus: unsupported protocol tus-v9',
       reason: 'unsupportedProtocol',
     },
-    events: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2487,6 +2486,7 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     scenarioId: 'startValidationUnsupportedProtocol',
+    events: [],
   },
   {
     behavior: 'start-option-validation',
@@ -2495,7 +2495,6 @@ export const tusClientConformanceScenarios = [
       message: 'tus: the `retryDelays` option must either be an array or null',
       reason: 'retryDelaysNotArray',
     },
-    events: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2509,6 +2508,7 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     scenarioId: 'startValidationRetryDelaysNotArray',
+    events: [],
   },
   {
     behavior: 'start-option-validation',
@@ -2517,7 +2517,6 @@ export const tusClientConformanceScenarios = [
       message: 'tus: cannot use the `uploadUrl` option when parallelUploads is enabled',
       reason: 'parallelUploadsWithUploadUrl',
     },
-    events: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2530,6 +2529,7 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     scenarioId: 'startValidationParallelUploadsWithUploadUrl',
+    events: [],
   },
   {
     behavior: 'start-option-validation',
@@ -2538,7 +2538,6 @@ export const tusClientConformanceScenarios = [
       message: 'tus: cannot use the `uploadSize` option when parallelUploads is enabled',
       reason: 'parallelUploadsWithUploadSize',
     },
-    events: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2551,6 +2550,7 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     scenarioId: 'startValidationParallelUploadsWithUploadSize',
+    events: [],
   },
   {
     behavior: 'start-option-validation',
@@ -2559,7 +2559,6 @@ export const tusClientConformanceScenarios = [
       message: 'tus: cannot use the `uploadLengthDeferred` option when parallelUploads is enabled',
       reason: 'parallelUploadsWithDeferredLength',
     },
-    events: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2572,6 +2571,7 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     scenarioId: 'startValidationParallelUploadsWithDeferredLength',
+    events: [],
   },
   {
     behavior: 'start-option-validation',
@@ -2581,7 +2581,6 @@ export const tusClientConformanceScenarios = [
         'tus: cannot use the `uploadDataDuringCreation` option when parallelUploads is enabled',
       reason: 'parallelUploadsWithUploadDataDuringCreation',
     },
-    events: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2594,6 +2593,7 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     scenarioId: 'startValidationParallelUploadsWithUploadDataDuringCreation',
+    events: [],
   },
   {
     behavior: 'start-option-validation',
@@ -2603,7 +2603,6 @@ export const tusClientConformanceScenarios = [
         'tus: cannot use the `parallelUploadBoundaries` option when `parallelUploads` is disabled',
       reason: 'parallelBoundariesWithoutParallelUploads',
     },
-    events: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2620,6 +2619,7 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     scenarioId: 'startValidationParallelBoundariesWithoutParallelUploads',
+    events: [],
   },
   {
     behavior: 'start-option-validation',
@@ -2629,7 +2629,6 @@ export const tusClientConformanceScenarios = [
         'tus: the `parallelUploadBoundaries` must have the same length as the value of `parallelUploads`',
       reason: 'parallelBoundariesLengthMismatch',
     },
-    events: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2647,6 +2646,7 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     scenarioId: 'startValidationParallelBoundariesLengthMismatch',
+    events: [],
   },
   {
     behavior: 'detailed-error',
@@ -2656,7 +2656,6 @@ export const tusClientConformanceScenarios = [
         'tus: unexpected response while creating upload, originated from request (method: POST, url: https://tus.io/uploads, response code: 500, response text: server_error, request id: contract-request-id)',
       reason: 'unexpectedCreateResponse',
     },
-    events: [],
     featureId: 'detailedErrors',
     input: {
       content: 'hello world',
@@ -2702,6 +2701,7 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'detailedCreateResponseError',
+    events: [],
   },
   {
     behavior: 'detailed-error',
@@ -2711,7 +2711,6 @@ export const tusClientConformanceScenarios = [
         'tus: failed to create upload, caused by Error: socket down, originated from request (method: POST, url: https://tus.io/uploads, response code: n/a, response text: n/a, request id: contract-request-id)',
       reason: 'createUploadRequestFailed',
     },
-    events: [],
     featureId: 'detailedErrors',
     input: {
       content: 'hello world',
@@ -2751,6 +2750,7 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'detailedCreateRequestError',
+    events: [],
   },
   {
     behavior: 'upload-body-headers',
@@ -2758,7 +2758,6 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/upload-body-headers-contract',
     },
-    events: [],
     featureId: 'uploadBodyHeaders',
     input: {
       content: 'hello world',
@@ -2826,6 +2825,7 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'uploadBodyHeaders',
+    events: [],
   },
   {
     behavior: 'custom-request-headers',
@@ -2833,7 +2833,6 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/custom-headers-contract',
     },
-    events: [],
     featureId: 'customRequestHeaders',
     input: {
       content: 'hello world',
@@ -2909,6 +2908,7 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'customRequestHeaders',
+    events: [],
   },
   {
     behavior: 'resume-from-previous-upload',
@@ -2916,60 +2916,6 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/resume-contract',
     },
-    events: [
-      {
-        fingerprint: 'contract-resume-fingerprint',
-        kind: 'fingerprint',
-        key: 'fingerprint:contract-resume-fingerprint',
-      },
-      {
-        count: 1,
-        fingerprint: 'contract-resume-fingerprint',
-        kind: 'url-storage-find',
-        key: 'url-storage-find:contract-resume-fingerprint:1',
-      },
-      {
-        fingerprint: 'contract-resume-fingerprint',
-        kind: 'fingerprint',
-        key: 'fingerprint:contract-resume-fingerprint',
-      },
-      {
-        kind: 'upload-url-available',
-        key: 'upload-url-available',
-      },
-      {
-        bytesSent: 5,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:5:11',
-      },
-      {
-        bytesSent: 11,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:11:11',
-      },
-      {
-        bytesAccepted: 11,
-        bytesTotal: 11,
-        chunkSize: 6,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:6:11:11',
-      },
-      {
-        kind: 'url-storage-remove',
-        urlStorageKey: 'tus::contract-resume-fingerprint::1337',
-        key: 'url-storage-remove:tus::contract-resume-fingerprint::1337',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -3052,23 +2998,32 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'resumeFromPreviousUpload',
-  },
-  {
-    behavior: 'relative-location-resolution',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/files/relative-contract',
-    },
     events: [
+      {
+        fingerprint: 'contract-resume-fingerprint',
+        kind: 'fingerprint',
+        key: 'fingerprint:contract-resume-fingerprint',
+      },
+      {
+        count: 1,
+        fingerprint: 'contract-resume-fingerprint',
+        kind: 'url-storage-find',
+        key: 'url-storage-find:contract-resume-fingerprint:1',
+      },
+      {
+        fingerprint: 'contract-resume-fingerprint',
+        kind: 'fingerprint',
+        key: 'fingerprint:contract-resume-fingerprint',
+      },
       {
         kind: 'upload-url-available',
         key: 'upload-url-available',
       },
       {
-        bytesSent: 0,
+        bytesSent: 5,
         bytesTotal: 11,
         kind: 'progress',
-        key: 'progress:0:11',
+        key: 'progress:5:11',
       },
       {
         bytesSent: 11,
@@ -3079,9 +3034,14 @@ export const tusClientConformanceScenarios = [
       {
         bytesAccepted: 11,
         bytesTotal: 11,
-        chunkSize: 11,
+        chunkSize: 6,
         kind: 'chunk-complete',
-        key: 'chunk-complete:11:11:11',
+        key: 'chunk-complete:6:11:11',
+      },
+      {
+        kind: 'url-storage-remove',
+        urlStorageKey: 'tus::contract-resume-fingerprint::1337',
+        key: 'url-storage-remove:tus::contract-resume-fingerprint::1337',
       },
       {
         kind: 'success',
@@ -3092,6 +3052,13 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+  },
+  {
+    behavior: 'relative-location-resolution',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/files/relative-contract',
+    },
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -3163,19 +3130,29 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'relativeLocationResolution',
-  },
-  {
-    behavior: 'array-buffer-input',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/array-buffer-contract',
-    },
     events: [
       {
-        inputKind: 'array-buffer',
-        kind: 'source-open',
-        size: 11,
-        key: 'source-open:array-buffer:11',
+        kind: 'upload-url-available',
+        key: 'upload-url-available',
+      },
+      {
+        bytesSent: 0,
+        bytesTotal: 11,
+        kind: 'progress',
+        key: 'progress:0:11',
+      },
+      {
+        bytesSent: 11,
+        bytesTotal: 11,
+        kind: 'progress',
+        key: 'progress:11:11',
+      },
+      {
+        bytesAccepted: 11,
+        bytesTotal: 11,
+        chunkSize: 11,
+        kind: 'chunk-complete',
+        key: 'chunk-complete:11:11:11',
       },
       {
         kind: 'success',
@@ -3186,6 +3163,13 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+  },
+  {
+    behavior: 'array-buffer-input',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/array-buffer-contract',
+    },
     featureId: 'inputSources',
     input: {
       content: 'hello world',
@@ -3252,19 +3236,12 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'arrayBufferInput',
-  },
-  {
-    behavior: 'array-buffer-view-input',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/array-buffer-view-contract',
-    },
     events: [
       {
-        inputKind: 'array-buffer-view',
+        inputKind: 'array-buffer',
         kind: 'source-open',
         size: 11,
-        key: 'source-open:array-buffer-view:11',
+        key: 'source-open:array-buffer:11',
       },
       {
         kind: 'success',
@@ -3275,6 +3252,13 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+  },
+  {
+    behavior: 'array-buffer-view-input',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/array-buffer-view-contract',
+    },
     featureId: 'inputSources',
     input: {
       content: 'hello world',
@@ -3341,19 +3325,12 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'arrayBufferViewInput',
-  },
-  {
-    behavior: 'web-readable-stream-input',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/web-stream-contract',
-    },
     events: [
       {
-        inputKind: 'web-readable-stream',
+        inputKind: 'array-buffer-view',
         kind: 'source-open',
-        size: null,
-        key: 'source-open:web-readable-stream:null',
+        size: 11,
+        key: 'source-open:array-buffer-view:11',
       },
       {
         kind: 'success',
@@ -3364,6 +3341,13 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+  },
+  {
+    behavior: 'web-readable-stream-input',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/web-stream-contract',
+    },
     featureId: 'inputSources',
     input: {
       chunkSize: 100,
@@ -3433,19 +3417,12 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'webReadableStreamInput',
-  },
-  {
-    behavior: 'node-readable-stream-input',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/node-stream-contract',
-    },
     events: [
       {
-        inputKind: 'node-readable-stream',
+        inputKind: 'web-readable-stream',
         kind: 'source-open',
         size: null,
-        key: 'source-open:node-readable-stream:null',
+        key: 'source-open:web-readable-stream:null',
       },
       {
         kind: 'success',
@@ -3456,6 +3433,13 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+  },
+  {
+    behavior: 'node-readable-stream-input',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/node-stream-contract',
+    },
     featureId: 'inputSources',
     input: {
       chunkSize: 100,
@@ -3524,21 +3508,13 @@ export const tusClientConformanceScenarios = [
         requestIndex: 1,
       },
     ],
-    runtimes: ['node'],
     scenarioId: 'nodeReadableStreamInput',
-  },
-  {
-    behavior: 'node-path-input',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/node-path-contract',
-    },
     events: [
       {
-        inputKind: 'node-path-reference',
+        inputKind: 'node-readable-stream',
         kind: 'source-open',
-        size: 11,
-        key: 'source-open:node-path-reference:11',
+        size: null,
+        key: 'source-open:node-readable-stream:null',
       },
       {
         kind: 'success',
@@ -3549,6 +3525,14 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+    runtimes: ['node'],
+  },
+  {
+    behavior: 'node-path-input',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/node-path-contract',
+    },
     featureId: 'inputSources',
     input: {
       content: 'hello world',
@@ -3614,38 +3598,13 @@ export const tusClientConformanceScenarios = [
         requestIndex: 1,
       },
     ],
-    runtimes: ['node'],
     scenarioId: 'nodePathInput',
-  },
-  {
-    behavior: 'deferred-length-upload',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/deferred-contract',
-    },
     events: [
       {
-        kind: 'upload-url-available',
-        key: 'upload-url-available',
-      },
-      {
-        bytesSent: 0,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:0:11',
-      },
-      {
-        bytesSent: 11,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:11:11',
-      },
-      {
-        bytesAccepted: 11,
-        bytesTotal: 11,
-        chunkSize: 11,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:11:11:11',
+        inputKind: 'node-path-reference',
+        kind: 'source-open',
+        size: 11,
+        key: 'source-open:node-path-reference:11',
       },
       {
         kind: 'success',
@@ -3656,6 +3615,14 @@ export const tusClientConformanceScenarios = [
         key: 'source-close',
       },
     ],
+    runtimes: ['node'],
+  },
+  {
+    behavior: 'deferred-length-upload',
+    completion: {
+      kind: 'success',
+      uploadUrl: 'https://tus.io/uploads/deferred-contract',
+    },
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -3730,6 +3697,39 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'deferredLengthUpload',
+    events: [
+      {
+        kind: 'upload-url-available',
+        key: 'upload-url-available',
+      },
+      {
+        bytesSent: 0,
+        bytesTotal: 11,
+        kind: 'progress',
+        key: 'progress:0:11',
+      },
+      {
+        bytesSent: 11,
+        bytesTotal: 11,
+        kind: 'progress',
+        key: 'progress:11:11',
+      },
+      {
+        bytesAccepted: 11,
+        bytesTotal: 11,
+        chunkSize: 11,
+        kind: 'chunk-complete',
+        key: 'chunk-complete:11:11:11',
+      },
+      {
+        kind: 'success',
+        key: 'success',
+      },
+      {
+        kind: 'source-close',
+        key: 'source-close',
+      },
+    ],
   },
   {
     behavior: 'override-patch-method',
@@ -3737,7 +3737,6 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/override-contract',
     },
-    events: [],
     featureId: 'overridePatchMethod',
     input: {
       content: 'hello world',
@@ -3804,6 +3803,7 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'overridePatchMethod',
+    events: [],
   },
   {
     behavior: 'parallel-upload-concat',
@@ -3811,34 +3811,6 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/parallel-final',
     },
-    events: [
-      {
-        bytesSent: 5,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:5:11',
-      },
-      {
-        bytesAccepted: 5,
-        bytesTotal: 11,
-        chunkSize: 5,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:5:5:11',
-      },
-      {
-        bytesSent: 11,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:11:11',
-      },
-      {
-        bytesAccepted: 11,
-        bytesTotal: 11,
-        chunkSize: 6,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:6:11:11',
-      },
-    ],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -4015,19 +3987,40 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'parallelUploadConcat',
+    events: [
+      {
+        bytesSent: 5,
+        bytesTotal: 11,
+        kind: 'progress',
+        key: 'progress:5:11',
+      },
+      {
+        bytesAccepted: 5,
+        bytesTotal: 11,
+        chunkSize: 5,
+        kind: 'chunk-complete',
+        key: 'chunk-complete:5:5:11',
+      },
+      {
+        bytesSent: 11,
+        bytesTotal: 11,
+        kind: 'progress',
+        key: 'progress:11:11',
+      },
+      {
+        bytesAccepted: 11,
+        bytesTotal: 11,
+        chunkSize: 6,
+        kind: 'chunk-complete',
+        key: 'chunk-complete:6:11:11',
+      },
+    ],
   },
   {
     behavior: 'parallel-upload-abort-cleanup',
     completion: {
       kind: 'aborted',
     },
-    events: [
-      {
-        kind: 'request-abort',
-        requestIndex: 3,
-        key: 'request-abort:3',
-      },
-    ],
     execution: {
       serverRequestGates: [
         {
@@ -4228,6 +4221,13 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'parallelUploadAbortCleanup',
+    events: [
+      {
+        kind: 'request-abort',
+        requestIndex: 3,
+        key: 'request-abort:3',
+      },
+    ],
   },
   {
     behavior: 'retry-patch-after-offset-recovery',
@@ -4235,30 +4235,6 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/retry-contract',
     },
-    events: [
-      {
-        decision: true,
-        kind: 'should-retry',
-        retryAttempt: 0,
-        key: 'should-retry:0:true',
-      },
-      {
-        delay: 0,
-        kind: 'retry-schedule',
-        key: 'retry-schedule:0',
-      },
-      {
-        decision: true,
-        kind: 'should-retry',
-        retryAttempt: 0,
-        key: 'should-retry:0:true',
-      },
-      {
-        delay: 0,
-        kind: 'retry-schedule',
-        key: 'retry-schedule:0',
-      },
-    ],
     featureId: 'retryOffsetRecovery',
     input: {
       content: 'hello world',
@@ -4431,6 +4407,30 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'retryPatchAfterOffsetRecovery',
+    events: [
+      {
+        decision: true,
+        kind: 'should-retry',
+        retryAttempt: 0,
+        key: 'should-retry:0:true',
+      },
+      {
+        delay: 0,
+        kind: 'retry-schedule',
+        key: 'retry-schedule:0',
+      },
+      {
+        decision: true,
+        kind: 'should-retry',
+        retryAttempt: 0,
+        key: 'should-retry:0:true',
+      },
+      {
+        delay: 0,
+        kind: 'retry-schedule',
+        key: 'retry-schedule:0',
+      },
+    ],
   },
   {
     behavior: 'request-lifecycle-hooks',
@@ -4438,26 +4438,6 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/request-hooks-contract',
     },
-    events: [
-      {
-        kind: 'before-request',
-        requestIndex: 0,
-        key: 'before-request:0',
-      },
-      {
-        kind: 'after-response',
-        requestIndex: 0,
-        key: 'after-response:0',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
     featureId: 'requestLifecycleHooks',
     input: {
       content: 'hello world',
@@ -4495,19 +4475,32 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'requestLifecycleHooks',
+    events: [
+      {
+        kind: 'before-request',
+        requestIndex: 0,
+        key: 'before-request:0',
+      },
+      {
+        kind: 'after-response',
+        requestIndex: 0,
+        key: 'after-response:0',
+      },
+      {
+        kind: 'success',
+        key: 'success',
+      },
+      {
+        kind: 'source-close',
+        key: 'source-close',
+      },
+    ],
   },
   {
     behavior: 'abort-upload',
     completion: {
       kind: 'aborted',
     },
-    events: [
-      {
-        kind: 'request-abort',
-        requestIndex: 0,
-        key: 'request-abort:0',
-      },
-    ],
     execution: {
       onRequestStart: [
         {
@@ -4548,6 +4541,13 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'abortUpload',
+    events: [
+      {
+        kind: 'request-abort',
+        requestIndex: 0,
+        key: 'request-abort:0',
+      },
+    ],
   },
   {
     behavior: 'abort-upload-after-stored-url',
@@ -4555,13 +4555,6 @@ export const tusClientConformanceScenarios = [
       kind: 'aborted',
       uploadUrl: 'https://tus.io/uploads/abort-terminate-contract',
     },
-    events: [
-      {
-        kind: 'request-abort',
-        requestIndex: 1,
-        key: 'request-abort:1',
-      },
-    ],
     execution: {
       onRequestStart: [
         {
@@ -4664,6 +4657,13 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'abortUploadAfterStoredUrl',
+    events: [
+      {
+        kind: 'request-abort',
+        requestIndex: 1,
+        key: 'request-abort:1',
+      },
+    ],
   },
   {
     behavior: 'terminate-with-retry',
@@ -4671,19 +4671,6 @@ export const tusClientConformanceScenarios = [
       kind: 'terminated',
       uploadUrl: 'https://tus.io/uploads/terminate-contract',
     },
-    events: [
-      {
-        decision: true,
-        kind: 'should-retry',
-        retryAttempt: 0,
-        key: 'should-retry:0:true',
-      },
-      {
-        delay: 0,
-        kind: 'retry-schedule',
-        key: 'retry-schedule:0',
-      },
-    ],
     execution: {
       onChunkComplete: [
         {
@@ -4804,6 +4791,19 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'terminateWithRetry',
+    events: [
+      {
+        decision: true,
+        kind: 'should-retry',
+        retryAttempt: 0,
+        key: 'should-retry:0:true',
+      },
+      {
+        delay: 0,
+        kind: 'retry-schedule',
+        key: 'retry-schedule:0',
+      },
+    ],
   },
 ]
 

@@ -894,75 +894,77 @@ export function tusValidateUploadStart({
   uploadDataDuringCreation,
   uploadLengthDeferred,
 }: TusUploadStartValidationInput): TusUploadStartValidationResult {
-  if (!hasFile) {
+  if (hasFile === false) {
     return tusUploadStartValidationError('missingInput', TUS_FLOW_POLICY.messages.missingInput)
   }
 
   if (!tusSupportsProtocol(protocol)) {
     return tusUploadStartValidationError(
       'unsupportedProtocol',
-      `${TUS_FLOW_POLICY.messages.unsupportedProtocolPrefix}${protocol}`,
+      TUS_FLOW_POLICY.messages.unsupportedProtocolPrefix + protocol,
     )
   }
 
-  if (!hasEndpoint && !hasUploadUrl && !hasCurrentUrl) {
+  if (hasEndpoint === false && hasUploadUrl === false && hasCurrentUrl === false) {
     return tusUploadStartValidationError(
       'missingEndpointOrUploadUrl',
       TUS_FLOW_POLICY.messages.missingEndpointOrUploadUrl,
     )
   }
 
-  if (retryDelays != null && !Array.isArray(retryDelays)) {
+  if (!(retryDelays == null || Array.isArray(retryDelays))) {
     return tusUploadStartValidationError(
       'retryDelaysNotArray',
       TUS_FLOW_POLICY.messages.retryDelaysNotArray,
     )
   }
 
-  if (parallelUploads >= TUS_FLOW_POLICY.minimumParallelUploads) {
-    if (hasUploadUrl) {
-      return tusUploadStartValidationError(
-        'parallelUploadsWithUploadUrl',
-        TUS_FLOW_POLICY.messages.parallelUploadsWithUploadUrl,
-      )
-    }
-
-    if (hasUploadSize) {
-      return tusUploadStartValidationError(
-        'parallelUploadsWithUploadSize',
-        TUS_FLOW_POLICY.messages.parallelUploadsWithUploadSize,
-      )
-    }
-
-    if (uploadLengthDeferred) {
-      return tusUploadStartValidationError(
-        'parallelUploadsWithDeferredLength',
-        TUS_FLOW_POLICY.messages.parallelUploadsWithDeferredLength,
-      )
-    }
-
-    if (uploadDataDuringCreation) {
-      return tusUploadStartValidationError(
-        'parallelUploadsWithUploadDataDuringCreation',
-        TUS_FLOW_POLICY.messages.parallelUploadsWithUploadDataDuringCreation,
-      )
-    }
+  if (parallelUploads >= TUS_FLOW_POLICY.minimumParallelUploads && hasUploadUrl === true) {
+    return tusUploadStartValidationError(
+      'parallelUploadsWithUploadUrl',
+      TUS_FLOW_POLICY.messages.parallelUploadsWithUploadUrl,
+    )
   }
 
-  if (parallelUploadBoundariesCount != null) {
-    if (parallelUploads < TUS_FLOW_POLICY.minimumParallelUploads) {
-      return tusUploadStartValidationError(
-        'parallelBoundariesWithoutParallelUploads',
-        TUS_FLOW_POLICY.messages.parallelBoundariesWithoutParallelUploads,
-      )
-    }
+  if (parallelUploads >= TUS_FLOW_POLICY.minimumParallelUploads && hasUploadSize === true) {
+    return tusUploadStartValidationError(
+      'parallelUploadsWithUploadSize',
+      TUS_FLOW_POLICY.messages.parallelUploadsWithUploadSize,
+    )
+  }
 
-    if (parallelUploads !== parallelUploadBoundariesCount) {
-      return tusUploadStartValidationError(
-        'parallelBoundariesLengthMismatch',
-        TUS_FLOW_POLICY.messages.parallelBoundariesLengthMismatch,
-      )
-    }
+  if (parallelUploads >= TUS_FLOW_POLICY.minimumParallelUploads && uploadLengthDeferred === true) {
+    return tusUploadStartValidationError(
+      'parallelUploadsWithDeferredLength',
+      TUS_FLOW_POLICY.messages.parallelUploadsWithDeferredLength,
+    )
+  }
+
+  if (
+    parallelUploads >= TUS_FLOW_POLICY.minimumParallelUploads &&
+    uploadDataDuringCreation === true
+  ) {
+    return tusUploadStartValidationError(
+      'parallelUploadsWithUploadDataDuringCreation',
+      TUS_FLOW_POLICY.messages.parallelUploadsWithUploadDataDuringCreation,
+    )
+  }
+
+  if (
+    parallelUploadBoundariesCount != null &&
+    parallelUploads < TUS_FLOW_POLICY.minimumParallelUploads
+  ) {
+    return tusUploadStartValidationError(
+      'parallelBoundariesWithoutParallelUploads',
+      TUS_FLOW_POLICY.messages.parallelBoundariesWithoutParallelUploads,
+    )
+  }
+
+  if (parallelUploadBoundariesCount != null && parallelUploads !== parallelUploadBoundariesCount) {
+    return tusUploadStartValidationError(
+      'parallelBoundariesLengthMismatch',
+      TUS_FLOW_POLICY.messages.parallelBoundariesLengthMismatch,
+    )
   }
 
   return { ok: true }
