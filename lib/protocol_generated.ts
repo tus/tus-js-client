@@ -160,6 +160,7 @@ export const TUS_PROTOCOL_UPLOAD_COMPLETE_HEADERS: Record<
 }
 
 export const TUS_CONCATENATION = {
+  extensionName: 'concatenation',
   finalPrefix: 'final;',
   headerName: 'Upload-Concat',
   partialValue: 'partial',
