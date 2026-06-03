@@ -121,6 +121,14 @@ export const TUS_PROTOCOL_REQUEST_HEADERS: Record<string, Record<string, string>
   },
 }
 
+export const TUS_PROTOCOL_RESPONSE_HEADERS: Record<string, Record<string, string>> = {
+  'tus-v1': {
+    'Tus-Resumable': '1.0.0',
+  },
+  'ietf-draft-03': {},
+  'ietf-draft-05': {},
+}
+
 export const TUS_PROTOCOL_UPLOAD_BODY_CONTENT_TYPES: Record<string, string> = {
   'ietf-draft-05': 'application/partial-upload',
   'tus-v1': 'application/offset+octet-stream',
@@ -2752,6 +2760,10 @@ export function tusRequiresKnownUploadLengthOnOffsetResponse(protocol: string): 
 
 export function tusRequestHeadersForProtocol(protocol: string): Record<string, string> {
   return { ...(TUS_PROTOCOL_REQUEST_HEADERS[protocol] ?? {}) }
+}
+
+export function tusResponseHeadersForProtocol(protocol: string): Record<string, string> {
+  return { ...(TUS_PROTOCOL_RESPONSE_HEADERS[protocol] ?? {}) }
 }
 
 export function tusRequestPlanForOperation({
