@@ -1,5 +1,5 @@
 import { Upload } from 'tus-js-client'
-import { TestHttpStack, waitableFunction } from './helpers/utils.js'
+import { expectTusDefaultRequestHeaders, TestHttpStack, waitableFunction } from './helpers/utils.js'
 
 describe('tus', () => {
   describe('#Upload', () => {
@@ -136,7 +136,7 @@ describe('tus', () => {
         req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads/blargh')
         expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+        expectTusDefaultRequestHeaders(req.requestHeaders)
         expect(req.requestHeaders['Upload-Offset']).toBe('6')
         expect(req.requestHeaders['Upload-Length']).toBe('11')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
@@ -403,7 +403,7 @@ describe('tus', () => {
         const req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads')
         expect(req.method).toBe('POST')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+        expectTusDefaultRequestHeaders(req.requestHeaders)
 
         req.respondWith({
           status: 204,
@@ -437,7 +437,7 @@ describe('tus', () => {
         let req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads/fileid')
         expect(req.method).toBe('HEAD')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+        expectTusDefaultRequestHeaders(req.requestHeaders)
 
         // Respond with a non zero offset to test that the stream that is created
         // for the reader returns the correct data and ignores the data in the stream

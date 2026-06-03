@@ -1,7 +1,12 @@
 import { defaultOptions, Upload } from 'tus-js-client'
 import { tusClientUrlStorageConformanceScenarios } from './generated-protocol-contract.js'
 import { assertUrlStorage, findUrlStorageScenario } from './helpers/assertUrlStorage.js'
-import { TestHttpStack, wait, waitableFunction } from './helpers/utils.js'
+import {
+  expectTusDefaultRequestHeaders,
+  TestHttpStack,
+  wait,
+  waitableFunction,
+} from './helpers/utils.js'
 
 describe('tus', () => {
   beforeEach(() => {
@@ -46,7 +51,7 @@ describe('tus', () => {
       let req = await testStack.nextRequest()
       expect(req.url).toBe('http://tus.io/uploads/resuming')
       expect(req.method).toBe('HEAD')
-      expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+      expectTusDefaultRequestHeaders(req.requestHeaders)
 
       req.respondWith({
         status: 204,
@@ -59,7 +64,7 @@ describe('tus', () => {
       req = await testStack.nextRequest()
       expect(req.url).toBe('http://tus.io/uploads/resuming')
       expect(req.method).toBe('PATCH')
-      expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+      expectTusDefaultRequestHeaders(req.requestHeaders)
       expect(req.requestHeaders['Upload-Offset']).toBe('3')
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
       expect(req.bodySize).toBe(11 - 3)
@@ -173,7 +178,7 @@ describe('tus', () => {
         let req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads/storedUrl')
         expect(req.method).toBe('HEAD')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+        expectTusDefaultRequestHeaders(req.requestHeaders)
 
         req.respondWith({
           status: 204,
@@ -196,7 +201,7 @@ describe('tus', () => {
         req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads/storedUrl')
         expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+        expectTusDefaultRequestHeaders(req.requestHeaders)
         expect(req.requestHeaders['Upload-Offset']).toBe('3')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
         expect(req.bodySize).toBe(11 - 3)
@@ -321,7 +326,7 @@ describe('tus', () => {
         req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads/blargh')
         expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+        expectTusDefaultRequestHeaders(req.requestHeaders)
         expect(req.requestHeaders['Upload-Offset']).toBe('0')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
         expect(req.bodySize).toBe(11)

@@ -1,8 +1,34 @@
+import {
+  TUS_DEFAULT_CLIENT_PROTOCOL,
+  tusRequestHeadersForProtocol,
+  tusResponseHeadersForProtocol,
+} from '../../../lib.esm/protocol_generated.js'
+
 /**
  * Helper function to create a Blob from a string.
  */
 export function getBlob(str) {
   return new Blob(str.split(''))
+}
+
+export function defaultProtocolRequestHeaders() {
+  return tusRequestHeadersForProtocol(TUS_DEFAULT_CLIENT_PROTOCOL)
+}
+
+export function defaultProtocolResponseHeaders() {
+  return tusResponseHeadersForProtocol(TUS_DEFAULT_CLIENT_PROTOCOL)
+}
+
+export function expectTusDefaultRequestHeaders(requestHeaders) {
+  for (const [name, value] of Object.entries(defaultProtocolRequestHeaders())) {
+    expect(requestHeaders[name]).toBe(value)
+  }
+}
+
+export function expectTusDefaultResponseHeaders(responseHeaders) {
+  for (const [name, value] of Object.entries(defaultProtocolResponseHeaders())) {
+    expect(responseHeaders.get(name)).toBe(value)
+  }
 }
 
 /**
@@ -112,13 +138,11 @@ export function validateUploadContent(upload, originalBlob) {
 export function validateUploadMetadata(upload, expectedSize) {
   return fetch(upload.url, {
     method: 'HEAD',
-    headers: {
-      'Tus-Resumable': '1.0.0',
-    },
+    headers: defaultProtocolRequestHeaders(),
   })
     .then((res) => {
       expect(res.status).toBe(200)
-      expect(res.headers.get('tus-resumable')).toBe('1.0.0')
+      expectTusDefaultResponseHeaders(res.headers)
       expect(res.headers.get('upload-offset')).toBe(String(expectedSize))
       expect(res.headers.get('upload-length')).toBe(String(expectedSize))
 

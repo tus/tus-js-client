@@ -6,9 +6,14 @@ import {
   tusManagedUpload,
   tusManagedUploadProofCases,
   tusProtocolOperations,
-  tusWireVersions,
 } from './generated-protocol-contract.js'
-import { getBlob, TestHttpStack, wait, waitableFunction } from './helpers/utils.js'
+import {
+  defaultProtocolResponseHeaders,
+  getBlob,
+  TestHttpStack,
+  wait,
+  waitableFunction,
+} from './helpers/utils.js'
 
 function getProtocolOperation(operationId) {
   const operation = tusProtocolOperations.find((candidate) => candidate.operationId === operationId)
@@ -48,15 +53,6 @@ function getManagedUploadScenario(scenarioId) {
   }
 
   return scenario
-}
-
-function getDefaultWireVersion() {
-  const versions = tusWireVersions.filter((candidate) => candidate.default)
-  if (versions.length !== 1) {
-    throw new Error('Generated TUS protocol contract must have exactly one default wire version')
-  }
-
-  return versions[0].value
 }
 
 function getGeneratedConformanceRuntime() {
@@ -111,7 +107,7 @@ function getOperationResponse(operation, statusCode) {
 function responseHeadersFor(response, overrides = {}) {
   const headers = {}
   const variant = response.headerVariants[0]
-  const defaultWireVersion = getDefaultWireVersion()
+  const defaultResponseHeaders = defaultProtocolResponseHeaders()
   for (const field of variant?.fields ?? []) {
     if (!field.required) continue
     if (overrides[field.displayName] != null) {
@@ -119,8 +115,8 @@ function responseHeadersFor(response, overrides = {}) {
       continue
     }
 
-    if (field.displayName === 'Tus-Resumable') {
-      headers[field.displayName] = defaultWireVersion
+    if (defaultResponseHeaders[field.displayName] != null) {
+      headers[field.displayName] = defaultResponseHeaders[field.displayName]
       continue
     }
 
