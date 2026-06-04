@@ -2044,6 +2044,15 @@ export const tusClientConformanceScenarios = [
       'success',
       'source-close',
     ],
+    eventKinds: [
+      'fingerprint',
+      'upload-url-available',
+      'url-storage-add',
+      'progress',
+      'chunk-complete',
+      'success',
+      'source-close',
+    ],
     eventPolicy: {
       matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
@@ -2142,50 +2151,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'singleUploadLifecycle',
-    events: [
-      {
-        fingerprint: 'contract-single-fingerprint',
-        kind: 'fingerprint',
-        key: 'fingerprint:contract-single-fingerprint',
-      },
-      {
-        kind: 'upload-url-available',
-        key: 'upload-url-available',
-      },
-      {
-        fingerprint: 'contract-single-fingerprint',
-        kind: 'url-storage-add',
-        uploadUrl: 'https://tus.io/uploads/generated-contract',
-        key: 'url-storage-add:contract-single-fingerprint:https://tus.io/uploads/generated-contract',
-      },
-      {
-        bytesSent: 0,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:0:11',
-      },
-      {
-        bytesSent: 11,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:11:11',
-      },
-      {
-        bytesAccepted: 11,
-        bytesTotal: 11,
-        chunkSize: 11,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:11:11:11',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
   },
   {
     behavior: 'creation-with-upload',
@@ -2202,6 +2167,7 @@ export const tusClientConformanceScenarios = [
       'success',
       'source-close',
     ],
+    eventKinds: ['progress', 'upload-url-available', 'success', 'source-close'],
     eventPolicy: {
       matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
@@ -2260,32 +2226,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'creationWithUpload',
-    events: [
-      {
-        bytesSent: 0,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:0:11',
-      },
-      {
-        bytesSent: 11,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:11:11',
-      },
-      {
-        kind: 'upload-url-available',
-        key: 'upload-url-available',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
   },
   {
     behavior: 'creation-with-upload-partial-chunk',
@@ -2309,6 +2249,7 @@ export const tusClientConformanceScenarios = [
       'success',
       'source-close',
     ],
+    eventKinds: ['progress', 'upload-url-available', 'chunk-complete', 'success', 'source-close'],
     eventPolicy: {
       matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
@@ -2440,77 +2381,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'creationWithUploadPartialChunk',
-    events: [
-      {
-        bytesSent: 0,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:0:11',
-      },
-      {
-        bytesSent: 5,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:5:11',
-      },
-      {
-        kind: 'upload-url-available',
-        key: 'upload-url-available',
-      },
-      {
-        bytesAccepted: 5,
-        bytesTotal: 11,
-        chunkSize: 5,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:5:5:11',
-      },
-      {
-        bytesSent: 5,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:5:11',
-      },
-      {
-        bytesSent: 10,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:10:11',
-      },
-      {
-        bytesAccepted: 10,
-        bytesTotal: 11,
-        chunkSize: 5,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:5:10:11',
-      },
-      {
-        bytesSent: 10,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:10:11',
-      },
-      {
-        bytesSent: 11,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:11:11',
-      },
-      {
-        bytesAccepted: 11,
-        bytesTotal: 11,
-        chunkSize: 1,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:1:11:11',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
   },
   {
     behavior: 'creation-with-upload',
@@ -2527,6 +2397,7 @@ export const tusClientConformanceScenarios = [
       'success',
       'source-close',
     ],
+    eventKinds: ['progress', 'upload-url-available', 'success', 'source-close'],
     eventPolicy: {
       matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
@@ -2585,32 +2456,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'ietfDraft05CreationWithUpload',
-    events: [
-      {
-        bytesSent: 0,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:0:11',
-      },
-      {
-        bytesSent: 11,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:11:11',
-      },
-      {
-        kind: 'upload-url-available',
-        key: 'upload-url-available',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
   },
   {
     behavior: 'upload-body-headers',
@@ -2634,6 +2479,7 @@ export const tusClientConformanceScenarios = [
       'success',
       'source-close',
     ],
+    eventKinds: ['upload-url-available', 'progress', 'chunk-complete', 'success', 'source-close'],
     eventPolicy: {
       matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
@@ -2795,77 +2641,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'ietfDraft05ChunkedUploadComplete',
-    events: [
-      {
-        kind: 'upload-url-available',
-        key: 'upload-url-available',
-      },
-      {
-        bytesSent: 0,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:0:11',
-      },
-      {
-        bytesSent: 5,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:5:11',
-      },
-      {
-        bytesAccepted: 5,
-        bytesTotal: 11,
-        chunkSize: 5,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:5:5:11',
-      },
-      {
-        bytesSent: 5,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:5:11',
-      },
-      {
-        bytesSent: 10,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:10:11',
-      },
-      {
-        bytesAccepted: 10,
-        bytesTotal: 11,
-        chunkSize: 5,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:5:10:11',
-      },
-      {
-        bytesSent: 10,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:10:11',
-      },
-      {
-        bytesSent: 11,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:11:11',
-      },
-      {
-        bytesAccepted: 11,
-        bytesTotal: 11,
-        chunkSize: 1,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:1:11:11',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
   },
   {
     behavior: 'upload-body-headers',
@@ -2883,6 +2658,7 @@ export const tusClientConformanceScenarios = [
       'success',
       'source-close',
     ],
+    eventKinds: ['upload-url-available', 'progress', 'chunk-complete', 'success', 'source-close'],
     eventPolicy: {
       matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
@@ -2969,39 +2745,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'ietfDraft03ResumeWithoutKnownLength',
-    events: [
-      {
-        kind: 'upload-url-available',
-        key: 'upload-url-available',
-      },
-      {
-        bytesSent: 5,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:5:11',
-      },
-      {
-        bytesSent: 11,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:11:11',
-      },
-      {
-        bytesAccepted: 11,
-        bytesTotal: 11,
-        chunkSize: 6,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:6:11:11',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
   },
   {
     behavior: 'start-option-validation',
@@ -3013,6 +2756,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
+    eventKinds: [],
     eventPolicy: {
       matching: 'exact',
     },
@@ -3027,7 +2771,6 @@ export const tusClientConformanceScenarios = [
     requests: [],
     retryDecisions: [],
     scenarioId: 'startValidationMissingInput',
-    events: [],
   },
   {
     behavior: 'start-option-validation',
@@ -3039,6 +2782,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
+    eventKinds: [],
     eventPolicy: {
       matching: 'exact',
     },
@@ -3052,7 +2796,6 @@ export const tusClientConformanceScenarios = [
     requests: [],
     retryDecisions: [],
     scenarioId: 'startValidationMissingEndpointOrUploadUrl',
-    events: [],
   },
   {
     behavior: 'start-option-validation',
@@ -3064,6 +2807,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
+    eventKinds: [],
     eventPolicy: {
       matching: 'exact',
     },
@@ -3079,7 +2823,6 @@ export const tusClientConformanceScenarios = [
     requests: [],
     retryDecisions: [],
     scenarioId: 'startValidationUnsupportedProtocol',
-    events: [],
   },
   {
     behavior: 'start-option-validation',
@@ -3091,6 +2834,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
+    eventKinds: [],
     eventPolicy: {
       matching: 'exact',
     },
@@ -3108,7 +2852,6 @@ export const tusClientConformanceScenarios = [
     requests: [],
     retryDecisions: [],
     scenarioId: 'startValidationRetryDelaysNotArray',
-    events: [],
   },
   {
     behavior: 'start-option-validation',
@@ -3120,6 +2863,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
+    eventKinds: [],
     eventPolicy: {
       matching: 'exact',
     },
@@ -3136,7 +2880,6 @@ export const tusClientConformanceScenarios = [
     requests: [],
     retryDecisions: [],
     scenarioId: 'startValidationParallelUploadsWithUploadUrl',
-    events: [],
   },
   {
     behavior: 'start-option-validation',
@@ -3148,6 +2891,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
+    eventKinds: [],
     eventPolicy: {
       matching: 'exact',
     },
@@ -3164,7 +2908,6 @@ export const tusClientConformanceScenarios = [
     requests: [],
     retryDecisions: [],
     scenarioId: 'startValidationParallelUploadsWithUploadSize',
-    events: [],
   },
   {
     behavior: 'start-option-validation',
@@ -3176,6 +2919,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
+    eventKinds: [],
     eventPolicy: {
       matching: 'exact',
     },
@@ -3192,7 +2936,6 @@ export const tusClientConformanceScenarios = [
     requests: [],
     retryDecisions: [],
     scenarioId: 'startValidationParallelUploadsWithDeferredLength',
-    events: [],
   },
   {
     behavior: 'start-option-validation',
@@ -3205,6 +2948,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
+    eventKinds: [],
     eventPolicy: {
       matching: 'exact',
     },
@@ -3221,7 +2965,6 @@ export const tusClientConformanceScenarios = [
     requests: [],
     retryDecisions: [],
     scenarioId: 'startValidationParallelUploadsWithUploadDataDuringCreation',
-    events: [],
   },
   {
     behavior: 'start-option-validation',
@@ -3234,6 +2977,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
+    eventKinds: [],
     eventPolicy: {
       matching: 'exact',
     },
@@ -3254,7 +2998,6 @@ export const tusClientConformanceScenarios = [
     requests: [],
     retryDecisions: [],
     scenarioId: 'startValidationParallelBoundariesWithoutParallelUploads',
-    events: [],
   },
   {
     behavior: 'start-option-validation',
@@ -3267,6 +3010,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
+    eventKinds: [],
     eventPolicy: {
       matching: 'exact',
     },
@@ -3288,7 +3032,6 @@ export const tusClientConformanceScenarios = [
     requests: [],
     retryDecisions: [],
     scenarioId: 'startValidationParallelBoundariesLengthMismatch',
-    events: [],
   },
   {
     behavior: 'detailed-error',
@@ -3301,6 +3044,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
+    eventKinds: [],
     eventPolicy: {
       matching: 'exact',
     },
@@ -3355,7 +3099,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'detailedCreateResponseError',
-    events: [],
   },
   {
     behavior: 'detailed-error',
@@ -3368,6 +3111,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
+    eventKinds: [],
     eventPolicy: {
       matching: 'exact',
     },
@@ -3415,7 +3159,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'detailedCreateRequestError',
-    events: [],
   },
   {
     behavior: 'upload-body-headers',
@@ -3426,6 +3169,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
+    eventKinds: [],
     eventPolicy: {
       matching: 'exact',
     },
@@ -3514,7 +3258,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'uploadBodyHeaders',
-    events: [],
   },
   {
     behavior: 'custom-request-headers',
@@ -3525,6 +3268,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
+    eventKinds: [],
     eventPolicy: {
       matching: 'exact',
     },
@@ -3621,7 +3365,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'customRequestHeaders',
-    events: [],
   },
   {
     behavior: 'request-id-headers',
@@ -3632,6 +3375,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
+    eventKinds: [],
     eventPolicy: {
       matching: 'exact',
     },
@@ -3727,7 +3471,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'requestIdHeaders',
-    events: [],
   },
   {
     behavior: 'resume-from-previous-upload',
@@ -3746,6 +3489,16 @@ export const tusClientConformanceScenarios = [
       'progress:11:11',
       'chunk-complete:6:11:11',
       'url-storage-remove:tus::contract-resume-fingerprint::1337',
+      'success',
+      'source-close',
+    ],
+    eventKinds: [
+      'fingerprint',
+      'url-storage-find',
+      'upload-url-available',
+      'progress',
+      'chunk-complete',
+      'url-storage-remove',
       'success',
       'source-close',
     ],
@@ -3851,60 +3604,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'resumeFromPreviousUpload',
-    events: [
-      {
-        fingerprint: 'contract-resume-fingerprint',
-        kind: 'fingerprint',
-        key: 'fingerprint:contract-resume-fingerprint',
-      },
-      {
-        count: 1,
-        fingerprint: 'contract-resume-fingerprint',
-        kind: 'url-storage-find',
-        key: 'url-storage-find:contract-resume-fingerprint:1',
-      },
-      {
-        fingerprint: 'contract-resume-fingerprint',
-        kind: 'fingerprint',
-        key: 'fingerprint:contract-resume-fingerprint',
-      },
-      {
-        kind: 'upload-url-available',
-        key: 'upload-url-available',
-      },
-      {
-        bytesSent: 5,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:5:11',
-      },
-      {
-        bytesSent: 11,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:11:11',
-      },
-      {
-        bytesAccepted: 11,
-        bytesTotal: 11,
-        chunkSize: 6,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:6:11:11',
-      },
-      {
-        kind: 'url-storage-remove',
-        urlStorageKey: 'tus::contract-resume-fingerprint::1337',
-        key: 'url-storage-remove:tus::contract-resume-fingerprint::1337',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
   },
   {
     behavior: 'relative-location-resolution',
@@ -3922,6 +3621,7 @@ export const tusClientConformanceScenarios = [
       'success',
       'source-close',
     ],
+    eventKinds: ['upload-url-available', 'progress', 'chunk-complete', 'success', 'source-close'],
     eventPolicy: {
       matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
@@ -4012,39 +3712,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'relativeLocationResolution',
-    events: [
-      {
-        kind: 'upload-url-available',
-        key: 'upload-url-available',
-      },
-      {
-        bytesSent: 0,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:0:11',
-      },
-      {
-        bytesSent: 11,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:11:11',
-      },
-      {
-        bytesAccepted: 11,
-        bytesTotal: 11,
-        chunkSize: 11,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:11:11:11',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
   },
   {
     behavior: 'array-buffer-input',
@@ -4055,6 +3722,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[], [], []],
     eventKeyExtraPrefixes: [],
     eventKeys: ['source-open:array-buffer:11', 'success', 'source-close'],
+    eventKinds: ['source-open', 'success', 'source-close'],
     eventPolicy: {
       matching: 'exact',
     },
@@ -4143,22 +3811,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'arrayBufferInput',
-    events: [
-      {
-        inputKind: 'array-buffer',
-        kind: 'source-open',
-        size: 11,
-        key: 'source-open:array-buffer:11',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
   },
   {
     behavior: 'array-buffer-view-input',
@@ -4169,6 +3821,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[], [], []],
     eventKeyExtraPrefixes: [],
     eventKeys: ['source-open:array-buffer-view:11', 'success', 'source-close'],
+    eventKinds: ['source-open', 'success', 'source-close'],
     eventPolicy: {
       matching: 'exact',
     },
@@ -4257,22 +3910,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'arrayBufferViewInput',
-    events: [
-      {
-        inputKind: 'array-buffer-view',
-        kind: 'source-open',
-        size: 11,
-        key: 'source-open:array-buffer-view:11',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
   },
   {
     behavior: 'web-readable-stream-input',
@@ -4283,6 +3920,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[], [], []],
     eventKeyExtraPrefixes: [],
     eventKeys: ['source-open:web-readable-stream:null', 'success', 'source-close'],
+    eventKinds: ['source-open', 'success', 'source-close'],
     eventPolicy: {
       matching: 'exact',
     },
@@ -4374,22 +4012,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'webReadableStreamInput',
-    events: [
-      {
-        inputKind: 'web-readable-stream',
-        kind: 'source-open',
-        size: null,
-        key: 'source-open:web-readable-stream:null',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
   },
   {
     behavior: 'node-readable-stream-input',
@@ -4400,6 +4022,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[], [], []],
     eventKeyExtraPrefixes: [],
     eventKeys: ['source-open:node-readable-stream:null', 'success', 'source-close'],
+    eventKinds: ['source-open', 'success', 'source-close'],
     eventPolicy: {
       matching: 'exact',
     },
@@ -4491,22 +4114,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'nodeReadableStreamInput',
-    events: [
-      {
-        inputKind: 'node-readable-stream',
-        kind: 'source-open',
-        size: null,
-        key: 'source-open:node-readable-stream:null',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
     runtimes: ['node'],
   },
   {
@@ -4518,6 +4125,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[], [], []],
     eventKeyExtraPrefixes: [],
     eventKeys: ['source-open:node-path-reference:11', 'success', 'source-close'],
+    eventKinds: ['source-open', 'success', 'source-close'],
     eventPolicy: {
       matching: 'exact',
     },
@@ -4606,22 +4214,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'nodePathInput',
-    events: [
-      {
-        inputKind: 'node-path-reference',
-        kind: 'source-open',
-        size: 11,
-        key: 'source-open:node-path-reference:11',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
     runtimes: ['node'],
   },
   {
@@ -4640,6 +4232,7 @@ export const tusClientConformanceScenarios = [
       'success',
       'source-close',
     ],
+    eventKinds: ['upload-url-available', 'progress', 'chunk-complete', 'success', 'source-close'],
     eventPolicy: {
       deferredLengthBytesTotal: 'allow-known-total-before-declaration',
       matching: 'exact-except-allowed-extra-events',
@@ -4734,39 +4327,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'deferredLengthUpload',
-    events: [
-      {
-        kind: 'upload-url-available',
-        key: 'upload-url-available',
-      },
-      {
-        bytesSent: 0,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:0:11',
-      },
-      {
-        bytesSent: 11,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:11:11',
-      },
-      {
-        bytesAccepted: 11,
-        bytesTotal: 11,
-        chunkSize: 11,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:11:11:11',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
   },
   {
     behavior: 'deferred-length-upload',
@@ -4803,6 +4363,7 @@ export const tusClientConformanceScenarios = [
       'success',
       'source-close',
     ],
+    eventKinds: ['upload-url-available', 'progress', 'chunk-complete', 'success', 'source-close'],
     eventPolicy: {
       deferredLengthBytesTotal: 'allow-known-total-before-declaration',
       matching: 'exact-except-allowed-extra-events',
@@ -4969,77 +4530,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'deferredLengthChunkedUpload',
-    events: [
-      {
-        kind: 'upload-url-available',
-        key: 'upload-url-available',
-      },
-      {
-        bytesSent: 0,
-        bytesTotal: null,
-        kind: 'progress',
-        key: 'progress:0:null',
-      },
-      {
-        bytesSent: 5,
-        bytesTotal: null,
-        kind: 'progress',
-        key: 'progress:5:null',
-      },
-      {
-        bytesAccepted: 5,
-        bytesTotal: null,
-        chunkSize: 5,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:5:5:null',
-      },
-      {
-        bytesSent: 5,
-        bytesTotal: null,
-        kind: 'progress',
-        key: 'progress:5:null',
-      },
-      {
-        bytesSent: 10,
-        bytesTotal: null,
-        kind: 'progress',
-        key: 'progress:10:null',
-      },
-      {
-        bytesAccepted: 10,
-        bytesTotal: null,
-        chunkSize: 5,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:5:10:null',
-      },
-      {
-        bytesSent: 10,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:10:11',
-      },
-      {
-        bytesSent: 11,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:11:11',
-      },
-      {
-        bytesAccepted: 11,
-        bytesTotal: 11,
-        chunkSize: 1,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:1:11:11',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
   },
   {
     behavior: 'override-patch-method',
@@ -5050,6 +4540,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
+    eventKinds: [],
     eventPolicy: {
       matching: 'exact',
     },
@@ -5138,7 +4629,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'overridePatchMethod',
-    events: [],
   },
   {
     behavior: 'parallel-upload-concat',
@@ -5154,6 +4644,7 @@ export const tusClientConformanceScenarios = [
       'progress:11:11',
       'chunk-complete:6:11:11',
     ],
+    eventKinds: ['progress', 'chunk-complete'],
     eventPolicy: {
       matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
@@ -5381,34 +4872,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'parallelUploadConcat',
-    events: [
-      {
-        bytesSent: 5,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:5:11',
-      },
-      {
-        bytesAccepted: 5,
-        bytesTotal: 11,
-        chunkSize: 5,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:5:5:11',
-      },
-      {
-        bytesSent: 11,
-        bytesTotal: 11,
-        kind: 'progress',
-        key: 'progress:11:11',
-      },
-      {
-        bytesAccepted: 11,
-        bytesTotal: 11,
-        chunkSize: 6,
-        kind: 'chunk-complete',
-        key: 'chunk-complete:6:11:11',
-      },
-    ],
   },
   {
     behavior: 'parallel-upload-abort-cleanup',
@@ -5418,6 +4881,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[]],
     eventKeyExtraPrefixes: [],
     eventKeys: ['request-abort:3'],
+    eventKinds: ['request-abort'],
     eventPolicy: {
       matching: 'exact',
     },
@@ -5665,13 +5129,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'parallelUploadAbortCleanup',
-    events: [
-      {
-        kind: 'request-abort',
-        requestIndex: 3,
-        key: 'request-abort:3',
-      },
-    ],
   },
   {
     behavior: 'retry-patch-after-offset-recovery',
@@ -5687,6 +5144,7 @@ export const tusClientConformanceScenarios = [
       'should-retry:0:true',
       'retry-schedule:0',
     ],
+    eventKinds: ['should-retry', 'retry-schedule'],
     eventPolicy: {
       matching: 'exact',
     },
@@ -5922,30 +5380,6 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'retryPatchAfterOffsetRecovery',
-    events: [
-      {
-        decision: true,
-        kind: 'should-retry',
-        retryAttempt: 0,
-        key: 'should-retry:0:true',
-      },
-      {
-        delay: 0,
-        kind: 'retry-schedule',
-        key: 'retry-schedule:0',
-      },
-      {
-        decision: true,
-        kind: 'should-retry',
-        retryAttempt: 0,
-        key: 'should-retry:0:true',
-      },
-      {
-        delay: 0,
-        kind: 'retry-schedule',
-        key: 'retry-schedule:0',
-      },
-    ],
   },
   {
     behavior: 'request-lifecycle-hooks',
@@ -5956,6 +5390,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[], [], [], []],
     eventKeyExtraPrefixes: [],
     eventKeys: ['before-request:0', 'after-response:0', 'success', 'source-close'],
+    eventKinds: ['before-request', 'after-response', 'success', 'source-close'],
     eventPolicy: {
       matching: 'exact',
     },
@@ -6006,26 +5441,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'requestLifecycleHooks',
-    events: [
-      {
-        kind: 'before-request',
-        requestIndex: 0,
-        key: 'before-request:0',
-      },
-      {
-        kind: 'after-response',
-        requestIndex: 0,
-        key: 'after-response:0',
-      },
-      {
-        kind: 'success',
-        key: 'success',
-      },
-      {
-        kind: 'source-close',
-        key: 'source-close',
-      },
-    ],
   },
   {
     behavior: 'abort-upload',
@@ -6035,6 +5450,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[]],
     eventKeyExtraPrefixes: [],
     eventKeys: ['request-abort:0'],
+    eventKinds: ['request-abort'],
     eventPolicy: {
       matching: 'exact',
     },
@@ -6083,13 +5499,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'abortUpload',
-    events: [
-      {
-        kind: 'request-abort',
-        requestIndex: 0,
-        key: 'request-abort:0',
-      },
-    ],
   },
   {
     behavior: 'abort-upload-after-stored-url',
@@ -6100,6 +5509,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[]],
     eventKeyExtraPrefixes: [],
     eventKeys: ['request-abort:1'],
+    eventKinds: ['request-abort'],
     eventPolicy: {
       matching: 'exact',
     },
@@ -6227,13 +5637,6 @@ export const tusClientConformanceScenarios = [
     ],
     retryDecisions: [],
     scenarioId: 'abortUploadAfterStoredUrl',
-    events: [
-      {
-        kind: 'request-abort',
-        requestIndex: 1,
-        key: 'request-abort:1',
-      },
-    ],
   },
   {
     behavior: 'terminate-with-retry',
@@ -6244,6 +5647,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[], []],
     eventKeyExtraPrefixes: [],
     eventKeys: ['should-retry:0:true', 'retry-schedule:0'],
+    eventKinds: ['should-retry', 'retry-schedule'],
     eventPolicy: {
       matching: 'exact',
     },
@@ -6403,19 +5807,6 @@ export const tusClientConformanceScenarios = [
       },
     ],
     scenarioId: 'terminateWithRetry',
-    events: [
-      {
-        decision: true,
-        kind: 'should-retry',
-        retryAttempt: 0,
-        key: 'should-retry:0:true',
-      },
-      {
-        delay: 0,
-        kind: 'retry-schedule',
-        key: 'retry-schedule:0',
-      },
-    ],
   },
 ]
 

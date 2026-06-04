@@ -266,7 +266,7 @@ function makeEventRecordingUrlStorage(storedUpload, observedEvents) {
 }
 
 function scenarioWantsEvent(scenario, kind) {
-  return scenario.events.some((event) => event.kind === kind)
+  return scenario.eventKinds.includes(kind)
 }
 
 function scenarioExecutionActions(scenario, phase) {
