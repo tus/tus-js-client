@@ -2058,6 +2058,7 @@ export const tusClientConformanceScenarios = [
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
+    executionActionPhases: [],
     featureId: 'singleUploadLifecycle',
     input: {
       content: 'hello world',
@@ -2173,6 +2174,7 @@ export const tusClientConformanceScenarios = [
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
+    executionActionPhases: [],
     featureId: 'creationWithUpload',
     input: {
       content: 'hello world',
@@ -2255,6 +2257,7 @@ export const tusClientConformanceScenarios = [
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
+    executionActionPhases: [],
     featureId: 'creationWithUpload',
     input: {
       chunkSize: 5,
@@ -2403,6 +2406,7 @@ export const tusClientConformanceScenarios = [
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
+    executionActionPhases: [],
     featureId: 'protocolVersionSelection',
     input: {
       content: 'hello world',
@@ -2485,6 +2489,7 @@ export const tusClientConformanceScenarios = [
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
+    executionActionPhases: [],
     featureId: 'protocolVersionSelection',
     input: {
       chunkSize: 5,
@@ -2664,6 +2669,7 @@ export const tusClientConformanceScenarios = [
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
+    executionActionPhases: [],
     featureId: 'protocolVersionSelection',
     input: {
       chunkSize: 6,
@@ -2759,6 +2765,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'startOptionValidation',
     input: {
       content: '',
@@ -2784,6 +2791,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2808,6 +2816,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2834,6 +2843,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2862,6 +2872,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2889,6 +2900,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2917,6 +2929,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2945,6 +2958,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2973,6 +2987,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -3005,6 +3020,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -3038,6 +3054,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'detailedErrors',
     input: {
       content: 'hello world',
@@ -3104,6 +3121,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'detailedErrors',
     input: {
       content: 'hello world',
@@ -3162,6 +3180,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'uploadBodyHeaders',
     input: {
       content: 'hello world',
@@ -3261,6 +3280,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'customRequestHeaders',
     input: {
       content: 'hello world',
@@ -3368,6 +3388,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'requestIdHeaders',
     input: {
       addRequestId: true,
@@ -3496,15 +3517,18 @@ export const tusClientConformanceScenarios = [
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
-    execution: {
-      beforeStart: [
-        {
-          expectedPreviousUploadCount: 1,
-          kind: 'resume-from-previous-upload',
-          selectedPreviousUploadIndex: 0,
-        },
-      ],
-    },
+    executionActionPhases: [
+      {
+        actions: [
+          {
+            expectedPreviousUploadCount: 1,
+            kind: 'resume-from-previous-upload',
+            selectedPreviousUploadIndex: 0,
+          },
+        ],
+        phase: 'beforeStart',
+      },
+    ],
     featureId: 'resumeUpload',
     input: {
       content: 'hello world',
@@ -3616,6 +3640,7 @@ export const tusClientConformanceScenarios = [
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
+    executionActionPhases: [],
     featureId: 'relativeLocationResolution',
     input: {
       content: 'hello world',
@@ -3715,6 +3740,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'inputSources',
     input: {
       content: 'hello world',
@@ -3814,6 +3840,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'inputSources',
     input: {
       content: 'hello world',
@@ -3913,6 +3940,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'inputSources',
     input: {
       chunkSize: 100,
@@ -4015,6 +4043,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'inputSources',
     input: {
       chunkSize: 100,
@@ -4118,6 +4147,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'inputSources',
     input: {
       content: 'hello world',
@@ -4228,6 +4258,7 @@ export const tusClientConformanceScenarios = [
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
+    executionActionPhases: [],
     featureId: 'deferredLengthUpload',
     input: {
       chunkSize: 100,
@@ -4359,6 +4390,7 @@ export const tusClientConformanceScenarios = [
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
+    executionActionPhases: [],
     featureId: 'deferredLengthUpload',
     input: {
       chunkSize: 5,
@@ -4533,6 +4565,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'overridePatchMethod',
     input: {
       content: 'hello world',
@@ -4639,17 +4672,20 @@ export const tusClientConformanceScenarios = [
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
-    execution: {
-      serverRequestGates: [
-        {
-          gateId: 'parallel-patches',
-          heldRequestIndexes: [2, 3],
-          kind: 'release-after-all-started',
-          releaseAfterRequestIndexes: [2, 3],
-          timeoutMs: 2000,
-        },
-      ],
-    },
+    executionActionPhases: [
+      {
+        actions: [
+          {
+            gateId: 'parallel-patches',
+            heldRequestIndexes: [2, 3],
+            kind: 'release-after-all-started',
+            releaseAfterRequestIndexes: [2, 3],
+            timeoutMs: 2000,
+          },
+        ],
+        phase: 'serverRequestGates',
+      },
+    ],
     featureId: 'parallelUploadConcat',
     input: {
       content: 'hello world',
@@ -4875,17 +4911,20 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
-    execution: {
-      serverRequestGates: [
-        {
-          gateId: 'parallel-cleanup-patches',
-          heldRequestIndexes: [2, 3],
-          kind: 'release-after-all-started',
-          releaseAfterRequestIndexes: [2, 3],
-          timeoutMs: 2000,
-        },
-      ],
-    },
+    executionActionPhases: [
+      {
+        actions: [
+          {
+            gateId: 'parallel-cleanup-patches',
+            heldRequestIndexes: [2, 3],
+            kind: 'release-after-all-started',
+            releaseAfterRequestIndexes: [2, 3],
+            timeoutMs: 2000,
+          },
+        ],
+        phase: 'serverRequestGates',
+      },
+    ],
     featureId: 'parallelUploadConcat',
     input: {
       content: 'hello world',
@@ -5138,6 +5177,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'retryOffsetRecovery',
     input: {
       content: 'hello world',
@@ -5384,6 +5424,7 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
+    executionActionPhases: [],
     featureId: 'requestLifecycleHooks',
     input: {
       content: 'hello world',
@@ -5445,14 +5486,17 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
-    execution: {
-      onRequestStart: [
-        {
-          kind: 'cancel-upload',
-          requestIndex: 0,
-        },
-      ],
-    },
+    executionActionPhases: [
+      {
+        actions: [
+          {
+            kind: 'cancel-upload',
+            requestIndex: 0,
+          },
+        ],
+        phase: 'onRequestStart',
+      },
+    ],
     featureId: 'abortUpload',
     input: {
       content: 'hello world',
@@ -5504,14 +5548,17 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
-    execution: {
-      onRequestStart: [
-        {
-          kind: 'cancel-upload',
-          requestIndex: 1,
-        },
-      ],
-    },
+    executionActionPhases: [
+      {
+        actions: [
+          {
+            kind: 'cancel-upload',
+            requestIndex: 1,
+          },
+        ],
+        phase: 'onRequestStart',
+      },
+    ],
     featureId: 'abortUpload',
     input: {
       content: 'hello world',
@@ -5642,14 +5689,17 @@ export const tusClientConformanceScenarios = [
     eventPolicy: {
       matching: 'exact',
     },
-    execution: {
-      onChunkComplete: [
-        {
-          kind: 'abort-upload',
-          terminateUpload: true,
-        },
-      ],
-    },
+    executionActionPhases: [
+      {
+        actions: [
+          {
+            kind: 'abort-upload',
+            terminateUpload: true,
+          },
+        ],
+        phase: 'onChunkComplete',
+      },
+    ],
     featureId: 'terminateUpload',
     input: {
       chunkSize: 5,

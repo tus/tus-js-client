@@ -270,7 +270,9 @@ function scenarioWantsEvent(scenario, kind) {
 }
 
 function scenarioExecutionActions(scenario, phase) {
-  return scenario.execution?.[phase] ?? []
+  return (
+    scenario.executionActionPhases.find((candidate) => candidate.phase === phase)?.actions ?? []
+  )
 }
 
 function makeEventRecordingFileReader(fileReader, scenario, observedEvents) {
