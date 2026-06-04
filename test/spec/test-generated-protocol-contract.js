@@ -412,7 +412,7 @@ function expectedUrlForScenarioRequest(scenario, request) {
   const uploadUrl =
     scenario.input.uploadUrl ??
     scenario.input.storedUpload?.uploadUrl ??
-    scenario.completion.uploadUrl
+    scenario.completionUploadUrl
   if (!uploadUrl) {
     throw new Error(`Generated scenario ${scenario.scenarioId} has no upload URL expectation`)
   }
@@ -749,7 +749,7 @@ async function runGeneratedConformanceScenario(scenario) {
       }
     }
 
-    if (scenario.completion.kind === 'aborted') {
+    if (scenario.completionKind === 'aborted') {
       await Promise.all(abortPromises)
       expect(onSuccess).not.toHaveBeenCalled()
       expect(onError).not.toHaveBeenCalled()
@@ -757,18 +757,18 @@ async function runGeneratedConformanceScenario(scenario) {
       return
     }
 
-    if (scenario.completion.kind === 'terminated') {
+    if (scenario.completionKind === 'terminated') {
       await terminatePromise()
-      expect(upload.url).toBe(scenario.completion.uploadUrl)
+      expect(upload.url).toBe(scenario.completionUploadUrl)
       expect(onSuccess).not.toHaveBeenCalled()
       expect(onError).not.toHaveBeenCalled()
       expectScenarioEvents(scenario, observedEvents)
       return
     }
 
-    if (scenario.completion.kind === 'error') {
+    if (scenario.completionKind === 'error') {
       const err = await onError.toBeCalled()
-      expect(err.message).toBe(scenario.completion.message)
+      expect(err.message).toBe(scenario.completionMessage)
       expect(onSuccess).not.toHaveBeenCalled()
       expect(await Promise.race([testStack.nextRequest(), wait(0)])).toBe('timed out')
       expectScenarioEvents(scenario, observedEvents)
@@ -776,7 +776,7 @@ async function runGeneratedConformanceScenario(scenario) {
     }
 
     await onSuccess.toBeCalled()
-    expect(upload.url).toBe(scenario.completion.uploadUrl)
+    expect(upload.url).toBe(scenario.completionUploadUrl)
     expect(onError).not.toHaveBeenCalled()
     expectScenarioEvents(scenario, observedEvents)
   } finally {
@@ -802,7 +802,7 @@ describe('generated TUS protocol contract', () => {
       const feature = getClientFeature(proofCase.featureId)
 
       expect(scenario.behavior).toBe(proofCase.behavior)
-      expect(scenario.completion.kind).toBe(proofCase.completionKind)
+      expect(scenario.completionKind).toBe(proofCase.completionKind)
       expect(scenario.featureId).toBe(proofCase.featureId)
       expect(feature.conformance.scenarioIds).toContain(scenario.scenarioId)
       expect(scenario.operationIds).toEqual(proofCase.operationIds)

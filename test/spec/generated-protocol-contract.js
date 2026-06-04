@@ -2028,10 +2028,10 @@ export const tusManagedUploadProofCases = [
 export const tusClientConformanceScenarios = [
   {
     behavior: 'single-upload-lifecycle',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/generated-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/generated-contract',
     eventKeyAlternativeGroups: [[], [], [], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventKeys: [
@@ -2154,10 +2154,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'creation-with-upload',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/creation-with-upload-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/creation-with-upload-contract',
     eventKeyAlternativeGroups: [[], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventKeys: [
@@ -2229,10 +2229,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'creation-with-upload-partial-chunk',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/creation-with-upload-partial-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/creation-with-upload-partial-contract',
     eventKeyAlternativeGroups: [[], [], [], [], [], [], [], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventKeys: [
@@ -2384,10 +2384,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'creation-with-upload',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/ietf-draft-05-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/ietf-draft-05-contract',
     eventKeyAlternativeGroups: [[], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventKeys: [
@@ -2459,10 +2459,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'upload-body-headers',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/ietf-draft-05-chunked-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/ietf-draft-05-chunked-contract',
     eventKeyAlternativeGroups: [[], [], [], [], [], [], [], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventKeys: [
@@ -2644,10 +2644,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'upload-body-headers',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/ietf-draft-03-resume-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/ietf-draft-03-resume-contract',
     eventKeyAlternativeGroups: [[], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventKeys: [
@@ -2748,11 +2748,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'start-option-validation',
-    completion: {
-      kind: 'error',
-      message: 'tus: no file or stream to upload provided',
-      reason: 'missingInput',
-    },
+    completionKind: 'error',
+    completionMessage: 'tus: no file or stream to upload provided',
+    completionReason: 'missingInput',
+    completionUploadUrl: null,
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
@@ -2774,11 +2773,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'start-option-validation',
-    completion: {
-      kind: 'error',
-      message: 'tus: neither an endpoint or an upload URL is provided',
-      reason: 'missingEndpointOrUploadUrl',
-    },
+    completionKind: 'error',
+    completionMessage: 'tus: neither an endpoint or an upload URL is provided',
+    completionReason: 'missingEndpointOrUploadUrl',
+    completionUploadUrl: null,
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
@@ -2799,11 +2797,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'start-option-validation',
-    completion: {
-      kind: 'error',
-      message: 'tus: unsupported protocol tus-v9',
-      reason: 'unsupportedProtocol',
-    },
+    completionKind: 'error',
+    completionMessage: 'tus: unsupported protocol tus-v9',
+    completionReason: 'unsupportedProtocol',
+    completionUploadUrl: null,
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
@@ -2826,11 +2823,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'start-option-validation',
-    completion: {
-      kind: 'error',
-      message: 'tus: the `retryDelays` option must either be an array or null',
-      reason: 'retryDelaysNotArray',
-    },
+    completionKind: 'error',
+    completionMessage: 'tus: the `retryDelays` option must either be an array or null',
+    completionReason: 'retryDelaysNotArray',
+    completionUploadUrl: null,
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
@@ -2855,11 +2851,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'start-option-validation',
-    completion: {
-      kind: 'error',
-      message: 'tus: cannot use the `uploadUrl` option when parallelUploads is enabled',
-      reason: 'parallelUploadsWithUploadUrl',
-    },
+    completionKind: 'error',
+    completionMessage: 'tus: cannot use the `uploadUrl` option when parallelUploads is enabled',
+    completionReason: 'parallelUploadsWithUploadUrl',
+    completionUploadUrl: null,
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
@@ -2883,11 +2878,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'start-option-validation',
-    completion: {
-      kind: 'error',
-      message: 'tus: cannot use the `uploadSize` option when parallelUploads is enabled',
-      reason: 'parallelUploadsWithUploadSize',
-    },
+    completionKind: 'error',
+    completionMessage: 'tus: cannot use the `uploadSize` option when parallelUploads is enabled',
+    completionReason: 'parallelUploadsWithUploadSize',
+    completionUploadUrl: null,
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
@@ -2911,11 +2905,11 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'start-option-validation',
-    completion: {
-      kind: 'error',
-      message: 'tus: cannot use the `uploadLengthDeferred` option when parallelUploads is enabled',
-      reason: 'parallelUploadsWithDeferredLength',
-    },
+    completionKind: 'error',
+    completionMessage:
+      'tus: cannot use the `uploadLengthDeferred` option when parallelUploads is enabled',
+    completionReason: 'parallelUploadsWithDeferredLength',
+    completionUploadUrl: null,
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
@@ -2939,12 +2933,11 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'start-option-validation',
-    completion: {
-      kind: 'error',
-      message:
-        'tus: cannot use the `uploadDataDuringCreation` option when parallelUploads is enabled',
-      reason: 'parallelUploadsWithUploadDataDuringCreation',
-    },
+    completionKind: 'error',
+    completionMessage:
+      'tus: cannot use the `uploadDataDuringCreation` option when parallelUploads is enabled',
+    completionReason: 'parallelUploadsWithUploadDataDuringCreation',
+    completionUploadUrl: null,
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
@@ -2968,12 +2961,11 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'start-option-validation',
-    completion: {
-      kind: 'error',
-      message:
-        'tus: cannot use the `parallelUploadBoundaries` option when `parallelUploads` is disabled',
-      reason: 'parallelBoundariesWithoutParallelUploads',
-    },
+    completionKind: 'error',
+    completionMessage:
+      'tus: cannot use the `parallelUploadBoundaries` option when `parallelUploads` is disabled',
+    completionReason: 'parallelBoundariesWithoutParallelUploads',
+    completionUploadUrl: null,
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
@@ -3001,12 +2993,11 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'start-option-validation',
-    completion: {
-      kind: 'error',
-      message:
-        'tus: the `parallelUploadBoundaries` must have the same length as the value of `parallelUploads`',
-      reason: 'parallelBoundariesLengthMismatch',
-    },
+    completionKind: 'error',
+    completionMessage:
+      'tus: the `parallelUploadBoundaries` must have the same length as the value of `parallelUploads`',
+    completionReason: 'parallelBoundariesLengthMismatch',
+    completionUploadUrl: null,
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
@@ -3035,12 +3026,11 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'detailed-error',
-    completion: {
-      kind: 'error',
-      message:
-        'tus: unexpected response while creating upload, originated from request (method: POST, url: https://tus.io/uploads, response code: 500, response text: server_error, request id: contract-request-id)',
-      reason: 'unexpectedCreateResponse',
-    },
+    completionKind: 'error',
+    completionMessage:
+      'tus: unexpected response while creating upload, originated from request (method: POST, url: https://tus.io/uploads, response code: 500, response text: server_error, request id: contract-request-id)',
+    completionReason: 'unexpectedCreateResponse',
+    completionUploadUrl: null,
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
@@ -3102,12 +3092,11 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'detailed-error',
-    completion: {
-      kind: 'error',
-      message:
-        'tus: failed to create upload, caused by Error: socket down, originated from request (method: POST, url: https://tus.io/uploads, response code: n/a, response text: n/a, request id: contract-request-id)',
-      reason: 'createUploadRequestFailed',
-    },
+    completionKind: 'error',
+    completionMessage:
+      'tus: failed to create upload, caused by Error: socket down, originated from request (method: POST, url: https://tus.io/uploads, response code: n/a, response text: n/a, request id: contract-request-id)',
+    completionReason: 'createUploadRequestFailed',
+    completionUploadUrl: null,
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
@@ -3162,10 +3151,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'upload-body-headers',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/upload-body-headers-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/upload-body-headers-contract',
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
@@ -3261,10 +3250,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'custom-request-headers',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/custom-headers-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/custom-headers-contract',
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
@@ -3368,10 +3357,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'request-id-headers',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/request-id-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/request-id-contract',
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
@@ -3474,10 +3463,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'resume-from-previous-upload',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/resume-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/resume-contract',
     eventKeyAlternativeGroups: [[], [], [], [], [], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventKeys: [
@@ -3607,10 +3596,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'relative-location-resolution',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/files/relative-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/files/relative-contract',
     eventKeyAlternativeGroups: [[], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventKeys: [
@@ -3715,10 +3704,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'array-buffer-input',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/array-buffer-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/array-buffer-contract',
     eventKeyAlternativeGroups: [[], [], []],
     eventKeyExtraPrefixes: [],
     eventKeys: ['source-open:array-buffer:11', 'success', 'source-close'],
@@ -3814,10 +3803,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'array-buffer-view-input',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/array-buffer-view-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/array-buffer-view-contract',
     eventKeyAlternativeGroups: [[], [], []],
     eventKeyExtraPrefixes: [],
     eventKeys: ['source-open:array-buffer-view:11', 'success', 'source-close'],
@@ -3913,10 +3902,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'web-readable-stream-input',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/web-stream-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/web-stream-contract',
     eventKeyAlternativeGroups: [[], [], []],
     eventKeyExtraPrefixes: [],
     eventKeys: ['source-open:web-readable-stream:null', 'success', 'source-close'],
@@ -4015,10 +4004,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'node-readable-stream-input',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/node-stream-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/node-stream-contract',
     eventKeyAlternativeGroups: [[], [], []],
     eventKeyExtraPrefixes: [],
     eventKeys: ['source-open:node-readable-stream:null', 'success', 'source-close'],
@@ -4118,10 +4107,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'node-path-input',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/node-path-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/node-path-contract',
     eventKeyAlternativeGroups: [[], [], []],
     eventKeyExtraPrefixes: [],
     eventKeys: ['source-open:node-path-reference:11', 'success', 'source-close'],
@@ -4218,10 +4207,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'deferred-length-upload',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/deferred-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/deferred-contract',
     eventKeyAlternativeGroups: [[], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventKeys: [
@@ -4330,10 +4319,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'deferred-length-upload',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/deferred-chunked-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/deferred-chunked-contract',
     eventKeyAlternativeGroups: [
       [],
       ['progress:0:11'],
@@ -4533,10 +4522,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'override-patch-method',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/override-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/override-contract',
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
     eventKeys: [],
@@ -4632,10 +4621,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'parallel-upload-concat',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/parallel-final',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/parallel-final',
     eventKeyAlternativeGroups: [[], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventKeys: [
@@ -4875,9 +4864,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'parallel-upload-abort-cleanup',
-    completion: {
-      kind: 'aborted',
-    },
+    completionKind: 'aborted',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: null,
     eventKeyAlternativeGroups: [[]],
     eventKeyExtraPrefixes: [],
     eventKeys: ['request-abort:3'],
@@ -5132,10 +5122,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'retry-patch-after-offset-recovery',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/retry-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/retry-contract',
     eventKeyAlternativeGroups: [[], [], [], []],
     eventKeyExtraPrefixes: [],
     eventKeys: [
@@ -5383,10 +5373,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'request-lifecycle-hooks',
-    completion: {
-      kind: 'success',
-      uploadUrl: 'https://tus.io/uploads/request-hooks-contract',
-    },
+    completionKind: 'success',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/request-hooks-contract',
     eventKeyAlternativeGroups: [[], [], [], []],
     eventKeyExtraPrefixes: [],
     eventKeys: ['before-request:0', 'after-response:0', 'success', 'source-close'],
@@ -5444,9 +5434,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'abort-upload',
-    completion: {
-      kind: 'aborted',
-    },
+    completionKind: 'aborted',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: null,
     eventKeyAlternativeGroups: [[]],
     eventKeyExtraPrefixes: [],
     eventKeys: ['request-abort:0'],
@@ -5502,10 +5493,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'abort-upload-after-stored-url',
-    completion: {
-      kind: 'aborted',
-      uploadUrl: 'https://tus.io/uploads/abort-terminate-contract',
-    },
+    completionKind: 'aborted',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/abort-terminate-contract',
     eventKeyAlternativeGroups: [[]],
     eventKeyExtraPrefixes: [],
     eventKeys: ['request-abort:1'],
@@ -5640,10 +5631,10 @@ export const tusClientConformanceScenarios = [
   },
   {
     behavior: 'terminate-with-retry',
-    completion: {
-      kind: 'terminated',
-      uploadUrl: 'https://tus.io/uploads/terminate-contract',
-    },
+    completionKind: 'terminated',
+    completionMessage: null,
+    completionReason: null,
+    completionUploadUrl: 'https://tus.io/uploads/terminate-contract',
     eventKeyAlternativeGroups: [[], []],
     eventKeyExtraPrefixes: [],
     eventKeys: ['should-retry:0:true', 'retry-schedule:0'],
