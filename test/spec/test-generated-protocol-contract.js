@@ -202,6 +202,25 @@ async function createScenarioInput(input) {
   throw new Error(`Unsupported generated TUS scenario input kind: ${input.kind}`)
 }
 
+function installGeneratedRequestIdRandom(scenario) {
+  if (!scenario.input.addRequestId) {
+    return () => {}
+  }
+
+  const expectedZeroUuid = '00000000-0000-4000-8000-000000000000'
+  if (scenario.input.generatedRequestId !== expectedZeroUuid) {
+    throw new Error(
+      `Generated scenario ${scenario.scenarioId} has unsupported generatedRequestId ${scenario.input.generatedRequestId}`,
+    )
+  }
+
+  const originalRandom = Math.random
+  Math.random = () => 0
+  return () => {
+    Math.random = originalRandom
+  }
+}
+
 function storedUploadKey(storedUpload) {
   return storedUpload.urlStorageKey ?? storedUpload.fingerprint
 }
@@ -493,6 +512,7 @@ async function startScenarioUpload(scenario, testStack) {
   let retryDecisionIndex = 0
   const observedEvents = []
   const restoreRetryTimerRecorder = installRetryTimerRecorder(scenario, observedEvents)
+  const restoreRequestIdRandom = installGeneratedRequestIdRandom(scenario)
   const onError = waitableFunction('onError')
   const onSuccess = waitableFunction('onSuccess')
   const options = {
@@ -584,6 +604,10 @@ async function startScenarioUpload(scenario, testStack) {
 
   if (scenario.input.headers != null) {
     options.headers = scenario.input.headers
+  }
+
+  if (scenario.input.addRequestId != null) {
+    options.addRequestId = scenario.input.addRequestId
   }
 
   if (scenario.input.overridePatchMethod != null) {
@@ -701,6 +725,7 @@ async function startScenarioUpload(scenario, testStack) {
     observedEvents,
     onError,
     onSuccess,
+    restoreRequestIdRandom,
     restoreRetryTimerRecorder,
     terminatePromise: () => terminatePromise,
     upload,
@@ -733,6 +758,7 @@ async function runGeneratedConformanceScenario(scenario) {
     onError,
     onSuccess,
     restoreRetryTimerRecorder,
+    restoreRequestIdRandom,
     terminatePromise,
     upload,
   } = await startScenarioUpload(scenario, testStack)
@@ -789,6 +815,7 @@ async function runGeneratedConformanceScenario(scenario) {
     expect(onError).not.toHaveBeenCalled()
     expectScenarioEvents(scenario, observedEvents)
   } finally {
+    restoreRequestIdRandom()
     restoreRetryTimerRecorder()
   }
 }
