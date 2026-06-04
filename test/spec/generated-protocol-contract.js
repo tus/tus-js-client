@@ -2035,7 +2035,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[], [], [], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventPolicy: {
-      matching: 'exact-except-extra-progress',
+      matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
@@ -2185,7 +2185,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventPolicy: {
-      matching: 'exact-except-extra-progress',
+      matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
@@ -2277,7 +2277,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[], [], [], [], [], [], [], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventPolicy: {
-      matching: 'exact-except-extra-progress',
+      matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
@@ -2487,7 +2487,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventPolicy: {
-      matching: 'exact-except-extra-progress',
+      matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
@@ -2579,7 +2579,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[], [], [], [], [], [], [], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventPolicy: {
-      matching: 'exact-except-extra-progress',
+      matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
@@ -2819,7 +2819,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventPolicy: {
-      matching: 'exact-except-extra-progress',
+      matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
@@ -3597,7 +3597,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[], [], [], [], [], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventPolicy: {
-      matching: 'exact-except-extra-progress',
+      matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
@@ -3761,7 +3761,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventPolicy: {
-      matching: 'exact-except-extra-progress',
+      matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
@@ -4446,7 +4446,7 @@ export const tusClientConformanceScenarios = [
     eventKeyExtraPrefixes: ['progress:'],
     eventPolicy: {
       deferredLengthBytesTotal: 'allow-known-total-before-declaration',
-      matching: 'exact-except-extra-progress',
+      matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
@@ -4594,7 +4594,7 @@ export const tusClientConformanceScenarios = [
     eventKeyExtraPrefixes: ['progress:'],
     eventPolicy: {
       deferredLengthBytesTotal: 'allow-known-total-before-declaration',
-      matching: 'exact-except-extra-progress',
+      matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },
@@ -4932,7 +4932,7 @@ export const tusClientConformanceScenarios = [
     eventKeyAlternativeGroups: [[], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
     eventPolicy: {
-      matching: 'exact-except-extra-progress',
+      matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
       transportProgress: 'may-emit-extra-samples',
     },

@@ -347,7 +347,7 @@ function hasAllowedExtraEventPrefix(scenario, eventKey) {
   return scenario.eventKeyExtraPrefixes.some((prefix) => eventKey.startsWith(prefix))
 }
 
-function expectScenarioEventsExactExceptExtraProgress(
+function expectScenarioEventsExactExceptAllowedExtraEvents(
   scenario,
   observedEvents,
   observedEventKeys,
@@ -386,8 +386,8 @@ function expectScenarioEvents(scenario, observedEvents) {
   const observedEventKeys = observedEvents.map(observedEventKey)
   const eventPolicy = scenario.eventPolicy ?? { matching: 'exact' }
 
-  if (eventPolicy.matching === 'exact-except-extra-progress') {
-    expectScenarioEventsExactExceptExtraProgress(
+  if (eventPolicy.matching === 'exact-except-allowed-extra-events') {
+    expectScenarioEventsExactExceptAllowedExtraEvents(
       scenario,
       observedEvents,
       observedEventKeys,
