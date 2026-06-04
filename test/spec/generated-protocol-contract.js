@@ -1881,6 +1881,16 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/generated-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+    ],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -2029,6 +2039,13 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/creation-with-upload-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      [],
+      [],
+      [],
+      [],
+    ],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -2119,6 +2136,20 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/creation-with-upload-partial-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+    ],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -2327,6 +2358,13 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/ietf-draft-05-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      [],
+      [],
+      [],
+      [],
+    ],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -2417,6 +2455,20 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/ietf-draft-05-chunked-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+    ],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -2655,6 +2707,14 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/ietf-draft-03-resume-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+    ],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -2781,6 +2841,7 @@ export const tusClientConformanceScenarios = [
       message: 'tus: no file or stream to upload provided',
       reason: 'missingInput',
     },
+    eventKeyAlternativeGroups: [],
     featureId: 'startOptionValidation',
     input: {
       content: '',
@@ -2800,6 +2861,7 @@ export const tusClientConformanceScenarios = [
       message: 'tus: neither an endpoint or an upload URL is provided',
       reason: 'missingEndpointOrUploadUrl',
     },
+    eventKeyAlternativeGroups: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2818,6 +2880,7 @@ export const tusClientConformanceScenarios = [
       message: 'tus: unsupported protocol tus-v9',
       reason: 'unsupportedProtocol',
     },
+    eventKeyAlternativeGroups: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2838,6 +2901,7 @@ export const tusClientConformanceScenarios = [
       message: 'tus: the `retryDelays` option must either be an array or null',
       reason: 'retryDelaysNotArray',
     },
+    eventKeyAlternativeGroups: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2860,6 +2924,7 @@ export const tusClientConformanceScenarios = [
       message: 'tus: cannot use the `uploadUrl` option when parallelUploads is enabled',
       reason: 'parallelUploadsWithUploadUrl',
     },
+    eventKeyAlternativeGroups: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2881,6 +2946,7 @@ export const tusClientConformanceScenarios = [
       message: 'tus: cannot use the `uploadSize` option when parallelUploads is enabled',
       reason: 'parallelUploadsWithUploadSize',
     },
+    eventKeyAlternativeGroups: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2902,6 +2968,7 @@ export const tusClientConformanceScenarios = [
       message: 'tus: cannot use the `uploadLengthDeferred` option when parallelUploads is enabled',
       reason: 'parallelUploadsWithDeferredLength',
     },
+    eventKeyAlternativeGroups: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2924,6 +2991,7 @@ export const tusClientConformanceScenarios = [
         'tus: cannot use the `uploadDataDuringCreation` option when parallelUploads is enabled',
       reason: 'parallelUploadsWithUploadDataDuringCreation',
     },
+    eventKeyAlternativeGroups: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2946,6 +3014,7 @@ export const tusClientConformanceScenarios = [
         'tus: cannot use the `parallelUploadBoundaries` option when `parallelUploads` is disabled',
       reason: 'parallelBoundariesWithoutParallelUploads',
     },
+    eventKeyAlternativeGroups: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2972,6 +3041,7 @@ export const tusClientConformanceScenarios = [
         'tus: the `parallelUploadBoundaries` must have the same length as the value of `parallelUploads`',
       reason: 'parallelBoundariesLengthMismatch',
     },
+    eventKeyAlternativeGroups: [],
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2999,6 +3069,7 @@ export const tusClientConformanceScenarios = [
         'tus: unexpected response while creating upload, originated from request (method: POST, url: https://tus.io/uploads, response code: 500, response text: server_error, request id: contract-request-id)',
       reason: 'unexpectedCreateResponse',
     },
+    eventKeyAlternativeGroups: [],
     featureId: 'detailedErrors',
     input: {
       content: 'hello world',
@@ -3059,6 +3130,7 @@ export const tusClientConformanceScenarios = [
         'tus: failed to create upload, caused by Error: socket down, originated from request (method: POST, url: https://tus.io/uploads, response code: n/a, response text: n/a, request id: contract-request-id)',
       reason: 'createUploadRequestFailed',
     },
+    eventKeyAlternativeGroups: [],
     featureId: 'detailedErrors',
     input: {
       content: 'hello world',
@@ -3110,6 +3182,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/upload-body-headers-contract',
     },
+    eventKeyAlternativeGroups: [],
     featureId: 'uploadBodyHeaders',
     input: {
       content: 'hello world',
@@ -3202,6 +3275,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/custom-headers-contract',
     },
+    eventKeyAlternativeGroups: [],
     featureId: 'customRequestHeaders',
     input: {
       content: 'hello world',
@@ -3302,6 +3376,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/request-id-contract',
     },
+    eventKeyAlternativeGroups: [],
     featureId: 'requestIdHeaders',
     input: {
       addRequestId: true,
@@ -3401,6 +3476,18 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/resume-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+    ],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -3563,6 +3650,14 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/files/relative-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+    ],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -3692,6 +3787,11 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/array-buffer-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      [],
+      [],
+    ],
     featureId: 'inputSources',
     input: {
       content: 'hello world',
@@ -3799,6 +3899,11 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/array-buffer-view-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      [],
+      [],
+    ],
     featureId: 'inputSources',
     input: {
       content: 'hello world',
@@ -3906,6 +4011,11 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/web-stream-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      [],
+      [],
+    ],
     featureId: 'inputSources',
     input: {
       chunkSize: 100,
@@ -4016,6 +4126,11 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/node-stream-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      [],
+      [],
+    ],
     featureId: 'inputSources',
     input: {
       chunkSize: 100,
@@ -4127,6 +4242,11 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/node-path-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      [],
+      [],
+    ],
     featureId: 'inputSources',
     input: {
       content: 'hello world',
@@ -4235,6 +4355,14 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/deferred-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+    ],
     eventPolicy: {
       deferredLengthBytesTotal: 'allow-known-total-before-declaration',
       matching: 'exact-except-extra-progress',
@@ -4368,6 +4496,20 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/deferred-chunked-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      ['progress:0:11'],
+      ['progress:5:11'],
+      ['chunk-complete:5:5:11'],
+      ['progress:5:11'],
+      ['progress:10:11'],
+      ['chunk-complete:5:10:11'],
+      [],
+      [],
+      [],
+      [],
+      [],
+    ],
     eventPolicy: {
       deferredLengthBytesTotal: 'allow-known-total-before-declaration',
       matching: 'exact-except-extra-progress',
@@ -4611,6 +4753,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/override-contract',
     },
+    eventKeyAlternativeGroups: [],
     featureId: 'overridePatchMethod',
     input: {
       content: 'hello world',
@@ -4703,6 +4846,12 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/parallel-final',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      [],
+      [],
+      [],
+    ],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -4963,6 +5112,9 @@ export const tusClientConformanceScenarios = [
     completion: {
       kind: 'aborted',
     },
+    eventKeyAlternativeGroups: [
+      [],
+    ],
     execution: {
       serverRequestGates: [
         {
@@ -5220,6 +5372,12 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/retry-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      [],
+      [],
+      [],
+    ],
     featureId: 'retryOffsetRecovery',
     input: {
       content: 'hello world',
@@ -5473,6 +5631,12 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/request-hooks-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      [],
+      [],
+      [],
+    ],
     featureId: 'requestLifecycleHooks',
     input: {
       content: 'hello world',
@@ -5545,6 +5709,9 @@ export const tusClientConformanceScenarios = [
     completion: {
       kind: 'aborted',
     },
+    eventKeyAlternativeGroups: [
+      [],
+    ],
     execution: {
       onRequestStart: [
         {
@@ -5603,6 +5770,9 @@ export const tusClientConformanceScenarios = [
       kind: 'aborted',
       uploadUrl: 'https://tus.io/uploads/abort-terminate-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+    ],
     execution: {
       onRequestStart: [
         {
@@ -5740,6 +5910,10 @@ export const tusClientConformanceScenarios = [
       kind: 'terminated',
       uploadUrl: 'https://tus.io/uploads/terminate-contract',
     },
+    eventKeyAlternativeGroups: [
+      [],
+      [],
+    ],
     execution: {
       onChunkComplete: [
         {
