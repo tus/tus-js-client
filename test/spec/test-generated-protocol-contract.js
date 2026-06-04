@@ -78,13 +78,14 @@ function requestMatchesHeaderVariant(requestHeaders, variant) {
 }
 
 function expectRequestMatchesOperation(req, operation, request) {
-  expect(req.method).toBe(request.method ?? operation.method)
+  expect(req.method).toBe(request.effectiveMethod ?? request.method ?? operation.method)
 
   if (request.headerMode === 'exact') {
     return
   }
 
-  const expectedContentType = request.headers?.['Content-Type'] ?? operation.request.contentType
+  const expectedHeaders = request.effectiveHeaders ?? request.headers ?? {}
+  const expectedContentType = expectedHeaders['Content-Type'] ?? operation.request.contentType
   if (expectedContentType) {
     expect(req.requestHeaders['Content-Type']).toBe(expectedContentType)
   } else {
@@ -138,6 +139,10 @@ function scenarioResponseHeadersFor(operation, response) {
   const operationResponse = getOperationResponse(operation, response.statusCode)
   if (!operationResponse) {
     return response.headers ?? {}
+  }
+
+  if (response.effectiveHeaders) {
+    return response.effectiveHeaders
   }
 
   return responseHeadersFor(operationResponse, response.headers)
@@ -459,7 +464,7 @@ function expectScenarioRequest(req, scenario, request) {
   expect(req.url).toBe(expectedUrlForScenarioRequest(scenario, request))
   expectRequestMatchesOperation(req, operation, request)
 
-  for (const [header, value] of Object.entries(request.headers ?? {})) {
+  for (const [header, value] of Object.entries(request.effectiveHeaders ?? request.headers ?? {})) {
     expect(req.requestHeaders[header]).toBe(value)
   }
 
@@ -498,7 +503,7 @@ async function abortScenarioRequest(req, scenario, request, requestIndex, observ
   const abortPromise = upload.abort(Boolean(scenario.input.terminateUploadOnAbort))
   await wait(0)
 
-  expect(req.method).toBe(request.method ?? operation.method)
+  expect(req.method).toBe(request.effectiveMethod ?? request.method ?? operation.method)
   expect(req.url).toBe(expectedUrlForScenarioRequest(scenario, request))
 
   return abortPromise
