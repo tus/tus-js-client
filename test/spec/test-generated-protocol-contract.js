@@ -208,6 +208,44 @@ async function createScenarioInput(input) {
   throw new Error(`Unsupported generated TUS scenario input kind: ${input.kind}`)
 }
 
+const sameNameScenarioInputOptionKeys = new Set([
+  'addRequestId',
+  'chunkSize',
+  'headers',
+  'metadata',
+  'metadataForPartialUploads',
+  'overridePatchMethod',
+  'parallelUploadBoundaries',
+  'parallelUploads',
+  'protocol',
+  'removeFingerprintOnSuccess',
+  'retryDelays',
+  'storeFingerprintForResuming',
+  'uploadDataDuringCreation',
+  'uploadLengthDeferred',
+  'uploadSize',
+  'uploadUrl',
+])
+
+function applyScenarioInputOption(options, entry) {
+  if (entry.key === 'endpointUrl') {
+    options.endpoint = entry.value
+    return
+  }
+
+  if (entry.key === 'rawOptions') {
+    Object.assign(options, entry.value)
+    return
+  }
+
+  if (sameNameScenarioInputOptionKeys.has(entry.key)) {
+    options[entry.key] = entry.value
+    return
+  }
+
+  throw new Error(`Unsupported generated TUS input option key: ${entry.key}`)
+}
+
 function installGeneratedRequestIdRandom(scenario) {
   if (!scenario.input.addRequestId) {
     return () => {}
@@ -465,9 +503,7 @@ async function startScenarioUpload(scenario, testStack) {
   const onError = waitableFunction('onError')
   const onSuccess = waitableFunction('onSuccess')
   const options = {
-    endpoint: scenario.input.endpointUrl,
     httpStack: testStack,
-    metadata: scenario.input.metadata ?? {},
     onError,
     onSuccess(payload) {
       if (scenarioWantsEvent(scenario, 'success')) {
@@ -541,67 +577,9 @@ async function startScenarioUpload(scenario, testStack) {
     }
   }
 
-  if (scenario.input.chunkSize != null) {
-    options.chunkSize = scenario.input.chunkSize
+  for (const entry of scenario.inputOptionEntries) {
+    applyScenarioInputOption(options, entry)
   }
-
-  if (scenario.input.metadataForPartialUploads != null) {
-    options.metadataForPartialUploads = scenario.input.metadataForPartialUploads
-  }
-
-  if (scenario.input.headers != null) {
-    options.headers = scenario.input.headers
-  }
-
-  if (scenario.input.addRequestId != null) {
-    options.addRequestId = scenario.input.addRequestId
-  }
-
-  if (scenario.input.overridePatchMethod != null) {
-    options.overridePatchMethod = scenario.input.overridePatchMethod
-  }
-
-  if (scenario.input.parallelUploads != null) {
-    options.parallelUploads = scenario.input.parallelUploads
-  }
-
-  if (scenario.input.parallelUploadBoundaries != null) {
-    options.parallelUploadBoundaries = scenario.input.parallelUploadBoundaries
-  }
-
-  if (scenario.input.retryDelays != null) {
-    options.retryDelays = scenario.input.retryDelays
-  }
-
-  if (scenario.input.protocol != null) {
-    options.protocol = scenario.input.protocol
-  }
-
-  if (scenario.input.uploadSize != null) {
-    options.uploadSize = scenario.input.uploadSize
-  }
-
-  if (scenario.input.removeFingerprintOnSuccess != null) {
-    options.removeFingerprintOnSuccess = scenario.input.removeFingerprintOnSuccess
-  }
-
-  if (scenario.input.storeFingerprintForResuming != null) {
-    options.storeFingerprintForResuming = scenario.input.storeFingerprintForResuming
-  }
-
-  if (scenario.input.uploadDataDuringCreation != null) {
-    options.uploadDataDuringCreation = scenario.input.uploadDataDuringCreation
-  }
-
-  if (scenario.input.uploadLengthDeferred != null) {
-    options.uploadLengthDeferred = scenario.input.uploadLengthDeferred
-  }
-
-  if (scenario.input.uploadUrl != null) {
-    options.uploadUrl = scenario.input.uploadUrl
-  }
-
-  Object.assign(options, scenario.input.rawOptions ?? {})
 
   const scenarioFingerprint =
     scenario.input.fingerprint !== undefined
