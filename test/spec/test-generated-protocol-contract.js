@@ -1,5 +1,6 @@
 import { defaultOptions, Upload } from 'tus-js-client'
 import {
+  tusClientConformanceEventKeyTemplates,
   tusClientConformanceScenarios,
   tusClientFeatures,
   tusClientScenarioProofCases,
@@ -301,62 +302,33 @@ function makeEventRecordingFileReader(fileReader, scenario, observedEvents) {
   }
 }
 
-function formatEventValue(value) {
-  return value == null ? 'null' : String(value)
+const eventKeyTemplateByKind = new Map(
+  tusClientConformanceEventKeyTemplates.map((template) => [template.eventKind, template]),
+)
+
+function eventTemplateFieldValue(event, field) {
+  const value = event[field.name]
+  if (value == null) {
+    if (field.valueKind.startsWith('nullable-')) {
+      return 'null'
+    }
+
+    throw new Error(
+      `Generated observed event ${event.kind} is missing non-nullable key field ${field.name}`,
+    )
+  }
+
+  return String(value)
 }
 
 function observedEventKey(event) {
-  if (event.kind === 'progress') {
-    return `progress:${event.bytesSent}:${formatEventValue(event.bytesTotal)}`
+  const template = eventKeyTemplateByKind.get(event.kind)
+  if (!template) {
+    throw new Error(`Generated observed event ${event.kind} has no event-key template`)
   }
 
-  if (event.kind === 'chunk-complete') {
-    return `chunk-complete:${event.chunkSize}:${event.bytesAccepted}:${formatEventValue(
-      event.bytesTotal,
-    )}`
-  }
-
-  if (event.kind === 'before-request') {
-    return `before-request:${event.requestIndex}`
-  }
-
-  if (event.kind === 'after-response') {
-    return `after-response:${event.requestIndex}`
-  }
-
-  if (event.kind === 'request-abort') {
-    return `request-abort:${event.requestIndex}`
-  }
-
-  if (event.kind === 'source-open') {
-    return `source-open:${event.inputKind}:${formatEventValue(event.size)}`
-  }
-
-  if (event.kind === 'fingerprint') {
-    return `fingerprint:${formatEventValue(event.fingerprint)}`
-  }
-
-  if (event.kind === 'should-retry') {
-    return `should-retry:${event.retryAttempt}:${event.decision}`
-  }
-
-  if (event.kind === 'retry-schedule') {
-    return `retry-schedule:${event.delay}`
-  }
-
-  if (event.kind === 'url-storage-add') {
-    return `url-storage-add:${event.fingerprint}:${event.uploadUrl}`
-  }
-
-  if (event.kind === 'url-storage-find') {
-    return `url-storage-find:${event.fingerprint}:${event.count}`
-  }
-
-  if (event.kind === 'url-storage-remove') {
-    return `url-storage-remove:${event.urlStorageKey}`
-  }
-
-  return event.kind
+  const parts = template.fields.map((field) => eventTemplateFieldValue(event, field))
+  return parts.length === 0 ? event.kind : [event.kind, ...parts].join(':')
 }
 
 function expectedEventKey(scenario, event) {
@@ -371,8 +343,8 @@ function expectedEventKey(scenario, event) {
   return event.key
 }
 
-function isProgressEventKey(eventKey) {
-  return eventKey.startsWith('progress:')
+function hasAllowedExtraEventPrefix(scenario, eventKey) {
+  return scenario.eventKeyExtraPrefixes.some((prefix) => eventKey.startsWith(prefix))
 }
 
 function expectScenarioEventsExactExceptExtraProgress(
@@ -389,10 +361,12 @@ function expectScenarioEventsExactExceptExtraProgress(
       continue
     }
 
-    expect(isProgressEventKey(observedEventKey))
+    expect(hasAllowedExtraEventPrefix(scenario, observedEventKey))
       .withContext(
-        `Expected generated scenario ${scenario.scenarioId} to only emit extra progress samples; observed events ${JSON.stringify(
+        `Expected generated scenario ${scenario.scenarioId} to only emit allowed extra event keys; observed events ${JSON.stringify(
           observedEvents,
+        )}; allowed prefixes ${JSON.stringify(
+          scenario.eventKeyExtraPrefixes,
         )}; expected keys ${JSON.stringify(expectedEventKeys)}`,
       )
       .toBe(true)

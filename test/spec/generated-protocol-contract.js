@@ -910,6 +910,157 @@ export const tusClientFeatures = [
   },
 ]
 
+export const tusClientConformanceEventKeyTemplates = [
+  {
+    eventKind: 'after-response',
+    fields: [
+      {
+        name: 'requestIndex',
+        valueKind: 'number',
+      },
+    ],
+  },
+  {
+    eventKind: 'before-request',
+    fields: [
+      {
+        name: 'requestIndex',
+        valueKind: 'number',
+      },
+    ],
+  },
+  {
+    eventKind: 'chunk-complete',
+    fields: [
+      {
+        name: 'chunkSize',
+        valueKind: 'number',
+      },
+      {
+        name: 'bytesAccepted',
+        valueKind: 'number',
+      },
+      {
+        name: 'bytesTotal',
+        valueKind: 'nullable-number',
+      },
+    ],
+  },
+  {
+    eventKind: 'fingerprint',
+    fields: [
+      {
+        name: 'fingerprint',
+        valueKind: 'nullable-string',
+      },
+    ],
+  },
+  {
+    eventKind: 'progress',
+    fields: [
+      {
+        name: 'bytesSent',
+        valueKind: 'number',
+      },
+      {
+        name: 'bytesTotal',
+        valueKind: 'nullable-number',
+      },
+    ],
+  },
+  {
+    eventKind: 'request-abort',
+    fields: [
+      {
+        name: 'requestIndex',
+        valueKind: 'number',
+      },
+    ],
+  },
+  {
+    eventKind: 'retry-schedule',
+    fields: [
+      {
+        name: 'delay',
+        valueKind: 'number',
+      },
+    ],
+  },
+  {
+    eventKind: 'should-retry',
+    fields: [
+      {
+        name: 'retryAttempt',
+        valueKind: 'number',
+      },
+      {
+        name: 'decision',
+        valueKind: 'boolean',
+      },
+    ],
+  },
+  {
+    eventKind: 'source-close',
+    fields: [],
+  },
+  {
+    eventKind: 'source-open',
+    fields: [
+      {
+        name: 'inputKind',
+        valueKind: 'string',
+      },
+      {
+        name: 'size',
+        valueKind: 'nullable-number',
+      },
+    ],
+  },
+  {
+    eventKind: 'success',
+    fields: [],
+  },
+  {
+    eventKind: 'upload-url-available',
+    fields: [],
+  },
+  {
+    eventKind: 'url-storage-add',
+    fields: [
+      {
+        name: 'fingerprint',
+        valueKind: 'string',
+      },
+      {
+        name: 'uploadUrl',
+        valueKind: 'nullable-string',
+      },
+    ],
+  },
+  {
+    eventKind: 'url-storage-find',
+    fields: [
+      {
+        name: 'fingerprint',
+        valueKind: 'string',
+      },
+      {
+        name: 'count',
+        valueKind: 'number',
+      },
+    ],
+  },
+  {
+    eventKind: 'url-storage-remove',
+    fields: [
+      {
+        name: 'urlStorageKey',
+        valueKind: 'string',
+      },
+    ],
+  },
+]
+
 export const tusManagedUpload = {
   capabilities: {
     cleanup: {
