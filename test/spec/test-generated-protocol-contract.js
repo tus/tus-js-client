@@ -331,18 +331,6 @@ function observedEventKey(event) {
   return parts.length === 0 ? event.kind : [event.kind, ...parts].join(':')
 }
 
-function expectedEventKey(scenario, event) {
-  if (event.key == null) {
-    throw new Error(
-      `Generated scenario ${scenario.scenarioId} has an event without a generated key: ${JSON.stringify(
-        event,
-      )}`,
-    )
-  }
-
-  return event.key
-}
-
 function hasAllowedExtraEventPrefix(scenario, eventKey) {
   return scenario.eventKeyExtraPrefixes.some((prefix) => eventKey.startsWith(prefix))
 }
@@ -382,9 +370,9 @@ function expectScenarioEventsExactExceptAllowedExtraEvents(
 }
 
 function expectScenarioEvents(scenario, observedEvents) {
-  const expectedEventKeys = scenario.events.map((event) => expectedEventKey(scenario, event))
+  const expectedEventKeys = scenario.eventKeys
   const observedEventKeys = observedEvents.map(observedEventKey)
-  const eventPolicy = scenario.eventPolicy ?? { matching: 'exact' }
+  const eventPolicy = scenario.eventPolicy
 
   if (eventPolicy.matching === 'exact-except-allowed-extra-events') {
     expectScenarioEventsExactExceptAllowedExtraEvents(

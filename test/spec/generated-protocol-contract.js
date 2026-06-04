@@ -2034,6 +2034,16 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[], [], [], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
+    eventKeys: [
+      'fingerprint:contract-single-fingerprint',
+      'upload-url-available',
+      'url-storage-add:contract-single-fingerprint:https://tus.io/uploads/generated-contract',
+      'progress:0:11',
+      'progress:11:11',
+      'chunk-complete:11:11:11',
+      'success',
+      'source-close',
+    ],
     eventPolicy: {
       matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
@@ -2184,6 +2194,13 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
+    eventKeys: [
+      'progress:0:11',
+      'progress:11:11',
+      'upload-url-available',
+      'success',
+      'source-close',
+    ],
     eventPolicy: {
       matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
@@ -2276,6 +2293,20 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[], [], [], [], [], [], [], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
+    eventKeys: [
+      'progress:0:11',
+      'progress:5:11',
+      'upload-url-available',
+      'chunk-complete:5:5:11',
+      'progress:5:11',
+      'progress:10:11',
+      'chunk-complete:5:10:11',
+      'progress:10:11',
+      'progress:11:11',
+      'chunk-complete:1:11:11',
+      'success',
+      'source-close',
+    ],
     eventPolicy: {
       matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
@@ -2486,6 +2517,13 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
+    eventKeys: [
+      'progress:0:11',
+      'progress:11:11',
+      'upload-url-available',
+      'success',
+      'source-close',
+    ],
     eventPolicy: {
       matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
@@ -2578,6 +2616,20 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[], [], [], [], [], [], [], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
+    eventKeys: [
+      'upload-url-available',
+      'progress:0:11',
+      'progress:5:11',
+      'chunk-complete:5:5:11',
+      'progress:5:11',
+      'progress:10:11',
+      'chunk-complete:5:10:11',
+      'progress:10:11',
+      'progress:11:11',
+      'chunk-complete:1:11:11',
+      'success',
+      'source-close',
+    ],
     eventPolicy: {
       matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
@@ -2818,6 +2870,14 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
+    eventKeys: [
+      'upload-url-available',
+      'progress:5:11',
+      'progress:11:11',
+      'chunk-complete:6:11:11',
+      'success',
+      'source-close',
+    ],
     eventPolicy: {
       matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
@@ -2946,6 +3006,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
+    eventKeys: [],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'startOptionValidation',
     input: {
       content: '',
@@ -2967,6 +3031,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
+    eventKeys: [],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -2987,6 +3055,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
+    eventKeys: [],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -3009,6 +3081,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
+    eventKeys: [],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -3033,6 +3109,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
+    eventKeys: [],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -3056,6 +3136,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
+    eventKeys: [],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -3079,6 +3163,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
+    eventKeys: [],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -3103,6 +3191,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
+    eventKeys: [],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -3127,6 +3219,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
+    eventKeys: [],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -3155,6 +3251,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
+    eventKeys: [],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'startOptionValidation',
     input: {
       content: 'hello world',
@@ -3184,6 +3284,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
+    eventKeys: [],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'detailedErrors',
     input: {
       content: 'hello world',
@@ -3246,6 +3350,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
+    eventKeys: [],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'detailedErrors',
     input: {
       content: 'hello world',
@@ -3299,6 +3407,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
+    eventKeys: [],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'uploadBodyHeaders',
     input: {
       content: 'hello world',
@@ -3393,6 +3505,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
+    eventKeys: [],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'customRequestHeaders',
     input: {
       content: 'hello world',
@@ -3495,6 +3611,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
+    eventKeys: [],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'requestIdHeaders',
     input: {
       addRequestId: true,
@@ -3596,6 +3716,18 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[], [], [], [], [], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
+    eventKeys: [
+      'fingerprint:contract-resume-fingerprint',
+      'url-storage-find:contract-resume-fingerprint:1',
+      'fingerprint:contract-resume-fingerprint',
+      'upload-url-available',
+      'progress:5:11',
+      'progress:11:11',
+      'chunk-complete:6:11:11',
+      'url-storage-remove:tus::contract-resume-fingerprint::1337',
+      'success',
+      'source-close',
+    ],
     eventPolicy: {
       matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
@@ -3760,6 +3892,14 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
+    eventKeys: [
+      'upload-url-available',
+      'progress:0:11',
+      'progress:11:11',
+      'chunk-complete:11:11:11',
+      'success',
+      'source-close',
+    ],
     eventPolicy: {
       matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
@@ -3891,6 +4031,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[], [], []],
     eventKeyExtraPrefixes: [],
+    eventKeys: ['source-open:array-buffer:11', 'success', 'source-close'],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'inputSources',
     input: {
       content: 'hello world',
@@ -4000,6 +4144,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[], [], []],
     eventKeyExtraPrefixes: [],
+    eventKeys: ['source-open:array-buffer-view:11', 'success', 'source-close'],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'inputSources',
     input: {
       content: 'hello world',
@@ -4109,6 +4257,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[], [], []],
     eventKeyExtraPrefixes: [],
+    eventKeys: ['source-open:web-readable-stream:null', 'success', 'source-close'],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'inputSources',
     input: {
       chunkSize: 100,
@@ -4221,6 +4373,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[], [], []],
     eventKeyExtraPrefixes: [],
+    eventKeys: ['source-open:node-readable-stream:null', 'success', 'source-close'],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'inputSources',
     input: {
       chunkSize: 100,
@@ -4334,6 +4490,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[], [], []],
     eventKeyExtraPrefixes: [],
+    eventKeys: ['source-open:node-path-reference:11', 'success', 'source-close'],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'inputSources',
     input: {
       content: 'hello world',
@@ -4444,6 +4604,14 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[], [], [], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
+    eventKeys: [
+      'upload-url-available',
+      'progress:0:11',
+      'progress:11:11',
+      'chunk-complete:11:11:11',
+      'success',
+      'source-close',
+    ],
     eventPolicy: {
       deferredLengthBytesTotal: 'allow-known-total-before-declaration',
       matching: 'exact-except-allowed-extra-events',
@@ -4592,6 +4760,20 @@ export const tusClientConformanceScenarios = [
       [],
     ],
     eventKeyExtraPrefixes: ['progress:'],
+    eventKeys: [
+      'upload-url-available',
+      'progress:0:null',
+      'progress:5:null',
+      'chunk-complete:5:5:null',
+      'progress:5:null',
+      'progress:10:null',
+      'chunk-complete:5:10:null',
+      'progress:10:11',
+      'progress:11:11',
+      'chunk-complete:1:11:11',
+      'success',
+      'source-close',
+    ],
     eventPolicy: {
       deferredLengthBytesTotal: 'allow-known-total-before-declaration',
       matching: 'exact-except-allowed-extra-events',
@@ -4837,6 +5019,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [],
     eventKeyExtraPrefixes: [],
+    eventKeys: [],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'overridePatchMethod',
     input: {
       content: 'hello world',
@@ -4931,6 +5117,12 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[], [], [], []],
     eventKeyExtraPrefixes: ['progress:'],
+    eventKeys: [
+      'progress:5:11',
+      'chunk-complete:5:5:11',
+      'progress:11:11',
+      'chunk-complete:6:11:11',
+    ],
     eventPolicy: {
       matching: 'exact-except-allowed-extra-events',
       progress: 'milestone',
@@ -5193,6 +5385,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[]],
     eventKeyExtraPrefixes: [],
+    eventKeys: ['request-abort:3'],
+    eventPolicy: {
+      matching: 'exact',
+    },
     execution: {
       serverRequestGates: [
         {
@@ -5452,6 +5648,15 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[], [], [], []],
     eventKeyExtraPrefixes: [],
+    eventKeys: [
+      'should-retry:0:true',
+      'retry-schedule:0',
+      'should-retry:0:true',
+      'retry-schedule:0',
+    ],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'retryOffsetRecovery',
     input: {
       content: 'hello world',
@@ -5707,6 +5912,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[], [], [], []],
     eventKeyExtraPrefixes: [],
+    eventKeys: ['before-request:0', 'after-response:0', 'success', 'source-close'],
+    eventPolicy: {
+      matching: 'exact',
+    },
     featureId: 'requestLifecycleHooks',
     input: {
       content: 'hello world',
@@ -5781,6 +5990,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[]],
     eventKeyExtraPrefixes: [],
+    eventKeys: ['request-abort:0'],
+    eventPolicy: {
+      matching: 'exact',
+    },
     execution: {
       onRequestStart: [
         {
@@ -5841,6 +6054,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[]],
     eventKeyExtraPrefixes: [],
+    eventKeys: ['request-abort:1'],
+    eventPolicy: {
+      matching: 'exact',
+    },
     execution: {
       onRequestStart: [
         {
@@ -5980,6 +6197,10 @@ export const tusClientConformanceScenarios = [
     },
     eventKeyAlternativeGroups: [[], []],
     eventKeyExtraPrefixes: [],
+    eventKeys: ['should-retry:0:true', 'retry-schedule:0'],
+    eventPolicy: {
+      matching: 'exact',
+    },
     execution: {
       onChunkComplete: [
         {
