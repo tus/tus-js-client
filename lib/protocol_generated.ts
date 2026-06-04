@@ -241,6 +241,11 @@ export const TUS_FLOW_POLICY = {
       removeStoredUrl: 'before-hook-when-option-enabled',
     },
     uploadUrlAvailable: {
+      contexts: {
+        createUpload: 'createUpload',
+        parallelFinalUpload: 'parallelFinalUpload',
+        resumeUpload: 'resumeUpload',
+      },
       createUpload: 'after-url-known-before-storage',
       parallelFinalUpload: 'not-emitted',
       resumeUpload: 'after-url-known-before-storage',
@@ -287,6 +292,10 @@ export const TUS_FLOW_POLICY = {
       separator: '-',
     },
     nodeFile: {
+      conformanceFixture: {
+        absolutePath: '/tmp/tus-contract-file.bin',
+        mtimeMs: 1700000000123,
+      },
       fields: ['prefix', 'absolutePath', 'size', 'mtimeMs', 'endpoint'],
       path: 'absolute',
       prefix: 'node-file',
@@ -460,6 +469,13 @@ export const TUS_FLOW_POLICY = {
     namespace: 'tus',
     record: {
       creationTime: 'sdk-current-date-string',
+      fields: {
+        creationTime: 'creationTime',
+        metadata: 'metadata',
+        size: 'size',
+        uploadUrl: 'uploadUrl',
+        urlStorageKey: 'urlStorageKey',
+      },
       missingUrl: 'fail',
       storedUrlKind: 'single-or-parallel-upload-url',
     },
@@ -2746,7 +2762,7 @@ export function tusShouldRetryStatus(status: number): boolean {
 }
 
 export function tusPlanTerminateResponse({ status }: { status: number }): TusTerminateResponsePlan {
-  if (tusExpectedResponseStatusForOperation(tusOperationIdForRole('termination'), status)) {
+  if (tusExpectedResponseStatusForOperation(TUS_OPERATION_IDS.TERMINATE_TUS_UPLOAD, status)) {
     return { action: 'complete' }
   }
 
@@ -2981,7 +2997,7 @@ export function tusCreateUploadRequestPlan({
         ? {}
         : tusUploadCompleteHeaders({ done: uploadComplete, protocol })),
     },
-    operationId: tusOperationIdForRole('creation'),
+    operationId: TUS_OPERATION_IDS.CREATE_TUS_UPLOAD,
     protocol,
     url: endpoint,
   })
@@ -3003,7 +3019,7 @@ export function tusFinalUploadRequestPlan({
       metadata,
       uploadUrls,
     }),
-    operationId: tusOperationIdForRole('creation'),
+    operationId: TUS_OPERATION_IDS.CREATE_TUS_UPLOAD,
     protocol,
     url: endpoint,
   })
@@ -3017,7 +3033,7 @@ export function tusGetUploadOffsetRequestPlan({
   uploadUrl: string
 }): TusRequestPlan {
   return tusRequestPlanForOperation({
-    operationId: tusOperationIdForRole('offset-discovery'),
+    operationId: TUS_OPERATION_IDS.GET_TUS_UPLOAD_OFFSET,
     protocol,
     url: uploadUrl,
   })
@@ -3034,7 +3050,7 @@ export function tusPatchUploadRequestPlan({
   protocol: string
   uploadUrl: string
 }): TusRequestPlan {
-  const operationId = tusOperationIdForRole('upload-chunk')
+  const operationId = TUS_OPERATION_IDS.PATCH_TUS_UPLOAD
   const methodOverride = overridePatchMethod
     ? tusMethodOverrideForOperation(operationId)
     : undefined
@@ -3062,7 +3078,7 @@ export function tusTerminateUploadRequestPlan({
   uploadUrl: string
 }): TusRequestPlan {
   return tusRequestPlanForOperation({
-    operationId: tusOperationIdForRole('termination'),
+    operationId: TUS_OPERATION_IDS.TERMINATE_TUS_UPLOAD,
     protocol,
     url: uploadUrl,
   })

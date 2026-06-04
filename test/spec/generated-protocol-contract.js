@@ -2178,6 +2178,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'singleUploadLifecycle',
+    runtimes: [],
   },
   {
     behavior: 'creation-with-upload',
@@ -2283,6 +2284,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'creationWithUpload',
+    runtimes: [],
   },
   {
     behavior: 'creation-with-upload-partial-chunk',
@@ -2473,6 +2475,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'creationWithUploadPartialChunk',
+    runtimes: [],
   },
   {
     behavior: 'creation-with-upload',
@@ -2581,6 +2584,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'ietfDraft05CreationWithUpload',
+    runtimes: [],
   },
   {
     behavior: 'upload-body-headers',
@@ -2802,6 +2806,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'ietfDraft05ChunkedUploadComplete',
+    runtimes: [],
   },
   {
     behavior: 'upload-body-headers',
@@ -2940,6 +2945,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'ietfDraft03ResumeWithoutKnownLength',
+    runtimes: [],
   },
   {
     behavior: 'start-option-validation',
@@ -2988,6 +2994,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'startValidationMissingInput',
+    runtimes: [],
   },
   {
     behavior: 'start-option-validation',
@@ -3031,6 +3038,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'startValidationMissingEndpointOrUploadUrl',
+    runtimes: [],
   },
   {
     behavior: 'start-option-validation',
@@ -3083,6 +3091,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'startValidationUnsupportedProtocol',
+    runtimes: [],
   },
   {
     behavior: 'start-option-validation',
@@ -3137,6 +3146,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'startValidationRetryDelaysNotArray',
+    runtimes: [],
   },
   {
     behavior: 'start-option-validation',
@@ -3193,6 +3203,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'startValidationParallelUploadsWithUploadUrl',
+    runtimes: [],
   },
   {
     behavior: 'start-option-validation',
@@ -3249,6 +3260,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'startValidationParallelUploadsWithUploadSize',
+    runtimes: [],
   },
   {
     behavior: 'start-option-validation',
@@ -3306,6 +3318,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'startValidationParallelUploadsWithDeferredLength',
+    runtimes: [],
   },
   {
     behavior: 'start-option-validation',
@@ -3363,6 +3376,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'startValidationParallelUploadsWithUploadDataDuringCreation',
+    runtimes: [],
   },
   {
     behavior: 'start-option-validation',
@@ -3421,6 +3435,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'startValidationParallelBoundariesWithoutParallelUploads',
+    runtimes: [],
   },
   {
     behavior: 'start-option-validation',
@@ -3483,6 +3498,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'startValidationParallelBoundariesLengthMismatch',
+    runtimes: [],
   },
   {
     behavior: 'detailed-error',
@@ -3582,6 +3598,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'detailedCreateResponseError',
+    runtimes: [],
   },
   {
     behavior: 'detailed-error',
@@ -3674,6 +3691,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'detailedCreateRequestError',
+    runtimes: [],
   },
   {
     behavior: 'upload-body-headers',
@@ -3801,6 +3819,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'uploadBodyHeaders',
+    runtimes: [],
   },
   {
     behavior: 'custom-request-headers',
@@ -3926,8 +3945,8 @@ export const tusClientConformanceScenarios = [
         terminateUpload: false,
       },
       fingerprint: {
-        install: false,
-        value: null,
+        install: true,
+        value: 'contract-custom-headers-fingerprint',
       },
       requestId: {
         enabled: false,
@@ -3939,6 +3958,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'customRequestHeaders',
+    runtimes: [],
   },
   {
     behavior: 'request-id-headers',
@@ -4078,6 +4098,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'requestIdHeaders',
+    runtimes: [],
   },
   {
     behavior: 'resume-from-previous-upload',
@@ -4240,6 +4261,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'resumeFromPreviousUpload',
+    runtimes: [],
   },
   {
     behavior: 'relative-location-resolution',
@@ -4376,6 +4398,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'relativeLocationResolution',
+    runtimes: [],
   },
   {
     behavior: 'array-buffer-input',
@@ -4503,6 +4526,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'arrayBufferInput',
+    runtimes: [],
   },
   {
     behavior: 'array-buffer-view-input',
@@ -4630,6 +4654,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'arrayBufferViewInput',
+    runtimes: [],
   },
   {
     behavior: 'web-readable-stream-input',
@@ -4766,6 +4791,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'webReadableStreamInput',
+    runtimes: [],
   },
   {
     behavior: 'node-readable-stream-input',
@@ -5177,6 +5203,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'deferredLengthUpload',
+    runtimes: [],
   },
   {
     behavior: 'deferred-length-upload',
@@ -5416,6 +5443,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'deferredLengthChunkedUpload',
+    runtimes: [],
   },
   {
     behavior: 'override-patch-method',
@@ -5533,8 +5561,8 @@ export const tusClientConformanceScenarios = [
         terminateUpload: false,
       },
       fingerprint: {
-        install: false,
-        value: null,
+        install: true,
+        value: 'contract-override-fingerprint',
       },
       requestId: {
         enabled: false,
@@ -5546,6 +5574,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'overridePatchMethod',
+    runtimes: [],
   },
   {
     behavior: 'parallel-upload-concat',
@@ -5828,6 +5857,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'parallelUploadConcat',
+    runtimes: [],
   },
   {
     behavior: 'parallel-upload-abort-cleanup',
@@ -6127,6 +6157,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'parallelUploadAbortCleanup',
+    runtimes: [],
   },
   {
     behavior: 'retry-patch-after-offset-recovery',
@@ -6413,6 +6444,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'retryPatchAfterOffsetRecovery',
+    runtimes: [],
   },
   {
     behavior: 'request-lifecycle-hooks',
@@ -6501,6 +6533,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'requestLifecycleHooks',
+    runtimes: [],
   },
   {
     behavior: 'abort-upload',
@@ -6589,6 +6622,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'abortUpload',
+    runtimes: [],
   },
   {
     behavior: 'abort-upload-after-stored-url',
@@ -6762,6 +6796,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'abortUploadAfterStoredUrl',
+    runtimes: [],
   },
   {
     behavior: 'terminate-with-retry',
@@ -6970,6 +7005,7 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'terminateWithRetry',
+    runtimes: [],
   },
 ]
 
