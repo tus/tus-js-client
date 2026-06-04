@@ -2069,6 +2069,10 @@ export const tusClientConformanceScenarios = [
         filename: 'hello.txt',
       },
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
+    },
     operationIds: ['createTusUpload', 'patchTusUpload'],
     primitives: [
       'open-input-source',
@@ -2112,6 +2116,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Metadata': 'filename aGVsbG8udHh0',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -2148,6 +2153,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '0',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/generated-contract',
       },
     ],
     retryDecisions: [],
@@ -2184,6 +2190,10 @@ export const tusClientConformanceScenarios = [
         filename: 'hello.txt',
       },
       uploadDataDuringCreation: true,
+    },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
     },
     operationIds: ['createTusUpload'],
     primitives: ['upload-during-creation', 'emit-progress'],
@@ -2224,6 +2234,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Metadata': 'filename aGVsbG8udHh0',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
     ],
     retryDecisions: [],
@@ -2269,6 +2280,10 @@ export const tusClientConformanceScenarios = [
       },
       uploadDataDuringCreation: true,
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
+    },
     operationIds: ['createTusUpload', 'patchTusUpload'],
     primitives: ['upload-during-creation', 'emit-progress'],
     requests: [
@@ -2308,6 +2323,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Metadata': 'filename aGVsbG8udHh0',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -2344,6 +2360,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '5',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/creation-with-upload-partial-contract',
       },
       {
         absentHeaders: [],
@@ -2380,6 +2397,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '10',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/creation-with-upload-partial-contract',
       },
     ],
     retryDecisions: [],
@@ -2417,6 +2435,10 @@ export const tusClientConformanceScenarios = [
       },
       protocol: 'ietf-draft-05',
       uploadDataDuringCreation: true,
+    },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
     },
     operationIds: ['createTusUpload'],
     primitives: ['select-client-protocol'],
@@ -2456,6 +2478,7 @@ export const tusClientConformanceScenarios = [
           'Content-Type': 'application/partial-upload',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
     ],
     retryDecisions: [],
@@ -2499,6 +2522,10 @@ export const tusClientConformanceScenarios = [
       protocol: 'ietf-draft-05',
       uploadUrl: 'https://tus.io/uploads/ietf-draft-05-chunked-contract',
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
+    },
     operationIds: ['getTusUploadOffset', 'patchTusUpload'],
     primitives: ['select-client-protocol'],
     requests: [
@@ -2534,6 +2561,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Draft-Interop-Version': '6',
         },
         effectiveMethod: 'HEAD',
+        expectedUrl: 'https://tus.io/uploads/ietf-draft-05-chunked-contract',
       },
       {
         absentHeaders: ['Tus-Resumable'],
@@ -2570,6 +2598,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '0',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/ietf-draft-05-chunked-contract',
       },
       {
         absentHeaders: ['Tus-Resumable'],
@@ -2606,6 +2635,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '5',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/ietf-draft-05-chunked-contract',
       },
       {
         absentHeaders: ['Tus-Resumable'],
@@ -2642,6 +2672,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '10',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/ietf-draft-05-chunked-contract',
       },
     ],
     retryDecisions: [],
@@ -2679,6 +2710,10 @@ export const tusClientConformanceScenarios = [
       protocol: 'ietf-draft-03',
       uploadUrl: 'https://tus.io/uploads/ietf-draft-03-resume-contract',
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
+    },
     operationIds: ['getTusUploadOffset', 'patchTusUpload'],
     primitives: ['select-client-protocol'],
     requests: [
@@ -2712,6 +2747,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Draft-Interop-Version': '5',
         },
         effectiveMethod: 'HEAD',
+        expectedUrl: 'https://tus.io/uploads/ietf-draft-03-resume-contract',
       },
       {
         absentHeaders: ['Content-Type', 'Tus-Resumable'],
@@ -2747,6 +2783,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '5',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/ietf-draft-03-resume-contract',
       },
     ],
     retryDecisions: [],
@@ -2772,6 +2809,10 @@ export const tusClientConformanceScenarios = [
       endpointUrl: 'https://tus.io/uploads',
       kind: 'none',
     },
+    inputSource: {
+      content: '',
+      kind: 'none',
+    },
     operationIds: [],
     primitives: ['validate-start-options'],
     requests: [],
@@ -2794,6 +2835,10 @@ export const tusClientConformanceScenarios = [
     executionActionPhases: [],
     featureId: 'startOptionValidation',
     input: {
+      content: 'hello world',
+      kind: 'blob',
+    },
+    inputSource: {
       content: 'hello world',
       kind: 'blob',
     },
@@ -2824,6 +2869,10 @@ export const tusClientConformanceScenarios = [
       kind: 'blob',
       protocol: 'tus-v9',
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
+    },
     operationIds: [],
     primitives: ['validate-start-options'],
     requests: [],
@@ -2853,6 +2902,10 @@ export const tusClientConformanceScenarios = [
         retryDelays: 44,
       },
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
+    },
     operationIds: [],
     primitives: ['validate-start-options'],
     requests: [],
@@ -2881,6 +2934,10 @@ export const tusClientConformanceScenarios = [
       parallelUploads: 2,
       uploadUrl: 'https://tus.io/uploads/start-validation-upload-url',
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
+    },
     operationIds: [],
     primitives: ['validate-start-options'],
     requests: [],
@@ -2908,6 +2965,10 @@ export const tusClientConformanceScenarios = [
       kind: 'blob',
       parallelUploads: 2,
       uploadSize: 11,
+    },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
     },
     operationIds: [],
     primitives: ['validate-start-options'],
@@ -2938,6 +2999,10 @@ export const tusClientConformanceScenarios = [
       parallelUploads: 2,
       uploadLengthDeferred: true,
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
+    },
     operationIds: [],
     primitives: ['validate-start-options'],
     requests: [],
@@ -2966,6 +3031,10 @@ export const tusClientConformanceScenarios = [
       kind: 'blob',
       parallelUploads: 2,
       uploadDataDuringCreation: true,
+    },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
     },
     operationIds: [],
     primitives: ['validate-start-options'],
@@ -3000,6 +3069,10 @@ export const tusClientConformanceScenarios = [
         },
       ],
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
+    },
     operationIds: [],
     primitives: ['validate-start-options'],
     requests: [],
@@ -3033,6 +3106,10 @@ export const tusClientConformanceScenarios = [
         },
       ],
       parallelUploads: 2,
+    },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
     },
     operationIds: [],
     primitives: ['validate-start-options'],
@@ -3070,6 +3147,10 @@ export const tusClientConformanceScenarios = [
         retryDelays: null,
       },
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
+    },
     operationIds: ['createTusUpload'],
     primitives: ['report-detailed-errors'],
     requests: [
@@ -3102,6 +3183,7 @@ export const tusClientConformanceScenarios = [
           'X-Request-ID': 'contract-request-id',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
     ],
     retryDecisions: [],
@@ -3137,6 +3219,10 @@ export const tusClientConformanceScenarios = [
         retryDelays: null,
       },
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
+    },
     operationIds: ['createTusUpload'],
     primitives: ['report-detailed-errors'],
     requests: [
@@ -3162,6 +3248,7 @@ export const tusClientConformanceScenarios = [
           'X-Request-ID': 'contract-request-id',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
     ],
     retryDecisions: [],
@@ -3189,6 +3276,10 @@ export const tusClientConformanceScenarios = [
       metadata: {
         filename: 'hello.txt',
       },
+    },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
     },
     operationIds: ['createTusUpload', 'patchTusUpload'],
     primitives: ['send-upload-body-headers'],
@@ -3226,6 +3317,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Metadata': 'filename aGVsbG8udHh0',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -3262,6 +3354,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '0',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/upload-body-headers-contract',
       },
     ],
     retryDecisions: [],
@@ -3293,6 +3386,10 @@ export const tusClientConformanceScenarios = [
       metadata: {
         filename: 'hello.txt',
       },
+    },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
     },
     operationIds: ['createTusUpload', 'patchTusUpload'],
     primitives: ['apply-custom-request-headers'],
@@ -3332,6 +3429,7 @@ export const tusClientConformanceScenarios = [
           'X-Tus-Trace': 'trace-123',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -3370,6 +3468,7 @@ export const tusClientConformanceScenarios = [
           'X-Tus-Trace': 'trace-123',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/custom-headers-contract',
       },
     ],
     retryDecisions: [],
@@ -3402,6 +3501,10 @@ export const tusClientConformanceScenarios = [
       metadata: {
         filename: 'hello.txt',
       },
+    },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
     },
     operationIds: ['createTusUpload', 'patchTusUpload'],
     primitives: ['add-request-id-header', 'apply-custom-request-headers'],
@@ -3440,6 +3543,7 @@ export const tusClientConformanceScenarios = [
           'X-Request-ID': '00000000-0000-4000-8000-000000000000',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -3477,6 +3581,7 @@ export const tusClientConformanceScenarios = [
           'X-Request-ID': '00000000-0000-4000-8000-000000000000',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/request-id-contract',
       },
     ],
     retryDecisions: [],
@@ -3541,6 +3646,10 @@ export const tusClientConformanceScenarios = [
         urlStorageKey: 'tus::contract-resume-fingerprint::1337',
       },
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
+    },
     operationIds: ['getTusUploadOffset', 'patchTusUpload'],
     primitives: ['fingerprint-input', 'resume-from-previous-upload', 'store-resume-url'],
     requests: [
@@ -3577,6 +3686,7 @@ export const tusClientConformanceScenarios = [
           'Tus-Resumable': '1.0.0',
         },
         effectiveMethod: 'HEAD',
+        expectedUrl: 'https://tus.io/uploads/resume-contract',
       },
       {
         absentHeaders: [],
@@ -3613,6 +3723,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '5',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/resume-contract',
       },
     ],
     retryDecisions: [],
@@ -3650,6 +3761,10 @@ export const tusClientConformanceScenarios = [
         filename: 'hello.txt',
       },
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
+    },
     operationIds: ['createTusUpload', 'patchTusUpload'],
     primitives: ['resolve-relative-location'],
     requests: [
@@ -3686,6 +3801,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Metadata': 'filename aGVsbG8udHh0',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/files/',
       },
       {
         absentHeaders: [],
@@ -3722,6 +3838,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '0',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/files/relative-contract',
       },
     ],
     retryDecisions: [],
@@ -3750,6 +3867,10 @@ export const tusClientConformanceScenarios = [
         filename: 'hello.txt',
       },
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'array-buffer',
+    },
     operationIds: ['createTusUpload', 'patchTusUpload'],
     primitives: ['read-browser-file'],
     requests: [
@@ -3786,6 +3907,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Metadata': 'filename aGVsbG8udHh0',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -3822,6 +3944,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '0',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/array-buffer-contract',
       },
     ],
     retryDecisions: [],
@@ -3850,6 +3973,10 @@ export const tusClientConformanceScenarios = [
         filename: 'hello.txt',
       },
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'array-buffer-view',
+    },
     operationIds: ['createTusUpload', 'patchTusUpload'],
     primitives: ['read-browser-file'],
     requests: [
@@ -3886,6 +4013,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Metadata': 'filename aGVsbG8udHh0',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -3922,6 +4050,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '0',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/array-buffer-view-contract',
       },
     ],
     retryDecisions: [],
@@ -3951,6 +4080,10 @@ export const tusClientConformanceScenarios = [
         filename: 'hello.txt',
       },
       uploadLengthDeferred: true,
+    },
+    inputSource: {
+      content: 'hello world',
+      kind: 'web-readable-stream',
     },
     operationIds: ['createTusUpload', 'patchTusUpload'],
     primitives: ['read-web-stream'],
@@ -3988,6 +4121,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Metadata': 'filename aGVsbG8udHh0',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -4025,6 +4159,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '0',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/web-stream-contract',
       },
     ],
     retryDecisions: [],
@@ -4054,6 +4189,10 @@ export const tusClientConformanceScenarios = [
         filename: 'hello.txt',
       },
       uploadLengthDeferred: true,
+    },
+    inputSource: {
+      content: 'hello world',
+      kind: 'node-readable-stream',
     },
     operationIds: ['createTusUpload', 'patchTusUpload'],
     primitives: ['read-node-stream'],
@@ -4091,6 +4230,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Metadata': 'filename aGVsbG8udHh0',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -4128,6 +4268,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '0',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/node-stream-contract',
       },
     ],
     retryDecisions: [],
@@ -4156,6 +4297,10 @@ export const tusClientConformanceScenarios = [
       metadata: {
         filename: 'hello.txt',
       },
+    },
+    inputSource: {
+      content: 'hello world',
+      kind: 'node-path-reference',
     },
     operationIds: ['createTusUpload', 'patchTusUpload'],
     primitives: ['read-node-file'],
@@ -4193,6 +4338,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Metadata': 'filename aGVsbG8udHh0',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -4229,6 +4375,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '0',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/node-path-contract',
       },
     ],
     retryDecisions: [],
@@ -4270,6 +4417,10 @@ export const tusClientConformanceScenarios = [
       },
       uploadLengthDeferred: true,
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'web-readable-stream',
+    },
     operationIds: ['createTusUpload', 'patchTusUpload'],
     primitives: ['defer-upload-length', 'emit-progress'],
     requests: [
@@ -4306,6 +4457,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Metadata': 'filename aGVsbG8udHh0',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -4343,6 +4495,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '0',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/deferred-contract',
       },
     ],
     retryDecisions: [],
@@ -4402,6 +4555,10 @@ export const tusClientConformanceScenarios = [
       },
       uploadLengthDeferred: true,
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
+    },
     operationIds: ['createTusUpload', 'patchTusUpload'],
     primitives: ['defer-upload-length', 'emit-chunk-complete', 'emit-progress'],
     requests: [
@@ -4438,6 +4595,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Metadata': 'filename aGVsbG8udHh0',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -4474,6 +4632,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '0',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/deferred-chunked-contract',
       },
       {
         absentHeaders: [],
@@ -4510,6 +4669,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '5',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/deferred-chunked-contract',
       },
       {
         absentHeaders: [],
@@ -4547,6 +4707,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '10',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/deferred-chunked-contract',
       },
     ],
     retryDecisions: [],
@@ -4573,6 +4734,10 @@ export const tusClientConformanceScenarios = [
       kind: 'blob',
       overridePatchMethod: true,
       uploadUrl: 'https://tus.io/uploads/override-contract',
+    },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
     },
     operationIds: ['getTusUploadOffset', 'patchTusUpload'],
     primitives: ['override-patch-method'],
@@ -4610,6 +4775,7 @@ export const tusClientConformanceScenarios = [
           'Tus-Resumable': '1.0.0',
         },
         effectiveMethod: 'HEAD',
+        expectedUrl: 'https://tus.io/uploads/override-contract',
       },
       {
         absentHeaders: [],
@@ -4647,6 +4813,7 @@ export const tusClientConformanceScenarios = [
           'X-HTTP-Method-Override': 'PATCH',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads/override-contract',
       },
     ],
     retryDecisions: [],
@@ -4699,6 +4866,10 @@ export const tusClientConformanceScenarios = [
       },
       parallelUploads: 2,
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
+    },
     operationIds: [
       'createTusUpload',
       'createTusUpload',
@@ -4745,6 +4916,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Metadata': 'test d29ybGQ=',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -4783,6 +4955,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Metadata': 'test d29ybGQ=',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -4819,6 +4992,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '0',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/parallel-part-1',
       },
       {
         absentHeaders: [],
@@ -4855,6 +5029,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '0',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/parallel-part-2',
       },
       {
         absentHeaders: ['Upload-Length'],
@@ -4893,6 +5068,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Metadata': 'foo aGVsbG8=',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
     ],
     retryDecisions: [],
@@ -4941,6 +5117,10 @@ export const tusClientConformanceScenarios = [
       overridePatchMethod: true,
       parallelUploads: 2,
       terminateUploadOnAbort: true,
+    },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
     },
     operationIds: [
       'createTusUpload',
@@ -4991,6 +5171,7 @@ export const tusClientConformanceScenarios = [
           'X-Tus-Trace': 'parallel-cleanup-trace-123',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -5031,6 +5212,7 @@ export const tusClientConformanceScenarios = [
           'X-Tus-Trace': 'parallel-cleanup-trace-123',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -5065,6 +5247,7 @@ export const tusClientConformanceScenarios = [
           'X-Tus-Trace': 'parallel-cleanup-trace-123',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads/parallel-cleanup-part-1',
       },
       {
         absentHeaders: [],
@@ -5092,6 +5275,7 @@ export const tusClientConformanceScenarios = [
           'X-Tus-Trace': 'parallel-cleanup-trace-123',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads/parallel-cleanup-part-2',
       },
       {
         absentHeaders: [],
@@ -5123,6 +5307,7 @@ export const tusClientConformanceScenarios = [
           'X-Tus-Trace': 'parallel-cleanup-trace-123',
         },
         effectiveMethod: 'DELETE',
+        expectedUrl: 'https://tus.io/uploads/parallel-cleanup-part-1',
       },
       {
         absentHeaders: [],
@@ -5154,6 +5339,7 @@ export const tusClientConformanceScenarios = [
           'X-Tus-Trace': 'parallel-cleanup-trace-123',
         },
         effectiveMethod: 'DELETE',
+        expectedUrl: 'https://tus.io/uploads/parallel-cleanup-part-2',
       },
     ],
     retryDecisions: [],
@@ -5187,6 +5373,10 @@ export const tusClientConformanceScenarios = [
         filename: 'hello.txt',
       },
       retryDelays: [0],
+    },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
     },
     operationIds: [
       'createTusUpload',
@@ -5231,6 +5421,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Metadata': 'filename aGVsbG8udHh0',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -5262,6 +5453,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '0',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/retry-contract',
       },
       {
         absentHeaders: [],
@@ -5296,6 +5488,7 @@ export const tusClientConformanceScenarios = [
           'Tus-Resumable': '1.0.0',
         },
         effectiveMethod: 'HEAD',
+        expectedUrl: 'https://tus.io/uploads/retry-contract',
       },
       {
         absentHeaders: [],
@@ -5327,6 +5520,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '5',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/retry-contract',
       },
       {
         absentHeaders: [],
@@ -5361,6 +5555,7 @@ export const tusClientConformanceScenarios = [
           'Tus-Resumable': '1.0.0',
         },
         effectiveMethod: 'HEAD',
+        expectedUrl: 'https://tus.io/uploads/retry-contract',
       },
       {
         absentHeaders: [],
@@ -5397,6 +5592,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '5',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/retry-contract',
       },
     ],
     retryDecisions: [
@@ -5431,6 +5627,10 @@ export const tusClientConformanceScenarios = [
       endpointUrl: 'https://tus.io/uploads',
       kind: 'blob',
       uploadUrl: 'https://tus.io/uploads/request-hooks-contract',
+    },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
     },
     operationIds: ['getTusUploadOffset'],
     primitives: ['run-request-hooks'],
@@ -5468,6 +5668,7 @@ export const tusClientConformanceScenarios = [
           'Tus-Resumable': '1.0.0',
         },
         effectiveMethod: 'HEAD',
+        expectedUrl: 'https://tus.io/uploads/request-hooks-contract',
       },
     ],
     retryDecisions: [],
@@ -5506,6 +5707,10 @@ export const tusClientConformanceScenarios = [
         filename: 'hello.txt',
       },
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
+    },
     operationIds: ['createTusUpload'],
     primitives: ['abort-current-request'],
     requests: [
@@ -5530,6 +5735,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Metadata': 'filename aGVsbG8udHh0',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
     ],
     retryDecisions: [],
@@ -5575,6 +5781,10 @@ export const tusClientConformanceScenarios = [
       overridePatchMethod: true,
       terminateUploadOnAbort: true,
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
+    },
     operationIds: ['createTusUpload', 'patchTusUpload', 'terminateTusUpload'],
     primitives: ['abort-current-request', 'terminate-upload'],
     requests: [
@@ -5613,6 +5823,7 @@ export const tusClientConformanceScenarios = [
           'X-Tus-Trace': 'abort-trace-123',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -5640,6 +5851,7 @@ export const tusClientConformanceScenarios = [
           'X-Tus-Trace': 'abort-trace-123',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads/abort-terminate-contract',
       },
       {
         absentHeaders: [],
@@ -5671,6 +5883,7 @@ export const tusClientConformanceScenarios = [
           'X-Tus-Trace': 'abort-trace-123',
         },
         effectiveMethod: 'DELETE',
+        expectedUrl: 'https://tus.io/uploads/abort-terminate-contract',
       },
     ],
     retryDecisions: [],
@@ -5711,6 +5924,10 @@ export const tusClientConformanceScenarios = [
       },
       retryDelays: [0, 0],
     },
+    inputSource: {
+      content: 'hello world',
+      kind: 'blob',
+    },
     operationIds: ['createTusUpload', 'patchTusUpload', 'terminateTusUpload', 'terminateTusUpload'],
     primitives: ['terminate-upload', 'retry-with-backoff'],
     requests: [
@@ -5747,6 +5964,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Metadata': 'filename aGVsbG8udHh0',
         },
         effectiveMethod: 'POST',
+        expectedUrl: 'https://tus.io/uploads',
       },
       {
         absentHeaders: [],
@@ -5783,6 +6001,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Offset': '0',
         },
         effectiveMethod: 'PATCH',
+        expectedUrl: 'https://tus.io/uploads/terminate-contract',
       },
       {
         absentHeaders: [],
@@ -5810,6 +6029,7 @@ export const tusClientConformanceScenarios = [
           'Tus-Resumable': '1.0.0',
         },
         effectiveMethod: 'DELETE',
+        expectedUrl: 'https://tus.io/uploads/terminate-contract',
       },
       {
         absentHeaders: [],
@@ -5839,6 +6059,7 @@ export const tusClientConformanceScenarios = [
           'Tus-Resumable': '1.0.0',
         },
         effectiveMethod: 'DELETE',
+        expectedUrl: 'https://tus.io/uploads/terminate-contract',
       },
     ],
     retryDecisions: [

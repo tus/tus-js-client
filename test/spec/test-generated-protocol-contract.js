@@ -282,7 +282,7 @@ function makeEventRecordingFileReader(fileReader, scenario, observedEvents) {
 
       if (scenarioWantsEvent(scenario, 'source-open')) {
         observedEvents.push({
-          inputKind: scenario.input.kind,
+          inputKind: scenario.inputSource.kind,
           kind: 'source-open',
           size: source.size,
         })
@@ -402,30 +402,10 @@ function expectScenarioEvents(scenario, observedEvents) {
   )
 }
 
-function expectedUrlForScenarioRequest(scenario, request) {
-  if (request.url === 'endpoint') {
-    return scenario.input.endpointUrl
-  }
-
-  if (request.uploadUrl) {
-    return request.uploadUrl
-  }
-
-  const uploadUrl =
-    scenario.input.uploadUrl ??
-    scenario.input.storedUpload?.uploadUrl ??
-    scenario.completionUploadUrl
-  if (!uploadUrl) {
-    throw new Error(`Generated scenario ${scenario.scenarioId} has no upload URL expectation`)
-  }
-
-  return uploadUrl
-}
-
-function expectScenarioRequest(req, scenario, request) {
+function expectScenarioRequest(req, request) {
   const operation = getProtocolOperation(request.operationId)
 
-  expect(req.url).toBe(expectedUrlForScenarioRequest(scenario, request))
+  expect(req.url).toBe(request.expectedUrl)
   expectRequestMatchesOperation(req, operation, request)
 
   for (const [header, value] of Object.entries(request.effectiveHeaders ?? request.headers ?? {})) {
@@ -468,7 +448,7 @@ async function abortScenarioRequest(req, scenario, request, requestIndex, observ
   await wait(0)
 
   expect(req.method).toBe(request.effectiveMethod ?? request.method ?? operation.method)
-  expect(req.url).toBe(expectedUrlForScenarioRequest(scenario, request))
+  expect(req.url).toBe(request.expectedUrl)
 
   return abortPromise
 }
@@ -669,7 +649,7 @@ async function startScenarioUpload(scenario, testStack) {
     }
   }
 
-  upload = new Upload(await createScenarioInput(scenario.input), options)
+  upload = new Upload(await createScenarioInput(scenario.inputSource), options)
 
   for (const action of scenarioExecutionActions(scenario, 'beforeStart')) {
     if (action.kind === 'resume-from-previous-upload') {
@@ -736,7 +716,7 @@ async function runGeneratedConformanceScenario(scenario) {
       const requestIndex = request.requestIndex
       expect(requestIndex).toBe(scenarioRequestIndex)
       const req = await testStack.nextRequest()
-      expectScenarioRequest(req, scenario, request)
+      expectScenarioRequest(req, request)
 
       if (request.abort) {
         abortPromises.push(
