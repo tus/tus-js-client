@@ -1881,16 +1881,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/generated-contract',
     },
-    eventKeyAlternativeGroups: [
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-    ],
+    eventKeyAlternativeGroups: [[], [], [], [], [], [], [], []],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -2039,13 +2030,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/creation-with-upload-contract',
     },
-    eventKeyAlternativeGroups: [
-      [],
-      [],
-      [],
-      [],
-      [],
-    ],
+    eventKeyAlternativeGroups: [[], [], [], [], []],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -2136,20 +2121,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/creation-with-upload-partial-contract',
     },
-    eventKeyAlternativeGroups: [
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-    ],
+    eventKeyAlternativeGroups: [[], [], [], [], [], [], [], [], [], [], [], []],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -2358,13 +2330,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/ietf-draft-05-contract',
     },
-    eventKeyAlternativeGroups: [
-      [],
-      [],
-      [],
-      [],
-      [],
-    ],
+    eventKeyAlternativeGroups: [[], [], [], [], []],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -2455,20 +2421,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/ietf-draft-05-chunked-contract',
     },
-    eventKeyAlternativeGroups: [
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-    ],
+    eventKeyAlternativeGroups: [[], [], [], [], [], [], [], [], [], [], [], []],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -2707,14 +2660,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/ietf-draft-03-resume-contract',
     },
-    eventKeyAlternativeGroups: [
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-    ],
+    eventKeyAlternativeGroups: [[], [], [], [], [], []],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -3476,18 +3422,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/resume-contract',
     },
-    eventKeyAlternativeGroups: [
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-    ],
+    eventKeyAlternativeGroups: [[], [], [], [], [], [], [], [], [], []],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -3650,14 +3585,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/files/relative-contract',
     },
-    eventKeyAlternativeGroups: [
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-    ],
+    eventKeyAlternativeGroups: [[], [], [], [], [], []],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -3787,11 +3715,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/array-buffer-contract',
     },
-    eventKeyAlternativeGroups: [
-      [],
-      [],
-      [],
-    ],
+    eventKeyAlternativeGroups: [[], [], []],
     featureId: 'inputSources',
     input: {
       content: 'hello world',
@@ -3899,11 +3823,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/array-buffer-view-contract',
     },
-    eventKeyAlternativeGroups: [
-      [],
-      [],
-      [],
-    ],
+    eventKeyAlternativeGroups: [[], [], []],
     featureId: 'inputSources',
     input: {
       content: 'hello world',
@@ -4011,11 +3931,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/web-stream-contract',
     },
-    eventKeyAlternativeGroups: [
-      [],
-      [],
-      [],
-    ],
+    eventKeyAlternativeGroups: [[], [], []],
     featureId: 'inputSources',
     input: {
       chunkSize: 100,
@@ -4126,11 +4042,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/node-stream-contract',
     },
-    eventKeyAlternativeGroups: [
-      [],
-      [],
-      [],
-    ],
+    eventKeyAlternativeGroups: [[], [], []],
     featureId: 'inputSources',
     input: {
       chunkSize: 100,
@@ -4242,11 +4154,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/node-path-contract',
     },
-    eventKeyAlternativeGroups: [
-      [],
-      [],
-      [],
-    ],
+    eventKeyAlternativeGroups: [[], [], []],
     featureId: 'inputSources',
     input: {
       content: 'hello world',
@@ -4355,14 +4263,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/deferred-contract',
     },
-    eventKeyAlternativeGroups: [
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-    ],
+    eventKeyAlternativeGroups: [[], [], [], [], [], []],
     eventPolicy: {
       deferredLengthBytesTotal: 'allow-known-total-before-declaration',
       matching: 'exact-except-extra-progress',
@@ -4846,12 +4747,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/parallel-final',
     },
-    eventKeyAlternativeGroups: [
-      [],
-      [],
-      [],
-      [],
-    ],
+    eventKeyAlternativeGroups: [[], [], [], []],
     eventPolicy: {
       matching: 'exact-except-extra-progress',
       progress: 'milestone',
@@ -5112,9 +5008,7 @@ export const tusClientConformanceScenarios = [
     completion: {
       kind: 'aborted',
     },
-    eventKeyAlternativeGroups: [
-      [],
-    ],
+    eventKeyAlternativeGroups: [[]],
     execution: {
       serverRequestGates: [
         {
@@ -5372,12 +5266,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/retry-contract',
     },
-    eventKeyAlternativeGroups: [
-      [],
-      [],
-      [],
-      [],
-    ],
+    eventKeyAlternativeGroups: [[], [], [], []],
     featureId: 'retryOffsetRecovery',
     input: {
       content: 'hello world',
@@ -5631,12 +5520,7 @@ export const tusClientConformanceScenarios = [
       kind: 'success',
       uploadUrl: 'https://tus.io/uploads/request-hooks-contract',
     },
-    eventKeyAlternativeGroups: [
-      [],
-      [],
-      [],
-      [],
-    ],
+    eventKeyAlternativeGroups: [[], [], [], []],
     featureId: 'requestLifecycleHooks',
     input: {
       content: 'hello world',
@@ -5709,9 +5593,7 @@ export const tusClientConformanceScenarios = [
     completion: {
       kind: 'aborted',
     },
-    eventKeyAlternativeGroups: [
-      [],
-    ],
+    eventKeyAlternativeGroups: [[]],
     execution: {
       onRequestStart: [
         {
@@ -5770,9 +5652,7 @@ export const tusClientConformanceScenarios = [
       kind: 'aborted',
       uploadUrl: 'https://tus.io/uploads/abort-terminate-contract',
     },
-    eventKeyAlternativeGroups: [
-      [],
-    ],
+    eventKeyAlternativeGroups: [[]],
     execution: {
       onRequestStart: [
         {
@@ -5910,10 +5790,7 @@ export const tusClientConformanceScenarios = [
       kind: 'terminated',
       uploadUrl: 'https://tus.io/uploads/terminate-contract',
     },
-    eventKeyAlternativeGroups: [
-      [],
-      [],
-    ],
+    eventKeyAlternativeGroups: [[], []],
     execution: {
       onChunkComplete: [
         {
