@@ -540,24 +540,22 @@ async function startScenarioUpload(scenario, testStack) {
     )
   }
 
-  if (scenarioWantsEvent(scenario, 'should-retry')) {
+  if (scenario.retryDecisions.length > 0) {
     options.onShouldRetry = (_error, retryAttempt) => {
-      const event = scenario.events.filter((candidate) => candidate.kind === 'should-retry')[
-        retryDecisionIndex
-      ]
-      if (!event) {
+      const retryDecision = scenario.retryDecisions[retryDecisionIndex]
+      if (!retryDecision) {
         throw new Error(
           `Generated scenario ${scenario.scenarioId} received unexpected retry decision request ${retryDecisionIndex}`,
         )
       }
 
       observedEvents.push({
-        decision: event.decision,
+        decision: retryDecision.decision,
         kind: 'should-retry',
         retryAttempt,
       })
       retryDecisionIndex += 1
-      return event.decision
+      return retryDecision.decision
     }
   }
 

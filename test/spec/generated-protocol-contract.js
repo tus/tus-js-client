@@ -2140,6 +2140,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'PATCH',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'singleUploadLifecycle',
     events: [
       {
@@ -2257,6 +2258,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'POST',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'creationWithUpload',
     events: [
       {
@@ -2436,6 +2438,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'PATCH',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'creationWithUploadPartialChunk',
     events: [
       {
@@ -2580,6 +2583,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'POST',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'ietfDraft05CreationWithUpload',
     events: [
       {
@@ -2789,6 +2793,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'PATCH',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'ietfDraft05ChunkedUploadComplete',
     events: [
       {
@@ -2962,6 +2967,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'PATCH',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'ietfDraft03ResumeWithoutKnownLength',
     events: [
       {
@@ -3019,6 +3025,7 @@ export const tusClientConformanceScenarios = [
     operationIds: [],
     primitives: ['validate-start-options'],
     requests: [],
+    retryDecisions: [],
     scenarioId: 'startValidationMissingInput',
     events: [],
   },
@@ -3043,6 +3050,7 @@ export const tusClientConformanceScenarios = [
     operationIds: [],
     primitives: ['validate-start-options'],
     requests: [],
+    retryDecisions: [],
     scenarioId: 'startValidationMissingEndpointOrUploadUrl',
     events: [],
   },
@@ -3069,6 +3077,7 @@ export const tusClientConformanceScenarios = [
     operationIds: [],
     primitives: ['validate-start-options'],
     requests: [],
+    retryDecisions: [],
     scenarioId: 'startValidationUnsupportedProtocol',
     events: [],
   },
@@ -3097,6 +3106,7 @@ export const tusClientConformanceScenarios = [
     operationIds: [],
     primitives: ['validate-start-options'],
     requests: [],
+    retryDecisions: [],
     scenarioId: 'startValidationRetryDelaysNotArray',
     events: [],
   },
@@ -3124,6 +3134,7 @@ export const tusClientConformanceScenarios = [
     operationIds: [],
     primitives: ['validate-start-options'],
     requests: [],
+    retryDecisions: [],
     scenarioId: 'startValidationParallelUploadsWithUploadUrl',
     events: [],
   },
@@ -3151,6 +3162,7 @@ export const tusClientConformanceScenarios = [
     operationIds: [],
     primitives: ['validate-start-options'],
     requests: [],
+    retryDecisions: [],
     scenarioId: 'startValidationParallelUploadsWithUploadSize',
     events: [],
   },
@@ -3178,6 +3190,7 @@ export const tusClientConformanceScenarios = [
     operationIds: [],
     primitives: ['validate-start-options'],
     requests: [],
+    retryDecisions: [],
     scenarioId: 'startValidationParallelUploadsWithDeferredLength',
     events: [],
   },
@@ -3206,6 +3219,7 @@ export const tusClientConformanceScenarios = [
     operationIds: [],
     primitives: ['validate-start-options'],
     requests: [],
+    retryDecisions: [],
     scenarioId: 'startValidationParallelUploadsWithUploadDataDuringCreation',
     events: [],
   },
@@ -3238,6 +3252,7 @@ export const tusClientConformanceScenarios = [
     operationIds: [],
     primitives: ['validate-start-options'],
     requests: [],
+    retryDecisions: [],
     scenarioId: 'startValidationParallelBoundariesWithoutParallelUploads',
     events: [],
   },
@@ -3271,6 +3286,7 @@ export const tusClientConformanceScenarios = [
     operationIds: [],
     primitives: ['validate-start-options'],
     requests: [],
+    retryDecisions: [],
     scenarioId: 'startValidationParallelBoundariesLengthMismatch',
     events: [],
   },
@@ -3337,6 +3353,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'POST',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'detailedCreateResponseError',
     events: [],
   },
@@ -3396,6 +3413,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'POST',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'detailedCreateRequestError',
     events: [],
   },
@@ -3494,6 +3512,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'PATCH',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'uploadBodyHeaders',
     events: [],
   },
@@ -3600,6 +3619,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'PATCH',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'customRequestHeaders',
     events: [],
   },
@@ -3705,6 +3725,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'PATCH',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'requestIdHeaders',
     events: [],
   },
@@ -3828,6 +3849,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'PATCH',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'resumeFromPreviousUpload',
     events: [
       {
@@ -3988,6 +4010,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'PATCH',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'relativeLocationResolution',
     events: [
       {
@@ -4118,6 +4141,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'PATCH',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'arrayBufferInput',
     events: [
       {
@@ -4231,6 +4255,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'PATCH',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'arrayBufferViewInput',
     events: [
       {
@@ -4347,6 +4372,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'PATCH',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'webReadableStreamInput',
     events: [
       {
@@ -4463,6 +4489,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'PATCH',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'nodeReadableStreamInput',
     events: [
       {
@@ -4577,6 +4604,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'PATCH',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'nodePathInput',
     events: [
       {
@@ -4704,6 +4732,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'PATCH',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'deferredLengthUpload',
     events: [
       {
@@ -4938,6 +4967,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'PATCH',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'deferredLengthChunkedUpload',
     events: [
       {
@@ -5106,6 +5136,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'POST',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'overridePatchMethod',
     events: [],
   },
@@ -5348,6 +5379,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'POST',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'parallelUploadConcat',
     events: [
       {
@@ -5631,6 +5663,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'DELETE',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'parallelUploadAbortCleanup',
     events: [
       {
@@ -5878,6 +5911,16 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'PATCH',
       },
     ],
+    retryDecisions: [
+      {
+        decision: true,
+        retryAttempt: 0,
+      },
+      {
+        decision: true,
+        retryAttempt: 0,
+      },
+    ],
     scenarioId: 'retryPatchAfterOffsetRecovery',
     events: [
       {
@@ -5961,6 +6004,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'HEAD',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'requestLifecycleHooks',
     events: [
       {
@@ -6037,6 +6081,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'POST',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'abortUpload',
     events: [
       {
@@ -6180,6 +6225,7 @@ export const tusClientConformanceScenarios = [
         effectiveMethod: 'DELETE',
       },
     ],
+    retryDecisions: [],
     scenarioId: 'abortUploadAfterStoredUrl',
     events: [
       {
@@ -6348,6 +6394,12 @@ export const tusClientConformanceScenarios = [
           'Tus-Resumable': '1.0.0',
         },
         effectiveMethod: 'DELETE',
+      },
+    ],
+    retryDecisions: [
+      {
+        decision: true,
+        retryAttempt: 0,
       },
     ],
     scenarioId: 'terminateWithRetry',
