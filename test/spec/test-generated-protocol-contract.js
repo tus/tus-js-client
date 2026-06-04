@@ -247,14 +247,15 @@ function applyScenarioInputOption(options, entry) {
 }
 
 function installGeneratedRequestIdRandom(scenario) {
-  if (!scenario.input.addRequestId) {
+  const requestIdSetup = scenario.runtimeSetup.requestId
+  if (!requestIdSetup.enabled) {
     return () => {}
   }
 
   const expectedZeroUuid = '00000000-0000-4000-8000-000000000000'
-  if (scenario.input.generatedRequestId !== expectedZeroUuid) {
+  if (requestIdSetup.generatedRequestId !== expectedZeroUuid) {
     throw new Error(
-      `Generated scenario ${scenario.scenarioId} has unsupported generatedRequestId ${scenario.input.generatedRequestId}`,
+      `Generated scenario ${scenario.scenarioId} has unsupported generatedRequestId ${requestIdSetup.generatedRequestId}`,
     )
   }
 
@@ -482,7 +483,7 @@ async function abortScenarioRequest(req, scenario, request, requestIndex, observ
     return originalAbort()
   }
 
-  const abortPromise = upload.abort(Boolean(scenario.input.terminateUploadOnAbort))
+  const abortPromise = upload.abort(scenario.runtimeSetup.abort.terminateUpload)
   await wait(0)
 
   expect(req.method).toBe(request.effectiveMethod ?? request.method ?? operation.method)
@@ -581,17 +582,10 @@ async function startScenarioUpload(scenario, testStack) {
     applyScenarioInputOption(options, entry)
   }
 
-  const scenarioFingerprint =
-    scenario.input.fingerprint !== undefined
-      ? scenario.input.fingerprint
-      : scenario.input.storedUpload?.fingerprint
-  if (
-    scenarioFingerprint !== undefined ||
-    scenario.input.kind === 'web-readable-stream' ||
-    scenario.input.kind === 'node-readable-stream'
-  ) {
+  const fingerprintSetup = scenario.runtimeSetup.fingerprint
+  if (fingerprintSetup.install) {
     options.fingerprint = jasmine.createSpy('fingerprint').and.callFake(() => {
-      const fingerprint = scenarioFingerprint ?? null
+      const fingerprint = fingerprintSetup.value
       if (scenarioWantsEvent(scenario, 'fingerprint')) {
         observedEvents.push({ fingerprint, kind: 'fingerprint' })
       }
@@ -599,13 +593,9 @@ async function startScenarioUpload(scenario, testStack) {
     })
   }
 
-  if (
-    scenario.input.storedUpload != null ||
-    scenarioWantsEvent(scenario, 'url-storage-add') ||
-    scenarioWantsEvent(scenario, 'url-storage-find') ||
-    scenarioWantsEvent(scenario, 'url-storage-remove')
-  ) {
-    options.urlStorage = makeEventRecordingUrlStorage(scenario.input.storedUpload, observedEvents)
+  const urlStorageSetup = scenario.runtimeSetup.urlStorage
+  if (urlStorageSetup.install) {
+    options.urlStorage = makeEventRecordingUrlStorage(urlStorageSetup.storedUpload, observedEvents)
   }
 
   const onChunkCompleteActions = scenarioExecutionActions(scenario, 'onChunkComplete')

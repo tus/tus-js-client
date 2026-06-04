@@ -2169,6 +2169,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: true,
+        value: 'contract-single-fingerprint',
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: true,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'singleUploadLifecycle',
   },
   {
@@ -2266,6 +2283,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'creationWithUpload',
   },
   {
@@ -2449,6 +2483,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'creationWithUploadPartialChunk',
   },
   {
@@ -2550,6 +2601,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'ietfDraft05CreationWithUpload',
   },
   {
@@ -2762,6 +2830,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'ietfDraft05ChunkedUploadComplete',
   },
   {
@@ -2891,6 +2976,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'ietfDraft03ResumeWithoutKnownLength',
   },
   {
@@ -2927,6 +3029,23 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'startValidationMissingInput',
   },
   {
@@ -2957,6 +3076,23 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'startValidationMissingEndpointOrUploadUrl',
   },
   {
@@ -2998,6 +3134,23 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'startValidationUnsupportedProtocol',
   },
   {
@@ -3043,6 +3196,23 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'startValidationRetryDelaysNotArray',
   },
   {
@@ -3089,6 +3259,23 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'startValidationParallelUploadsWithUploadUrl',
   },
   {
@@ -3135,6 +3322,23 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'startValidationParallelUploadsWithUploadSize',
   },
   {
@@ -3182,6 +3386,23 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'startValidationParallelUploadsWithDeferredLength',
   },
   {
@@ -3229,6 +3450,23 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'startValidationParallelUploadsWithUploadDataDuringCreation',
   },
   {
@@ -3281,6 +3519,23 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'startValidationParallelBoundariesWithoutParallelUploads',
   },
   {
@@ -3338,6 +3593,23 @@ export const tusClientConformanceScenarios = [
     primitives: ['validate-start-options'],
     requests: [],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'startValidationParallelBoundariesLengthMismatch',
   },
   {
@@ -3434,6 +3706,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'detailedCreateResponseError',
   },
   {
@@ -3523,6 +3812,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'detailedCreateRequestError',
   },
   {
@@ -3641,6 +3947,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'uploadBodyHeaders',
   },
   {
@@ -3774,6 +4097,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'customRequestHeaders',
   },
   {
@@ -3909,6 +4249,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: true,
+        generatedRequestId: '00000000-0000-4000-8000-000000000000',
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'requestIdHeaders',
   },
   {
@@ -4061,6 +4418,27 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: true,
+        value: 'contract-resume-fingerprint',
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: true,
+        storedUpload: {
+          fingerprint: 'contract-resume-fingerprint',
+          uploadUrl: 'https://tus.io/uploads/resume-contract',
+          urlStorageKey: 'tus::contract-resume-fingerprint::1337',
+        },
+      },
+    },
     scenarioId: 'resumeFromPreviousUpload',
   },
   {
@@ -4188,6 +4566,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'relativeLocationResolution',
   },
   {
@@ -4306,6 +4701,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'arrayBufferInput',
   },
   {
@@ -4424,6 +4836,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'arrayBufferViewInput',
   },
   {
@@ -4553,6 +4982,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: true,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'webReadableStreamInput',
   },
   {
@@ -4682,6 +5128,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: true,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'nodeReadableStreamInput',
     runtimes: ['node'],
   },
@@ -4801,6 +5264,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'nodePathInput',
     runtimes: ['node'],
   },
@@ -4941,6 +5421,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: true,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'deferredLengthUpload',
   },
   {
@@ -5173,6 +5670,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'deferredLengthChunkedUpload',
   },
   {
@@ -5293,6 +5807,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'overridePatchMethod',
   },
   {
@@ -5570,6 +6101,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'parallelUploadConcat',
   },
   {
@@ -5868,6 +6416,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: true,
+      },
+      fingerprint: {
+        install: true,
+        value: 'contract-parallel-cleanup-fingerprint',
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'parallelUploadAbortCleanup',
   },
   {
@@ -6146,6 +6711,23 @@ export const tusClientConformanceScenarios = [
         retryAttempt: 0,
       },
     ],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'retryPatchAfterOffsetRecovery',
   },
   {
@@ -6223,6 +6805,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'requestLifecycleHooks',
   },
   {
@@ -6302,6 +6901,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'abortUpload',
   },
   {
@@ -6473,6 +7089,23 @@ export const tusClientConformanceScenarios = [
       },
     ],
     retryDecisions: [],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: true,
+      },
+      fingerprint: {
+        install: true,
+        value: 'contract-abort-terminate-fingerprint',
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'abortUploadAfterStoredUrl',
   },
   {
@@ -6674,6 +7307,23 @@ export const tusClientConformanceScenarios = [
         retryAttempt: 0,
       },
     ],
+    runtimeSetup: {
+      abort: {
+        terminateUpload: false,
+      },
+      fingerprint: {
+        install: false,
+        value: null,
+      },
+      requestId: {
+        enabled: false,
+        generatedRequestId: null,
+      },
+      urlStorage: {
+        install: false,
+        storedUpload: null,
+      },
+    },
     scenarioId: 'terminateWithRetry',
   },
 ]
