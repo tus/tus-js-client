@@ -45,15 +45,6 @@ export const TUS_OPERATION_METHOD_BY_ID: Record<string, string> = {
   downloadTusUpload: 'GET',
 }
 
-export const TUS_OPERATION_ID_BY_ROLE: Record<string, string> = {
-  'capability-discovery': 'discoverTusCapabilities',
-  creation: 'createTusUpload',
-  'offset-discovery': 'getTusUploadOffset',
-  'upload-chunk': 'patchTusUpload',
-  termination: 'terminateTusUpload',
-  download: 'downloadTusUpload',
-}
-
 export const TUS_OPERATION_IDS = {
   DISCOVER_TUS_CAPABILITIES: 'discoverTusCapabilities',
   CREATE_TUS_UPLOAD: 'createTusUpload',
@@ -2778,15 +2769,6 @@ export function tusExpectedResponseStatusForOperation(
   status: number,
 ): boolean {
   return TUS_OPERATION_RESPONSE_STATUS_CODES[operationId]?.includes(status) ?? false
-}
-
-export function tusOperationIdForRole(role: string): string {
-  const operationId = TUS_OPERATION_ID_BY_ROLE[role]
-  if (operationId == null) {
-    throw new Error(`Unknown TUS operation role: ${role}`)
-  }
-
-  return operationId
 }
 
 export function tusRequiresKnownUploadLengthOnOffsetResponse(protocol: string): boolean {
