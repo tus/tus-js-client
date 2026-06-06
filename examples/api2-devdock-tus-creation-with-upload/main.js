@@ -7,9 +7,12 @@ import {
   writeJsonResult,
 } from '../api2-devdock-shared/scenario.js'
 
-async function uploadWithTus(scenario, createResponse) {
-  const content = scenarioBytes(scenario.upload)
+async function uploadWithCreationData(scenario, createResponse) {
+  if (scenario.upload.uploadDataDuringCreation !== true) {
+    fail('creation-with-upload scenario must set uploadDataDuringCreation')
+  }
 
+  const content = scenarioBytes(scenario.upload)
   const upload = new Upload(content, tusUploadOptions({ content, createResponse, scenario }))
 
   await new Promise((resolve, reject) => {
@@ -19,7 +22,7 @@ async function uploadWithTus(scenario, createResponse) {
   })
 
   if (!upload.url) {
-    fail('TUS upload did not expose an upload URL')
+    fail('creation-with-upload TUS upload did not expose an upload URL')
   }
 
   return upload.url
@@ -28,7 +31,7 @@ async function uploadWithTus(scenario, createResponse) {
 async function main() {
   const scenario = await loadScenario(import.meta.url)
   const createResponse = scenario.prepared.createResponse
-  const uploadUrl = await uploadWithTus(scenario, createResponse)
+  const uploadUrl = await uploadWithCreationData(scenario, createResponse)
   await writeJsonResult({ uploadUrl })
   console.log(`TypeScript TUS SDK devdock scenario ${scenario.scenarioId} uploaded to ${uploadUrl}`)
 }

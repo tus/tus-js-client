@@ -104,6 +104,23 @@ export function uploadMetadata(uploadConfig, scenario, createResponse) {
   return metadata
 }
 
+export function tusUploadOptions({ content, createResponse, scenario }) {
+  const uploadConfig = scenario.upload
+  const context = { createResponse, scenario }
+  const options = {
+    endpoint: scalarString(resolveValue(uploadConfig.tusUrl, context, 'tusUrl')),
+    chunkSize: chunkSizeBytes(uploadConfig.chunkSize, content.length),
+    metadata: uploadMetadata(uploadConfig, scenario, createResponse),
+    retryDelays: retryDelays(uploadConfig.retries),
+  }
+
+  if (uploadConfig.uploadDataDuringCreation === true) {
+    options.uploadDataDuringCreation = true
+  }
+
+  return options
+}
+
 export function retryDelays(retries) {
   if (!Number.isInteger(retries) || retries < 0) {
     fail(`unsupported retry count ${JSON.stringify(retries)}`)
