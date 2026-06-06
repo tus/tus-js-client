@@ -157,6 +157,19 @@ export function requireResumePlan(uploadConfig) {
   return resume
 }
 
+export function requireRetryOffsetRecoveryPlan(uploadConfig) {
+  const retryOffsetRecovery = uploadConfig.retryOffsetRecovery
+  if (
+    typeof retryOffsetRecovery !== 'object' ||
+    retryOffsetRecovery === null ||
+    Array.isArray(retryOffsetRecovery)
+  ) {
+    fail('scenario upload is missing a retry offset recovery plan')
+  }
+
+  return retryOffsetRecovery
+}
+
 export async function writeJsonResult(result) {
   const resultPath = process.env.API2_SDK_EXAMPLE_RESULT
   if (!resultPath) {
