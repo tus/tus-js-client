@@ -27,6 +27,7 @@ function uploadOptions({ content, createResponse, scenario, storage }) {
     chunkSize: chunkSizeBytes(uploadConfig.chunkSize, content.length),
     fingerprint: async () => resume.fingerprint,
     metadata: uploadMetadata(uploadConfig, scenario, createResponse),
+    removeFingerprintOnSuccess: resume.removeFingerprintOnSuccess,
     retryDelays: retryDelays(uploadConfig.retries),
     urlStorage: storage,
   }
