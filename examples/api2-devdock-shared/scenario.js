@@ -2,6 +2,11 @@ import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import {
+  TUS_DEFAULT_CLIENT_PROTOCOL,
+  tusRequestHeadersForProtocol,
+} from '../../lib.esm/protocol_generated.js'
+
 export function fail(message) {
   throw new Error(message)
 }
@@ -121,6 +126,10 @@ export function tusUploadOptions({ content, createResponse, scenario }) {
   return options
 }
 
+export function tusDefaultRequestHeaders() {
+  return tusRequestHeadersForProtocol(TUS_DEFAULT_CLIENT_PROTOCOL)
+}
+
 export function retryDelays(retries) {
   if (!Number.isInteger(retries) || retries < 0) {
     fail(`unsupported retry count ${JSON.stringify(retries)}`)
@@ -168,6 +177,15 @@ export function requireRetryOffsetRecoveryPlan(uploadConfig) {
   }
 
   return retryOffsetRecovery
+}
+
+export function requireTerminationPlan(uploadConfig) {
+  const termination = uploadConfig.termination
+  if (typeof termination !== 'object' || termination === null || Array.isArray(termination)) {
+    fail('scenario upload is missing a termination plan')
+  }
+
+  return termination
 }
 
 export async function writeJsonResult(result) {
