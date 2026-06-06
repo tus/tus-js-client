@@ -84,18 +84,21 @@ export const TUS_REQUEST_CONTENT_TYPES = {
 export const TUS_RESPONSE_STATUS_CODES = {
   DISCOVER_TUS_CAPABILITIES_200: 200,
   CREATE_TUS_UPLOAD_201: 201,
+  CREATE_TUS_UPLOAD_500: 500,
   GET_TUS_UPLOAD_OFFSET_200: 200,
   PATCH_TUS_UPLOAD_204: 204,
+  PATCH_TUS_UPLOAD_500: 500,
   TERMINATE_TUS_UPLOAD_204: 204,
+  TERMINATE_TUS_UPLOAD_423: 423,
   DOWNLOAD_TUS_UPLOAD_200: 200,
 } as const
 
 export const TUS_OPERATION_RESPONSE_STATUS_CODES: Record<string, readonly number[]> = {
   discoverTusCapabilities: [200],
-  createTusUpload: [201],
+  createTusUpload: [201, 500],
   getTusUploadOffset: [200],
-  patchTusUpload: [204],
-  terminateTusUpload: [204],
+  patchTusUpload: [204, 500],
+  terminateTusUpload: [204, 423],
   downloadTusUpload: [200],
 }
 

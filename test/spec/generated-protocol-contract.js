@@ -166,6 +166,21 @@ export const tusProtocolOperations = [
           },
         ],
       },
+      {
+        statusCode: 500,
+        bodyKind: 'empty',
+        headerVariants: [
+          {
+            fields: [
+              {
+                displayName: 'Tus-Resumable',
+                name: 'tus-resumable',
+                required: true,
+              },
+            ],
+          },
+        ],
+      },
     ],
   },
   {
@@ -286,6 +301,21 @@ export const tusProtocolOperations = [
           },
         ],
       },
+      {
+        statusCode: 500,
+        bodyKind: 'empty',
+        headerVariants: [
+          {
+            fields: [
+              {
+                displayName: 'Tus-Resumable',
+                name: 'tus-resumable',
+                required: true,
+              },
+            ],
+          },
+        ],
+      },
     ],
   },
   {
@@ -311,6 +341,21 @@ export const tusProtocolOperations = [
     responses: [
       {
         statusCode: 204,
+        bodyKind: 'empty',
+        headerVariants: [
+          {
+            fields: [
+              {
+                displayName: 'Tus-Resumable',
+                name: 'tus-resumable',
+                required: true,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        statusCode: 423,
         bodyKind: 'empty',
         headerVariants: [
           {
@@ -2092,6 +2137,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -2130,6 +2176,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 11,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -2235,6 +2282,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 11,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -2355,6 +2403,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 5,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -2397,6 +2446,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 5,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -2435,6 +2485,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 1,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -2544,6 +2595,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: ['Tus-Resumable'],
         abort: false,
         bodySize: 11,
+        bodyStart: null,
         errorMessage: null,
         headerMode: 'exact',
         headers: {
@@ -2663,6 +2715,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: ['Tus-Resumable'],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: 'exact',
         headers: {},
@@ -2697,6 +2750,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: ['Tus-Resumable'],
         abort: false,
         bodySize: 5,
+        bodyStart: null,
         errorMessage: null,
         headerMode: 'exact',
         headers: {
@@ -2736,6 +2790,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: ['Tus-Resumable'],
         abort: false,
         bodySize: 5,
+        bodyStart: null,
         errorMessage: null,
         headerMode: 'exact',
         headers: {
@@ -2775,6 +2830,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: ['Tus-Resumable'],
         abort: false,
         bodySize: 1,
+        bodyStart: null,
         errorMessage: null,
         headerMode: 'exact',
         headers: {
@@ -2884,6 +2940,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: ['Tus-Resumable'],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: 'exact',
         headers: {},
@@ -2916,6 +2973,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: ['Content-Type', 'Tus-Resumable'],
         abort: false,
         bodySize: 6,
+        bodyStart: null,
         errorMessage: null,
         headerMode: 'exact',
         headers: {
@@ -3564,6 +3622,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -3580,7 +3639,9 @@ export const tusClientConformanceScenarios = [
           headers: {},
           headersSpecified: false,
           statusCode: 500,
-          effectiveHeaders: {},
+          effectiveHeaders: {
+            'Tus-Resumable': '1.0.0',
+          },
         },
         role: null,
         uploadUrl: null,
@@ -3667,6 +3728,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: 'socket down',
         headerMode: null,
         headers: {
@@ -3750,6 +3812,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -3788,6 +3851,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 11,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -3888,6 +3952,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -3930,6 +3995,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 11,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -4037,6 +4103,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -4077,6 +4144,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 11,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -4203,6 +4271,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {},
@@ -4238,6 +4307,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 6,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -4344,6 +4414,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -4382,6 +4453,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 11,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -4475,6 +4547,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -4513,6 +4586,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 11,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -4606,6 +4680,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -4644,6 +4719,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 11,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -4745,6 +4821,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: ['Upload-Length'],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -4783,6 +4860,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 11,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -4886,6 +4964,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: ['Upload-Length'],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -4924,6 +5003,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 11,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -5020,6 +5100,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -5058,6 +5139,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 11,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -5170,6 +5252,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: ['Upload-Length'],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -5208,6 +5291,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 11,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -5340,6 +5424,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: ['Upload-Length'],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -5378,6 +5463,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 5,
+        bodyStart: 0,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -5416,6 +5502,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 5,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -5454,6 +5541,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 1,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -5551,6 +5639,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {},
@@ -5586,6 +5675,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 8,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -5716,6 +5806,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -5756,6 +5847,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -5796,6 +5888,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 5,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -5834,6 +5927,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 6,
+        bodyStart: 5,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -5872,6 +5966,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: ['Upload-Length'],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -6002,6 +6097,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -6046,6 +6142,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -6090,6 +6187,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 5,
+        bodyStart: 0,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -6107,7 +6205,9 @@ export const tusClientConformanceScenarios = [
           headers: {},
           headersSpecified: false,
           statusCode: 500,
-          effectiveHeaders: {},
+          effectiveHeaders: {
+            'Tus-Resumable': '1.0.0',
+          },
         },
         role: 'upload-partial-chunk',
         uploadUrl: 'https://tus.io/uploads/parallel-cleanup-part-1',
@@ -6128,6 +6228,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: true,
         bodySize: 6,
+        bodyStart: 5,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -6159,6 +6260,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -6194,6 +6296,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -6300,6 +6403,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -6338,6 +6442,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 11,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -6353,7 +6458,9 @@ export const tusClientConformanceScenarios = [
           headers: {},
           headersSpecified: false,
           statusCode: 500,
-          effectiveHeaders: {},
+          effectiveHeaders: {
+            'Tus-Resumable': '1.0.0',
+          },
         },
         role: 'upload-chunk',
         uploadUrl: null,
@@ -6371,6 +6478,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {},
@@ -6406,6 +6514,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 6,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -6421,7 +6530,9 @@ export const tusClientConformanceScenarios = [
           headers: {},
           headersSpecified: false,
           statusCode: 500,
-          effectiveHeaders: {},
+          effectiveHeaders: {
+            'Tus-Resumable': '1.0.0',
+          },
         },
         role: 'retry-upload-chunk',
         uploadUrl: null,
@@ -6439,6 +6550,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {},
@@ -6474,6 +6586,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 6,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -6574,6 +6687,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {},
@@ -6674,6 +6788,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: true,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -6776,6 +6891,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -6818,6 +6934,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: true,
         bodySize: 11,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -6849,6 +6966,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -6957,6 +7075,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -6995,6 +7114,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: 5,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {
@@ -7033,6 +7153,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {},
@@ -7045,7 +7166,9 @@ export const tusClientConformanceScenarios = [
           headers: {},
           headersSpecified: false,
           statusCode: 423,
-          effectiveHeaders: {},
+          effectiveHeaders: {
+            'Tus-Resumable': '1.0.0',
+          },
         },
         role: 'terminate-upload',
         uploadUrl: null,
@@ -7061,6 +7184,7 @@ export const tusClientConformanceScenarios = [
         absentHeaders: [],
         abort: false,
         bodySize: null,
+        bodyStart: null,
         errorMessage: null,
         headerMode: null,
         headers: {},
