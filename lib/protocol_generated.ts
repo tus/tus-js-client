@@ -2814,7 +2814,7 @@ export function tusShouldRetryStatus(status: number): boolean {
 }
 
 export function tusPlanTerminateResponse({ status }: { status: number }): TusTerminateResponsePlan {
-  if (tusExpectedResponseStatusForOperation(TUS_OPERATION_IDS.TERMINATE_TUS_UPLOAD, status)) {
+  if (tusIsSuccessfulResponseStatus(status)) {
     return { action: 'complete' }
   }
 
