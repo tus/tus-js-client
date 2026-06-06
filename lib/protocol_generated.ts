@@ -480,6 +480,20 @@ export const TUS_FLOW_POLICY = {
   },
 }
 
+export const TUS_SUCCESS_CLOSE_SOURCE_AFTER_HOOK = true
+
+export const TUS_SUCCESS_CLOSE_SOURCE_REQUIRES_SOURCE = true
+
+export const TUS_SUCCESS_EMIT_AFTER_UPLOAD_COMPLETE = true
+
+export const TUS_SUCCESS_REMOVE_STORED_URL_BEFORE_HOOK = true
+
+export const TUS_SUCCESS_REMOVE_STORED_URL_REQUIRES_OPTION = true
+
+export const TUS_URL_STORAGE_REMOVE_ON_SUCCESS_ENABLED = true
+
+export const TUS_URL_STORAGE_REMOVE_ON_SUCCESS_REQUIRES_OPTION = true
+
 export type TusNumericHeaderReadResult =
   | { ok: false; reason: 'invalid' | 'missing' }
   | { ok: true; value: number }
@@ -1556,10 +1570,22 @@ export function tusPlanSuccessEvent({
   tusAssertEventHookPolicySupported()
 
   return {
-    closeSource: hasSource,
+    closeSource: tusShouldCloseSourceOnSuccess({ hasSource }),
     removeStoredUpload: tusShouldRemoveStoredUploadOnSuccess({ removeFingerprintOnSuccess }),
     shouldCall: hasHook,
   }
+}
+
+export function tusShouldCloseSourceOnSuccess({ hasSource }: { hasSource: boolean }): boolean {
+  tusAssertEventHookPolicySupported()
+
+  if (!TUS_SUCCESS_CLOSE_SOURCE_AFTER_HOOK) {
+    return false
+  }
+  if (TUS_SUCCESS_CLOSE_SOURCE_REQUIRES_SOURCE) {
+    return hasSource
+  }
+  return true
 }
 
 export function tusCommonSupportedFileSourceTypes(): readonly string[] {
@@ -2067,9 +2093,22 @@ export function tusShouldRemoveStoredUploadOnSuccess({
 }: {
   removeFingerprintOnSuccess: boolean
 }): boolean {
+  tusAssertEventHookPolicySupported()
   tusAssertUrlStorageCleanupPolicySupported()
 
-  return removeFingerprintOnSuccess
+  if (!TUS_SUCCESS_REMOVE_STORED_URL_BEFORE_HOOK) {
+    return false
+  }
+  if (!TUS_URL_STORAGE_REMOVE_ON_SUCCESS_ENABLED) {
+    return false
+  }
+  if (
+    TUS_SUCCESS_REMOVE_STORED_URL_REQUIRES_OPTION ||
+    TUS_URL_STORAGE_REMOVE_ON_SUCCESS_REQUIRES_OPTION
+  ) {
+    return removeFingerprintOnSuccess
+  }
+  return true
 }
 
 export function tusUrlStorageCreationTime({ now }: { now: Date }): string {
@@ -2597,7 +2636,25 @@ export function tusShouldResetRetryAttempt({
 }): boolean {
   tusAssertRequestLifecyclePolicySupported()
 
-  return offset > offsetBeforeRetry
+  const policy = TUS_FLOW_POLICY.requestLifecycle.retry.attemptCounter.reset
+  switch (policy) {
+    case 'when-offset-advanced-since-last-retry':
+      return offset > offsetBeforeRetry
+    default:
+      throw new Error(`tus: unsupported retry reset policy ${policy}`)
+  }
+}
+
+export function tusNextRetryAttempt({ retryAttempt }: { retryAttempt: number }): number {
+  tusAssertRequestLifecyclePolicySupported()
+
+  const policy = TUS_FLOW_POLICY.requestLifecycle.retry.attemptCounter.increment
+  switch (policy) {
+    case 'after-retry-scheduled':
+      return retryAttempt + 1
+    default:
+      throw new Error(`tus: unsupported retry increment policy ${policy}`)
+  }
 }
 
 export function tusPlanRetryAfterError({
@@ -2631,12 +2688,13 @@ export function tusPlanRetryAfterError({
     return { action: 'emitError', retryAttempt: effectiveRetryAttempt }
   }
 
+  const nextRetryAttempt = tusNextRetryAttempt({ retryAttempt: effectiveRetryAttempt })
   return {
     action: 'scheduleRetry',
     delay: retryDelays[effectiveRetryAttempt],
-    nextRetryAttempt: effectiveRetryAttempt + 1,
+    nextRetryAttempt,
     offsetBeforeRetry: offset,
-    remainingRetryDelays: [...retryDelays.slice(effectiveRetryAttempt + 1)],
+    remainingRetryDelays: [...retryDelays.slice(nextRetryAttempt)],
     retryAttempt: effectiveRetryAttempt,
   }
 }

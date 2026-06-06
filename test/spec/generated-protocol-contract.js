@@ -2094,8 +2094,11 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Length': '11',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -2130,6 +2133,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
         },
         headersSpecified: true,
@@ -2233,8 +2237,12 @@ export const tusClientConformanceScenarios = [
         bodySize: 11,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Length': '11',
+          'Content-Type': 'application/offset+octet-stream',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -2349,8 +2357,12 @@ export const tusClientConformanceScenarios = [
         bodySize: 5,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Length': '11',
+          'Content-Type': 'application/offset+octet-stream',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -2388,6 +2400,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '5',
         },
         headersSpecified: true,
@@ -2425,6 +2438,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '10',
         },
         headersSpecified: true,
@@ -2532,8 +2546,13 @@ export const tusClientConformanceScenarios = [
         bodySize: 11,
         errorMessage: null,
         headerMode: 'exact',
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Length': '11',
+          'Upload-Complete': '?1',
+          'Content-Type': 'application/partial-upload',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -2559,6 +2578,7 @@ export const tusClientConformanceScenarios = [
           'Upload-Length': '11',
           'Upload-Complete': '?1',
           'Content-Type': 'application/partial-upload',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
         },
         effectiveMethod: 'POST',
         expectedUrl: 'https://tus.io/uploads',
@@ -2680,6 +2700,8 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: 'exact',
         headers: {
+          'Upload-Complete': '?0',
+          'Content-Type': 'application/partial-upload',
           'Upload-Offset': '0',
         },
         headersSpecified: true,
@@ -2717,6 +2739,8 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: 'exact',
         headers: {
+          'Upload-Complete': '?0',
+          'Content-Type': 'application/partial-upload',
           'Upload-Offset': '5',
         },
         headersSpecified: true,
@@ -2754,6 +2778,8 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: 'exact',
         headers: {
+          'Upload-Complete': '?1',
+          'Content-Type': 'application/partial-upload',
           'Upload-Offset': '10',
         },
         headersSpecified: true,
@@ -2893,6 +2919,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: 'exact',
         headers: {
+          'Upload-Complete': '?1',
           'Upload-Offset': '5',
         },
         headersSpecified: true,
@@ -3539,8 +3566,12 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Length': '11',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+          'X-Request-ID': 'contract-request-id',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -3638,8 +3669,12 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: 'socket down',
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Length': '11',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+          'X-Request-ID': 'contract-request-id',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: null,
@@ -3717,8 +3752,11 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Length': '11',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -3753,6 +3791,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
         },
         headersSpecified: true,
@@ -3851,8 +3890,13 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Length': '11',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+          'X-Tus-Contract': 'custom-header',
+          'X-Tus-Trace': 'trace-123',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -3889,7 +3933,10 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
+          'X-Tus-Contract': 'custom-header',
+          'X-Tus-Trace': 'trace-123',
         },
         headersSpecified: true,
         method: null,
@@ -3992,8 +4039,12 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Length': '11',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+          'X-Request-ID': '00000000-0000-4000-8000-000000000000',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -4029,7 +4080,9 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
+          'X-Request-ID': '00000000-0000-4000-8000-000000000000',
         },
         headersSpecified: true,
         method: null,
@@ -4188,6 +4241,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '5',
         },
         headersSpecified: true,
@@ -4292,8 +4346,11 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Length': '11',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -4328,6 +4385,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
         },
         headersSpecified: true,
@@ -4419,8 +4477,11 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Length': '11',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -4455,6 +4516,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
         },
         headersSpecified: true,
@@ -4546,8 +4608,11 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Length': '11',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -4582,6 +4647,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
         },
         headersSpecified: true,
@@ -4681,8 +4747,11 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Defer-Length': '1',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -4717,6 +4786,8 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Upload-Length': '11',
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
         },
         headersSpecified: true,
@@ -4817,8 +4888,11 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Defer-Length': '1',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -4853,6 +4927,8 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Upload-Length': '11',
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
         },
         headersSpecified: true,
@@ -4946,8 +5022,11 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Length': '11',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -4982,6 +5061,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
         },
         headersSpecified: true,
@@ -5092,8 +5172,11 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Defer-Length': '1',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -5128,6 +5211,8 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Upload-Length': '11',
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
         },
         headersSpecified: true,
@@ -5257,8 +5342,11 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Defer-Length': '1',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -5293,6 +5381,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
         },
         headersSpecified: true,
@@ -5330,6 +5419,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '5',
         },
         headersSpecified: true,
@@ -5367,6 +5457,8 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Upload-Length': '11',
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '10',
         },
         headersSpecified: true,
@@ -5497,6 +5589,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '3',
         },
         headersSpecified: true,
@@ -5626,6 +5719,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Upload-Metadata': 'test d29ybGQ=',
           'Upload-Concat': 'partial',
           'Upload-Length': '5',
         },
@@ -5651,9 +5745,9 @@ export const tusClientConformanceScenarios = [
         requestIndex: 0,
         effectiveHeaders: {
           'Tus-Resumable': '1.0.0',
+          'Upload-Metadata': 'test d29ybGQ=',
           'Upload-Concat': 'partial',
           'Upload-Length': '5',
-          'Upload-Metadata': 'test d29ybGQ=',
         },
         effectiveMethod: 'POST',
         expectedUrl: 'https://tus.io/uploads',
@@ -5665,6 +5759,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Upload-Metadata': 'test d29ybGQ=',
           'Upload-Concat': 'partial',
           'Upload-Length': '6',
         },
@@ -5690,9 +5785,9 @@ export const tusClientConformanceScenarios = [
         requestIndex: 1,
         effectiveHeaders: {
           'Tus-Resumable': '1.0.0',
+          'Upload-Metadata': 'test d29ybGQ=',
           'Upload-Concat': 'partial',
           'Upload-Length': '6',
-          'Upload-Metadata': 'test d29ybGQ=',
         },
         effectiveMethod: 'POST',
         expectedUrl: 'https://tus.io/uploads',
@@ -5704,6 +5799,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
         },
         headersSpecified: true,
@@ -5741,6 +5837,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
         },
         headersSpecified: true,
@@ -5778,6 +5875,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Upload-Metadata': 'foo aGVsbG8=',
           'Upload-Concat':
             'final;https://tus.io/uploads/parallel-part-1 https://tus.io/uploads/parallel-part-2',
         },
@@ -5803,9 +5901,9 @@ export const tusClientConformanceScenarios = [
         requestIndex: 4,
         effectiveHeaders: {
           'Tus-Resumable': '1.0.0',
+          'Upload-Metadata': 'foo aGVsbG8=',
           'Upload-Concat':
             'final;https://tus.io/uploads/parallel-part-1 https://tus.io/uploads/parallel-part-2',
-          'Upload-Metadata': 'foo aGVsbG8=',
         },
         effectiveMethod: 'POST',
         expectedUrl: 'https://tus.io/uploads',
@@ -5907,8 +6005,11 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Upload-Metadata': 'test d29ybGQ=',
           'Upload-Concat': 'partial',
           'Upload-Length': '5',
+          'X-Tus-Contract': 'parallel-cleanup-policy',
+          'X-Tus-Trace': 'parallel-cleanup-trace-123',
         },
         headersSpecified: true,
         method: null,
@@ -5932,9 +6033,9 @@ export const tusClientConformanceScenarios = [
         requestIndex: 0,
         effectiveHeaders: {
           'Tus-Resumable': '1.0.0',
+          'Upload-Metadata': 'test d29ybGQ=',
           'Upload-Concat': 'partial',
           'Upload-Length': '5',
-          'Upload-Metadata': 'test d29ybGQ=',
           'X-Tus-Contract': 'parallel-cleanup-policy',
           'X-Tus-Trace': 'parallel-cleanup-trace-123',
         },
@@ -5948,8 +6049,11 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Upload-Metadata': 'test d29ybGQ=',
           'Upload-Concat': 'partial',
           'Upload-Length': '6',
+          'X-Tus-Contract': 'parallel-cleanup-policy',
+          'X-Tus-Trace': 'parallel-cleanup-trace-123',
         },
         headersSpecified: true,
         method: null,
@@ -5973,9 +6077,9 @@ export const tusClientConformanceScenarios = [
         requestIndex: 1,
         effectiveHeaders: {
           'Tus-Resumable': '1.0.0',
+          'Upload-Metadata': 'test d29ybGQ=',
           'Upload-Concat': 'partial',
           'Upload-Length': '6',
-          'Upload-Metadata': 'test d29ybGQ=',
           'X-Tus-Contract': 'parallel-cleanup-policy',
           'X-Tus-Trace': 'parallel-cleanup-trace-123',
         },
@@ -5989,7 +6093,10 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
+          'X-Tus-Contract': 'parallel-cleanup-policy',
+          'X-Tus-Trace': 'parallel-cleanup-trace-123',
         },
         headersSpecified: true,
         method: null,
@@ -6010,9 +6117,9 @@ export const tusClientConformanceScenarios = [
           'Tus-Resumable': '1.0.0',
           'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
-          'X-HTTP-Method-Override': 'PATCH',
           'X-Tus-Contract': 'parallel-cleanup-policy',
           'X-Tus-Trace': 'parallel-cleanup-trace-123',
+          'X-HTTP-Method-Override': 'PATCH',
         },
         effectiveMethod: 'POST',
         expectedUrl: 'https://tus.io/uploads/parallel-cleanup-part-1',
@@ -6024,7 +6131,10 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
+          'X-Tus-Contract': 'parallel-cleanup-policy',
+          'X-Tus-Trace': 'parallel-cleanup-trace-123',
         },
         headersSpecified: true,
         method: null,
@@ -6038,9 +6148,9 @@ export const tusClientConformanceScenarios = [
           'Tus-Resumable': '1.0.0',
           'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
-          'X-HTTP-Method-Override': 'PATCH',
           'X-Tus-Contract': 'parallel-cleanup-policy',
           'X-Tus-Trace': 'parallel-cleanup-trace-123',
+          'X-HTTP-Method-Override': 'PATCH',
         },
         effectiveMethod: 'POST',
         expectedUrl: 'https://tus.io/uploads/parallel-cleanup-part-2',
@@ -6051,7 +6161,10 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
+        headers: {
+          'X-Tus-Contract': 'parallel-cleanup-policy',
+          'X-Tus-Trace': 'parallel-cleanup-trace-123',
+        },
         headersSpecified: true,
         method: null,
         operationId: 'terminateTusUpload',
@@ -6083,7 +6196,10 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
+        headers: {
+          'X-Tus-Contract': 'parallel-cleanup-policy',
+          'X-Tus-Trace': 'parallel-cleanup-trace-123',
+        },
         headersSpecified: true,
         method: null,
         operationId: 'terminateTusUpload',
@@ -6186,8 +6302,11 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Length': '11',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -6222,6 +6341,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
         },
         headersSpecified: true,
@@ -6289,6 +6409,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '5',
         },
         headersSpecified: true,
@@ -6356,6 +6477,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '5',
         },
         headersSpecified: true,
@@ -6554,8 +6676,11 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Length': '11',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: null,
@@ -6653,8 +6778,13 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Length': '11',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+          'X-Tus-Contract': 'abort-policy',
+          'X-Tus-Trace': 'abort-trace-123',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -6691,7 +6821,10 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
+          'X-Tus-Contract': 'abort-policy',
+          'X-Tus-Trace': 'abort-trace-123',
         },
         headersSpecified: true,
         method: null,
@@ -6705,9 +6838,9 @@ export const tusClientConformanceScenarios = [
           'Tus-Resumable': '1.0.0',
           'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
-          'X-HTTP-Method-Override': 'PATCH',
           'X-Tus-Contract': 'abort-policy',
           'X-Tus-Trace': 'abort-trace-123',
+          'X-HTTP-Method-Override': 'PATCH',
         },
         effectiveMethod: 'POST',
         expectedUrl: 'https://tus.io/uploads/abort-terminate-contract',
@@ -6718,7 +6851,10 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
+        headers: {
+          'X-Tus-Contract': 'abort-policy',
+          'X-Tus-Trace': 'abort-trace-123',
+        },
         headersSpecified: true,
         method: null,
         operationId: 'terminateTusUpload',
@@ -6823,8 +6959,11 @@ export const tusClientConformanceScenarios = [
         bodySize: null,
         errorMessage: null,
         headerMode: null,
-        headers: {},
-        headersSpecified: false,
+        headers: {
+          'Upload-Length': '11',
+          'Upload-Metadata': 'filename aGVsbG8udHh0',
+        },
+        headersSpecified: true,
         method: null,
         operationId: 'createTusUpload',
         response: {
@@ -6859,6 +6998,7 @@ export const tusClientConformanceScenarios = [
         errorMessage: null,
         headerMode: null,
         headers: {
+          'Content-Type': 'application/offset+octet-stream',
           'Upload-Offset': '0',
         },
         headersSpecified: true,
