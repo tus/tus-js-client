@@ -188,6 +188,82 @@ export function requireTerminationPlan(uploadConfig) {
   return termination
 }
 
+export function requireUploadCallbacksPlan(uploadConfig) {
+  const callbacks = uploadConfig.uploadCallbacks
+  if (typeof callbacks !== 'object' || callbacks === null || Array.isArray(callbacks)) {
+    fail('scenario upload is missing an upload callback plan')
+  }
+
+  return callbacks
+}
+
+export function uploadCallbackEventKey(callbacks, ...parts) {
+  return parts.join(callbacks.eventKeyPartSeparator)
+}
+
+export function uploadCallbackEventKeyNumber(value) {
+  return String(value)
+}
+
+export function uploadCallbackEventKeyTotal(value) {
+  return scalarString(value)
+}
+
+function uploadCallbackEventMatchesExpected(callbacks, expectedIndex, actual) {
+  if (actual === callbacks.eventKeys[expectedIndex]) {
+    return true
+  }
+
+  if (expectedIndex >= callbacks.eventKeyAlternativeGroups.length) {
+    return false
+  }
+
+  return callbacks.eventKeyAlternativeGroups[expectedIndex].includes(actual)
+}
+
+function hasAllowedUploadCallbackExtraEventPrefix(callbacks, event) {
+  return callbacks.allowedExtraEventKeyPrefixes.some((prefix) => event.startsWith(prefix))
+}
+
+export function matchUploadCallbackEventKeys(callbacks, actual) {
+  const policy = callbacks.eventPolicyMatching
+  if (policy !== 'exact' && policy !== 'exact-except-allowed-extra-events') {
+    fail(`unsupported upload callback event policy ${JSON.stringify(policy)}`)
+  }
+
+  let expectedIndex = 0
+  const matched = []
+  for (const event of actual) {
+    if (
+      expectedIndex < callbacks.eventKeys.length &&
+      uploadCallbackEventMatchesExpected(callbacks, expectedIndex, event)
+    ) {
+      matched.push(callbacks.eventKeys[expectedIndex])
+      expectedIndex += 1
+      continue
+    }
+
+    if (
+      policy === 'exact-except-allowed-extra-events' &&
+      hasAllowedUploadCallbackExtraEventPrefix(callbacks, event)
+    ) {
+      continue
+    }
+
+    fail(
+      `upload callback events emitted unexpected extra event ${JSON.stringify(event)}; allowed prefixes ${JSON.stringify(callbacks.allowedExtraEventKeyPrefixes)}; expected ${JSON.stringify(callbacks.eventKeys)}, got ${JSON.stringify(actual)}`,
+    )
+  }
+
+  if (expectedIndex !== callbacks.eventKeys.length) {
+    fail(
+      `upload callback events did not emit every expected non-extra event; expected ${JSON.stringify(callbacks.eventKeys)}, got ${JSON.stringify(actual)}`,
+    )
+  }
+
+  return matched
+}
+
 export async function writeJsonResult(result) {
   const resultPath = process.env.API2_SDK_EXAMPLE_RESULT
   if (!resultPath) {
