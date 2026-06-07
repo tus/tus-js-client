@@ -499,7 +499,7 @@ async function startScenarioUpload(scenario, testStack) {
   let beforeRequestIndex = 0
   let retryDecisionIndex = 0
   const observedEvents = []
-  const restoreRetryTimerRecorder = installRetryTimerRecorder(scenario, observedEvents)
+  const retryTimerRecorder = installRetryTimerRecorder(scenario, observedEvents)
   const restoreRequestIdRandom = installGeneratedRequestIdRandom(scenario)
   const onError = waitableFunction('onError')
   const onSuccess = waitableFunction('onSuccess')
@@ -573,6 +573,9 @@ async function startScenarioUpload(scenario, testStack) {
         kind: 'should-retry',
         retryAttempt,
       })
+      if (retryDecision.decision) {
+        retryTimerRecorder.allowNextSchedule()
+      }
       retryDecisionIndex += 1
       return retryDecision.decision
     }
@@ -641,7 +644,7 @@ async function startScenarioUpload(scenario, testStack) {
     onError,
     onSuccess,
     restoreRequestIdRandom,
-    restoreRetryTimerRecorder,
+    restoreRetryTimerRecorder: retryTimerRecorder.restore,
     terminatePromise: () => terminatePromise,
     upload,
   }
@@ -649,17 +652,29 @@ async function startScenarioUpload(scenario, testStack) {
 
 function installRetryTimerRecorder(scenario, observedEvents) {
   if (!scenarioWantsEvent(scenario, 'retry-schedule')) {
-    return () => {}
+    return {
+      allowNextSchedule() {},
+      restore() {},
+    }
   }
 
   const originalSetTimeout = globalThis.setTimeout
+  let allowedScheduleCount = 0
   globalThis.setTimeout = (handler, delay, ...args) => {
-    observedEvents.push({ delay, kind: 'retry-schedule' })
+    if (allowedScheduleCount > 0) {
+      observedEvents.push({ delay, kind: 'retry-schedule' })
+      allowedScheduleCount -= 1
+    }
     return originalSetTimeout(handler, delay, ...args)
   }
 
-  return () => {
-    globalThis.setTimeout = originalSetTimeout
+  return {
+    allowNextSchedule() {
+      allowedScheduleCount += 1
+    },
+    restore() {
+      globalThis.setTimeout = originalSetTimeout
+    },
   }
 }
 
