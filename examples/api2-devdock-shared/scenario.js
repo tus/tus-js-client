@@ -123,6 +123,10 @@ export function tusUploadOptions({ content, createResponse, scenario }) {
     options.headers = uploadConfig.headers
   }
 
+  if (uploadConfig.addRequestId === true) {
+    options.addRequestId = true
+  }
+
   if (uploadConfig.uploadDataDuringCreation === true) {
     options.uploadDataDuringCreation = true
   }
