@@ -119,6 +119,10 @@ export function tusUploadOptions({ content, createResponse, scenario }) {
     retryDelays: retryDelays(uploadConfig.retries),
   }
 
+  if (uploadConfig.headers) {
+    options.headers = uploadConfig.headers
+  }
+
   if (uploadConfig.uploadDataDuringCreation === true) {
     options.uploadDataDuringCreation = true
   }
