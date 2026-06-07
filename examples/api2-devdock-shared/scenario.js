@@ -131,6 +131,10 @@ export function tusUploadOptions({ content, createResponse, scenario }) {
     options.uploadDataDuringCreation = true
   }
 
+  if (uploadConfig.uploadLengthDeferred === true) {
+    options.uploadLengthDeferred = true
+  }
+
   return options
 }
 
