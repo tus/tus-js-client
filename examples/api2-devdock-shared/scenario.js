@@ -462,6 +462,14 @@ class ContractRequest {
     this.observed.requestMethods.push(this.requestPlan.effectiveMethod)
     this.observed.requestUrls.push(this.url)
 
+    if (this.requestPlan.errorMessage) {
+      return Promise.reject(new Error(this.requestPlan.errorMessage))
+    }
+
+    if (!this.requestPlan.response) {
+      fail('TUS conformance scenario request has no response or error plan')
+    }
+
     return Promise.resolve(new ContractResponse(this.requestPlan.response))
   }
 
