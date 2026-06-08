@@ -44,7 +44,8 @@ jobs:
         run: npm ci
       - name: Verify Chrome for Puppeteer
         if: matrix.suite == 'puppeteer'
-        run: "$CHROME_BIN" --version
+        run: |
+          "$CHROME_BIN" --version
       - name: Build
         run: npm run build
       - name: Test
