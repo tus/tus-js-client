@@ -1,5 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { Readable } from 'node:stream'
 import { fileURLToPath } from 'node:url'
 
 import {
@@ -241,6 +243,26 @@ function bodySize(body) {
   fail(`TUS conformance scenario cannot measure request body ${typeof body}`)
 }
 
+function contentBytes(content) {
+  return new TextEncoder().encode(content)
+}
+
+function readableStreamFromContent(content) {
+  let sent = false
+  const bytes = contentBytes(content)
+  return new ReadableStream({
+    pull(controller) {
+      if (sent) {
+        controller.close()
+        return
+      }
+
+      controller.enqueue(bytes)
+      sent = true
+    },
+  })
+}
+
 export function tusConformanceInputOptions(conformanceScenario) {
   const options = {}
   for (const entry of conformanceScenario.inputOptionEntries) {
@@ -250,13 +272,39 @@ export function tusConformanceInputOptions(conformanceScenario) {
   return options
 }
 
-export function tusConformanceUploadInput(conformanceScenario) {
+export async function tusConformanceUploadInput(conformanceScenario) {
   const inputSource = conformanceScenario.inputSource
-  if (inputSource.kind !== 'blob') {
-    fail(`TUS conformance scenario cannot build input kind ${JSON.stringify(inputSource.kind)}`)
+  if (inputSource.kind === 'blob') {
+    return new Blob([inputSource.content])
   }
 
-  return new Blob([inputSource.content])
+  if (inputSource.kind === 'array-buffer') {
+    const bytes = contentBytes(inputSource.content)
+    return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+  }
+
+  if (inputSource.kind === 'array-buffer-view') {
+    return contentBytes(inputSource.content)
+  }
+
+  if (inputSource.kind === 'web-readable-stream') {
+    return readableStreamFromContent(inputSource.content)
+  }
+
+  if (inputSource.kind === 'node-readable-stream') {
+    return Readable.from([Buffer.from(contentBytes(inputSource.content))])
+  }
+
+  if (inputSource.kind === 'node-path-reference') {
+    const filePath = path.join(
+      tmpdir(),
+      `tus-js-client-api2-${conformanceScenario.scenarioId}-input.bin`,
+    )
+    await writeFile(filePath, contentBytes(inputSource.content))
+    return { path: filePath }
+  }
+
+  fail(`TUS conformance scenario cannot build input kind ${JSON.stringify(inputSource.kind)}`)
 }
 
 class ContractResponse {
@@ -344,6 +392,43 @@ class ContractRequest {
 
   getUnderlyingObject() {
     return this.requestPlan
+  }
+}
+
+export function tusConformanceScenarioWantsEvent(conformanceScenario, kind) {
+  return conformanceScenario.events.some((event) => event.kind === kind)
+}
+
+export function tusConformanceEventRecordingFileReader({
+  conformanceScenario,
+  events,
+  fileReader,
+}) {
+  return {
+    async openFile(input, chunkSize) {
+      const source = await fileReader.openFile(input, chunkSize)
+
+      if (tusConformanceScenarioWantsEvent(conformanceScenario, 'source-open')) {
+        events.push({
+          inputKind: conformanceScenario.inputSource.kind,
+          kind: 'source-open',
+          size: source.size,
+        })
+      }
+
+      return {
+        get size() {
+          return source.size
+        },
+        close() {
+          events.push({ kind: 'source-close' })
+          source.close()
+        },
+        slice(start, end) {
+          return source.slice(start, end)
+        },
+      }
+    },
   }
 }
 

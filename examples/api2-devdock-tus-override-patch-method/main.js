@@ -11,7 +11,7 @@ import {
 
 async function uploadWithOverridePatchMethod(conformanceScenario) {
   const inputOptions = tusConformanceInputOptions(conformanceScenario)
-  const content = tusConformanceUploadInput(conformanceScenario)
+  const content = await tusConformanceUploadInput(conformanceScenario)
   const httpStack = new TusConformanceHttpStack(conformanceScenario)
   const upload = new Upload(content, {
     endpoint: inputOptions.endpointUrl,
