@@ -9,7 +9,7 @@ jobs:
   tests:
     runs-on: ubuntu-22.04
     env:
-      PUPPETEER_CACHE_DIR: /tmp/puppeteer-cache
+      CHROME_BIN: /usr/bin/google-chrome
     strategy:
       fail-fast: false
       matrix:
@@ -42,11 +42,9 @@ jobs:
           deno-version: latest
       - name: Install dependencies
         run: npm ci
-      - name: Install Chrome for Puppeteer
+      - name: Verify Chrome for Puppeteer
         if: matrix.suite == 'puppeteer'
-        run: |
-          rm -rf "$PUPPETEER_CACHE_DIR"
-          npx puppeteer browsers install chrome
+        run: "$CHROME_BIN" --version
       - name: Build
         run: npm run build
       - name: Test
