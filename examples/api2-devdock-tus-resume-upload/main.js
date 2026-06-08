@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
@@ -103,6 +103,7 @@ async function resumeStoredUpload({ content, createResponse, scenario, storage }
   return {
     previousUploadCount: previousUploads.length,
     remainingPreviousUploadCount: remainingPreviousUploads.length,
+    storedUploadKey: previousUpload.urlStorageKey,
     uploadUrl: upload.url,
   }
 }
@@ -122,12 +123,27 @@ async function uploadWithStoredResume(scenario, createResponse) {
       storage,
     })
     const resumedUpload = await resumeStoredUpload({ content, createResponse, scenario, storage })
-
-    return {
+    const urlStorageBackend = scenario.upload.urlStorageBackend
+    const result = {
       firstAcceptedBytes: firstUpload.acceptedBytes,
       firstUploadUrl: firstUpload.firstUploadUrl,
       ...resumedUpload,
     }
+
+    if (urlStorageBackend) {
+      if (urlStorageBackend.kind !== 'file') {
+        fail(`resume scenario expected file URL storage backend, got ${urlStorageBackend.kind}`)
+      }
+
+      const storageFile = JSON.parse(await readFile(storagePath, 'utf8'))
+      result.storedUploadKeyPrefixMatched = resumedUpload.storedUploadKey.startsWith(
+        urlStorageBackend.expectedStoredUploadKeyPrefix,
+      )
+      result.storageFileEntryCount = Object.keys(storageFile).length
+      result.urlStorageBackend = urlStorageBackend.kind
+    }
+
+    return result
   } finally {
     await rm(tempDir, { force: true, recursive: true })
   }
