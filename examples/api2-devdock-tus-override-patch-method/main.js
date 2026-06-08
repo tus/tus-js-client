@@ -9,14 +9,15 @@ import {
   writeJsonResult,
 } from '../api2-devdock-shared/scenario.js'
 
-async function uploadWithRelativeLocationResolution(conformanceScenario) {
+async function uploadWithOverridePatchMethod(conformanceScenario) {
   const inputOptions = tusConformanceInputOptions(conformanceScenario)
   const content = tusConformanceUploadInput(conformanceScenario)
   const httpStack = new TusConformanceHttpStack(conformanceScenario)
   const upload = new Upload(content, {
     endpoint: inputOptions.endpointUrl,
     httpStack,
-    metadata: inputOptions.metadata,
+    overridePatchMethod: inputOptions.overridePatchMethod,
+    uploadUrl: inputOptions.uploadUrl,
   })
 
   await new Promise((resolve, reject) => {
@@ -26,16 +27,17 @@ async function uploadWithRelativeLocationResolution(conformanceScenario) {
   })
 
   if (!upload.url) {
-    fail('relative Location scenario did not expose an upload URL')
+    fail('override PATCH scenario did not expose an upload URL')
   }
 
   if (httpStack.nextRequestIndex !== conformanceScenario.requests.length) {
     fail(
-      `relative Location scenario expected ${conformanceScenario.requests.length} request(s), got ${httpStack.nextRequestIndex}`,
+      `override PATCH scenario expected ${conformanceScenario.requests.length} request(s), got ${httpStack.nextRequestIndex}`,
     )
   }
 
   return {
+    requestHeaders: httpStack.observed.requestHeaders,
     requestMethods: httpStack.observed.requestMethods,
     requestUrls: httpStack.observed.requestUrls,
     uploadUrl: upload.url,
@@ -45,10 +47,10 @@ async function uploadWithRelativeLocationResolution(conformanceScenario) {
 async function main() {
   const scenario = await loadScenario(import.meta.url)
   const conformanceScenario = requireTusConformanceScenario(scenario)
-  const result = await uploadWithRelativeLocationResolution(conformanceScenario)
+  const result = await uploadWithOverridePatchMethod(conformanceScenario)
   await writeJsonResult(result)
   console.log(
-    `TypeScript TUS SDK devdock scenario ${scenario.scenarioId} resolved ${result.uploadUrl}`,
+    `TypeScript TUS SDK devdock scenario ${scenario.scenarioId} overrode PATCH for ${result.uploadUrl}`,
   )
 }
 

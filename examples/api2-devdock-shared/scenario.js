@@ -217,6 +217,177 @@ export function requireTusConformanceScenario(scenario) {
   return conformanceScenario
 }
 
+function bodySize(body) {
+  if (body == null) {
+    return null
+  }
+
+  if (body instanceof Blob) {
+    return body.size
+  }
+
+  if (body instanceof ArrayBuffer) {
+    return body.byteLength
+  }
+
+  if (ArrayBuffer.isView(body)) {
+    return body.byteLength
+  }
+
+  if (typeof body.length === 'number') {
+    return body.length
+  }
+
+  fail(`TUS conformance scenario cannot measure request body ${typeof body}`)
+}
+
+export function tusConformanceInputOptions(conformanceScenario) {
+  const options = {}
+  for (const entry of conformanceScenario.inputOptionEntries) {
+    options[entry.key] = entry.value
+  }
+
+  return options
+}
+
+export function tusConformanceUploadInput(conformanceScenario) {
+  const inputSource = conformanceScenario.inputSource
+  if (inputSource.kind !== 'blob') {
+    fail(`TUS conformance scenario cannot build input kind ${JSON.stringify(inputSource.kind)}`)
+  }
+
+  return new Blob([inputSource.content])
+}
+
+class ContractResponse {
+  constructor(responsePlan) {
+    this.responsePlan = responsePlan
+  }
+
+  getStatus() {
+    return this.responsePlan.statusCode
+  }
+
+  getHeader(header) {
+    return this.responsePlan.effectiveHeaders[header]
+  }
+
+  getBody() {
+    return this.responsePlan.body ?? ''
+  }
+
+  getUnderlyingObject() {
+    return this.responsePlan
+  }
+}
+
+class ContractRequest {
+  constructor({ observed, requestPlan, url }) {
+    this.headers = {}
+    this.observed = observed
+    this.requestPlan = requestPlan
+    this.url = url
+    this.progressHandler = () => {}
+  }
+
+  getMethod() {
+    return this.requestPlan.effectiveMethod
+  }
+
+  getURL() {
+    return this.url
+  }
+
+  setHeader(header, value) {
+    this.headers[header] = value
+  }
+
+  getHeader(header) {
+    return this.headers[header]
+  }
+
+  setProgressHandler(progressHandler) {
+    this.progressHandler = progressHandler
+  }
+
+  send(body = null) {
+    const size = bodySize(body)
+    if (size !== this.requestPlan.bodySize) {
+      fail(
+        `TUS conformance scenario expected request body size ${this.requestPlan.bodySize}, got ${size}`,
+      )
+    }
+
+    for (const [header, value] of Object.entries(this.requestPlan.effectiveHeaders)) {
+      if (this.headers[header] !== value) {
+        fail(
+          `TUS conformance scenario expected request header ${header}=${JSON.stringify(value)}, got ${JSON.stringify(this.headers[header])}`,
+        )
+      }
+    }
+
+    if (size != null) {
+      this.progressHandler(0)
+      this.progressHandler(size)
+    }
+
+    this.observed.requestHeaders.push({ ...this.headers })
+    this.observed.requestMethods.push(this.requestPlan.effectiveMethod)
+    this.observed.requestUrls.push(this.url)
+
+    return Promise.resolve(new ContractResponse(this.requestPlan.response))
+  }
+
+  abort() {
+    return Promise.resolve()
+  }
+
+  getUnderlyingObject() {
+    return this.requestPlan
+  }
+}
+
+export class TusConformanceHttpStack {
+  constructor(conformanceScenario) {
+    this.conformanceScenario = conformanceScenario
+    this.nextRequestIndex = 0
+    this.observed = {
+      requestHeaders: [],
+      requestMethods: [],
+      requestUrls: [],
+    }
+  }
+
+  createRequest(method, url) {
+    const requestPlan = this.conformanceScenario.requests[this.nextRequestIndex]
+    if (!requestPlan) {
+      fail(`TUS conformance scenario received unexpected ${method} request to ${url}`)
+    }
+
+    this.nextRequestIndex += 1
+
+    if (method !== requestPlan.effectiveMethod) {
+      fail(
+        `TUS conformance scenario expected ${requestPlan.effectiveMethod} request, got ${method}`,
+      )
+    }
+
+    if (url !== requestPlan.expectedUrl) {
+      fail(`TUS conformance scenario expected request URL ${requestPlan.expectedUrl}, got ${url}`)
+    }
+
+    return new ContractRequest({
+      observed: this.observed,
+      requestPlan,
+      url,
+    })
+  }
+
+  getName() {
+    return 'API2 contract conformance transport'
+  }
+}
+
 export function requireTerminationPlan(uploadConfig) {
   const termination = uploadConfig.termination
   if (typeof termination !== 'object' || termination === null || Array.isArray(termination)) {
