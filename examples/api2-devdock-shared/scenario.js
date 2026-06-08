@@ -204,6 +204,19 @@ export function requireRequestLifecycleHooksPlan(uploadConfig) {
   return requestLifecycleHooks
 }
 
+export function requireTusConformanceScenario(scenario) {
+  const conformanceScenario = scenario.conformanceScenario
+  if (
+    typeof conformanceScenario !== 'object' ||
+    conformanceScenario === null ||
+    Array.isArray(conformanceScenario)
+  ) {
+    fail('scenario is missing a TUS conformance scenario')
+  }
+
+  return conformanceScenario
+}
+
 export function requireTerminationPlan(uploadConfig) {
   const termination = uploadConfig.termination
   if (typeof termination !== 'object' || termination === null || Array.isArray(termination)) {
