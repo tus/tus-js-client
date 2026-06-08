@@ -645,6 +645,53 @@ export function tusConformanceScenarioWantsEvent(conformanceScenario, kind) {
   return conformanceScenario.events.some((event) => event.kind === kind)
 }
 
+function tusConformanceEventMatches(actualEvent, expectedEvent) {
+  return Object.entries(expectedEvent).every(([key, expectedValue]) => {
+    return key === 'key' || actualEvent[key] === expectedValue
+  })
+}
+
+function tusConformanceProjectedEvent(actualEvent, expectedEvent) {
+  const projectedEvent = {}
+  for (const key of Object.keys(expectedEvent)) {
+    if (key === 'key') {
+      continue
+    }
+
+    projectedEvent[key] = actualEvent[key]
+  }
+
+  return projectedEvent
+}
+
+export function tusConformanceExpectedEventSequence(conformanceScenario, events) {
+  const projectedEvents = []
+  let cursor = 0
+
+  for (const expectedEvent of conformanceScenario.events) {
+    let actualEvent = null
+    for (; cursor < events.length; cursor += 1) {
+      if (!tusConformanceEventMatches(events[cursor], expectedEvent)) {
+        continue
+      }
+
+      actualEvent = events[cursor]
+      cursor += 1
+      break
+    }
+
+    if (actualEvent == null) {
+      fail(
+        `TUS conformance scenario did not observe expected event ${JSON.stringify(expectedEvent)}`,
+      )
+    }
+
+    projectedEvents.push(tusConformanceProjectedEvent(actualEvent, expectedEvent))
+  }
+
+  return projectedEvents
+}
+
 export function tusConformanceRetryObserver(conformanceScenario, events) {
   const retryDecisions = Array.isArray(conformanceScenario.retryDecisions)
     ? conformanceScenario.retryDecisions

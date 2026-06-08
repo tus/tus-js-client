@@ -5,20 +5,21 @@ import {
   loadScenario,
   requireTusConformanceScenario,
   TusConformanceHttpStack,
+  tusConformanceExpectedEventSequence,
   tusConformanceUploadInput,
   tusConformanceUploadOptions,
   writeJsonResult,
 } from '../api2-devdock-shared/scenario.js'
 
 async function uploadWithParallelConcat(conformanceScenario) {
-  const events = []
+  const rawEvents = []
   const content = await tusConformanceUploadInput(conformanceScenario)
-  const httpStack = new TusConformanceHttpStack(conformanceScenario, { events })
+  const httpStack = new TusConformanceHttpStack(conformanceScenario, { events: rawEvents })
   const upload = new Upload(content, {
     ...tusConformanceUploadOptions(conformanceScenario),
     httpStack,
     onChunkComplete: (chunkSize, bytesAccepted, bytesTotal) => {
-      events.push({
+      rawEvents.push({
         bytesAccepted,
         bytesTotal,
         chunkSize,
@@ -26,7 +27,7 @@ async function uploadWithParallelConcat(conformanceScenario) {
       })
     },
     onProgress: (bytesSent, bytesTotal) => {
-      events.push({
+      rawEvents.push({
         bytesSent,
         bytesTotal,
         kind: 'progress',
@@ -59,6 +60,7 @@ async function uploadWithParallelConcat(conformanceScenario) {
       `parallel upload concat scenario expected ${conformanceScenario.requests.length} request(s), got ${httpStack.nextRequestIndex}`,
     )
   }
+  const events = tusConformanceExpectedEventSequence(conformanceScenario, rawEvents)
 
   return {
     absentHeaderPresence: absentHeaderPresence(
@@ -69,6 +71,7 @@ async function uploadWithParallelConcat(conformanceScenario) {
     errorCalled,
     eventCount: events.length,
     events,
+    rawEventCount: rawEvents.length,
     requestBodySizes: httpStack.observed.requestBodySizes,
     requestBodyStarts: httpStack.observed.requestBodyStarts,
     requestCount: httpStack.nextRequestIndex,
