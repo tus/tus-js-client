@@ -297,10 +297,54 @@ function readableStreamFromContent(content) {
   })
 }
 
+const sameNameTusConformanceInputOptionKeys = new Set([
+  'addRequestId',
+  'chunkSize',
+  'headers',
+  'metadata',
+  'metadataForPartialUploads',
+  'overridePatchMethod',
+  'parallelUploadBoundaries',
+  'parallelUploads',
+  'protocol',
+  'removeFingerprintOnSuccess',
+  'retryDelays',
+  'storeFingerprintForResuming',
+  'uploadDataDuringCreation',
+  'uploadLengthDeferred',
+  'uploadSize',
+  'uploadUrl',
+])
+
 export function tusConformanceInputOptions(conformanceScenario) {
   const options = {}
   for (const entry of conformanceScenario.inputOptionEntries) {
     options[entry.key] = entry.value
+  }
+
+  return options
+}
+
+export function tusConformanceUploadOptions(conformanceScenario) {
+  const options = {}
+
+  for (const entry of conformanceScenario.inputOptionEntries) {
+    if (entry.key === 'endpointUrl') {
+      options.endpoint = entry.value
+      continue
+    }
+
+    if (entry.key === 'rawOptions') {
+      Object.assign(options, entry.value)
+      continue
+    }
+
+    if (sameNameTusConformanceInputOptionKeys.has(entry.key)) {
+      options[entry.key] = entry.value
+      continue
+    }
+
+    fail(`TUS conformance scenario cannot map input option ${JSON.stringify(entry.key)}`)
   }
 
   return options
