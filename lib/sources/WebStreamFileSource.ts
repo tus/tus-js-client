@@ -1,4 +1,10 @@
 import type { FileSource, SliceResult } from '../options.js'
+import {
+  tusWebStreamAlreadyLockedMessage,
+  tusWebStreamBackwardsReadMessage,
+  tusWebStreamMissingBufferMessage,
+  tusWebStreamUnknownDataTypeMessage,
+} from '../protocol_generated.js'
 
 function len(blobOrArray: WebStreamFileSource['_buffer']): number {
   if (blobOrArray === undefined) return 0
@@ -20,7 +26,7 @@ function concat<T extends WebStreamFileSource['_buffer']>(a: T, b: T): T {
     c.set(b, a.length)
     return c as T
   }
-  throw new Error('Unknown data type')
+  throw new Error(tusWebStreamUnknownDataTypeMessage())
 }
 
 /**
@@ -46,9 +52,7 @@ export class WebStreamFileSource implements FileSource {
 
   constructor(stream: ReadableStream) {
     if (stream.locked) {
-      throw new Error(
-        'Readable stream is already locked to reader. tus-js-client cannot obtain a new reader.',
-      )
+      throw new Error(tusWebStreamAlreadyLockedMessage())
     }
 
     this._reader = stream.getReader()
@@ -56,7 +60,7 @@ export class WebStreamFileSource implements FileSource {
 
   async slice(start: number, end: number): Promise<SliceResult> {
     if (start < this._bufferOffset) {
-      throw new Error("Requested data is before the reader's current offset")
+      throw new Error(tusWebStreamBackwardsReadMessage())
     }
 
     return await this._readUntilEnoughDataOrDone(start, end)
@@ -98,7 +102,7 @@ export class WebStreamFileSource implements FileSource {
 
   private _getDataFromBuffer(start: number, end: number) {
     if (this._buffer === undefined) {
-      throw new Error('cannot _getDataFromBuffer because _buffer is unset')
+      throw new Error(tusWebStreamMissingBufferMessage())
     }
 
     // Remove data from buffer before `start`.

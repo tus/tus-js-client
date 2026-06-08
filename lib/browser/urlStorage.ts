@@ -1,4 +1,15 @@
 import type { PreviousUpload, UrlStorage } from '../options.js'
+import {
+  tusIsWebStorageUnavailableError,
+  tusShouldIgnoreMalformedStoredUpload,
+  tusUrlStorageAllUploadsPrefix,
+  tusUrlStorageFingerprintPrefix,
+  tusUrlStorageId,
+  tusUrlStorageKey,
+  tusUrlStorageMissingItemMessage,
+  tusUrlStorageMissingKeyMessage,
+  tusWebStorageProbeKey,
+} from '../protocol_generated.js'
 
 let hasStorage = false
 try {
@@ -9,7 +20,7 @@ try {
   // Mode on Safari on iOS (see #49)
   // If the key was not used before, we remove it from local storage again to
   // not cause confusion where the entry came from.
-  const key = 'tusSupport'
+  const key = tusWebStorageProbeKey()
   const originalValue = localStorage.getItem(key)
   localStorage.setItem(key, String(originalValue))
   if (originalValue == null) localStorage.removeItem(key)
@@ -17,8 +28,7 @@ try {
   // If we try to access localStorage inside a sandboxed iframe, a SecurityError
   // is thrown. When in private mode on iOS Safari, a QuotaExceededError is
   // thrown (see #49)
-  // TODO: Replace `code` with `name`
-  if (e instanceof DOMException && (e.code === e.SECURITY_ERR || e.code === e.QUOTA_EXCEEDED_ERR)) {
+  if (e instanceof DOMException && tusIsWebStorageUnavailableError({ domExceptionName: e.name })) {
     hasStorage = false
   } else {
     throw e
@@ -29,12 +39,12 @@ export const canStoreURLs = hasStorage
 
 export class WebStorageUrlStorage implements UrlStorage {
   findAllUploads(): Promise<PreviousUpload[]> {
-    const results = this._findEntries('tus::')
+    const results = this._findEntries(tusUrlStorageAllUploadsPrefix())
     return Promise.resolve(results)
   }
 
   findUploadsByFingerprint(fingerprint: string): Promise<PreviousUpload[]> {
-    const results = this._findEntries(`tus::${fingerprint}::`)
+    const results = this._findEntries(tusUrlStorageFingerprintPrefix({ fingerprint }))
     return Promise.resolve(results)
   }
 
@@ -44,8 +54,8 @@ export class WebStorageUrlStorage implements UrlStorage {
   }
 
   addUpload(fingerprint: string, upload: PreviousUpload): Promise<string> {
-    const id = Math.round(Math.random() * 1e12)
-    const key = `tus::${fingerprint}::${id}`
+    const id = tusUrlStorageId({ randomValue: Math.random() })
+    const key = tusUrlStorageKey({ fingerprint, id })
 
     localStorage.setItem(key, JSON.stringify(upload))
     return Promise.resolve(key)
@@ -57,7 +67,7 @@ export class WebStorageUrlStorage implements UrlStorage {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i)
       if (key == null) {
-        throw new Error(`didn't find key for item ${i}`)
+        throw new Error(tusUrlStorageMissingKeyMessage({ index: i }))
       }
 
       // Ignore entires that are not from tus-js-client
@@ -65,18 +75,20 @@ export class WebStorageUrlStorage implements UrlStorage {
 
       const item = localStorage.getItem(key)
       if (item == null) {
-        throw new Error(`didn't find item for key ${key}`)
+        throw new Error(tusUrlStorageMissingItemMessage({ key }))
       }
 
       try {
-        // TODO: Validate JSON
         const upload = JSON.parse(item)
         upload.urlStorageKey = key
 
         results.push(upload)
-      } catch (_e) {
+      } catch (err) {
         // The JSON parse error is intentionally ignored here, so a malformed
         // entry in the storage cannot prevent an upload.
+        if (!tusShouldIgnoreMalformedStoredUpload()) {
+          throw err
+        }
       }
     }
 

@@ -1,5 +1,5 @@
 import { Upload } from 'tus-js-client'
-import { TestHttpStack, waitableFunction } from './helpers/utils.js'
+import { expectTusDefaultRequestHeaders, TestHttpStack, waitableFunction } from './helpers/utils.js'
 
 describe('tus', () => {
   describe('#Upload', () => {
@@ -52,7 +52,7 @@ describe('tus', () => {
         let req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads')
         expect(req.method).toBe('POST')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+        expectTusDefaultRequestHeaders(req.requestHeaders)
         expect(req.requestHeaders['Upload-Length']).toBe('13')
 
         req.respondWith({
@@ -65,7 +65,7 @@ describe('tus', () => {
         req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads/blargh')
         expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+        expectTusDefaultRequestHeaders(req.requestHeaders)
         expect(req.requestHeaders['Upload-Offset']).toBe('0')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
         expect(req.bodySize).toBe(7)
@@ -80,7 +80,7 @@ describe('tus', () => {
         req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads/blargh')
         expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+        expectTusDefaultRequestHeaders(req.requestHeaders)
         expect(req.requestHeaders['Upload-Offset']).toBe('7')
         expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
         expect(req.bodySize).toBe(6)

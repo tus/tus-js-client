@@ -2,7 +2,7 @@
 const baseConfig = require('./base.conf.cjs')
 
 // Configure to use Puppeteer. See https://github.com/karma-runner/karma-chrome-launcher#available-browsers
-process.env.CHROME_BIN = require('puppeteer').executablePath()
+process.env.CHROME_BIN ||= require('puppeteer').executablePath()
 
 module.exports = (config) => {
   baseConfig(config)
@@ -15,5 +15,9 @@ module.exports = (config) => {
     // start these browsers
     // available browser launchers: https://www.npmjs.com/search?q=keywords:karma-launcher
     browsers: ['ChromeHeadless'],
+
+    // Chrome on shared GitHub runners can pause long enough for Karma's default
+    // 30s activity timeout to disconnect the browser even though specs are still passing.
+    browserNoActivityTimeout: 120000,
   })
 }

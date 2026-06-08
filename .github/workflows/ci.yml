@@ -40,6 +40,17 @@ jobs:
           deno-version: latest
       - name: Install dependencies
         run: npm ci
+      - name: Configure Puppeteer browser
+        if: matrix.suite == 'puppeteer'
+        run: |
+          chrome_bin="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium-browser || true)"
+          if [ -z "$chrome_bin" ]; then
+            rm -rf ~/.cache/puppeteer/chrome
+            npx puppeteer browsers install chrome
+            chrome_bin="$(node -e "process.stdout.write(require('puppeteer').executablePath())")"
+          fi
+          test -x "$chrome_bin"
+          echo "CHROME_BIN=$chrome_bin" >> "$GITHUB_ENV"
       - name: Build
         run: npm run build
       - name: Test

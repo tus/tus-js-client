@@ -6,6 +6,7 @@ import type {
   HttpStack,
   SliceType,
 } from '../options.js'
+import { tusHttpStackNodeReadableBodyUnsupportedMessage } from '../protocol_generated.js'
 
 // TODO: Add tests for this.
 export class FetchHttpStack implements HttpStack {
@@ -51,9 +52,7 @@ class FetchRequest implements HttpRequest {
 
   async send(body?: SliceType): Promise<FetchResponse> {
     if (isNodeReadableStream(body)) {
-      throw new Error(
-        'Using a Node.js readable stream as HTTP request body is not supported using the Fetch API HTTP stack.',
-      )
+      throw new Error(tusHttpStackNodeReadableBodyUnsupportedMessage({ stackName: 'Fetch API' }))
     }
 
     const res = await fetch(this._url, {

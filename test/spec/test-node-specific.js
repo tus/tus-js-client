@@ -11,8 +11,9 @@ import { canStoreURLs, Upload } from 'tus-js-client'
 import { FileUrlStorage } from 'tus-js-client/node/FileUrlStorage'
 import { NodeHttpStack } from 'tus-js-client/node/NodeHttpStack'
 import { NodeStreamFileSource } from 'tus-js-client/node/sources/NodeStreamFileSource'
-import { assertUrlStorage } from './helpers/assertUrlStorage.js'
-import { TestHttpStack, waitableFunction } from './helpers/utils.js'
+import { tusClientUrlStorageConformanceScenarios } from './generated-protocol-contract.js'
+import { assertUrlStorage, findUrlStorageScenario } from './helpers/assertUrlStorage.js'
+import { expectTusDefaultRequestHeaders, TestHttpStack, waitableFunction } from './helpers/utils.js'
 
 describe('tus', () => {
   describe('#canStoreURLs', () => {
@@ -126,7 +127,7 @@ describe('tus', () => {
         const req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads')
         expect(req.method).toBe('POST')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+        expectTusDefaultRequestHeaders(req.requestHeaders)
 
         req.respondWith({
           status: 204,
@@ -161,7 +162,6 @@ describe('tus', () => {
       })
 
       it('should support parallelUploads', async () => {
-        // TODO: The ordering of requests is no longer deterministic, so we need to update this test
         // Create a temporary file
         const path = temp.path()
         fs.writeFileSync(path, 'hello world')
@@ -181,68 +181,79 @@ describe('tus', () => {
         const upload = new Upload(file, options)
         upload.start()
 
-        let req = await testStack.nextRequest()
-        expect(req.url).toBe('https://tus.io/uploads')
-        expect(req.method).toBe('POST')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Length']).toBe('5')
-        expect(req.requestHeaders['Upload-Concat']).toBe('partial')
+        const createRequests = [await testStack.nextRequest(), await testStack.nextRequest()].sort(
+          (a, b) =>
+            Number(a.requestHeaders['Upload-Length']) - Number(b.requestHeaders['Upload-Length']),
+        )
 
-        req.respondWith({
+        const [firstPartCreateRequest, secondPartCreateRequest] = createRequests
+        expect(firstPartCreateRequest.url).toBe('https://tus.io/uploads')
+        expect(firstPartCreateRequest.method).toBe('POST')
+        expectTusDefaultRequestHeaders(firstPartCreateRequest.requestHeaders)
+        expect(firstPartCreateRequest.requestHeaders['Upload-Length']).toBe('5')
+        expect(firstPartCreateRequest.requestHeaders['Upload-Concat']).toBe('partial')
+
+        firstPartCreateRequest.respondWith({
           status: 201,
           responseHeaders: {
             Location: 'https://tus.io/uploads/upload1',
           },
         })
 
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('https://tus.io/uploads')
-        expect(req.method).toBe('POST')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Length']).toBe('6')
-        expect(req.requestHeaders['Upload-Concat']).toBe('partial')
+        expect(secondPartCreateRequest.url).toBe('https://tus.io/uploads')
+        expect(secondPartCreateRequest.method).toBe('POST')
+        expectTusDefaultRequestHeaders(secondPartCreateRequest.requestHeaders)
+        expect(secondPartCreateRequest.requestHeaders['Upload-Length']).toBe('6')
+        expect(secondPartCreateRequest.requestHeaders['Upload-Concat']).toBe('partial')
 
-        req.respondWith({
+        secondPartCreateRequest.respondWith({
           status: 201,
           responseHeaders: {
             Location: 'https://tus.io/uploads/upload2',
           },
         })
 
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('https://tus.io/uploads/upload1')
-        expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Offset']).toBe('0')
-        expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-        expect(req.bodySize).toBe(5)
+        const patchRequests = [await testStack.nextRequest(), await testStack.nextRequest()].sort(
+          (a, b) => a.url.localeCompare(b.url),
+        )
 
-        req.respondWith({
+        const [firstPartPatchRequest, secondPartPatchRequest] = patchRequests
+        expect(firstPartPatchRequest.url).toBe('https://tus.io/uploads/upload1')
+        expect(firstPartPatchRequest.method).toBe('PATCH')
+        expectTusDefaultRequestHeaders(firstPartPatchRequest.requestHeaders)
+        expect(firstPartPatchRequest.requestHeaders['Upload-Offset']).toBe('0')
+        expect(firstPartPatchRequest.requestHeaders['Content-Type']).toBe(
+          'application/offset+octet-stream',
+        )
+        expect(firstPartPatchRequest.bodySize).toBe(5)
+
+        firstPartPatchRequest.respondWith({
           status: 204,
           responseHeaders: {
             'Upload-Offset': '5',
           },
         })
 
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('https://tus.io/uploads/upload2')
-        expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Offset']).toBe('0')
-        expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-        expect(req.bodySize).toBe(6)
+        expect(secondPartPatchRequest.url).toBe('https://tus.io/uploads/upload2')
+        expect(secondPartPatchRequest.method).toBe('PATCH')
+        expectTusDefaultRequestHeaders(secondPartPatchRequest.requestHeaders)
+        expect(secondPartPatchRequest.requestHeaders['Upload-Offset']).toBe('0')
+        expect(secondPartPatchRequest.requestHeaders['Content-Type']).toBe(
+          'application/offset+octet-stream',
+        )
+        expect(secondPartPatchRequest.bodySize).toBe(6)
 
-        req.respondWith({
+        secondPartPatchRequest.respondWith({
           status: 204,
           responseHeaders: {
             'Upload-Offset': '6',
           },
         })
 
-        req = await testStack.nextRequest()
+        const req = await testStack.nextRequest()
         expect(req.url).toBe('https://tus.io/uploads')
         expect(req.method).toBe('POST')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+        expectTusDefaultRequestHeaders(req.requestHeaders)
         expect(req.requestHeaders['Upload-Length']).toBeUndefined()
         expect(req.requestHeaders['Upload-Concat']).toBe(
           'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2',
@@ -258,7 +269,13 @@ describe('tus', () => {
         await options.onSuccess.toBeCalled()
 
         expect(upload.url).toBe('https://tus.io/uploads/upload3')
-        expect(options.onProgress).toHaveBeenCalledWith(5, 11)
+        expect(
+          options.onProgress.calls
+            .allArgs()
+            .some(
+              ([bytesSent, bytesTotal]) => bytesSent > 0 && bytesSent < 11 && bytesTotal === 11,
+            ),
+        ).toBe(true)
         expect(options.onProgress).toHaveBeenCalledWith(11, 11)
       })
 
@@ -284,7 +301,7 @@ describe('tus', () => {
         const req = await testStack.nextRequest()
         expect(req.url).toBe('http://tus.io/uploads')
         expect(req.method).toBe('POST')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+        expectTusDefaultRequestHeaders(req.requestHeaders)
 
         req.respondWith({
           status: 204,
@@ -358,7 +375,7 @@ describe('tus', () => {
       let req = await options.httpStack.nextRequest()
       expect(req.url).toBe('http://tus.io/uploads/resuming')
       expect(req.method).toBe('HEAD')
-      expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+      expectTusDefaultRequestHeaders(req.requestHeaders)
 
       req.respondWith({
         status: 204,
@@ -373,7 +390,7 @@ describe('tus', () => {
       req = await options.httpStack.nextRequest()
       expect(req.url).toBe('http://tus.io/uploads/resuming')
       expect(req.method).toBe('PATCH')
-      expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+      expectTusDefaultRequestHeaders(req.requestHeaders)
       expect(req.requestHeaders['Upload-Offset']).toBe('3')
       expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
       expect(req.bodySize).toBe(11 - 3)
@@ -393,7 +410,10 @@ describe('tus', () => {
     it('should allow storing and retrieving uploads', async () => {
       const storagePath = temp.path()
       const storage = new FileUrlStorage(storagePath)
-      await assertUrlStorage(storage)
+      await assertUrlStorage(
+        storage,
+        findUrlStorageScenario(tusClientUrlStorageConformanceScenarios, 'fileUrlStorageBackend'),
+      )
     })
   })
 

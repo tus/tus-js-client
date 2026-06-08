@@ -1,50 +1,87 @@
-export async function assertUrlStorage(urlStorage) {
-  // In the beginning of the test, the storage should be empty.
-  let result = await urlStorage.findAllUploads()
-  expect(result).toEqual([])
+export async function assertUrlStorage(urlStorage, scenario) {
+  const keyRefs = new Map()
+  const expectedUploads = new Map()
 
-  // Add a few uploads into the storage
-  const key1 = await urlStorage.addUpload('fingerprintA', { id: 1 })
-  const key2 = await urlStorage.addUpload('fingerprintA', { id: 2 })
-  const key3 = await urlStorage.addUpload('fingerprintB', { id: 3 })
+  for (const action of scenario.actions) {
+    if (action.kind === 'assert-empty') {
+      expect(await urlStorage.findAllUploads()).toEqual([])
+      continue
+    }
 
-  expect(/^tus::fingerprintA::/.test(key1)).toBe(true)
-  expect(/^tus::fingerprintA::/.test(key2)).toBe(true)
-  expect(/^tus::fingerprintB::/.test(key3)).toBe(true)
+    if (action.kind === 'add-upload') {
+      const upload = clone(action.upload)
+      const key = await urlStorage.addUpload(action.fingerprint, upload)
+      expect(key.startsWith(action.expectedKeyPrefix)).toBe(true)
+      keyRefs.set(action.keyRef, key)
+      expectedUploads.set(action.keyRef, { ...clone(action.upload), urlStorageKey: key })
+      continue
+    }
 
-  // Query the just stored uploads individually
-  result = await urlStorage.findUploadsByFingerprint('fingerprintA')
-  sort(result)
-  expect(result).toEqual([
-    { id: 1, urlStorageKey: key1 },
-    { id: 2, urlStorageKey: key2 },
-  ])
+    if (action.kind === 'find-by-fingerprint') {
+      expectStoredUploads(
+        await urlStorage.findUploadsByFingerprint(action.fingerprint),
+        expectedUploadsForRefs(expectedUploads, action.expectedKeyRefs),
+      )
+      continue
+    }
 
-  result = await urlStorage.findUploadsByFingerprint('fingerprintB')
-  sort(result)
-  expect(result).toEqual([{ id: 3, urlStorageKey: key3 }])
+    if (action.kind === 'find-all') {
+      expectStoredUploads(
+        await urlStorage.findAllUploads(),
+        expectedUploadsForRefs(expectedUploads, action.expectedKeyRefs),
+      )
+      continue
+    }
 
-  // Check that we can retrieve all stored uploads
-  result = await urlStorage.findAllUploads()
-  sort(result)
-  expect(result).toEqual([
-    { id: 1, urlStorageKey: key1 },
-    { id: 2, urlStorageKey: key2 },
-    { id: 3, urlStorageKey: key3 },
-  ])
+    if (action.kind === 'remove-upload') {
+      const key = keyRefs.get(action.keyRef)
+      if (key == null) {
+        throw new Error(`Generated URL storage scenario references unknown key: ${action.keyRef}`)
+      }
 
-  // Check that it can remove an upload and will not return it back
-  await urlStorage.removeUpload(key2)
-  await urlStorage.removeUpload(key3)
+      await urlStorage.removeUpload(key)
+      expectedUploads.delete(action.keyRef)
+      continue
+    }
 
-  result = await urlStorage.findUploadsByFingerprint('fingerprintA')
-  expect(result).toEqual([{ id: 1, urlStorageKey: key1 }])
-
-  result = await urlStorage.findUploadsByFingerprint('fingerprintB')
-  expect(result).toEqual([])
+    throw new Error(`Unsupported generated URL storage scenario action: ${action.kind}`)
+  }
 }
 
-// Sort the results from the URL storage since the order in not deterministic.
-function sort(result) {
-  result.sort((a, b) => a.id - b.id)
+export function findUrlStorageScenario(scenarios, scenarioId) {
+  const scenario = scenarios.find((candidate) => candidate.scenarioId === scenarioId)
+  if (!scenario) {
+    throw new Error(`Missing generated URL storage conformance scenario: ${scenarioId}`)
+  }
+
+  return scenario
+}
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value))
+}
+
+function expectedUploadsForRefs(expectedUploads, refs) {
+  return refs.map((ref) => {
+    const upload = expectedUploads.get(ref)
+    if (!upload) {
+      throw new Error(`Generated URL storage scenario references unknown expected upload: ${ref}`)
+    }
+
+    return upload
+  })
+}
+
+function expectStoredUploads(actual, expected) {
+  expect(sortStoredUploads(actual)).toEqual(sortStoredUploads(expected))
+}
+
+function sortStoredUploads(result) {
+  return [...result].sort((a, b) => {
+    if (a.id !== b.id) {
+      return a.id - b.id
+    }
+
+    return String(a.urlStorageKey).localeCompare(String(b.urlStorageKey))
+  })
 }

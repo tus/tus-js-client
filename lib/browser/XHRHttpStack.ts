@@ -6,6 +6,10 @@ import type {
   HttpStack,
   SliceType,
 } from '../options.js'
+import {
+  tusAbortErrorDescriptor,
+  tusHttpStackNodeReadableBodyUnsupportedMessage,
+} from '../protocol_generated.js'
 
 export class XHRHttpStack implements HttpStack {
   createRequest(method: string, url: string): HttpRequest {
@@ -68,7 +72,7 @@ class XHRRequest implements HttpRequest {
   send(body?: SliceType): Promise<HttpResponse> {
     if (isNodeReadableStream(body)) {
       throw new Error(
-        'Using a Node.js readable stream as HTTP request body is not supported using the XMLHttpRequest HTTP stack.',
+        tusHttpStackNodeReadableBodyUnsupportedMessage({ stackName: 'XMLHttpRequest' }),
       )
     }
 
@@ -82,7 +86,8 @@ class XHRRequest implements HttpRequest {
       }
 
       this._xhr.onabort = () => {
-        reject(new DOMException('Request was aborted', 'AbortError'))
+        const error = tusAbortErrorDescriptor()
+        reject(new DOMException(error.message, error.name))
       }
 
       this._xhr.send(body)

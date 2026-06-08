@@ -10,6 +10,12 @@ import type {
   HttpStack,
   SliceType,
 } from '../options.js'
+import {
+  tusAbortErrorDescriptor,
+  tusHttpStackProgressThrottle,
+  tusNodeHttpStackMissingStatusCodeMessage,
+  tusNodeHttpStackUnsupportedBodyTypeMessage,
+} from '../protocol_generated.js'
 
 export class NodeHttpStack implements HttpStack {
   private _requestOptions: http.RequestOptions
@@ -80,9 +86,10 @@ class Request implements HttpRequest {
         nodeBody = body
       } else {
         throw new Error(
-          // @ts-expect-error According to the types, this case cannot happen. But
-          // we still want to try logging the constructor if this code is reached by accident.
-          `Unsupported HTTP request body type in Node.js HTTP stack: ${typeof body} (constructor: ${body?.constructor?.name})`,
+          tusNodeHttpStackUnsupportedBodyTypeMessage({
+            bodyType: typeof body,
+            constructorName: getConstructorName(body),
+          }),
         )
       }
     }
@@ -144,8 +151,10 @@ class Request implements HttpRequest {
 
   abort() {
     // Note: The destroy() method will trigger an `error` event with the provided error.
-    if (this._request != null)
-      this._request.destroy(new DOMException('Request was aborted', 'AbortError'))
+    if (this._request != null) {
+      const error = tusAbortErrorDescriptor()
+      this._request.destroy(new DOMException(error.message, error.name))
+    }
     return Promise.resolve()
   }
 
@@ -166,7 +175,7 @@ class Response implements HttpResponse {
 
   getStatus() {
     if (this._response.statusCode === undefined) {
-      throw new Error('no status code available yet')
+      throw new Error(tusNodeHttpStackMissingStatusCodeMessage())
     }
     return this._response.statusCode
   }
@@ -188,6 +197,14 @@ class Response implements HttpResponse {
   }
 }
 
+function getConstructorName(value: unknown): string {
+  if ((typeof value !== 'object' && typeof value !== 'function') || value === null) {
+    return 'undefined'
+  }
+
+  return value.constructor.name
+}
+
 // ProgressEmitter is a simple PassThrough-style transform stream which keeps
 // track of the number of bytes which have been piped through it and will
 // invoke the `onprogress` function whenever new number are available.
@@ -204,9 +221,10 @@ class ProgressEmitter extends Transform {
     // these calls can occur frequently, especially when you have a good
     // connection to the remote server. Therefore, we are throtteling them to
     // prevent accessive function calls.
-    this._onprogress = throttle(onprogress, 100, {
-      leading: true,
-      trailing: false,
+    const throttlePolicy = tusHttpStackProgressThrottle()
+    this._onprogress = throttle(onprogress, throttlePolicy.milliseconds, {
+      leading: throttlePolicy.leading,
+      trailing: throttlePolicy.trailing,
     })
   }
 
@@ -235,9 +253,10 @@ function writeBufferToStreamWithProgress(
   source: Uint8Array,
   onprogress: HttpProgressHandler,
 ) {
-  onprogress = throttle(onprogress, 100, {
-    leading: true,
-    trailing: false,
+  const throttlePolicy = tusHttpStackProgressThrottle()
+  onprogress = throttle(onprogress, throttlePolicy.milliseconds, {
+    leading: throttlePolicy.leading,
+    trailing: throttlePolicy.trailing,
   })
 
   let offset = 0

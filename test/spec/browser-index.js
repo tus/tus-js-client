@@ -5,6 +5,7 @@ beforeEach(() => {
 })
 
 import './test-common.js'
+import './test-generated-protocol-contract.js'
 import './test-browser-specific.js'
 import './test-parallel-uploads.js'
 import './test-terminate.js'
