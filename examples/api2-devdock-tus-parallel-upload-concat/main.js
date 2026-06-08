@@ -10,12 +10,28 @@ import {
   writeJsonResult,
 } from '../api2-devdock-shared/scenario.js'
 
-async function uploadWithProtocolVersionSelection(conformanceScenario) {
+async function uploadWithParallelConcat(conformanceScenario) {
+  const events = []
   const content = await tusConformanceUploadInput(conformanceScenario)
-  const httpStack = new TusConformanceHttpStack(conformanceScenario)
+  const httpStack = new TusConformanceHttpStack(conformanceScenario, { events })
   const upload = new Upload(content, {
     ...tusConformanceUploadOptions(conformanceScenario),
     httpStack,
+    onChunkComplete: (chunkSize, bytesAccepted, bytesTotal) => {
+      events.push({
+        bytesAccepted,
+        bytesTotal,
+        chunkSize,
+        kind: 'chunk-complete',
+      })
+    },
+    onProgress: (bytesSent, bytesTotal) => {
+      events.push({
+        bytesSent,
+        bytesTotal,
+        kind: 'progress',
+      })
+    },
   })
   let completionKind = 'unknown'
   let errorCalled = false
@@ -36,11 +52,11 @@ async function uploadWithProtocolVersionSelection(conformanceScenario) {
   })
 
   if (!upload.url) {
-    fail('protocol version scenario did not expose an upload URL')
+    fail('parallel upload concat scenario did not expose an upload URL')
   }
   if (httpStack.nextRequestIndex !== conformanceScenario.requests.length) {
     fail(
-      `protocol version scenario expected ${conformanceScenario.requests.length} request(s), got ${httpStack.nextRequestIndex}`,
+      `parallel upload concat scenario expected ${conformanceScenario.requests.length} request(s), got ${httpStack.nextRequestIndex}`,
     )
   }
 
@@ -51,6 +67,10 @@ async function uploadWithProtocolVersionSelection(conformanceScenario) {
     ),
     completionKind,
     errorCalled,
+    eventCount: events.length,
+    events,
+    requestBodySizes: httpStack.observed.requestBodySizes,
+    requestBodyStarts: httpStack.observed.requestBodyStarts,
     requestCount: httpStack.nextRequestIndex,
     requestHeaders: httpStack.observed.requestHeaders,
     requestMethods: httpStack.observed.requestMethods,
@@ -63,10 +83,10 @@ async function uploadWithProtocolVersionSelection(conformanceScenario) {
 async function main() {
   const scenario = await loadScenario(import.meta.url)
   const conformanceScenario = requireTusConformanceScenario(scenario)
-  const result = await uploadWithProtocolVersionSelection(conformanceScenario)
+  const result = await uploadWithParallelConcat(conformanceScenario)
   await writeJsonResult(result)
   console.log(
-    `TypeScript TUS SDK devdock scenario ${scenario.scenarioId} selected ${conformanceScenario.inputOptionEntries.find((entry) => entry.key === 'protocol')?.value ?? 'the default protocol'} for ${result.uploadUrl}`,
+    `TypeScript TUS SDK devdock scenario ${scenario.scenarioId} concatenated ${conformanceScenario.inputOptionEntries.find((entry) => entry.key === 'parallelUploads')?.value ?? 'parallel'} upload(s) into ${result.uploadUrl}`,
   )
 }
 

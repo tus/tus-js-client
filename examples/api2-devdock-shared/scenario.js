@@ -220,62 +220,102 @@ export function requireTusConformanceScenario(scenario) {
   return conformanceScenario
 }
 
-function fixedBodySize(body) {
+function concatBytes(parts) {
+  const size = parts.reduce((sum, part) => sum + part.byteLength, 0)
+  const result = new Uint8Array(size)
+  let offset = 0
+  for (const part of parts) {
+    result.set(part, offset)
+    offset += part.byteLength
+  }
+
+  return result
+}
+
+function bytesEqual(left, right) {
+  if (left.byteLength !== right.byteLength) {
+    return false
+  }
+
+  return left.every((value, index) => value === right[index])
+}
+
+function byteOffset(haystack, needle) {
+  if (needle.byteLength === 0) {
+    return 0
+  }
+
+  for (let offset = 0; offset <= haystack.byteLength - needle.byteLength; offset += 1) {
+    if (bytesEqual(haystack.slice(offset, offset + needle.byteLength), needle)) {
+      return offset
+    }
+  }
+
+  return null
+}
+
+async function fixedBodySnapshot(body) {
   if (body == null) {
-    return null
+    return { bytes: null, size: null }
   }
 
   if (body instanceof Blob) {
-    return body.size
+    const bytes = new Uint8Array(await body.arrayBuffer())
+    return { bytes, size: bytes.byteLength }
   }
 
   if (body instanceof ArrayBuffer) {
-    return body.byteLength
+    const bytes = new Uint8Array(body)
+    return { bytes, size: bytes.byteLength }
   }
 
   if (ArrayBuffer.isView(body)) {
-    return body.byteLength
+    const bytes = new Uint8Array(body.buffer, body.byteOffset, body.byteLength)
+    return { bytes, size: bytes.byteLength }
   }
 
   if (typeof body.length === 'number') {
-    return body.length
+    const bytes = Buffer.isBuffer(body) ? body : null
+    return { bytes, size: body.length }
   }
 
   fail(`TUS conformance scenario cannot measure request body ${typeof body}`)
 }
 
-function chunkSize(chunk) {
+function chunkBytes(chunk) {
   if (typeof chunk === 'string') {
-    return Buffer.byteLength(chunk)
+    return Buffer.from(chunk)
   }
 
   if (chunk instanceof ArrayBuffer) {
-    return chunk.byteLength
+    return new Uint8Array(chunk)
   }
 
   if (ArrayBuffer.isView(chunk)) {
-    return chunk.byteLength
+    return new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength)
   }
 
   fail(`TUS conformance scenario cannot measure request body chunk ${typeof chunk}`)
 }
 
-async function streamBodySize(body, progressHandler) {
-  let size = 0
+async function streamBodySnapshot(body, progressHandler) {
+  const parts = []
   for await (const chunk of body) {
-    size += chunkSize(chunk)
-    progressHandler(size)
+    const bytes = chunkBytes(chunk)
+    parts.push(bytes)
+    progressHandler(parts.reduce((sum, part) => sum + part.byteLength, 0))
   }
 
-  return size
+  const bytes = concatBytes(parts)
+  return { bytes, size: bytes.byteLength }
 }
 
-async function bodySize(body, progressHandler) {
+async function bodySnapshot(body, progressHandler) {
   if (body instanceof Readable) {
-    return await streamBodySize(body, progressHandler)
+    return { ...(await streamBodySnapshot(body, progressHandler)), isStream: true }
   }
 
-  return fixedBodySize(body)
+  return { ...(await fixedBodySnapshot(body)), isStream: false }
 }
 
 function contentBytes(content) {
@@ -375,6 +415,19 @@ export function tusConformanceRuntimeSetupOptions(conformanceScenario) {
   return options
 }
 
+export function absentHeaderPresence(conformanceScenario, requestHeaders) {
+  return conformanceScenario.requests.map((request, requestIndex) => {
+    const observedHeaders = requestHeaders[requestIndex]
+    if (!observedHeaders) {
+      fail(`TUS conformance scenario did not capture request ${requestIndex} headers`)
+    }
+
+    return Object.fromEntries(
+      request.absentHeaders.map((header) => [header, Object.hasOwn(observedHeaders, header)]),
+    )
+  })
+}
+
 export async function tusConformanceUploadInput(conformanceScenario) {
   const inputSource = conformanceScenario.inputSource
   if (inputSource.kind === 'blob') {
@@ -433,9 +486,10 @@ class ContractResponse {
 }
 
 class ContractRequest {
-  constructor({ events, observed, onRequestStart, requestPlan, url }) {
+  constructor({ events, inputContent, observed, onRequestStart, requestPlan, url }) {
     this.headers = {}
     this.events = events
+    this.inputContent = inputContent
     this.observed = observed
     this.onRequestStart = onRequestStart
     this.requestPlan = requestPlan
@@ -493,19 +547,35 @@ class ContractRequest {
       }
     }
 
-    const isStreamBody = body instanceof Readable
-    const size = await bodySize(body, this.progressHandler)
+    const bodyInfo = await bodySnapshot(body, this.progressHandler)
+    const size = bodyInfo.size
     if (size !== this.requestPlan.bodySize) {
       fail(
         `TUS conformance scenario expected request body size ${this.requestPlan.bodySize}, got ${size}`,
       )
     }
 
-    if (size != null && !isStreamBody) {
+    let bodyStart = null
+    if (bodyInfo.bytes != null && this.inputContent != null) {
+      bodyStart = byteOffset(this.inputContent, bodyInfo.bytes)
+    }
+
+    if (
+      typeof this.requestPlan.bodyStart === 'number' &&
+      bodyStart !== this.requestPlan.bodyStart
+    ) {
+      fail(
+        `TUS conformance scenario expected request body start ${this.requestPlan.bodyStart}, got ${bodyStart}`,
+      )
+    }
+
+    if (size != null && !bodyInfo.isStream) {
       this.progressHandler(0)
       this.progressHandler(size)
     }
 
+    this.observed.requestBodySizes.push(size)
+    this.observed.requestBodyStarts.push(bodyStart)
     this.observed.requestHeaders.push({ ...this.headers })
     this.observed.requestMethods.push(this.requestPlan.effectiveMethod)
     this.observed.requestUrls.push(this.url)
@@ -685,9 +755,15 @@ export class TusConformanceHttpStack {
   constructor(conformanceScenario, { events = [] } = {}) {
     this.conformanceScenario = conformanceScenario
     this.events = events
+    this.inputContent =
+      typeof conformanceScenario.inputSource?.content === 'string'
+        ? contentBytes(conformanceScenario.inputSource.content)
+        : null
     this.nextRequestIndex = 0
     this.onRequestStart = () => {}
     this.observed = {
+      requestBodySizes: [],
+      requestBodyStarts: [],
       requestHeaders: [],
       requestMethods: [],
       requestUrls: [],
@@ -714,6 +790,7 @@ export class TusConformanceHttpStack {
 
     return new ContractRequest({
       events: this.events,
+      inputContent: this.inputContent,
       observed: this.observed,
       onRequestStart: this.onRequestStart,
       requestPlan,
