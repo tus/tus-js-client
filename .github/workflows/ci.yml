@@ -9,7 +9,7 @@ jobs:
   tests:
     runs-on: ubuntu-22.04
     env:
-      PUPPETEER_CACHE_DIR: ${{ runner.temp }}/puppeteer
+      PUPPETEER_CACHE_DIR: /tmp/puppeteer-cache
     strategy:
       fail-fast: false
       matrix:
@@ -44,7 +44,9 @@ jobs:
         run: npm ci
       - name: Install Chrome for Puppeteer
         if: matrix.suite == 'puppeteer'
-        run: npx puppeteer browsers install chrome
+        run: |
+          rm -rf "$PUPPETEER_CACHE_DIR"
+          npx puppeteer browsers install chrome
       - name: Build
         run: npm run build
       - name: Test
