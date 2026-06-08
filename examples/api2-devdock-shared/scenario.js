@@ -191,6 +191,19 @@ export function requireRetryOffsetRecoveryPlan(uploadConfig) {
   return retryOffsetRecovery
 }
 
+export function requireRequestLifecycleHooksPlan(uploadConfig) {
+  const requestLifecycleHooks = uploadConfig.requestLifecycleHooks
+  if (
+    typeof requestLifecycleHooks !== 'object' ||
+    requestLifecycleHooks === null ||
+    Array.isArray(requestLifecycleHooks)
+  ) {
+    fail('scenario upload is missing a request lifecycle hooks plan')
+  }
+
+  return requestLifecycleHooks
+}
+
 export function requireTerminationPlan(uploadConfig) {
   const termination = uploadConfig.termination
   if (typeof termination !== 'object' || termination === null || Array.isArray(termination)) {
