@@ -8,6 +8,8 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-22.04
+    env:
+      CHROME_BIN: /usr/bin/google-chrome
     strategy:
       fail-fast: false
       matrix:
@@ -35,11 +37,15 @@ jobs:
           node-version: ${{ matrix.node || 24 }}
       - name: Install Deno
         if: matrix.suite == 'deno'
-        uses: denoland/setup-deno@v2
+        uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282
         with:
           deno-version: latest
       - name: Install dependencies
         run: npm ci
+      - name: Verify Chrome for Puppeteer
+        if: matrix.suite == 'puppeteer'
+        run: |
+          "$CHROME_BIN" --version
       - name: Build
         run: npm run build
       - name: Test
