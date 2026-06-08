@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 
 import {
   TUS_DEFAULT_CLIENT_PROTOCOL,
+  tusAbortErrorDescriptor,
   tusRequestHeadersForProtocol,
 } from '../../lib.esm/protocol_generated.js'
 
@@ -350,6 +351,30 @@ export function tusConformanceUploadOptions(conformanceScenario) {
   return options
 }
 
+export function tusConformanceRuntimeSetupOptions(conformanceScenario) {
+  const runtimeSetup = conformanceScenario.runtimeSetup
+  if (typeof runtimeSetup !== 'object' || runtimeSetup === null || Array.isArray(runtimeSetup)) {
+    return {}
+  }
+
+  const options = {}
+  const fingerprint = runtimeSetup.fingerprint
+  if (
+    typeof fingerprint === 'object' &&
+    fingerprint !== null &&
+    !Array.isArray(fingerprint) &&
+    fingerprint.install === true
+  ) {
+    if (typeof fingerprint.value !== 'string') {
+      fail('TUS conformance scenario asked to install a fingerprint without a string value')
+    }
+
+    options.fingerprint = async () => fingerprint.value
+  }
+
+  return options
+}
+
 export async function tusConformanceUploadInput(conformanceScenario) {
   const inputSource = conformanceScenario.inputSource
   if (inputSource.kind === 'blob') {
@@ -408,11 +433,16 @@ class ContractResponse {
 }
 
 class ContractRequest {
-  constructor({ observed, requestPlan, url }) {
+  constructor({ events, observed, onRequestStart, requestPlan, url }) {
     this.headers = {}
+    this.events = events
     this.observed = observed
+    this.onRequestStart = onRequestStart
     this.requestPlan = requestPlan
     this.url = url
+    this.abortReject = null
+    this.abortRecorded = false
+    this.aborted = false
     this.progressHandler = () => {}
   }
 
@@ -462,6 +492,18 @@ class ContractRequest {
     this.observed.requestMethods.push(this.requestPlan.effectiveMethod)
     this.observed.requestUrls.push(this.url)
 
+    if (this.requestPlan.abort) {
+      return new Promise((_resolve, reject) => {
+        this.abortReject = reject
+        this.onRequestStart(this.requestPlan)
+        if (this.aborted) {
+          this.rejectAbort()
+        }
+      })
+    }
+
+    this.onRequestStart(this.requestPlan)
+
     if (this.requestPlan.errorMessage) {
       return Promise.reject(new Error(this.requestPlan.errorMessage))
     }
@@ -474,7 +516,36 @@ class ContractRequest {
   }
 
   abort() {
+    if (this.requestPlan.abort !== true) {
+      fail(
+        `TUS conformance scenario did not expect request ${this.requestPlan.requestIndex} to be aborted`,
+      )
+    }
+
+    this.aborted = true
+    if (!this.abortRecorded) {
+      this.events.push({
+        kind: 'request-abort',
+        method: this.requestPlan.effectiveMethod,
+        requestIndex: this.requestPlan.requestIndex,
+        url: this.url,
+      })
+      this.abortRecorded = true
+    }
+
+    this.rejectAbort()
     return Promise.resolve()
+  }
+
+  rejectAbort() {
+    if (!this.abortReject) {
+      return
+    }
+
+    const reject = this.abortReject
+    this.abortReject = null
+    const error = tusAbortErrorDescriptor()
+    reject(new DOMException(error.message, error.name))
   }
 
   getUnderlyingObject() {
@@ -520,9 +591,11 @@ export function tusConformanceEventRecordingFileReader({
 }
 
 export class TusConformanceHttpStack {
-  constructor(conformanceScenario) {
+  constructor(conformanceScenario, { events = [] } = {}) {
     this.conformanceScenario = conformanceScenario
+    this.events = events
     this.nextRequestIndex = 0
+    this.onRequestStart = () => {}
     this.observed = {
       requestHeaders: [],
       requestMethods: [],
@@ -549,7 +622,9 @@ export class TusConformanceHttpStack {
     }
 
     return new ContractRequest({
+      events: this.events,
       observed: this.observed,
+      onRequestStart: this.onRequestStart,
       requestPlan,
       url,
     })
