@@ -557,6 +557,79 @@ export function tusConformanceScenarioWantsEvent(conformanceScenario, kind) {
   return conformanceScenario.events.some((event) => event.kind === kind)
 }
 
+export function tusConformanceRetryObserver(conformanceScenario, events) {
+  const retryDecisions = Array.isArray(conformanceScenario.retryDecisions)
+    ? conformanceScenario.retryDecisions
+    : []
+  if (tusConformanceScenarioWantsEvent(conformanceScenario, 'should-retry')) {
+    if (retryDecisions.length === 0) {
+      fail('TUS conformance scenario wants retry decisions but exposes none')
+    }
+  }
+
+  let allowedScheduleCount = 0
+  let retryDecisionIndex = 0
+  let restoreRetryTimer = () => {}
+
+  if (tusConformanceScenarioWantsEvent(conformanceScenario, 'retry-schedule')) {
+    const originalSetTimeout = globalThis.setTimeout
+    globalThis.setTimeout = (handler, delay, ...args) => {
+      if (allowedScheduleCount > 0) {
+        events.push({ delay, kind: 'retry-schedule' })
+        allowedScheduleCount -= 1
+      }
+
+      return originalSetTimeout(handler, delay, ...args)
+    }
+    restoreRetryTimer = () => {
+      globalThis.setTimeout = originalSetTimeout
+    }
+  }
+
+  const onShouldRetry =
+    retryDecisions.length === 0
+      ? undefined
+      : (_error, retryAttempt) => {
+          const retryDecision = retryDecisions[retryDecisionIndex]
+          if (!retryDecision) {
+            fail(
+              `TUS conformance scenario received unexpected retry decision request ${retryDecisionIndex}`,
+            )
+          }
+          if (retryDecision.retryAttempt !== retryAttempt) {
+            fail(
+              `TUS conformance scenario expected retry attempt ${retryDecision.retryAttempt}, got ${retryAttempt}`,
+            )
+          }
+
+          events.push({
+            decision: retryDecision.decision,
+            kind: 'should-retry',
+            retryAttempt,
+          })
+          if (retryDecision.decision) {
+            allowedScheduleCount += 1
+          }
+          retryDecisionIndex += 1
+          return retryDecision.decision
+        }
+
+  return {
+    assertComplete() {
+      if (retryDecisionIndex !== retryDecisions.length) {
+        fail(
+          `TUS conformance scenario expected ${retryDecisions.length} retry decision(s), got ${retryDecisionIndex}`,
+        )
+      }
+      if (allowedScheduleCount !== 0) {
+        fail(`TUS conformance scenario left ${allowedScheduleCount} retry schedule(s) unobserved`)
+      }
+    },
+    onShouldRetry,
+    restore: restoreRetryTimer,
+  }
+}
+
 export function tusConformanceEventRecordingFileReader({
   conformanceScenario,
   events,
