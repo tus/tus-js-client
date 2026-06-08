@@ -219,7 +219,7 @@ export function requireTusConformanceScenario(scenario) {
   return conformanceScenario
 }
 
-function bodySize(body) {
+function fixedBodySize(body) {
   if (body == null) {
     return null
   }
@@ -241,6 +241,40 @@ function bodySize(body) {
   }
 
   fail(`TUS conformance scenario cannot measure request body ${typeof body}`)
+}
+
+function chunkSize(chunk) {
+  if (typeof chunk === 'string') {
+    return Buffer.byteLength(chunk)
+  }
+
+  if (chunk instanceof ArrayBuffer) {
+    return chunk.byteLength
+  }
+
+  if (ArrayBuffer.isView(chunk)) {
+    return chunk.byteLength
+  }
+
+  fail(`TUS conformance scenario cannot measure request body chunk ${typeof chunk}`)
+}
+
+async function streamBodySize(body, progressHandler) {
+  let size = 0
+  for await (const chunk of body) {
+    size += chunkSize(chunk)
+    progressHandler(size)
+  }
+
+  return size
+}
+
+async function bodySize(body, progressHandler) {
+  if (body instanceof Readable) {
+    return await streamBodySize(body, progressHandler)
+  }
+
+  return fixedBodySize(body)
 }
 
 function contentBytes(content) {
@@ -358,14 +392,7 @@ class ContractRequest {
     this.progressHandler = progressHandler
   }
 
-  send(body = null) {
-    const size = bodySize(body)
-    if (size !== this.requestPlan.bodySize) {
-      fail(
-        `TUS conformance scenario expected request body size ${this.requestPlan.bodySize}, got ${size}`,
-      )
-    }
-
+  async send(body = null) {
     for (const [header, value] of Object.entries(this.requestPlan.effectiveHeaders)) {
       if (this.headers[header] !== value) {
         fail(
@@ -374,7 +401,15 @@ class ContractRequest {
       }
     }
 
-    if (size != null) {
+    const isStreamBody = body instanceof Readable
+    const size = await bodySize(body, this.progressHandler)
+    if (size !== this.requestPlan.bodySize) {
+      fail(
+        `TUS conformance scenario expected request body size ${this.requestPlan.bodySize}, got ${size}`,
+      )
+    }
+
+    if (size != null && !isStreamBody) {
       this.progressHandler(0)
       this.progressHandler(size)
     }

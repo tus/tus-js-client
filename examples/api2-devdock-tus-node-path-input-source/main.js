@@ -39,13 +39,14 @@ async function uploadWithNodePathInputSource(conformanceScenario) {
 
   await new Promise((resolve, reject) => {
     upload.options.onError = reject
-    upload.options.onSuccess = resolve
+    upload.options.onSuccess = (payload) => {
+      if (tusConformanceScenarioWantsEvent(conformanceScenario, 'success')) {
+        events.push({ kind: 'success' })
+      }
+      resolve(payload)
+    }
     upload.start()
   })
-
-  if (tusConformanceScenarioWantsEvent(conformanceScenario, 'success')) {
-    events.push({ kind: 'success' })
-  }
 
   if (!upload.url) {
     fail('node path input source scenario did not expose an upload URL')
