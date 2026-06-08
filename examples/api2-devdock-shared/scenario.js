@@ -475,6 +475,24 @@ class ContractRequest {
       }
     }
 
+    for (const header of this.requestPlan.absentHeaders) {
+      if (Object.hasOwn(this.headers, header)) {
+        fail(
+          `TUS conformance scenario expected request header ${header} to be absent, got ${JSON.stringify(this.headers[header])}`,
+        )
+      }
+    }
+
+    if (this.requestPlan.headerMode === 'exact') {
+      for (const header of Object.keys(this.headers)) {
+        if (!Object.hasOwn(this.requestPlan.effectiveHeaders, header)) {
+          fail(
+            `TUS conformance scenario did not expect request header ${header}=${JSON.stringify(this.headers[header])}`,
+          )
+        }
+      }
+    }
+
     const isStreamBody = body instanceof Readable
     const size = await bodySize(body, this.progressHandler)
     if (size !== this.requestPlan.bodySize) {
