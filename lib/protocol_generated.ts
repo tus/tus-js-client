@@ -212,6 +212,7 @@ export const TUS_FLOW_POLICY = {
     terminateUploadContext: 'detached-from-aborted-request',
   },
   detailedErrors: {
+    causeStringTemplate: 'Error: {message}',
     causedByTemplate: ', caused by {cause}',
     emptyResponseBody: '',
     missingValue: 'n/a',
