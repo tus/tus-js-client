@@ -27,6 +27,8 @@ jobs:
             node: 24
           - desc: 'Deno'
             suite: 'deno'
+          - desc: 'Bun'
+            suite: 'bun'
     name: Tests (${{ matrix.desc }})
     steps:
       - name: Check out sources
@@ -40,6 +42,11 @@ jobs:
         uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282
         with:
           deno-version: latest
+      - name: Install Bun
+        if: matrix.suite == 'bun'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
       - name: Install dependencies
         run: npm ci
       - name: Verify Chrome for Puppeteer
