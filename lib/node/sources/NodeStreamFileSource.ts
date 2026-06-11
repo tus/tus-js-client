@@ -12,9 +12,22 @@ import type { FileSource } from '../../options.js'
  */
 function readChunk(stream: Readable, size: number) {
   return new Promise<Buffer>((resolve, reject) => {
+    // If the stream has already ended, resolve immediately with an empty buffer.
+    if (stream.readableEnded) {
+      resolve(Buffer.alloc(0))
+      return
+    }
+
     const onError = (err: Error) => {
       stream.off('readable', onReadable)
+      stream.off('end', onEnd)
       reject(err)
+    }
+
+    const onEnd = () => {
+      stream.off('error', onError)
+      stream.off('readable', onReadable)
+      resolve(Buffer.alloc(0))
     }
 
     const onReadable = () => {
@@ -24,12 +37,14 @@ function readChunk(stream: Readable, size: number) {
       if (chunk != null) {
         stream.off('error', onError)
         stream.off('readable', onReadable)
+        stream.off('end', onEnd)
 
         resolve(chunk)
       }
     }
 
     stream.once('error', onError)
+    stream.once('end', onEnd)
     stream.on('readable', onReadable)
   })
 }
