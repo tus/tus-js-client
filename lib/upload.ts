@@ -73,7 +73,15 @@ import {
   tusValidateUploadStart,
 } from './protocol_generated.js'
 import { tusTerminateUploadWithRetry } from './terminate_generated.js'
+import { tusUploadChunksUntilComplete } from './upload_chunks_generated.js'
 import { uuid } from './uuid.js'
+
+// The request/response pair a chunk upload attempt settles through the generated chunk loop:
+// the response carries the accepted offset, the request provides the error context.
+interface TusChunkExchange {
+  req: HttpRequest
+  res: HttpResponse
+}
 
 export const defaultOptions = {
   endpoint: undefined,
@@ -805,15 +813,53 @@ export class BaseUpload {
    * @api private
    */
   private async _performUpload(): Promise<void> {
-    // If the upload has been aborted, we will not send the next PATCH request.
-    // This is important if the abort method was called during a callback, such
-    // as onChunkComplete or onProgress.
-    if (this._aborted) {
-      return
-    }
+    await this._uploadChunks(null)
+  }
 
-    let req: HttpRequest
+  /**
+   * Run the generated chunk loop: settle a pending response exchange if one is supplied (the
+   * creation-with-data entry), then keep sending PATCH requests until the server holds the full
+   * upload. Abort checks, the emission order, and the completion exit live in the generated
+   * module; errors propagate to the caller's retry handling.
+   *
+   * @api private
+   */
+  private async _uploadChunks(pendingExchange: TusChunkExchange | null): Promise<void> {
+    await tusUploadChunksUntilComplete({
+      applyChunkResponse: (exchange) => this._applyChunkResponse(exchange),
+      emitChunkComplete: (chunkSize, offset) => {
+        this._emitChunkComplete({
+          bytesAccepted: offset,
+          bytesTotal: this._size,
+          chunkSize,
+          hasHook: typeof this.options.onChunkComplete === 'function',
+          phase: 'afterChunkAccepted',
+        })
+      },
+      emitProgressAfterChunkAccepted: (offset) => {
+        this._emitProgress({
+          bytesTotal: this._size,
+          hasHook: typeof this.options.onProgress === 'function',
+          phase: 'afterChunkAccepted',
+          uploadOffset: offset,
+        })
+      },
+      emitSuccess: (exchange) => this._emitSuccess(exchange.res),
+      getOffset: () => this._offset,
+      getSize: () => this._size,
+      isAborted: () => this._aborted,
+      pendingExchange,
+      performPatchRequest: () => this._performPatchRequest(),
+    })
+  }
 
+  /**
+   * Send a single PATCH request for the chunk at the current offset and surface any failure as a
+   * DetailedError. This is the per-attempt byte-source transport the generated chunk loop calls.
+   *
+   * @api private
+   */
+  private async _performPatchRequest(): Promise<TusChunkExchange> {
     const chunkRequestPlan = tusPlanUploadChunkRequest({
       offset: this._offset,
       uploadUrl: this.url,
@@ -821,7 +867,7 @@ export class BaseUpload {
     if (!chunkRequestPlan.ok) {
       throw new Error(chunkRequestPlan.message)
     }
-    req = this._openRequest(
+    const req = this._openRequest(
       tusPatchUploadRequestPlan({
         offset: this._offset,
         overridePatchMethod: this.options.overridePatchMethod,
@@ -830,23 +876,39 @@ export class BaseUpload {
       }),
     )
 
-    let res: HttpResponse
     try {
-      res = await this._addChunkToRequest(req)
+      const res = await this._addChunkToRequest(req)
+      return { req, res }
     } catch (err) {
-      // Don't emit an error if the upload was aborted manually
-      if (this._aborted) {
-        return
-      }
-
       if (!(err instanceof Error)) {
         throw new Error(tusNonErrorThrownValueMessage({ value: err }))
       }
 
       throw new DetailedError(chunkRequestPlan.requestErrorMessage, err, req, undefined)
     }
+  }
 
-    await this._handleUploadResponse(req, res)
+  /**
+   * Read the accepted offset off a chunk response, fail on unusable responses, and advance the
+   * upload state. Returns the number of bytes the server newly accepted.
+   *
+   * @api private
+   */
+  private _applyChunkResponse({ req, res }: TusChunkExchange): number {
+    const chunkResponsePlan = tusPlanUploadChunkResponse({
+      currentOffset: this._offset,
+      response: tusReadUploadChunkResponse({
+        getHeader: (headerName) => res.getHeader(headerName),
+        status: res.getStatus(),
+      }),
+      size: this._size,
+    })
+    if (chunkResponsePlan.action === 'fail') {
+      throw new DetailedError(chunkResponsePlan.message, undefined, req, res)
+    }
+
+    this._offset = chunkResponsePlan.offset
+    return chunkResponsePlan.chunkSize
   }
 
   /**
@@ -929,41 +991,7 @@ export class BaseUpload {
    * @api private
    */
   private async _handleUploadResponse(req: HttpRequest, res: HttpResponse): Promise<void> {
-    const chunkResponsePlan = tusPlanUploadChunkResponse({
-      currentOffset: this._offset,
-      response: tusReadUploadChunkResponse({
-        getHeader: (headerName) => res.getHeader(headerName),
-        status: res.getStatus(),
-      }),
-      size: this._size,
-    })
-    if (chunkResponsePlan.action === 'fail') {
-      throw new DetailedError(chunkResponsePlan.message, undefined, req, res)
-    }
-
-    this._emitProgress({
-      bytesTotal: this._size,
-      hasHook: typeof this.options.onProgress === 'function',
-      phase: 'afterChunkAccepted',
-      uploadOffset: chunkResponsePlan.offset,
-    })
-    this._emitChunkComplete({
-      bytesAccepted: chunkResponsePlan.offset,
-      bytesTotal: this._size,
-      chunkSize: chunkResponsePlan.chunkSize,
-      hasHook: typeof this.options.onChunkComplete === 'function',
-      phase: 'afterChunkAccepted',
-    })
-
-    this._offset = chunkResponsePlan.offset
-
-    if (chunkResponsePlan.action === 'complete') {
-      // Yay, finally done :)
-      await this._emitSuccess(res)
-      return
-    }
-
-    await this._performUpload()
+    await this._uploadChunks({ req, res })
   }
 
   /**
