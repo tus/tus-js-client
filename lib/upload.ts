@@ -44,7 +44,6 @@ import {
   tusPlanResumeOffsetResponse,
   tusPlanResumeResponseStatus,
   tusPlanResumeUploadRequest,
-  tusPlanRetryAfterError,
   tusPlanSingleUploadStart,
   tusPlanStoredUploadRecord,
   tusPlanSuccessEvent,
@@ -61,10 +60,8 @@ import {
   tusReadUploadCreationResponse,
   tusReadUploadOffsetResponse,
   tusResolveUploadLocation,
-  tusShouldEvaluateRetryPolicy,
   tusShouldSendUploadBodyDuringCreation,
   tusShouldSuppressErrorAfterAbort,
-  tusShouldTreatRequestErrorAsRetryable,
   tusShouldUseCustomRetryPolicy,
   tusTerminateUploadRequestPlan,
   tusUploadBodyHeaders,
@@ -72,6 +69,7 @@ import {
   tusUrlStorageCreationTime,
   tusValidateUploadStart,
 } from './protocol_generated.js'
+import { tusScheduleUploadRetryOrEmitError } from './retry_scheduling_generated.js'
 import { tusTerminateUploadWithRetry } from './terminate_generated.js'
 import { tusUploadChunksUntilComplete } from './upload_chunks_generated.js'
 import { uuid } from './uuid.js'
@@ -511,50 +509,37 @@ export class BaseUpload {
     }
   }
 
+  /**
+   * Run the generated retry-scheduling decision pass: either schedule a full start() re-entry
+   * through the retry timer or emit the error to the user. The abort guard, the retry decisions,
+   * and the attempt/offset bookkeeping live in the generated module; this method only wires the
+   * upload's state and timer closures.
+   *
+   * @api private
+   */
   private _retryOrEmitError(err: Error): void {
-    // Do not retry if explicitly aborted
-    if (this._aborted) return
-
-    const retryableErr = getRetryableError(err)
-    const retryInput = {
-      isNetworkError: retryableErr != null,
-      offset: this._offset,
-      offsetBeforeRetry: this._offsetBeforeRetry,
+    tusScheduleUploadRetryOrEmitError({
+      emitError: (error) => this._emitError(error),
+      error: err,
+      evaluateRetryPolicy: (error, retryAttempt) =>
+        shouldRetryByPolicy(error, retryAttempt, this.options),
+      getOffset: () => this._offset,
+      getOffsetBeforeRetry: () => this._offsetBeforeRetry,
+      getRetryAttempt: () => this._retryAttempt,
+      isAborted: () => this._aborted,
       retryDelays: this.options.retryDelays,
-    }
-    let retryPlan = tusPlanRetryAfterError({
-      ...retryInput,
-      retryAttempt: this._retryAttempt,
+      scheduleRestart: (delayMs) => {
+        this._retryTimeout = setTimeout(() => {
+          this.start()
+        }, delayMs)
+      },
+      setOffsetBeforeRetry: (offset) => {
+        this._offsetBeforeRetry = offset
+      },
+      setRetryAttempt: (retryAttempt) => {
+        this._retryAttempt = retryAttempt
+      },
     })
-    this._retryAttempt = retryPlan.retryAttempt
-
-    if (
-      tusShouldEvaluateRetryPolicy({
-        hasRetryableError: retryableErr != null,
-        retryPlanAction: retryPlan.action,
-      }) &&
-      retryableErr != null
-    ) {
-      retryPlan = tusPlanRetryAfterError({
-        ...retryInput,
-        retryAttempt: retryPlan.retryAttempt,
-        shouldRetry: shouldRetryByPolicy(retryableErr, retryPlan.retryAttempt, this.options),
-      })
-      this._retryAttempt = retryPlan.retryAttempt
-    }
-
-    if (retryPlan.action === 'scheduleRetry') {
-      this._retryAttempt = retryPlan.nextRetryAttempt
-      this._offsetBeforeRetry = retryPlan.offsetBeforeRetry
-
-      this._retryTimeout = setTimeout(() => {
-        this.start()
-      }, retryPlan.delay)
-      return
-    }
-
-    // If we are not retrying, emit the error to the user.
-    this._emitError(err)
   }
 
   /**
@@ -1143,20 +1128,6 @@ function isOnline(): boolean {
   // -disable-next-line no-undef
   const platformOnline = typeof navigator !== 'undefined' ? navigator.onLine : undefined
   return tusDefaultRetryOnlineStatus({ platformOnline })
-}
-
-/**
- * Extract errors that originated from a request. Only these can safely be retried.
- */
-function getRetryableError(err: Error): DetailedError | null {
-  if (
-    err instanceof DetailedError &&
-    tusShouldTreatRequestErrorAsRetryable({ hasRequestContext: err.originalRequest != null })
-  ) {
-    return err
-  }
-
-  return null
 }
 
 function shouldRetryByPolicy(
