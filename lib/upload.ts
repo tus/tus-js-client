@@ -51,7 +51,6 @@ import {
   tusPlanTerminateUploadRequest,
   tusPlanUploadChunkRequest,
   tusPlanUploadChunkResponse,
-  tusPlanUploadCompletionAfterOffset,
   tusPlanUploadCreationRequest,
   tusPlanUploadCreationResponse,
   tusPlanUploadStorage,
@@ -72,6 +71,11 @@ import {
 import { tusScheduleUploadRetryOrEmitError } from './retry_scheduling_generated.js'
 import { tusTerminateUploadWithRetry } from './terminate_generated.js'
 import { tusUploadChunksUntilComplete } from './upload_chunks_generated.js'
+import {
+  tusCreateUploadFlow,
+  tusPrepareAndStartUpload,
+  tusResumeUploadFlow,
+} from './upload_lifecycle_generated.js'
 import { uuid } from './uuid.js'
 
 // The request/response pair a chunk upload attempt settles through the generated chunk loop:
@@ -79,6 +83,12 @@ import { uuid } from './uuid.js'
 interface TusChunkExchange {
   req: HttpRequest
   res: HttpResponse
+}
+
+// The creation exchange additionally carries the endpoint the POST went to, so the response
+// settlement can resolve the Location header against the request URL.
+interface TusCreationExchange extends TusChunkExchange {
+  endpoint: string
 }
 
 export const defaultOptions = {
@@ -228,35 +238,62 @@ export class BaseUpload {
     })
   }
 
+  /**
+   * Run the generated preparation flow: fingerprint, source open, size derivation, the parallel
+   * branch point, the abort-flag reset, and the resume-or-create dispatch. The step order lives
+   * in the generated module; the closures own the upload's state.
+   *
+   * @api private
+   */
   private async _prepareAndStartUpload(): Promise<void> {
-    this._fingerprint = await this.options.fingerprint(this.file, this.options)
-    log(tusPlanPreparedFingerprintLog({ fingerprint: this._fingerprint }).message)
+    await tusPrepareAndStartUpload({
+      computeFingerprint: async () => {
+        this._fingerprint = await this.options.fingerprint(this.file, this.options)
+        log(tusPlanPreparedFingerprintLog({ fingerprint: this._fingerprint }).message)
+      },
+      createUpload: () => this._createUpload(),
+      hasSource: () => this._source != null,
+      openSource: async () => {
+        this._source = await this.options.fileReader.openFile(this.file, this.options.chunkSize)
+      },
+      prepareUploadSize: () => {
+        const preparedUploadSizePlan = tusPlanPreparedUploadSize({
+          sourceSize: this._source?.size,
+          uploadLengthDeferred: this._uploadLengthDeferred,
+          uploadSize: this.options.uploadSize,
+        })
+        if (!preparedUploadSizePlan.ok) {
+          throw new Error(preparedUploadSizePlan.message)
+        }
 
-    if (this._source == null) {
-      this._source = await this.options.fileReader.openFile(this.file, this.options.chunkSize)
-    }
+        this._size = preparedUploadSizePlan.size
+      },
+      // Reset the aborted flag when the upload is started or else the chunk loop would stop
+      // before sending a request if the upload has been aborted previously.
+      resetAborted: () => {
+        this._aborted = false
+      },
+      resolveStartMode: () => {
+        const plan = tusPlanSingleUploadStart({
+          currentUrl: this.url,
+          uploadUrl: this.options.uploadUrl,
+        })
+        log(plan.logMessage)
 
-    const preparedUploadSizePlan = tusPlanPreparedUploadSize({
-      sourceSize: this._source.size,
-      uploadLengthDeferred: this._uploadLengthDeferred,
-      uploadSize: this.options.uploadSize,
+        if (plan.action === 'resumeConfigured') {
+          this.url = plan.url
+        }
+
+        return plan.action !== 'create'
+      },
+      resumeUpload: () => this._resumeUpload(),
+      shouldUploadInParallel: () =>
+        tusPlanPreparedUploadMode({
+          hasParallelUploadUrls: this._parallelUploadUrls != null,
+          parallelUploads: this.options.parallelUploads,
+        }).action === 'parallel',
+      startParallelUpload: () => this._startParallelUpload(),
     })
-    if (!preparedUploadSizePlan.ok) {
-      throw new Error(preparedUploadSizePlan.message)
-    }
-    this._size = preparedUploadSizePlan.size
-
-    const preparedUploadModePlan = tusPlanPreparedUploadMode({
-      hasParallelUploadUrls: this._parallelUploadUrls != null,
-      parallelUploads: this.options.parallelUploads,
-    })
-
-    if (preparedUploadModePlan.action === 'parallel') {
-      await this._startParallelUpload()
-      return
-    }
-
-    await this._startSingleUpload()
   }
 
   /**
@@ -408,36 +445,6 @@ export class BaseUpload {
     log(tusPlanCreatedUploadLog({ uploadUrl: this.url }).message)
 
     await this._emitSuccess(res)
-  }
-
-  /**
-   * Initiate the uploading procedure for a non-parallel upload. Here the entire file is
-   * uploaded in a sequential matter.
-   *
-   * @api private
-   */
-  private async _startSingleUpload(): Promise<void> {
-    // Reset the aborted flag when the upload is started or else the
-    // _performUpload will stop before sending a request if the upload has been
-    // aborted previously.
-    this._aborted = false
-
-    const plan = tusPlanSingleUploadStart({
-      currentUrl: this.url,
-      uploadUrl: this.options.uploadUrl,
-    })
-    log(plan.logMessage)
-
-    if (plan.action === 'resumeCurrent') {
-      return await this._resumeUpload()
-    }
-
-    if (plan.action === 'resumeConfigured') {
-      this.url = plan.url
-      return await this._resumeUpload()
-    }
-
-    return await this._createUpload()
   }
 
   /**
@@ -617,13 +624,36 @@ export class BaseUpload {
   }
 
   /**
-   * Create a new upload using the creation extension by sending a POST
-   * request to the endpoint. After successful creation the file will be
-   * uploaded
+   * Create a new upload using the creation extension by sending a POST request to the endpoint
+   * and hand the settled exchange into the generated chunk loop. The step order — response
+   * settlement, the upload-url-available emission, the empty-upload completion, URL storage,
+   * the chunk-loop entry — lives in the generated module.
    *
    * @api private
    */
   private async _createUpload(): Promise<void> {
+    await tusCreateUploadFlow({
+      applyCreationResponse: (exchange) => this._applyCreationResponse(exchange),
+      emitSuccess: (exchange) => this._emitSuccess(exchange.res),
+      emitUploadUrlAvailable: () => this._emitUploadUrlAvailable('createUpload'),
+      performCreationRequest: () => this._performCreationRequest(),
+      saveUploadInUrlStorage: () => this._saveUploadInUrlStorage(),
+      setOffset: (offset) => {
+        this._offset = offset
+      },
+      uploadChunks: (pendingExchange) => this._uploadChunks(pendingExchange),
+      uploadDataDuringCreation: this.options.uploadDataDuringCreation,
+    })
+  }
+
+  /**
+   * Send the upload creation POST — optionally carrying the first chunk when the
+   * uploadDataDuringCreation option asks for it — and surface any failure as a DetailedError.
+   * This is the per-attempt creation transport the generated creation flow calls.
+   *
+   * @api private
+   */
+  private async _performCreationRequest(): Promise<TusCreationExchange> {
     const creationRequestPlan = tusPlanUploadCreationRequest({
       endpoint: this.options.endpoint,
       size: this._size,
@@ -666,6 +696,16 @@ export class BaseUpload {
       throw new DetailedError(creationRequestPlan.requestErrorMessage, err, req, undefined)
     }
 
+    return { endpoint: creationRequestPlan.endpoint, req, res }
+  }
+
+  /**
+   * Read the creation response, fail on unusable responses, resolve the upload's location, and
+   * report whether the created upload is already complete (an empty, non-deferred upload).
+   *
+   * @api private
+   */
+  private _applyCreationResponse({ endpoint, req, res }: TusCreationExchange): boolean {
     const creationResponsePlan = tusPlanUploadCreationResponse({
       followUp: 'patchIfNonempty',
       response: tusReadUploadCreationResponse({
@@ -680,42 +720,62 @@ export class BaseUpload {
 
     this.url = tusResolveUploadLocation({
       location: creationResponsePlan.location,
-      requestUrl: creationRequestPlan.endpoint,
+      requestUrl: endpoint,
     })
     log(tusPlanCreatedUploadLog({ uploadUrl: this.url }).message)
 
-    await this._emitUploadUrlAvailable('createUpload')
-
-    if (creationResponsePlan.action === 'complete') {
-      // Nothing to upload and file was successfully created
-      await this._emitSuccess(res)
-      return
-    }
-
-    await this._saveUploadInUrlStorage()
-
-    if (this.options.uploadDataDuringCreation) {
-      await this._handleUploadResponse(req, res)
-    } else {
-      this._offset = 0
-      await this._performUpload()
-    }
+    return creationResponsePlan.action === 'complete'
   }
 
   /**
-   * Try to resume an existing upload. First a HEAD request will be sent
-   * to retrieve the offset. If the request fails a new upload will be
-   * created. In the case of a successful response the file will be uploaded.
+   * Try to resume an existing upload: HEAD for the offset and fall back to creating a new
+   * upload when the response is not resumable. The step order — status settlement, offset
+   * application, the upload-url-available emission, URL storage, the already-complete exit, the
+   * chunk-loop entry — lives in the generated module.
    *
    * @api private
    */
   private async _resumeUpload(): Promise<void> {
+    await tusResumeUploadFlow({
+      applyResumeOffset: (exchange) => this._applyResumeOffset(exchange),
+      clearUploadUrl: () => {
+        this.url = null
+      },
+      createUpload: () => this._createUpload(),
+      emitProgressAfterResumeAlreadyComplete: (length) => {
+        this._emitProgress({
+          hasHook: typeof this.options.onProgress === 'function',
+          phase: 'afterResumeAlreadyComplete',
+          uploadLength: length,
+        })
+      },
+      emitSuccess: (exchange) => this._emitSuccess(exchange.res),
+      emitUploadUrlAvailable: () => this._emitUploadUrlAvailable('resumeUpload'),
+      performHeadRequest: () => this._performResumeHeadRequest(),
+      readUploadLength: (exchange) => this._readResumeUploadLength(exchange),
+      saveUploadInUrlStorage: () => this._saveUploadInUrlStorage(),
+      setOffset: (offset) => {
+        this._offset = offset
+      },
+      settleResumeStatus: (exchange) => this._settleResumeStatus(exchange),
+      uploadChunks: (pendingExchange) => this._uploadChunks(pendingExchange),
+    })
+  }
+
+  /**
+   * Send the HEAD request that retrieves the remote upload's offset and surface any failure as
+   * a DetailedError. This is the per-attempt resume transport the generated resume flow calls.
+   *
+   * @api private
+   */
+  private async _performResumeHeadRequest(): Promise<TusChunkExchange> {
     const resumeRequestPlan = tusPlanResumeUploadRequest({
       uploadUrl: this.url,
     })
     if (!resumeRequestPlan.ok) {
       throw new Error(resumeRequestPlan.message)
     }
+
     const req = this._openRequest(
       tusGetUploadOffsetRequestPlan({
         protocol: this.options.protocol,
@@ -723,9 +783,8 @@ export class BaseUpload {
       }),
     )
 
-    let res: HttpResponse
     try {
-      res = await this._sendRequest(req)
+      return { req, res: await this._sendRequest(req) }
     } catch (err) {
       if (!(err instanceof Error)) {
         throw new Error(tusNonErrorThrownValueMessage({ value: err }))
@@ -733,72 +792,71 @@ export class BaseUpload {
 
       throw new DetailedError(resumeRequestPlan.requestErrorMessage, err, req, undefined)
     }
+  }
 
-    const status = res.getStatus()
+  /**
+   * Apply the resume status plan: remove the stored upload when planned, fail on unusable
+   * responses, and report whether a new upload must be created instead (the 4xx
+   * fallback-to-create path).
+   *
+   * @api private
+   */
+  private async _settleResumeStatus({ req, res }: TusChunkExchange): Promise<boolean> {
     const responseStatusPlan = tusPlanResumeResponseStatus({
       hasEndpoint: this.options.endpoint != null,
-      status,
+      status: res.getStatus(),
     })
-    if (responseStatusPlan.action !== 'readOffset') {
-      if (responseStatusPlan.removeStoredUpload) {
-        await this._removeFromUrlStorage()
-      }
-
-      if (responseStatusPlan.action === 'fail') {
-        throw new DetailedError(responseStatusPlan.message, undefined, req, res)
-      }
-
-      this.url = null
-      await this._createUpload()
-      return
+    if (responseStatusPlan.action === 'readOffset') {
+      return false
     }
 
-    const offsetResponse = tusReadUploadOffsetResponse({
-      getHeader: (headerName) => res.getHeader(headerName),
-      protocol: this.options.protocol,
-      status,
-    })
+    if (responseStatusPlan.removeStoredUpload) {
+      await this._removeFromUrlStorage()
+    }
+
+    if (responseStatusPlan.action === 'fail') {
+      throw new DetailedError(responseStatusPlan.message, undefined, req, res)
+    }
+
+    return true
+  }
+
+  /**
+   * Read the offset response, fail on unusable responses, sync the deferred-length state, and
+   * return the server-side offset the upload continues from.
+   *
+   * @api private
+   */
+  private _applyResumeOffset({ req, res }: TusChunkExchange): number {
     const offsetResponsePlan = tusPlanResumeOffsetResponse({
-      response: offsetResponse,
+      response: tusReadUploadOffsetResponse({
+        getHeader: (headerName) => res.getHeader(headerName),
+        protocol: this.options.protocol,
+        status: res.getStatus(),
+      }),
     })
     if (offsetResponsePlan.action === 'fail') {
       throw new DetailedError(offsetResponsePlan.message, undefined, req, res)
     }
 
-    const offset = offsetResponsePlan.offset
-    const length = offsetResponsePlan.length
     this._uploadLengthDeferred = offsetResponsePlan.uploadLengthDeferred
-
-    await this._emitUploadUrlAvailable('resumeUpload')
-
-    await this._saveUploadInUrlStorage()
-
-    // Upload has already been completed and we do not need to send additional
-    // data to the server
-    const completionPlan = tusPlanUploadCompletionAfterOffset({ length, offset })
-    if (completionPlan.complete) {
-      this._emitProgress({
-        hasHook: typeof this.options.onProgress === 'function',
-        phase: 'afterResumeAlreadyComplete',
-        uploadLength: completionPlan.length,
-      })
-      await this._emitSuccess(res)
-      return
-    }
-
-    this._offset = offset
-    await this._performUpload()
+    return offsetResponsePlan.offset
   }
 
   /**
-   * Start uploading the file using PATCH requests. The file will be divided
-   * into chunks as specified in the chunkSize option. During the upload
-   * the onProgress event handler may be invoked multiple times.
+   * Read the optional Upload-Length off the offset response — the resume completion check's
+   * input next to the discovered offset.
    *
    * @api private
    */
-  private async _performUpload(): Promise<void> {
-    await this._uploadChunks(null)
+  private _readResumeUploadLength({ res }: TusChunkExchange): number | null {
+    const offsetResponse = tusReadUploadOffsetResponse({
+      getHeader: (headerName) => res.getHeader(headerName),
+      protocol: this.options.protocol,
+      status: res.getStatus(),
+    })
+
+    return offsetResponse.ok ? offsetResponse.length : null
   }
 
   /**
@@ -967,16 +1025,6 @@ export class BaseUpload {
       phase: 'beforeRequestBody',
     })
     return await this._sendRequest(req, value)
-  }
-
-  /**
-   * _handleUploadResponse is used by requests that haven been sent using _addChunkToRequest
-   * and already have received a response.
-   *
-   * @api private
-   */
-  private async _handleUploadResponse(req: HttpRequest, res: HttpResponse): Promise<void> {
-    await this._uploadChunks({ req, res })
   }
 
   /**
