@@ -72,6 +72,7 @@ import {
   tusUrlStorageCreationTime,
   tusValidateUploadStart,
 } from './protocol_generated.js'
+import { tusTerminateUploadWithRetry } from './terminate_generated.js'
 import { uuid } from './uuid.js'
 
 export const defaultOptions = {
@@ -1164,16 +1165,11 @@ function wait(delay: number) {
 }
 
 /**
- * Use the Termination extension to delete an upload from the server by sending a DELETE
- * request to the specified upload URL. This is only possible if the server supports the
- * Termination extension. If the `options.retryDelays` property is set, the method will
- * also retry if an error ocurrs.
+ * Send a single DELETE request for the upload and surface any failure as a DetailedError.
  *
- * @param {String} url The upload's URL which will be terminated.
- * @param {object} options Optional options for influencing HTTP requests.
- * @return {Promise} The Promise will be resolved/rejected when the requests finish.
+ * @api private
  */
-export async function terminate(url: string, options: UploadOptions): Promise<void> {
+async function sendTerminateRequest(url: string, options: UploadOptions): Promise<void> {
   const terminateRequestPlan = tusPlanTerminateUploadRequest({ uploadUrl: url })
   const plan = tusTerminateUploadRequestPlan({
     protocol: options.protocol,
@@ -1194,48 +1190,30 @@ export async function terminate(url: string, options: UploadOptions): Promise<vo
       throw new Error(tusNonErrorThrownValueMessage({ value: err }))
     }
 
-    const detailedErr =
-      err instanceof DetailedError
-        ? err
-        : new DetailedError(terminateRequestPlan.requestErrorMessage, err, req)
-
-    const retryableErr = getRetryableError(detailedErr)
-    const retryDelays = options.retryDelays ?? null
-    let retryPlan = tusPlanRetryAfterError({
-      isNetworkError: retryableErr != null,
-      offset: 0,
-      offsetBeforeRetry: 0,
-      retryAttempt: 0,
-      retryDelays,
-    })
-
-    if (
-      tusShouldEvaluateRetryPolicy({
-        hasRetryableError: retryableErr != null,
-        retryPlanAction: retryPlan.action,
-      }) &&
-      retryableErr != null
-    ) {
-      retryPlan = tusPlanRetryAfterError({
-        isNetworkError: true,
-        offset: 0,
-        offsetBeforeRetry: 0,
-        retryAttempt: retryPlan.retryAttempt,
-        retryDelays,
-        shouldRetry: shouldRetryByPolicy(retryableErr, retryPlan.retryAttempt, options),
-      })
+    if (err instanceof DetailedError) {
+      throw err
     }
 
-    if (retryPlan.action !== 'scheduleRetry') {
-      throw detailedErr
-    }
-
-    const newOptions = {
-      ...options,
-      retryDelays: retryPlan.remainingRetryDelays,
-    }
-
-    await wait(retryPlan.delay)
-    await terminate(url, newOptions)
+    throw new DetailedError(terminateRequestPlan.requestErrorMessage, err, req)
   }
+}
+
+/**
+ * Use the Termination extension to delete an upload from the server by sending a DELETE
+ * request to the specified upload URL. This is only possible if the server supports the
+ * Termination extension. If the `options.retryDelays` property is set, the method will
+ * also retry if an error ocurrs.
+ *
+ * @param {String} url The upload's URL which will be terminated.
+ * @param {object} options Optional options for influencing HTTP requests.
+ * @return {Promise} The Promise will be resolved/rejected when the requests finish.
+ */
+export async function terminate(url: string, options: UploadOptions): Promise<void> {
+  await tusTerminateUploadWithRetry({
+    evaluateRetryPolicy: (error, retryAttempt) => shouldRetryByPolicy(error, retryAttempt, options),
+    retryDelays: options.retryDelays ?? null,
+    sendTerminateRequest: (uploadUrl) => sendTerminateRequest(uploadUrl, options),
+    sleep: wait,
+    uploadUrl: url,
+  })
 }
