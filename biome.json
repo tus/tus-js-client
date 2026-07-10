@@ -60,6 +60,11 @@
   },
   "overrides": [
     {
+      "includes": ["test/spec/api2_tus_contract.json"],
+      "formatter": { "enabled": false },
+      "linter": { "enabled": false }
+    },
+    {
       "includes": ["**/lib/node/**"],
       "linter": {
         "rules": {

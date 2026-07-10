@@ -11,11 +11,46 @@ import { canStoreURLs, Upload } from 'tus-js-client'
 import { FileUrlStorage } from 'tus-js-client/node/FileUrlStorage'
 import { NodeHttpStack } from 'tus-js-client/node/NodeHttpStack'
 import { NodeStreamFileSource } from 'tus-js-client/node/sources/NodeStreamFileSource'
-import { tusClientUrlStorageConformanceScenarios } from './generated-protocol-contract.js'
+import {
+  tusClientConformanceScenarios,
+  tusClientFeatures,
+  tusClientUrlStorageConformanceScenarios,
+  tusManagedUpload,
+  tusProtocolOperations,
+  tusWireVersions,
+} from './generated-protocol-contract.js'
 import { assertUrlStorage, findUrlStorageScenario } from './helpers/assertUrlStorage.js'
 import { expectTusDefaultRequestHeaders, TestHttpStack, waitableFunction } from './helpers/utils.js'
 
+const canonicalTusContract = JSON.parse(
+  fs.readFileSync(new URL('./api2_tus_contract.json', import.meta.url), 'utf8'),
+)
+
 describe('tus', () => {
+  describe('api2 contract fixture', () => {
+    it('keeps the SDK-owned test adapter aligned with the canonical fixture', () => {
+      const canonicalClientFeatures = canonicalTusContract.clientFeatures.map(
+        ({ conformance, description, featureId, flow, operationIds, primitives }) => ({
+          conformance,
+          description,
+          featureId,
+          flow,
+          operationIds,
+          primitives,
+        }),
+      )
+
+      expect(tusWireVersions).toEqual(canonicalTusContract.wireVersions)
+      expect(tusProtocolOperations).toEqual(canonicalTusContract.operations)
+      expect(tusClientFeatures).toEqual(canonicalClientFeatures)
+      expect(tusManagedUpload).toEqual(canonicalTusContract.managedUpload)
+      expect(tusClientConformanceScenarios).toEqual(canonicalTusContract.clientConformanceScenarios)
+      expect(tusClientUrlStorageConformanceScenarios).toEqual(
+        canonicalTusContract.clientUrlStorageConformanceScenarios,
+      )
+    })
+  })
+
   describe('#canStoreURLs', () => {
     it('should be true', () => {
       expect(canStoreURLs).toBe(true)
