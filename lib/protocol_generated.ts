@@ -1168,83 +1168,11 @@ export function tusResolveUploadLocation({
   return tusResolveRelativeUrl(requestUrl, location)
 }
 
-function tusAssertRequestLifecyclePolicySupported(): void {
-  const policy = TUS_FLOW_POLICY.requestLifecycle
-
-  if (policy.hooks.beforeRequest !== 'before-transport-send') {
-    throw new Error(`tus: unsupported before-request hook policy ${policy.hooks.beforeRequest}`)
-  }
-
-  if (policy.hooks.afterResponse !== 'after-successful-transport-response') {
-    throw new Error(`tus: unsupported after-response hook policy ${policy.hooks.afterResponse}`)
-  }
-
-  if (policy.retry.evaluationTrigger !== 'generated-plan-evaluate-policy') {
-    throw new Error(`tus: unsupported retry policy trigger ${policy.retry.evaluationTrigger}`)
-  }
-
-  if (policy.retry.customDecision !== 'custom-callback-before-default-decision') {
-    throw new Error(`tus: unsupported custom retry decision ${policy.retry.customDecision}`)
-  }
-
-  if (policy.retry.defaultDecision !== 'retryable-status-and-online') {
-    throw new Error(`tus: unsupported default retry decision ${policy.retry.defaultDecision}`)
-  }
-
-  if (policy.retry.onlineSignal.source !== 'sdk-platform-online-status') {
-    throw new Error(`tus: unsupported retry online signal ${policy.retry.onlineSignal.source}`)
-  }
-
-  if (policy.retry.error.retryableWhen !== 'request-context-present') {
-    throw new Error(`tus: unsupported retryable error policy ${policy.retry.error.retryableWhen}`)
-  }
-
-  if (policy.retry.failure.nonRetryableError !== 'emit-error') {
-    throw new Error(
-      `tus: unsupported non-retryable-error policy ${policy.retry.failure.nonRetryableError}`,
-    )
-  }
-
-  if (policy.retry.failure.exhaustedDelays !== 'emit-error') {
-    throw new Error(
-      `tus: unsupported exhausted retry delay policy ${policy.retry.failure.exhaustedDelays}`,
-    )
-  }
-
-  if (policy.retry.failure.policyRejected !== 'emit-error') {
-    throw new Error(`tus: unsupported rejected retry policy ${policy.retry.failure.policyRejected}`)
-  }
-
-  if (policy.retry.delaySource !== 'retry-delays-indexed-by-attempt') {
-    throw new Error(`tus: unsupported retry delay source ${policy.retry.delaySource}`)
-  }
-
-  if (policy.retry.attemptCounter.reset !== 'when-offset-advanced-since-last-retry') {
-    throw new Error(`tus: unsupported retry reset policy ${policy.retry.attemptCounter.reset}`)
-  }
-
-  if (policy.retry.attemptCounter.increment !== 'after-retry-scheduled') {
-    throw new Error(
-      `tus: unsupported retry increment policy ${policy.retry.attemptCounter.increment}`,
-    )
-  }
-
-  if (policy.retry.timer.source !== 'sdk-platform-timer') {
-    throw new Error(`tus: unsupported retry timer source ${policy.retry.timer.source}`)
-  }
-
-  if (policy.retry.timer.restart !== 'start-upload-after-delay') {
-    throw new Error(`tus: unsupported retry timer restart ${policy.retry.timer.restart}`)
-  }
-}
-
 export function tusDefaultRetryOnlineStatus({
   platformOnline,
 }: {
   platformOnline: boolean | undefined
 }): boolean {
-  tusAssertRequestLifecyclePolicySupported()
-
   const policy = TUS_FLOW_POLICY.requestLifecycle.retry.onlineSignal
   if (platformOnline === false && policy.offlineWhenPlatformOnlineIsFalse) {
     return false
@@ -1260,8 +1188,6 @@ export function tusPlanRequestLifecycleHooks({
   hasAfterResponseHook: boolean
   hasBeforeRequestHook: boolean
 }): TusRequestLifecycleHookPlan {
-  tusAssertRequestLifecyclePolicySupported()
-
   return {
     afterResponseHook: hasAfterResponseHook,
     beforeRequestHook: hasBeforeRequestHook,
@@ -1275,8 +1201,6 @@ export function tusShouldEvaluateRetryPolicy({
   hasRetryableError: boolean
   retryPlanAction: TusRetryAfterErrorPlan['action']
 }): boolean {
-  tusAssertRequestLifecyclePolicySupported()
-
   return retryPlanAction === 'evaluatePolicy' && hasRetryableError
 }
 
@@ -1285,8 +1209,6 @@ export function tusShouldTreatRequestErrorAsRetryable({
 }: {
   hasRequestContext: boolean
 }): boolean {
-  tusAssertRequestLifecyclePolicySupported()
-
   return hasRequestContext
 }
 
@@ -1295,8 +1217,6 @@ export function tusShouldUseCustomRetryPolicy({
 }: {
   hasCustomRetryPolicy: boolean
 }): boolean {
-  tusAssertRequestLifecyclePolicySupported()
-
   return hasCustomRetryPolicy
 }
 
@@ -1307,8 +1227,6 @@ export function tusDefaultRetryPolicyDecision({
   isOnline: boolean
   status: number
 }): boolean {
-  tusAssertRequestLifecyclePolicySupported()
-
   return tusShouldRetryStatus(status) && isOnline
 }
 
@@ -1327,31 +1245,13 @@ function tusAssertAbortPolicySupported(): void {
       throw new Error(`tus: unsupported abort sequence action ${action}`)
     }
   }
-
-  if (policy.terminateUpload !== 'when-requested-and-upload-url-known') {
-    throw new Error(`tus: unsupported abort termination policy ${policy.terminateUpload}`)
-  }
-
-  if (policy.removeStoredUrlAfterTermination !== 'after-successful-termination') {
-    throw new Error(
-      `tus: unsupported abort storage cleanup policy ${policy.removeStoredUrlAfterTermination}`,
-    )
-  }
-
-  if (policy.error.type !== 'DOMException') {
-    throw new Error(`tus: unsupported abort error type ${policy.error.type}`)
-  }
 }
 
 export function tusShouldSuppressErrorAfterAbort({ aborted }: { aborted: boolean }): boolean {
-  tusAssertAbortPolicySupported()
-
   return TUS_FLOW_POLICY.abort.suppressErrorAfterAbort && aborted
 }
 
 export function tusAbortErrorDescriptor(): TusAbortErrorDescriptor {
-  tusAssertAbortPolicySupported()
-
   return {
     message: TUS_FLOW_POLICY.abort.error.message,
     name: TUS_FLOW_POLICY.abort.error.name,
@@ -1415,24 +1315,6 @@ export function tusPlanAbort({
   return { actions }
 }
 
-function tusAssertUploadUrlAvailableHookPolicySupported(): void {
-  const policy = TUS_FLOW_POLICY.eventHooks.uploadUrlAvailable
-
-  if (policy.createUpload !== 'after-url-known-before-storage') {
-    throw new Error(`tus: unsupported create upload URL hook policy ${policy.createUpload}`)
-  }
-
-  if (policy.resumeUpload !== 'after-url-known-before-storage') {
-    throw new Error(`tus: unsupported resume upload URL hook policy ${policy.resumeUpload}`)
-  }
-
-  if (policy.parallelFinalUpload !== 'not-emitted') {
-    throw new Error(
-      `tus: unsupported parallel final upload URL hook policy ${policy.parallelFinalUpload}`,
-    )
-  }
-}
-
 export function tusPlanUploadUrlAvailableHook({
   context,
   hasHook,
@@ -1440,71 +1322,12 @@ export function tusPlanUploadUrlAvailableHook({
   context: TusUploadUrlAvailableHookContext
   hasHook: boolean
 }): TusUploadUrlAvailableHookPlan {
-  tusAssertUploadUrlAvailableHookPolicySupported()
-
   return {
     shouldCall: hasHook && TUS_FLOW_POLICY.eventHooks.uploadUrlAvailable[context] !== 'not-emitted',
   }
 }
 
-function tusAssertEventHookPolicySupported(): void {
-  tusAssertUploadUrlAvailableHookPolicySupported()
-
-  const policy = TUS_FLOW_POLICY.eventHooks
-  if (policy.progress.afterChunkAccepted !== 'accepted-offset') {
-    throw new Error(
-      `tus: unsupported chunk-accepted progress hook policy ${policy.progress.afterChunkAccepted}`,
-    )
-  }
-
-  if (policy.progress.afterResumeAlreadyComplete !== 'upload-length') {
-    throw new Error(
-      `tus: unsupported completed-resume progress hook policy ${policy.progress.afterResumeAlreadyComplete}`,
-    )
-  }
-
-  if (policy.progress.beforeRequestBody !== 'current-offset') {
-    throw new Error(
-      `tus: unsupported request-body progress hook policy ${policy.progress.beforeRequestBody}`,
-    )
-  }
-
-  if (policy.progress.duringRequest !== 'start-offset-plus-transmitted-bytes') {
-    throw new Error(
-      `tus: unsupported request progress hook policy ${policy.progress.duringRequest}`,
-    )
-  }
-
-  if (policy.progress.parallelPartProgress !== 'aggregated-part-progress') {
-    throw new Error(
-      `tus: unsupported parallel progress hook policy ${policy.progress.parallelPartProgress}`,
-    )
-  }
-
-  if (policy.chunkComplete.afterChunkAccepted !== 'accepted-chunk-size-and-offset') {
-    throw new Error(
-      `tus: unsupported chunk-complete hook policy ${policy.chunkComplete.afterChunkAccepted}`,
-    )
-  }
-
-  if (policy.success.closeSource !== 'after-hook-when-source-open') {
-    throw new Error(`tus: unsupported success source-close policy ${policy.success.closeSource}`)
-  }
-
-  if (policy.success.emit !== 'after-upload-complete') {
-    throw new Error(`tus: unsupported success hook policy ${policy.success.emit}`)
-  }
-
-  if (policy.success.removeStoredUrl !== 'before-hook-when-option-enabled') {
-    throw new Error(
-      `tus: unsupported success storage cleanup policy ${policy.success.removeStoredUrl}`,
-    )
-  }
-}
-
 export function tusPlanProgressEvent(input: TusProgressEventPlanInput): TusProgressEventPlan {
-  tusAssertEventHookPolicySupported()
-
   if (input.phase === 'afterChunkAccepted') {
     return {
       bytesSent: input.uploadOffset,
@@ -1552,8 +1375,6 @@ export function tusPlanProgressEvent(input: TusProgressEventPlanInput): TusProgr
 export function tusPlanChunkCompleteEvent(
   input: TusChunkCompleteEventPlanInput,
 ): TusChunkCompleteEventPlan {
-  tusAssertEventHookPolicySupported()
-
   return {
     bytesAccepted: input.bytesAccepted,
     bytesTotal: input.bytesTotal,
@@ -1571,8 +1392,6 @@ export function tusPlanSuccessEvent({
   hasSource: boolean
   removeFingerprintOnSuccess: boolean
 }): TusSuccessEventPlan {
-  tusAssertEventHookPolicySupported()
-
   return {
     closeSource: tusShouldCloseSourceOnSuccess({ hasSource }),
     removeStoredUpload: tusShouldRemoveStoredUploadOnSuccess({ removeFingerprintOnSuccess }),
@@ -1581,8 +1400,6 @@ export function tusPlanSuccessEvent({
 }
 
 export function tusShouldCloseSourceOnSuccess({ hasSource }: { hasSource: boolean }): boolean {
-  tusAssertEventHookPolicySupported()
-
   if (!TUS_SUCCESS_CLOSE_SOURCE_AFTER_HOOK) {
     return false
   }
@@ -2026,9 +1843,6 @@ export function tusUrlStorageKey({
 
 export function tusUrlStorageId({ randomValue }: { randomValue: number }): number {
   const policy = TUS_FLOW_POLICY.urlStorage.id
-  if (policy.strategy !== 'rounded-random-number') {
-    throw new Error(`tus: unsupported URL storage ID policy ${policy.strategy}`)
-  }
 
   return Math.round(randomValue * policy.multiplier)
 }
@@ -2068,38 +1882,11 @@ export function tusUrlStorageMissingItemMessage({ key }: { key: string }): strin
   })
 }
 
-function tusAssertUrlStorageRecordPolicySupported(): void {
-  const policy = TUS_FLOW_POLICY.urlStorage.record
-
-  if (policy.creationTime !== 'sdk-current-date-string') {
-    throw new Error(`tus: unsupported URL storage creation time policy ${policy.creationTime}`)
-  }
-
-  if (policy.missingUrl !== 'fail') {
-    throw new Error(`tus: unsupported URL storage missing URL policy ${policy.missingUrl}`)
-  }
-
-  if (policy.storedUrlKind !== 'single-or-parallel-upload-url') {
-    throw new Error(`tus: unsupported URL storage URL kind policy ${policy.storedUrlKind}`)
-  }
-}
-
-function tusAssertUrlStorageCleanupPolicySupported(): void {
-  if (TUS_FLOW_POLICY.urlStorage.removeOnSuccess !== 'when-option-enabled') {
-    throw new Error(
-      `tus: unsupported URL storage success cleanup policy ${TUS_FLOW_POLICY.urlStorage.removeOnSuccess}`,
-    )
-  }
-}
-
 export function tusShouldRemoveStoredUploadOnSuccess({
   removeFingerprintOnSuccess,
 }: {
   removeFingerprintOnSuccess: boolean
 }): boolean {
-  tusAssertEventHookPolicySupported()
-  tusAssertUrlStorageCleanupPolicySupported()
-
   if (!TUS_SUCCESS_REMOVE_STORED_URL_BEFORE_HOOK) {
     return false
   }
@@ -2116,8 +1903,6 @@ export function tusShouldRemoveStoredUploadOnSuccess({
 }
 
 export function tusUrlStorageCreationTime({ now }: { now: Date }): string {
-  tusAssertUrlStorageRecordPolicySupported()
-
   return now.toString()
 }
 
@@ -2138,8 +1923,6 @@ export function tusPlanStoredUploadRecord({
   uploadUrl: string | null
   useParallelUploadUrls: boolean
 }): TusStoredUploadRecordPlan {
-  tusAssertUrlStorageRecordPolicySupported()
-
   if (useParallelUploadUrls) {
     if (parallelUploadUrls == null) {
       return {
@@ -2638,8 +2421,6 @@ export function tusShouldResetRetryAttempt({
   offset: number
   offsetBeforeRetry: number
 }): boolean {
-  tusAssertRequestLifecyclePolicySupported()
-
   const policy = TUS_FLOW_POLICY.requestLifecycle.retry.attemptCounter.reset
   switch (policy) {
     case 'when-offset-advanced-since-last-retry':
@@ -2650,8 +2431,6 @@ export function tusShouldResetRetryAttempt({
 }
 
 export function tusNextRetryAttempt({ retryAttempt }: { retryAttempt: number }): number {
-  tusAssertRequestLifecyclePolicySupported()
-
   const policy = TUS_FLOW_POLICY.requestLifecycle.retry.attemptCounter.increment
   switch (policy) {
     case 'after-retry-scheduled':
