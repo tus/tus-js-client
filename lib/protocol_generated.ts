@@ -1119,12 +1119,6 @@ export function tusPlanRequestHeaders({
   operationHeaders: Record<string, string>
   requestId?: string
 }): Record<string, string> {
-  const policy = TUS_FLOW_POLICY.requestHeaders
-  const supportedLayerOrder = 'operation|custom|request-id'
-  if (policy.layers.join('|') !== supportedLayerOrder) {
-    throw new Error(`tus: unsupported request header layer policy ${policy.layers.join('|')}`)
-  }
-
   if (addRequestId && !requestId) {
     throw new Error('tus: request ID is required when addRequestId is enabled')
   }
@@ -1143,11 +1137,6 @@ export function tusPlanRequestId({
   addRequestId: boolean
   generateRequestId: () => string
 }): string | undefined {
-  const policy = TUS_FLOW_POLICY.requestHeaders
-  if (policy.requestIdSource !== 'sdk-generated-uuid') {
-    throw new Error(`tus: unsupported request ID source ${policy.requestIdSource}`)
-  }
-
   return addRequestId ? generateRequestId() : undefined
 }
 
@@ -1162,11 +1151,6 @@ export function tusResolveUploadLocation({
   location: string
   requestUrl: string
 }): string {
-  const policy = TUS_FLOW_POLICY.locationResolution
-  if (policy.strategy !== 'relative-to-creation-request-url') {
-    throw new Error(`tus: unsupported Location resolution strategy ${policy.strategy}`)
-  }
-
   return tusResolveRelativeUrl(requestUrl, location)
 }
 
@@ -1232,23 +1216,6 @@ export function tusDefaultRetryPolicyDecision({
   return tusShouldRetryStatus(status) && isOnline
 }
 
-function tusAssertAbortPolicySupported(): void {
-  const policy = TUS_FLOW_POLICY.abort
-  const supportedActions = [
-    'mark-aborted',
-    'abort-parallel-uploads',
-    'abort-current-request',
-    'clear-retry-timer',
-    'terminate-upload-if-requested',
-  ]
-
-  for (const action of policy.sequence) {
-    if (!supportedActions.includes(action)) {
-      throw new Error(`tus: unsupported abort sequence action ${action}`)
-    }
-  }
-}
-
 export function tusShouldSuppressErrorAfterAbort({ aborted }: { aborted: boolean }): boolean {
   return TUS_FLOW_POLICY.abort.suppressErrorAfterAbort && aborted
 }
@@ -1274,44 +1241,19 @@ export function tusPlanAbort({
   shouldTerminate: boolean
   uploadUrl: string | null
 }): TusAbortPlan {
-  tusAssertAbortPolicySupported()
-
   const actions: TusAbortRuntimeAction[] = []
-  for (const policyAction of TUS_FLOW_POLICY.abort.sequence) {
-    if (policyAction === 'mark-aborted') {
-      actions.push({ action: 'markAborted' })
-      continue
-    }
-
-    if (policyAction === 'abort-parallel-uploads') {
-      if (hasParallelUploads) {
-        actions.push({ action: 'abortParallelUploads', shouldTerminate })
-      }
-      continue
-    }
-
-    if (policyAction === 'abort-current-request') {
-      if (hasCurrentRequest) {
-        actions.push({ action: 'abortCurrentRequest' })
-      }
-      continue
-    }
-
-    if (policyAction === 'clear-retry-timer') {
-      if (hasRetryTimer) {
-        actions.push({ action: 'clearRetryTimer' })
-      }
-      continue
-    }
-
-    if (policyAction === 'terminate-upload-if-requested') {
-      if (shouldTerminate && uploadUrl != null) {
-        actions.push({ action: 'terminateUpload', removeStoredUpload: true, uploadUrl })
-      }
-      continue
-    }
-
-    throw new Error(`tus: unsupported abort sequence action ${policyAction}`)
+  actions.push({ action: 'markAborted' })
+  if (hasParallelUploads) {
+    actions.push({ action: 'abortParallelUploads', shouldTerminate })
+  }
+  if (hasCurrentRequest) {
+    actions.push({ action: 'abortCurrentRequest' })
+  }
+  if (hasRetryTimer) {
+    actions.push({ action: 'clearRetryTimer' })
+  }
+  if (shouldTerminate && uploadUrl != null) {
+    actions.push({ action: 'terminateUpload', removeStoredUpload: true, uploadUrl })
   }
 
   return { actions }
@@ -1500,41 +1442,11 @@ export function tusCordovaInvalidArrayBufferResultMessage({
   )
 }
 
-function tusAssertHttpStackPolicySupported(): void {
-  const policy = TUS_FLOW_POLICY.httpStacks
-
-  if (policy.browserStackNodeReadableBody !== 'unsupported') {
-    throw new Error(
-      `tus: unsupported browser HTTP stack Node readable body policy ${policy.browserStackNodeReadableBody}`,
-    )
-  }
-
-  if (policy.nodeStackUnsupportedBodyType !== 'throw') {
-    throw new Error(
-      `tus: unsupported Node HTTP stack body type policy ${policy.nodeStackUnsupportedBodyType}`,
-    )
-  }
-
-  if (policy.nodeStackMissingStatusCode !== 'throw') {
-    throw new Error(
-      `tus: unsupported Node HTTP stack status code policy ${policy.nodeStackMissingStatusCode}`,
-    )
-  }
-
-  if (!Number.isFinite(policy.progressThrottle.milliseconds)) {
-    throw new Error(
-      `tus: unsupported HTTP progress throttle ${policy.progressThrottle.milliseconds}`,
-    )
-  }
-}
-
 export function tusHttpStackNodeReadableBodyUnsupportedMessage({
   stackName,
 }: {
   stackName: string
 }): string {
-  tusAssertHttpStackPolicySupported()
-
   return tusFormatFlowMessage(
     TUS_FLOW_POLICY.httpStacks.messages.browserStackNodeReadableBodyUnsupported,
     { stackName },
@@ -1548,8 +1460,6 @@ export function tusNodeHttpStackUnsupportedBodyTypeMessage({
   bodyType: string
   constructorName: string
 }): string {
-  tusAssertHttpStackPolicySupported()
-
   return tusFormatFlowMessage(TUS_FLOW_POLICY.httpStacks.messages.nodeStackUnsupportedBodyType, {
     bodyType,
     constructorName,
@@ -1557,14 +1467,10 @@ export function tusNodeHttpStackUnsupportedBodyTypeMessage({
 }
 
 export function tusNodeHttpStackMissingStatusCodeMessage(): string {
-  tusAssertHttpStackPolicySupported()
-
   return TUS_FLOW_POLICY.httpStacks.messages.nodeStackMissingStatusCode
 }
 
 export function tusHttpStackProgressThrottle(): TusHttpStackProgressThrottle {
-  tusAssertHttpStackPolicySupported()
-
   return {
     leading: TUS_FLOW_POLICY.httpStacks.progressThrottle.leading,
     milliseconds: TUS_FLOW_POLICY.httpStacks.progressThrottle.milliseconds,
@@ -1638,20 +1544,6 @@ function tusFingerprintPart(value: number | string | null | undefined): string {
   return value == null ? '' : String(value)
 }
 
-function tusAssertFingerprintFields({
-  actualFields,
-  expectedFields,
-  policyName,
-}: {
-  actualFields: readonly string[]
-  expectedFields: readonly string[]
-  policyName: string
-}): void {
-  if (actualFields.join('|') !== expectedFields.join('|')) {
-    throw new Error(`tus: unsupported ${policyName} fingerprint fields ${actualFields.join('|')}`)
-  }
-}
-
 export function tusBrowserBlobFingerprint({
   endpoint,
   lastModified,
@@ -1660,24 +1552,12 @@ export function tusBrowserBlobFingerprint({
   type,
 }: TusBrowserBlobFingerprintInput): string {
   const policy = TUS_FLOW_POLICY.fingerprints.browserBlob
-  tusAssertFingerprintFields({
-    actualFields: policy.fields,
-    expectedFields: ['prefix', 'name', 'type', 'size', 'lastModified', 'endpoint'],
-    policyName: 'browser Blob',
-  })
-
   return [policy.prefix, name, type, size, lastModified, endpoint]
     .map(tusFingerprintPart)
     .join(policy.separator)
 }
 
 export function tusReactNativeExifHash({ exifJson }: { exifJson: string }): number {
-  if (TUS_FLOW_POLICY.fingerprints.reactNative.exifHash !== 'javascript-string-hash-code') {
-    throw new Error(
-      `tus: unsupported React Native EXIF hash policy ${TUS_FLOW_POLICY.fingerprints.reactNative.exifHash}`,
-    )
-  }
-
   let hash = 0
   for (let index = 0; index < exifJson.length; index += 1) {
     hash = (hash << 5) - hash + exifJson.charCodeAt(index)
@@ -1694,12 +1574,6 @@ export function tusReactNativeFingerprint({
   size,
 }: TusReactNativeFingerprintInput): string {
   const policy = TUS_FLOW_POLICY.fingerprints.reactNative
-  tusAssertFingerprintFields({
-    actualFields: policy.fields,
-    expectedFields: ['prefix', 'name', 'size', 'exifHash', 'endpoint'],
-    policyName: 'React Native',
-  })
-
   return [
     policy.prefix,
     name || policy.emptyName,
@@ -1717,18 +1591,8 @@ export function tusPlanNodeBufferFingerprint({
   size: number
 }): TusNodeBufferFingerprintPlan {
   const policy = TUS_FLOW_POLICY.fingerprints.nodeBuffer
-  tusAssertFingerprintFields({
-    actualFields: policy.fields,
-    expectedFields: ['prefix', 'contentHash', 'size', 'endpoint'],
-    policyName: 'Node buffer',
-  })
-
-  if (policy.hashAlgorithm !== 'md5') {
-    throw new Error(`tus: unsupported Node buffer fingerprint hash ${policy.hashAlgorithm}`)
-  }
-
   return {
-    hashAlgorithm: policy.hashAlgorithm,
+    hashAlgorithm: 'md5',
     sampleBytes: Math.min(policy.sampleBytes, size),
   }
 }
@@ -1749,28 +1613,12 @@ export function tusNodeFileFingerprint({
   size,
 }: TusNodeFileFingerprintInput): string {
   const policy = TUS_FLOW_POLICY.fingerprints.nodeFile
-  tusAssertFingerprintFields({
-    actualFields: policy.fields,
-    expectedFields: ['prefix', 'absolutePath', 'size', 'mtimeMs', 'endpoint'],
-    policyName: 'Node file',
-  })
-
-  if (policy.path !== 'absolute') {
-    throw new Error(`tus: unsupported Node file fingerprint path policy ${policy.path}`)
-  }
-
   return [policy.prefix, absolutePath, size, mtimeMs, endpoint]
     .map(tusFingerprintPart)
     .join(policy.separator)
 }
 
 export function tusUnsupportedInputFingerprint(): null {
-  if (TUS_FLOW_POLICY.fingerprints.unsupportedInput !== 'null') {
-    throw new Error(
-      `tus: unsupported fallback fingerprint policy ${TUS_FLOW_POLICY.fingerprints.unsupportedInput}`,
-    )
-  }
-
   return null
 }
 
@@ -1864,12 +1712,7 @@ export function tusIsWebStorageUnavailableError({
 }
 
 export function tusShouldIgnoreMalformedStoredUpload(): boolean {
-  const policy = TUS_FLOW_POLICY.urlStorage.webStorage.malformedEntry
-  if (policy === 'ignore') {
-    return true
-  }
-
-  throw new Error(`tus: unsupported malformed stored upload policy ${policy}`)
+  return true
 }
 
 export function tusUrlStorageMissingKeyMessage({ index }: { index: number }): string {
@@ -2102,12 +1945,6 @@ function tusSplitSizeIntoParallelUploadBoundaries({
   partCount: number
   totalSize: number
 }): TusParallelUploadBoundary[] {
-  if (TUS_FLOW_POLICY.parallelUploadSplit.strategy !== 'contiguous-floor-size-last-remainder') {
-    throw new Error(
-      `tus: unsupported parallel upload split strategy ${TUS_FLOW_POLICY.parallelUploadSplit.strategy}`,
-    )
-  }
-
   const partSize = Math.floor(totalSize / partCount)
   const parts: TusParallelUploadBoundary[] = []
 
@@ -2157,28 +1994,6 @@ export function tusPlanParallelUploadParts({
   }
 }
 
-function tusAssertParallelPartialUploadPolicySupported(): void {
-  const policy = TUS_FLOW_POLICY.parallelPartialUpload
-
-  if (policy.headerKind !== 'partial-upload') {
-    throw new Error(`tus: unsupported partial upload header kind ${policy.headerKind}`)
-  }
-
-  if (policy.metadataSource !== 'metadataForPartialUploads') {
-    throw new Error(`tus: unsupported partial upload metadata source ${policy.metadataSource}`)
-  }
-
-  if (policy.nestedParallelUploads !== 'disabled') {
-    throw new Error(
-      `tus: unsupported nested parallel upload policy ${policy.nestedParallelUploads}`,
-    )
-  }
-
-  if (policy.urlStorage !== 'parent-managed') {
-    throw new Error(`tus: unsupported partial upload URL storage policy ${policy.urlStorage}`)
-  }
-}
-
 export function tusPlanParallelPartialUploadOptions({
   headers,
   metadataForPartialUploads,
@@ -2188,8 +2003,6 @@ export function tusPlanParallelPartialUploadOptions({
   metadataForPartialUploads: Record<string, string>
   uploadUrl: string | null
 }): TusParallelPartialUploadOptionsPlan {
-  tusAssertParallelPartialUploadPolicySupported()
-
   return {
     headers: {
       ...headers,
@@ -2423,23 +2236,11 @@ export function tusShouldResetRetryAttempt({
   offset: number
   offsetBeforeRetry: number
 }): boolean {
-  const policy = TUS_FLOW_POLICY.requestLifecycle.retry.attemptCounter.reset
-  switch (policy) {
-    case 'when-offset-advanced-since-last-retry':
-      return offset > offsetBeforeRetry
-    default:
-      throw new Error(`tus: unsupported retry reset policy ${policy}`)
-  }
+  return offset > offsetBeforeRetry
 }
 
 export function tusNextRetryAttempt({ retryAttempt }: { retryAttempt: number }): number {
-  const policy = TUS_FLOW_POLICY.requestLifecycle.retry.attemptCounter.increment
-  switch (policy) {
-    case 'after-retry-scheduled':
-      return retryAttempt + 1
-    default:
-      throw new Error(`tus: unsupported retry increment policy ${policy}`)
-  }
+  return retryAttempt + 1
 }
 
 export function tusPlanRetryAfterError({
