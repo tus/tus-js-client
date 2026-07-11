@@ -1,3 +1,7 @@
+// This file is generated from Transloadit API2 TUS protocol contracts. If it looks wrong,
+// please report the issue instead of editing this file by hand; the source fix
+// belongs in the protocol contract generator so all TUS clients stay in sync.
+
 export const tusWireVersions = [
   {
     default: true,
@@ -153,6 +157,21 @@ export const tusProtocolOperations = [
                 name: 'location',
                 required: true,
               },
+              {
+                displayName: 'Tus-Resumable',
+                name: 'tus-resumable',
+                required: true,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        statusCode: 413,
+        bodyKind: 'empty',
+        headerVariants: [
+          {
+            fields: [
               {
                 displayName: 'Tus-Resumable',
                 name: 'tus-resumable',
@@ -337,6 +356,21 @@ export const tusProtocolOperations = [
     responses: [
       {
         statusCode: 204,
+        bodyKind: 'empty',
+        headerVariants: [
+          {
+            fields: [
+              {
+                displayName: 'Tus-Resumable',
+                name: 'tus-resumable',
+                required: true,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        statusCode: 400,
         bodyKind: 'empty',
         headerVariants: [
           {
@@ -948,157 +982,6 @@ export const tusClientFeatures = [
     ],
     operationIds: [],
     primitives: ['report-detailed-errors'],
-  },
-]
-
-export const tusClientConformanceEventKeyTemplates = [
-  {
-    eventKind: 'after-response',
-    fields: [
-      {
-        name: 'requestIndex',
-        valueKind: 'number',
-      },
-    ],
-  },
-  {
-    eventKind: 'before-request',
-    fields: [
-      {
-        name: 'requestIndex',
-        valueKind: 'number',
-      },
-    ],
-  },
-  {
-    eventKind: 'chunk-complete',
-    fields: [
-      {
-        name: 'chunkSize',
-        valueKind: 'number',
-      },
-      {
-        name: 'bytesAccepted',
-        valueKind: 'number',
-      },
-      {
-        name: 'bytesTotal',
-        valueKind: 'nullable-number',
-      },
-    ],
-  },
-  {
-    eventKind: 'fingerprint',
-    fields: [
-      {
-        name: 'fingerprint',
-        valueKind: 'nullable-string',
-      },
-    ],
-  },
-  {
-    eventKind: 'progress',
-    fields: [
-      {
-        name: 'bytesSent',
-        valueKind: 'number',
-      },
-      {
-        name: 'bytesTotal',
-        valueKind: 'nullable-number',
-      },
-    ],
-  },
-  {
-    eventKind: 'request-abort',
-    fields: [
-      {
-        name: 'requestIndex',
-        valueKind: 'number',
-      },
-    ],
-  },
-  {
-    eventKind: 'retry-schedule',
-    fields: [
-      {
-        name: 'delay',
-        valueKind: 'number',
-      },
-    ],
-  },
-  {
-    eventKind: 'should-retry',
-    fields: [
-      {
-        name: 'retryAttempt',
-        valueKind: 'number',
-      },
-      {
-        name: 'decision',
-        valueKind: 'boolean',
-      },
-    ],
-  },
-  {
-    eventKind: 'source-close',
-    fields: [],
-  },
-  {
-    eventKind: 'source-open',
-    fields: [
-      {
-        name: 'inputKind',
-        valueKind: 'string',
-      },
-      {
-        name: 'size',
-        valueKind: 'nullable-number',
-      },
-    ],
-  },
-  {
-    eventKind: 'success',
-    fields: [],
-  },
-  {
-    eventKind: 'upload-url-available',
-    fields: [],
-  },
-  {
-    eventKind: 'url-storage-add',
-    fields: [
-      {
-        name: 'fingerprint',
-        valueKind: 'string',
-      },
-      {
-        name: 'uploadUrl',
-        valueKind: 'nullable-string',
-      },
-    ],
-  },
-  {
-    eventKind: 'url-storage-find',
-    fields: [
-      {
-        name: 'fingerprint',
-        valueKind: 'string',
-      },
-      {
-        name: 'count',
-        valueKind: 'number',
-      },
-    ],
-  },
-  {
-    eventKind: 'url-storage-remove',
-    fields: [
-      {
-        name: 'urlStorageKey',
-        valueKind: 'string',
-      },
-    ],
   },
 ]
 
@@ -1982,6 +1865,212 @@ export const tusManagedUpload = {
     },
   ],
 }
+
+export const tusClientConformanceEventKeyTemplates = [
+  {
+    eventKind: 'after-response',
+    fields: [
+      {
+        name: 'requestIndex',
+        valueKind: 'number',
+      },
+    ],
+  },
+  {
+    eventKind: 'before-request',
+    fields: [
+      {
+        name: 'requestIndex',
+        valueKind: 'number',
+      },
+    ],
+  },
+  {
+    eventKind: 'chunk-complete',
+    fields: [
+      {
+        name: 'chunkSize',
+        valueKind: 'number',
+      },
+      {
+        name: 'bytesAccepted',
+        valueKind: 'number',
+      },
+      {
+        name: 'bytesTotal',
+        valueKind: 'nullable-number',
+      },
+    ],
+  },
+  {
+    eventKind: 'fingerprint',
+    fields: [
+      {
+        name: 'fingerprint',
+        valueKind: 'nullable-string',
+      },
+    ],
+  },
+  {
+    eventKind: 'progress',
+    fields: [
+      {
+        name: 'bytesSent',
+        valueKind: 'number',
+      },
+      {
+        name: 'bytesTotal',
+        valueKind: 'nullable-number',
+      },
+    ],
+  },
+  {
+    eventKind: 'request-abort',
+    fields: [
+      {
+        name: 'requestIndex',
+        valueKind: 'number',
+      },
+    ],
+  },
+  {
+    eventKind: 'retry-schedule',
+    fields: [
+      {
+        name: 'delay',
+        valueKind: 'number',
+      },
+    ],
+  },
+  {
+    eventKind: 'should-retry',
+    fields: [
+      {
+        name: 'retryAttempt',
+        valueKind: 'number',
+      },
+      {
+        name: 'decision',
+        valueKind: 'boolean',
+      },
+    ],
+  },
+  {
+    eventKind: 'source-close',
+    fields: [],
+  },
+  {
+    eventKind: 'source-open',
+    fields: [
+      {
+        name: 'inputKind',
+        valueKind: 'string',
+      },
+      {
+        name: 'size',
+        valueKind: 'nullable-number',
+      },
+    ],
+  },
+  {
+    eventKind: 'success',
+    fields: [],
+  },
+  {
+    eventKind: 'upload-url-available',
+    fields: [],
+  },
+  {
+    eventKind: 'url-storage-add',
+    fields: [
+      {
+        name: 'fingerprint',
+        valueKind: 'string',
+      },
+      {
+        name: 'uploadUrl',
+        valueKind: 'nullable-string',
+      },
+    ],
+  },
+  {
+    eventKind: 'url-storage-find',
+    fields: [
+      {
+        name: 'fingerprint',
+        valueKind: 'string',
+      },
+      {
+        name: 'count',
+        valueKind: 'number',
+      },
+    ],
+  },
+  {
+    eventKind: 'url-storage-remove',
+    fields: [
+      {
+        name: 'urlStorageKey',
+        valueKind: 'string',
+      },
+    ],
+  },
+]
+
+export const tusClientScenarioProofCases = [
+  {
+    behavior: 'single-upload-lifecycle',
+    completionKind: 'success',
+    featureId: 'singleUploadLifecycle',
+    operationIds: ['createTusUpload', 'patchTusUpload'],
+    primitives: [
+      'open-input-source',
+      'fingerprint-input',
+      'store-resume-url',
+      'retry-with-backoff',
+      'emit-progress',
+      'abort-current-request',
+    ],
+    profile: 'urlStorageCreateFlow',
+    scenarioId: 'singleUploadLifecycle',
+  },
+  {
+    behavior: 'custom-request-headers',
+    completionKind: 'success',
+    featureId: 'customRequestHeaders',
+    operationIds: ['createTusUpload', 'patchTusUpload'],
+    primitives: ['apply-custom-request-headers'],
+    profile: 'customRequestHeaders',
+    scenarioId: 'customRequestHeaders',
+  },
+  {
+    behavior: 'override-patch-method',
+    completionKind: 'success',
+    featureId: 'overridePatchMethod',
+    operationIds: ['getTusUploadOffset', 'patchTusUpload'],
+    primitives: ['override-patch-method'],
+    profile: 'overridePatchMethod',
+    scenarioId: 'overridePatchMethod',
+  },
+  {
+    behavior: 'node-path-input',
+    completionKind: 'success',
+    featureId: 'inputSources',
+    operationIds: ['createTusUpload', 'patchTusUpload'],
+    primitives: ['read-node-file'],
+    profile: 'nodePathFileUpload',
+    scenarioId: 'nodePathInput',
+  },
+  {
+    behavior: 'resume-from-previous-upload',
+    completionKind: 'success',
+    featureId: 'resumeUpload',
+    operationIds: ['getTusUploadOffset', 'patchTusUpload'],
+    primitives: ['fingerprint-input', 'resume-from-previous-upload', 'store-resume-url'],
+    profile: 'resumeFromPreviousUpload',
+    scenarioId: 'resumeFromPreviousUpload',
+  },
+]
 
 export const tusManagedUploadProofCases = [
   {
@@ -7232,61 +7321,6 @@ export const tusClientConformanceScenarios = [
       },
     },
     scenarioId: 'terminateWithRetry',
-  },
-]
-
-export const tusClientScenarioProofCases = [
-  {
-    behavior: 'single-upload-lifecycle',
-    completionKind: 'success',
-    featureId: 'singleUploadLifecycle',
-    operationIds: ['createTusUpload', 'patchTusUpload'],
-    primitives: [
-      'open-input-source',
-      'fingerprint-input',
-      'store-resume-url',
-      'retry-with-backoff',
-      'emit-progress',
-      'abort-current-request',
-    ],
-    profile: 'urlStorageCreateFlow',
-    scenarioId: 'singleUploadLifecycle',
-  },
-  {
-    behavior: 'custom-request-headers',
-    completionKind: 'success',
-    featureId: 'customRequestHeaders',
-    operationIds: ['createTusUpload', 'patchTusUpload'],
-    primitives: ['apply-custom-request-headers'],
-    profile: 'customRequestHeaders',
-    scenarioId: 'customRequestHeaders',
-  },
-  {
-    behavior: 'override-patch-method',
-    completionKind: 'success',
-    featureId: 'overridePatchMethod',
-    operationIds: ['getTusUploadOffset', 'patchTusUpload'],
-    primitives: ['override-patch-method'],
-    profile: 'overridePatchMethod',
-    scenarioId: 'overridePatchMethod',
-  },
-  {
-    behavior: 'node-path-input',
-    completionKind: 'success',
-    featureId: 'inputSources',
-    operationIds: ['createTusUpload', 'patchTusUpload'],
-    primitives: ['read-node-file'],
-    profile: 'nodePathFileUpload',
-    scenarioId: 'nodePathInput',
-  },
-  {
-    behavior: 'resume-from-previous-upload',
-    completionKind: 'success',
-    featureId: 'resumeUpload',
-    operationIds: ['getTusUploadOffset', 'patchTusUpload'],
-    primitives: ['fingerprint-input', 'resume-from-previous-upload', 'store-resume-url'],
-    profile: 'resumeFromPreviousUpload',
-    scenarioId: 'resumeFromPreviousUpload',
   },
 ]
 

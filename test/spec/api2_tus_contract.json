@@ -8486,6 +8486,21 @@
           ]
         },
         {
+          "statusCode": 413,
+          "bodyKind": "empty",
+          "headerVariants": [
+            {
+              "fields": [
+                {
+                  "displayName": "Tus-Resumable",
+                  "name": "tus-resumable",
+                  "required": true
+                }
+              ]
+            }
+          ]
+        },
+        {
           "statusCode": 500,
           "bodyKind": "empty",
           "headerVariants": [
@@ -8660,6 +8675,21 @@
       "responses": [
         {
           "statusCode": 204,
+          "bodyKind": "empty",
+          "headerVariants": [
+            {
+              "fields": [
+                {
+                  "displayName": "Tus-Resumable",
+                  "name": "tus-resumable",
+                  "required": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "statusCode": 400,
           "bodyKind": "empty",
           "headerVariants": [
             {
