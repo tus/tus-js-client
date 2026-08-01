@@ -37,7 +37,7 @@ jobs:
           node-version: ${{ matrix.node || 24 }}
       - name: Install Deno
         if: matrix.suite == 'deno'
-        uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed
         with:
           deno-version: latest
       - name: Install dependencies
