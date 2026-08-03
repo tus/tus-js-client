@@ -32,7 +32,7 @@ jobs:
       - name: Check out sources
         uses: actions/checkout@v7
       - name: Install Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node || 24 }}
       - name: Install Deno
@@ -57,7 +57,7 @@ jobs:
       - name: Check out sources
         uses: actions/checkout@v7
       - name: Install Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node || 24 }}
       - name: Install dependencies
