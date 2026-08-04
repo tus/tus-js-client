@@ -143,7 +143,7 @@ A number indicating the maximum size of a `PATCH` request body in bytes. The def
 **Warning:** **Do not set this value**, unless you are being forced to. The only two valid reasons for setting `chunkSize` are:
 
 - You are passing a reader or readable stream as input to tus-js-client and it will complain that it "cannot create source for stream without a finite value for the chunkSize option" if you leave `chunkSize` empty.
-- You are using a tus server or proxy with a limit on how big request bodies may be.
+- You are using a tus server or proxy with a limit on how big request bodies may be. For example, Cloudflare's proxy caps request bodies at 100 MB on Free and Pro plans (200 MB on Business), and Nginx defaults to a 1 MB `client_max_body_size`. With the default `chunkSize` of `Infinity`, the entire file is sent in a single `PATCH` request, so uploads larger than such a limit fail (typically with `HTTP 413`, but some proxies reset the connection instead) even though the tus server itself would accept them. In that case, set `chunkSize` safely below the smallest body-size limit in your chain (for example, 50-90 MB behind Cloudflare) while respecting any server-side minimums (see below).
 
 In all other cases, **do not set this value** as it will hurt your upload performance. If in doubt, leave this value to the default or contact us for help.
 
