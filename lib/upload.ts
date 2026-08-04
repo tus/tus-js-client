@@ -868,7 +868,6 @@ export class BaseUpload {
     if (this._uploadLengthDeferred && done) {
       this._size = this._offset + sizeOfValue
       req.setHeader('Upload-Length', `${this._size}`)
-      this._uploadLengthDeferred = false
     }
 
     // The specified uploadSize might not match the actual amount of data that a source
