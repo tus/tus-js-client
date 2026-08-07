@@ -32,6 +32,7 @@ export const defaultOptions = {
   onSuccess: undefined,
   onError: undefined,
   onUploadUrlAvailable: undefined,
+  onShouldRemove: undefined,
 
   overridePatchMethod: false,
   headers: {},
@@ -938,11 +939,19 @@ export class BaseUpload {
 
   /**
    * Remove the entry in the URL storage, if it has been saved before.
+   * If the `onShouldRemoveFromUrlStorage` option is provided and is a function,
+   * it will be invoked to determine whether the removal should proceed.
+   * If it returns or resolves to `false`, the removal is skipped.
    *
    * @api private
    */
   private async _removeFromUrlStorage(): Promise<void> {
     if (!this._urlStorageKey) return
+
+    if (typeof this.options.onShouldRemoveFromUrlStorage === 'function') {
+      const shouldRemove = await Promise.resolve(this.options.onShouldRemoveFromUrlStorage())
+      if (!shouldRemove) return
+    }
 
     await this.options.urlStorage.removeUpload(this._urlStorageKey)
     this._urlStorageKey = undefined
