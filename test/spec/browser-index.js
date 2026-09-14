@@ -6,6 +6,7 @@ beforeEach(() => {
 
 import './test-common.js'
 import './test-browser-specific.js'
+import './test-fetch-http-stack.js'
 import './test-parallel-uploads.js'
 import './test-terminate.js'
 import './test-web-stream.js'
