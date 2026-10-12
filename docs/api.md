@@ -228,7 +228,7 @@ A boolean indicating whether partial upload URLs should be saved progressively d
 
 This option only has an effect when `parallelUploads` is greater than 1. Enabling it provides better fault tolerance for parallel uploads: if a crash or network failure occurs before all partial uploads have been created, the ones that were created can still be resumed.
 
-When enabled, `urlStorage.addUpload` is called again for the same fingerprint every time another partial upload URL becomes available. The storage implementation must therefore update the existing entry for that fingerprint instead of adding a new one. The built-in storages do not do this yet, so this option is only recommended with a custom `urlStorage`.
+When enabled, `urlStorage.addUpload` is called again for the same fingerprint every time another partial upload URL becomes available. The storage implementation must therefore update the existing entry for that fingerprint instead of adding a new one. Writes to the storage are serialised, so an implementation that simply replaces the stored entry will end up with every URL. The built-in storages do not do this yet, so this option is only recommended with a custom `urlStorage`.
 
 #### uploadLengthDeferred
 

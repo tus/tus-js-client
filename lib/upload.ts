@@ -75,6 +75,10 @@ export class BaseUpload {
   // The key that the URL storage returned when saving an URL with a fingerprint,
   private _urlStorageKey?: string
 
+  // Saves to the URL storage run one at a time, so partial uploads that finish creation
+  // concurrently cannot overwrite each other's URLs in a storage that replaces the entry.
+  private _pendingUrlStorageSave: Promise<void> = Promise.resolve()
+
   // The offset used in the current PATCH request
   private _offset = 0
 
@@ -965,7 +969,19 @@ export class BaseUpload {
    *
    * @api private
    */
-  private async _saveUploadInUrlStorage(): Promise<void> {
+  private _saveUploadInUrlStorage(): Promise<void> {
+    const save = this._pendingUrlStorageSave.then(() => this._writeUploadToUrlStorage())
+    this._pendingUrlStorageSave = save.catch(() => {})
+    return save
+  }
+
+  /**
+   * Write the current upload URL(s) to the URL storage. Called through
+   * `_saveUploadInUrlStorage`, which serialises the writes.
+   *
+   * @api private
+   */
+  private async _writeUploadToUrlStorage(): Promise<void> {
     // We do not store the upload URL
     // - if it was disabled in the option, or
     // - if no fingerprint was calculated for the input (i.e. a stream), or
