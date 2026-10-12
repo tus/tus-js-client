@@ -208,6 +208,71 @@ describe('tus', () => {
       expect(testUrlStorage.removeUpload).toHaveBeenCalled()
     })
 
+    it('should clamp `parallelUploads` when the file is smaller than the requested part count', async () => {
+      // A 3-byte file with `parallelUploads: 8` used to produce empty parts, which
+      // crashed `PathFileSource` with `ERR_OUT_OF_RANGE`.
+      const testStack = new TestHttpStack()
+      const file = getBlob('hi!')
+      const options = {
+        httpStack: testStack,
+        parallelUploads: 8,
+        endpoint: 'https://tus.io/uploads',
+        onSuccess: waitableFunction(),
+      }
+
+      const upload = new Upload(file, options)
+      upload.start()
+
+      const partialLengths = []
+      for (let i = 0; i < 3; i++) {
+        const req = await testStack.nextRequest()
+        expect(req.url).toBe('https://tus.io/uploads')
+        expect(req.method).toBe('POST')
+        expect(req.requestHeaders['Upload-Concat']).toBe('partial')
+        partialLengths.push(req.requestHeaders['Upload-Length'])
+
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: `https://tus.io/uploads/upload${i + 1}`,
+          },
+        })
+      }
+      expect(partialLengths).toEqual(['1', '1', '1'])
+
+      for (let i = 0; i < 3; i++) {
+        const req = await testStack.nextRequest()
+        expect(req.url).toBe(`https://tus.io/uploads/upload${i + 1}`)
+        expect(req.method).toBe('PATCH')
+        expect(req.requestHeaders['Upload-Offset']).toBe('0')
+        expect(req.bodySize).toBe(1)
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            'Upload-Offset': '1',
+          },
+        })
+      }
+
+      const finalReq = await testStack.nextRequest()
+      expect(finalReq.url).toBe('https://tus.io/uploads')
+      expect(finalReq.method).toBe('POST')
+      expect(finalReq.requestHeaders['Upload-Concat']).toBe(
+        'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2 https://tus.io/uploads/upload3',
+      )
+
+      finalReq.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: 'https://tus.io/uploads/final',
+        },
+      })
+
+      await options.onSuccess.toBeCalled()
+      expect(upload.url).toBe('https://tus.io/uploads/final')
+    })
+
     it('should split a file into multiple parts based on custom `parallelUploadBoundaries`', async () => {
       const testStack = new TestHttpStack()
 
