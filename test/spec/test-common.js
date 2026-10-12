@@ -99,6 +99,7 @@ describe('tus', () => {
         httpStack: testStack,
         endpoint: 'http://tus.io/uploads',
         uploadUrl: 'http://tus.io/uploads/resuming',
+        onSuccess: waitableFunction('onSuccess'),
       }
 
       const upload = new Upload(file, options)
@@ -121,6 +122,27 @@ describe('tus', () => {
 
       // The upload URL should be cleared when tus-js.client tries to create a new upload.
       expect(upload.url).toBe(null)
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: 'http://tus.io/uploads/new',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/new')
+      expect(req.method).toBe('PATCH')
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': '11',
+        },
+      })
+
+      await options.onSuccess.toBeCalled()
+      expect(upload.url).toBe('http://tus.io/uploads/new')
     })
 
     it('should create an upload using the creation-with-data extension', async () => {
@@ -829,6 +851,239 @@ describe('tus', () => {
       expect(upload.start.bind(upload)).toThrowError(
         'tus: the `retryDelays` option must either be an array or null',
       )
+    })
+
+    it('should create a new upload immediately if HEAD fails with a 5XX status and retries are disabled', async () => {
+      const testStack = new TestHttpStack()
+      const file = getBlob('hello world')
+      const options = {
+        httpStack: testStack,
+        endpoint: 'http://tus.io/uploads',
+        uploadUrl: 'http://tus.io/uploads/resuming',
+        retryDelays: null,
+        onSuccess: waitableFunction('onSuccess'),
+      }
+
+      const upload = new Upload(file, options)
+      upload.start()
+
+      let req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/resuming')
+      expect(req.method).toBe('HEAD')
+
+      req.respondWith({
+        status: 500,
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads')
+      expect(req.method).toBe('POST')
+      expect(upload.url).toBe(null)
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: 'http://tus.io/uploads/new',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/new')
+      expect(req.method).toBe('PATCH')
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': '11',
+        },
+      })
+
+      await options.onSuccess.toBeCalled()
+      expect(upload.url).toBe('http://tus.io/uploads/new')
+    })
+
+    it('should retry a HEAD request that fails with a 5XX status before creating a new upload', async () => {
+      const testStack = new TestHttpStack()
+      const file = getBlob('hello world')
+      const options = {
+        httpStack: testStack,
+        endpoint: 'http://tus.io/uploads',
+        uploadUrl: 'http://tus.io/uploads/resuming',
+        retryDelays: [10, 10],
+        onSuccess: waitableFunction('onSuccess'),
+        onError() {},
+      }
+      spyOn(options, 'onError')
+
+      const upload = new Upload(file, options)
+      upload.start()
+
+      let req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/resuming')
+      expect(req.method).toBe('HEAD')
+
+      req.respondWith({
+        status: 500,
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/resuming')
+      expect(req.method).toBe('HEAD')
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Length': '11',
+          'Upload-Offset': '3',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/resuming')
+      expect(req.method).toBe('PATCH')
+      expect(req.requestHeaders['Upload-Offset']).toBe('3')
+      expect(req.bodySize).toBe(8)
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': '11',
+        },
+      })
+
+      await options.onSuccess.toBeCalled()
+      expect(options.onError).not.toHaveBeenCalled()
+      expect(upload.url).toBe('http://tus.io/uploads/resuming')
+    })
+
+    it('should create a new upload if HEAD keeps failing with a 5XX status', async () => {
+      const testStack = new TestHttpStack()
+      const file = getBlob('hello world')
+      const options = {
+        httpStack: testStack,
+        endpoint: 'http://tus.io/uploads',
+        uploadUrl: 'http://tus.io/uploads/resuming',
+        retryDelays: [10],
+        onSuccess: waitableFunction('onSuccess'),
+      }
+
+      const upload = new Upload(file, options)
+      upload.start()
+
+      let req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/resuming')
+      expect(req.method).toBe('HEAD')
+
+      req.respondWith({
+        status: 500,
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/resuming')
+      expect(req.method).toBe('HEAD')
+
+      req.respondWith({
+        status: 502,
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads')
+      expect(req.method).toBe('POST')
+      expect(req.requestHeaders['Upload-Length']).toBe('11')
+      expect(upload.url).toBe(null)
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: 'http://tus.io/uploads/new',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/uploads/new')
+      expect(req.method).toBe('PATCH')
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': '11',
+        },
+      })
+
+      await options.onSuccess.toBeCalled()
+      expect(upload.url).toBe('http://tus.io/uploads/new')
+    })
+
+    it('should retry HEAD after a PATCH 5XX instead of restarting the upload', async () => {
+      const testStack = new TestHttpStack()
+      const file = getBlob('hello world')
+      const options = {
+        httpStack: testStack,
+        endpoint: 'http://tus.io/files/',
+        retryDelays: [10, 10],
+        onSuccess: waitableFunction('onSuccess'),
+        onError() {},
+      }
+      spyOn(options, 'onError')
+
+      const upload = new Upload(file, options)
+      upload.start()
+
+      let req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/files/')
+      expect(req.method).toBe('POST')
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: '/files/foo',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/files/foo')
+      expect(req.method).toBe('PATCH')
+
+      req.respondWith({
+        status: 500,
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/files/foo')
+      expect(req.method).toBe('HEAD')
+
+      req.respondWith({
+        status: 500,
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/files/foo')
+      expect(req.method).toBe('HEAD')
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': '5',
+          'Upload-Length': '11',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('http://tus.io/files/foo')
+      expect(req.method).toBe('PATCH')
+      expect(req.requestHeaders['Upload-Offset']).toBe('5')
+      expect(req.bodySize).toBe(6)
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': '11',
+        },
+      })
+
+      await options.onSuccess.toBeCalled()
+      expect(options.onError).not.toHaveBeenCalled()
+      expect(upload.url).toBe('http://tus.io/files/foo')
     })
 
     // This tests ensures that tus-js-client correctly retries if the
