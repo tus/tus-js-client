@@ -109,6 +109,13 @@ class Request implements HttpRequest {
       const httpModule = url.protocol === 'https:' ? https : http
       this._request = httpModule.request(url, options)
       const req = this._request
+
+      req.on('timeout', () => {
+        // Node.js only emits the event and leaves the request open, so the
+        // promise would otherwise never settle and no retry could be triggered.
+        req.destroy(new Error('socket timeout'))
+      })
+
       req.on('response', (res) => {
         const resChunks: Buffer[] = []
         res.on('data', (data: Buffer) => {

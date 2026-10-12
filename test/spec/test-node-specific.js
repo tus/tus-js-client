@@ -445,6 +445,27 @@ describe('tus', () => {
         progressEvents.some((bytesSent) => bytesSent !== 0 && bytesSent !== randomData.length),
       ).toBeTrue()
     })
+
+    it('should reject the request when the socket times out', async () => {
+      // Start a server that accepts the request but never responds.
+      const server = http.createServer((req) => {
+        req.on('data', () => {})
+      })
+
+      server.listen(0)
+      await once(server, 'listening')
+      const { port } = server.address()
+
+      try {
+        const stack = new NodeHttpStack({ timeout: 100 })
+        const req = stack.createRequest('GET', `http://localhost:${port}`)
+        await expectAsync(req.send()).toBeRejectedWithError('socket timeout')
+        expect(req.getUnderlyingObject().destroyed).toBeTrue()
+      } finally {
+        server.closeAllConnections()
+        server.close()
+      }
+    }, 2000)
   })
 
   describe('#NodeStreamFileSource', () => {
