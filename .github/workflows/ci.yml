@@ -21,10 +21,10 @@ jobs:
             node: 20
           - desc: 'Node.js 22'
             suite: 'node'
-            node: 22
+            node: '^22.23.4'
           - desc: 'Node.js 24'
             suite: 'node'
-            node: 24
+            node: '^24.22.1'
           - desc: 'Deno'
             suite: 'deno'
     name: Tests (${{ matrix.desc }})
@@ -34,7 +34,8 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: ${{ matrix.node || 24 }}
+          node-version: ${{ matrix.node || '^24.22.1' }}
+          check-latest: true
       - name: Install Deno
         if: matrix.suite == 'deno'
         uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed
@@ -59,7 +60,8 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: ${{ matrix.node || 24 }}
+          node-version: ${{ matrix.node || '^24.22.1' }}
+          check-latest: true
       - name: Install dependencies
         run: npm ci
       - name: Build
