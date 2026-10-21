@@ -63,6 +63,7 @@ export interface UploadOptions {
   onError?: (error: Error | DetailedError) => void
   onShouldRetry?: (error: DetailedError, retryAttempt: number, options: UploadOptions) => boolean
   onUploadUrlAvailable?: () => void | Promise<void>
+  onShouldRemoveFromUrlStorage?: () => boolean | Promise<boolean>
 
   overridePatchMethod: boolean
   headers: { [key: string]: string }
