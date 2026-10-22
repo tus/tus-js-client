@@ -7,7 +7,7 @@ import stream from 'node:stream'
 import { text } from 'node:stream/consumers'
 import intoStream from 'into-stream'
 import temp from 'temp'
-import { canStoreURLs, Upload } from 'tus-js-client'
+import { canStoreURLs, NodeHttpStack as ExportedNodeHttpStack, Upload } from 'tus-js-client'
 import { FileUrlStorage } from 'tus-js-client/node/FileUrlStorage'
 import { NodeHttpStack } from 'tus-js-client/node/NodeHttpStack'
 import { NodeStreamFileSource } from 'tus-js-client/node/sources/NodeStreamFileSource'
@@ -398,6 +398,10 @@ describe('tus', () => {
   })
 
   describe('#NodeHttpStack', () => {
+    it('should be exported from the package entry point', () => {
+      expect(ExportedNodeHttpStack).toBe(NodeHttpStack)
+    })
+
     it("should allow to pass options to Node's requests", async () => {
       const customAgent = new https.Agent()
       const stack = new NodeHttpStack({
