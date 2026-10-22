@@ -353,6 +353,112 @@ describe('tus', () => {
       expect(err.originalRequest).toBe(req)
     })
 
+    it('should abort in-flight partial uploads before retrying the parallel upload', async () => {
+      const testStack = new TestHttpStack()
+      const file = getBlob('hello world')
+      const options = {
+        httpStack: testStack,
+        parallelUploads: 2,
+        retryDelays: [10],
+        endpoint: 'https://tus.io/uploads',
+        onSuccess: waitableFunction(),
+      }
+
+      const upload = new Upload(file, options)
+      upload.start()
+
+      // The first partial upload fails to be created and will be retried on its own.
+      let req = await testStack.nextRequest()
+      expect(req.method).toBe('POST')
+      expect(req.requestHeaders['Upload-Length']).toBe('5')
+      req.respondWith({ status: 500 })
+
+      // The second partial upload is created and starts transferring data.
+      req = await testStack.nextRequest()
+      expect(req.method).toBe('POST')
+      expect(req.requestHeaders['Upload-Length']).toBe('6')
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: 'https://tus.io/uploads/upload2',
+        },
+      })
+
+      const inFlightPatch = await testStack.nextRequest()
+      expect(inFlightPatch.url).toBe('https://tus.io/uploads/upload2')
+      expect(inFlightPatch.method).toBe('PATCH')
+      spyOn(inFlightPatch, 'abort').and.callThrough()
+
+      // The first partial upload exhausts its retries, which fails the parent
+      // upload and triggers a retry of the entire parallel upload.
+      req = await testStack.nextRequest()
+      expect(req.method).toBe('POST')
+      expect(req.requestHeaders['Upload-Length']).toBe('5')
+      req.respondWith({ status: 500 })
+
+      req = await testStack.nextRequest()
+      expect(req.method).toBe('POST')
+      expect(req.requestHeaders['Upload-Length']).toBe('5')
+
+      // The stale PATCH request from the previous attempt must have been aborted
+      // so that it does not keep running alongside the new partial uploads.
+      expect(inFlightPatch.abort).toHaveBeenCalled()
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: 'https://tus.io/uploads/upload1',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads/upload2')
+      expect(req.method).toBe('HEAD')
+      req.respondWith({
+        status: 200,
+        responseHeaders: {
+          'Upload-Length': '6',
+          'Upload-Offset': '0',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads/upload1')
+      expect(req.method).toBe('PATCH')
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': '5',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads/upload2')
+      expect(req.method).toBe('PATCH')
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': '6',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads')
+      expect(req.method).toBe('POST')
+      expect(req.requestHeaders['Upload-Concat']).toBe(
+        'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2',
+      )
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: 'https://tus.io/uploads/final',
+        },
+      })
+
+      await options.onSuccess.toBeCalled()
+      expect(upload.url).toBe('https://tus.io/uploads/final')
+    })
+
     it('should resume the partial uploads', async () => {
       const testStack = new TestHttpStack()
       const file = getBlob('hello world')
