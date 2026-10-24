@@ -77,38 +77,6 @@ export function createStreamingSource(sizeInBytes, streamChunkSize = 1024 * 1024
   })
 }
 
-// The public demo server closes connections while CI downloads the uploaded
-// 50 MiB object. Retry those reads before treating the failure as a test error.
-const VALIDATION_RETRY_DELAYS = [0, 1000, 3000, 5000]
-
-function isTransientNetworkError(err) {
-  if (!(err instanceof Error)) return false
-  const message = `${err.name} ${err.message} ${err.cause ?? ''}`
-  return /terminated|other side closed|network|ECONNRESET|ECONNREFUSED|ETIMEDOUT|UND_ERR_SOCKET|fetch failed|error reading a body/i.test(
-    message,
-  )
-}
-
-async function fetchAndRead(url, options, readBody) {
-  for (let attempt = 0; attempt < VALIDATION_RETRY_DELAYS.length; attempt++) {
-    if (VALIDATION_RETRY_DELAYS[attempt] > 0) {
-      await wait(VALIDATION_RETRY_DELAYS[attempt])
-    }
-
-    try {
-      const res = await fetch(url, options)
-      const body = readBody ? await readBody(res) : undefined
-      return { res, body }
-    } catch (err) {
-      if (!isTransientNetworkError(err) || attempt === VALIDATION_RETRY_DELAYS.length - 1) {
-        throw err
-      }
-    }
-  }
-
-  throw new Error('tus: validation request was not sent')
-}
-
 /**
  * Validate that uploaded content matches the original blob.
  * Downloads the entire file and compares it against the original.
@@ -116,20 +84,23 @@ async function fetchAndRead(url, options, readBody) {
  * @param {Blob} originalBlob - The original blob that was uploaded
  * @returns {Promise<Object>} Promise that resolves to the upload object
  */
-export async function validateUploadContent(upload, originalBlob) {
+export function validateUploadContent(upload, originalBlob) {
   // Download and validate the entire uploaded file against the original blob
-  const [{ res, body: downloadedContent }, originalContent] = await Promise.all([
-    fetchAndRead(upload.url, undefined, (response) => response.text()),
+  return Promise.all([
+    fetch(upload.url).then((res) => {
+      expect(res.status).toBe(200)
+      return res.text()
+    }),
     originalBlob.text(),
-  ])
+  ]).then(([downloadedContent, originalContent]) => {
+    // Verify the file size matches
+    expect(downloadedContent.length).toBe(originalContent.length)
 
-  expect(res.status).toBe(200)
-  // Verify the file size matches
-  expect(downloadedContent.length).toBe(originalContent.length)
-  // Validate that the downloaded content matches the original blob
-  expect(downloadedContent).toBe(originalContent)
+    // Validate that the downloaded content matches the original blob
+    expect(downloadedContent).toBe(originalContent)
 
-  return upload
+    return upload
+  })
 }
 
 /**
@@ -138,38 +109,39 @@ export async function validateUploadContent(upload, originalBlob) {
  * @param {number} expectedSize - Expected file size in bytes
  * @returns {Promise<Object>} Promise that resolves to the upload object
  */
-export async function validateUploadMetadata(upload, expectedSize) {
-  const { res, body } = await fetchAndRead(
-    upload.url,
-    {
-      method: 'HEAD',
-      headers: {
-        'Tus-Resumable': '1.0.0',
-      },
+export function validateUploadMetadata(upload, expectedSize) {
+  return fetch(upload.url, {
+    method: 'HEAD',
+    headers: {
+      'Tus-Resumable': '1.0.0',
     },
-    (response) => response.text(),
-  )
+  })
+    .then((res) => {
+      expect(res.status).toBe(200)
+      expect(res.headers.get('tus-resumable')).toBe('1.0.0')
+      expect(res.headers.get('upload-offset')).toBe(String(expectedSize))
+      expect(res.headers.get('upload-length')).toBe(String(expectedSize))
 
-  expect(res.status).toBe(200)
-  expect(res.headers.get('tus-resumable')).toBe('1.0.0')
-  expect(res.headers.get('upload-offset')).toBe(String(expectedSize))
-  expect(res.headers.get('upload-length')).toBe(String(expectedSize))
+      // The values in the Upload-Metadata header may not be in the same
+      // order as we submitted them (the specification does not require
+      // that). Therefore, we split the values and verify that each one
+      // is present.
+      const metadataStr = res.headers.get('upload-metadata')
+      expect(metadataStr).toBeTruthy()
+      const metadata = metadataStr.split(',')
+      expect(metadata).toContain('filename bGFyZ2UtZmlsZS50eHQ=')
+      expect(metadata).toContain('filetype dGV4dC9wbGFpbg==')
+      expect(metadata).toContain('nonlatin c8WCb8WEY2U=')
+      expect(metadata).toContain('number MTAw')
+      expect(metadata.length).toBe(4)
 
-  // The values in the Upload-Metadata header may not be in the same
-  // order as we submitted them (the specification does not require
-  // that). Therefore, we split the values and verify that each one
-  // is present.
-  const metadataStr = res.headers.get('upload-metadata')
-  expect(metadataStr).toBeTruthy()
-  const metadata = metadataStr.split(',')
-  expect(metadata).toContain('filename bGFyZ2UtZmlsZS50eHQ=')
-  expect(metadata).toContain('filetype dGV4dC9wbGFpbg==')
-  expect(metadata).toContain('nonlatin c8WCb8WEY2U=')
-  expect(metadata).toContain('number MTAw')
-  expect(metadata.length).toBe(4)
-  expect(body).toBe('')
+      return res.text()
+    })
+    .then((data) => {
+      expect(data).toBe('')
 
-  return upload
+      return upload
+    })
 }
 
 /**
@@ -177,11 +149,12 @@ export async function validateUploadMetadata(upload, expectedSize) {
  * @param {Object} upload - The upload object with URL
  * @returns {Promise<Object>} Promise that resolves to the upload object
  */
-export async function validateUploadDeletion(upload) {
-  const { res } = await fetchAndRead(upload.url)
-  expect(res.status).toBe(404)
+export function validateUploadDeletion(upload) {
+  return fetch(upload.url).then((res) => {
+    expect(res.status).toBe(404)
 
-  return upload
+    return upload
+  })
 }
 
 /**
