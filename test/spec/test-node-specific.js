@@ -161,7 +161,6 @@ describe('tus', () => {
       })
 
       it('should support parallelUploads', async () => {
-        // TODO: The ordering of requests is no longer deterministic, so we need to update this test
         // Create a temporary file
         const path = temp.path()
         fs.writeFileSync(path, 'hello world')
@@ -181,71 +180,77 @@ describe('tus', () => {
         const upload = new Upload(file, options)
         upload.start()
 
-        let req = await testStack.nextRequest()
-        expect(req.url).toBe('https://tus.io/uploads')
-        expect(req.method).toBe('POST')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Length']).toBe('5')
-        expect(req.requestHeaders['Upload-Concat']).toBe('partial')
+        // Both parts stat the file and send their creation requests concurrently.
+        // Hold every response until both POSTs have arrived. Answering the first
+        // one lets its PATCH overtake the other part's POST.
+        const creationRequests = []
+        while (creationRequests.length < 2) {
+          const req = await testStack.nextRequest()
+          expect(req.url).toBe('https://tus.io/uploads')
+          expect(req.method).toBe('POST')
+          expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+          expect(req.requestHeaders['Upload-Concat']).toBe('partial')
+          creationRequests.push(req)
+        }
 
-        req.respondWith({
-          status: 201,
-          responseHeaders: {
-            Location: 'https://tus.io/uploads/upload1',
-          },
-        })
+        const creationByLength = new Map(
+          creationRequests.map((req) => [req.requestHeaders['Upload-Length'], req]),
+        )
+        expect([...creationByLength.keys()].sort()).toEqual(['5', '6'])
 
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('https://tus.io/uploads')
-        expect(req.method).toBe('POST')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Length']).toBe('6')
-        expect(req.requestHeaders['Upload-Concat']).toBe('partial')
+        const locationByLength = {
+          5: 'https://tus.io/uploads/upload1',
+          6: 'https://tus.io/uploads/upload2',
+        }
+        for (const [length, req] of creationByLength) {
+          req.respondWith({
+            status: 201,
+            responseHeaders: {
+              Location: locationByLength[length],
+            },
+          })
+        }
 
-        req.respondWith({
-          status: 201,
-          responseHeaders: {
-            Location: 'https://tus.io/uploads/upload2',
-          },
-        })
+        // PATCH bodies are sized by reading streams, so these can arrive in either order.
+        const patchRequests = []
+        while (patchRequests.length < 2) {
+          const req = await testStack.nextRequest()
+          expect(req.method).toBe('PATCH')
+          expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
+          expect(req.requestHeaders['Upload-Offset']).toBe('0')
+          expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
+          patchRequests.push(req)
+        }
 
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('https://tus.io/uploads/upload1')
-        expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Offset']).toBe('0')
-        expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-        expect(req.bodySize).toBe(5)
+        const patchByUrl = new Map(patchRequests.map((req) => [req.url, req]))
+        const patchForLength5 = patchByUrl.get(locationByLength[5])
+        const patchForLength6 = patchByUrl.get(locationByLength[6])
+        expect(patchForLength5).toBeDefined()
+        expect(patchForLength6).toBeDefined()
+        expect(patchForLength5.bodySize).toBe(5)
+        expect(patchForLength6.bodySize).toBe(6)
 
-        req.respondWith({
+        patchForLength5.respondWith({
           status: 204,
           responseHeaders: {
             'Upload-Offset': '5',
           },
         })
-
-        req = await testStack.nextRequest()
-        expect(req.url).toBe('https://tus.io/uploads/upload2')
-        expect(req.method).toBe('PATCH')
-        expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
-        expect(req.requestHeaders['Upload-Offset']).toBe('0')
-        expect(req.requestHeaders['Content-Type']).toBe('application/offset+octet-stream')
-        expect(req.bodySize).toBe(6)
-
-        req.respondWith({
+        patchForLength6.respondWith({
           status: 204,
           responseHeaders: {
             'Upload-Offset': '6',
           },
         })
 
-        req = await testStack.nextRequest()
+        // The concatenation request is sent only after both parts have finished.
+        const req = await testStack.nextRequest()
         expect(req.url).toBe('https://tus.io/uploads')
         expect(req.method).toBe('POST')
         expect(req.requestHeaders['Tus-Resumable']).toBe('1.0.0')
         expect(req.requestHeaders['Upload-Length']).toBeUndefined()
         expect(req.requestHeaders['Upload-Concat']).toBe(
-          'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2',
+          `final;${locationByLength[5]} ${locationByLength[6]}`,
         )
 
         req.respondWith({
@@ -258,7 +263,12 @@ describe('tus', () => {
         await options.onSuccess.toBeCalled()
 
         expect(upload.url).toBe('https://tus.io/uploads/upload3')
-        expect(options.onProgress).toHaveBeenCalledWith(5, 11)
+        // The first part to finish reading contributes either 5 or 6 bytes.
+        // The total is reported once both parts have completed.
+        const sawPartialProgress = options.onProgress.calls
+          .allArgs()
+          .some(([loaded, total]) => total === 11 && (loaded === 5 || loaded === 6))
+        expect(sawPartialProgress).toBe(true)
         expect(options.onProgress).toHaveBeenCalledWith(11, 11)
       })
 
