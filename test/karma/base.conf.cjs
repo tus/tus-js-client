@@ -38,6 +38,10 @@ module.exports = (config) => {
     // if true, Karma captures browsers, runs the tests and exits
     singleRun: true,
 
+    // End-to-end specs download and compare a 50 MiB upload. That work can
+    // block the page, and Karma's 30s default treats the silence as a disconnect.
+    browserNoActivityTimeout: 180000,
+
     // Concurrency level
     // how many browser instances should be started simultaneously
     concurrency: Number.POSITIVE_INFINITY,
