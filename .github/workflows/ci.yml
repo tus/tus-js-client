@@ -5,6 +5,12 @@ on:
     types:
       - opened
       - synchronize
+# A branch push also opens or updates a pull request, which starts this
+# workflow twice. Queue the second run so both do not upload to the public
+# demo server at the same time.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   tests:
     runs-on: ubuntu-22.04
