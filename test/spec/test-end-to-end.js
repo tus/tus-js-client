@@ -7,9 +7,9 @@ import {
   validateUploadMetadata,
 } from './helpers/utils.js'
 
-// Covers a 50 MB upload plus validation reads that may be retried after the
-// public demo server stalls or closes the connection.
-const END_TO_END_TIMEOUT = 240 * 1000
+// Test timeout for end-to-end tests when uploading to real server.
+// Increased to handle 50 MB uploads
+const END_TO_END_TIMEOUT = 120 * 1000
 
 // File size for end-to-end tests (50 MB = 52,428,800 bytes)
 const FILE_SIZE = 50 * 1024 * 1024

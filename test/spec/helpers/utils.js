@@ -77,17 +77,14 @@ export function createStreamingSource(sizeInBytes, streamChunkSize = 1024 * 1024
   })
 }
 
-// The public demo server closes or stalls connections while CI downloads the
-// uploaded 50 MiB object. Bound each attempt so a hang can be retried inside
-// the spec timeout.
-const VALIDATION_RETRY_DELAYS = [0, 1000, 3000]
-const VALIDATION_ATTEMPT_TIMEOUT_MS = 45_000
+// The public demo server closes connections while CI downloads the uploaded
+// 50 MiB object. Retry those reads before treating the failure as a test error.
+const VALIDATION_RETRY_DELAYS = [0, 1000, 3000, 5000]
 
 function isTransientNetworkError(err) {
   if (!(err instanceof Error)) return false
-  if (err.name === 'TimeoutError' || err.name === 'AbortError') return true
   const message = `${err.name} ${err.message} ${err.cause ?? ''}`
-  return /terminated|failed to fetch|other side closed|ECONNRESET|ECONNREFUSED|ETIMEDOUT|UND_ERR_SOCKET|fetch failed|error reading a body|networkerror|timeout/i.test(
+  return /terminated|other side closed|network|ECONNRESET|ECONNREFUSED|ETIMEDOUT|UND_ERR_SOCKET|fetch failed|error reading a body/i.test(
     message,
   )
 }
@@ -99,10 +96,7 @@ async function fetchAndRead(url, options, readBody) {
     }
 
     try {
-      const res = await fetch(url, {
-        ...options,
-        signal: AbortSignal.timeout(VALIDATION_ATTEMPT_TIMEOUT_MS),
-      })
+      const res = await fetch(url, options)
       const body = readBody ? await readBody(res) : undefined
       return { res, body }
     } catch (err) {
