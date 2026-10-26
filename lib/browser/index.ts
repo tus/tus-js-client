@@ -38,4 +38,5 @@ const isSupported =
 // Note: The exported interface must be the same as in lib/node/index.ts.
 // Any changes should be reflected in both files.
 export { Upload, defaultOptions, isSupported, canStoreURLs, enableDebugLog, DetailedError }
+export type { UploadState } from '../upload.js'
 export type * from '../options.js'

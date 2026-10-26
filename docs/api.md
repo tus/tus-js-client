@@ -466,6 +466,26 @@ The `file` argument used in the constructor.
 
 The URL used to upload the file. This property will be set once an upload has been created, which happens at last when the `onSuccess` callback is invoked. To resume an upload from a specific URL use the `uploadUrl` option instead.
 
+### tus.Upload#state
+
+A read-only status string. It describes where the upload is, and does not include the URL, the offset, or other upload data. Those stay on their own properties.
+
+| State | Meaning |
+| --- | --- |
+| `idle` | The upload has been created and `start` has not been called. `abort()` before `start()` leaves the upload here. |
+| `running` | `start` has begun this attempt. Automatic retries stay in `running`, so another `start()` during the wait is ignored. |
+| `paused` | `abort()` stopped a running upload. The file stays open. `start()` resumes. |
+| `success` | The upload finished. Further `start()` calls are ignored. |
+| `error` | The upload failed after retries were exhausted, or `start()` was called with invalid options. `start()` tries again. |
+
+```js
+if (upload.state === 'paused') {
+  upload.start()
+}
+```
+
+Calling `start()` while the state is `running` does not change the upload. Calling `resumeFromPreviousUpload()` during `running` or `success` is ignored, so it cannot replace the URL of an attempt that is already underway.
+
 ### tus.Upload#start()
 
 Start or resume the upload using the specified file. If no `file` property is available the error handler will be called. If you supplied your own URL using the `uploadUrl` option the client will try to resume using this URL. Alternatively, you can use `tus.Upload#findPreviousUploads` and `tus.Upload#resumeFromPreviousUpload` to query the URL storage for previous uploads for this specific file. If no upload can be resume it will create a new upload using the supplied `endpoint` option.
