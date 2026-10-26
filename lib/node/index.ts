@@ -9,9 +9,8 @@ import { fingerprint } from './fileSignature.js'
 import { NodeFileReader } from './NodeFileReader.js'
 import { NodeHttpStack } from './NodeHttpStack.js'
 
-// @ts-expect-error: Bun global
-const isBun = typeof Bun !== 'undefined'
-const DefaultHttpStack = !isBun ? NodeHttpStack : FetchHttpStack
+const isBun = 'Bun' in globalThis
+const DefaultHttpStack = isBun ? FetchHttpStack : NodeHttpStack
 
 const defaultOptions = {
   ...baseDefaultOptions,
