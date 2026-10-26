@@ -2,7 +2,7 @@
 const baseConfig = require('./base.conf.cjs')
 
 // Configure to use Puppeteer. See https://github.com/karma-runner/karma-chrome-launcher#available-browsers
-process.env.CHROME_BIN = require('puppeteer').executablePath()
+process.env.CHROME_BIN = process.env.CHROME_BIN || require('puppeteer').executablePath()
 
 module.exports = (config) => {
   baseConfig(config)

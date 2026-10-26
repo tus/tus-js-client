@@ -7,7 +7,6 @@ import type {
   SliceType,
 } from '../options.js'
 
-// TODO: Add tests for this.
 export class FetchHttpStack implements HttpStack {
   createRequest(method: string, url: string) {
     return new FetchRequest(method, url)

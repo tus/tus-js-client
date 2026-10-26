@@ -8,6 +8,8 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-22.04
+    env:
+      CHROME_BIN: /usr/bin/google-chrome
     strategy:
       fail-fast: false
       matrix:
@@ -19,10 +21,14 @@ jobs:
             node: 20
           - desc: 'Node.js 22'
             suite: 'node'
-            node: 22
+            node: '^22.23.4'
           - desc: 'Node.js 24'
             suite: 'node'
-            node: 24
+            node: '^24.22.1'
+          - desc: 'Node.js 26'
+            suite: 'node'
+            # Pin the validated tooling release while older majors retain compatibility coverage.
+            node: '26.12.1'
           - desc: 'Deno'
             suite: 'deno'
           - desc: 'Bun'
@@ -30,14 +36,16 @@ jobs:
     name: Tests (${{ matrix.desc }})
     steps:
       - name: Check out sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
-          node-version: ${{ matrix.node || 24 }}
+          # Browser and Deno builds use the same exact Node 26 release as the new lane.
+          node-version: ${{ matrix.node || '26.12.1' }}
+          check-latest: true
       - name: Install Deno
         if: matrix.suite == 'deno'
-        uses: denoland/setup-deno@v2
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed
         with:
           deno-version: latest
       - name: Install Bun
@@ -47,20 +55,31 @@ jobs:
           bun-version: latest
       - name: Install dependencies
         run: npm ci
+      - name: Verify Chrome for Puppeteer
+        if: matrix.suite == 'puppeteer'
+        run: |
+          "$CHROME_BIN" --version
       - name: Build
         run: npm run build
+      - name: Start tusd
+        id: tusd
+        uses: ./.github/actions/setup-tusd
       - name: Test
+        env:
+          TUS_ENDPOINT: ${{ steps.tusd.outputs.endpoint }}
         run: npm run test-${{ matrix.suite }}
   lint:
     name: Linter
     runs-on: ubuntu-22.04
     steps:
       - name: Check out sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
-          node-version: ${{ matrix.node || 24 }}
+          # Match the exact tooling release validated by the Node 26 lane.
+          node-version: '26.12.1'
+          check-latest: true
       - name: Install dependencies
         run: npm ci
       - name: Build

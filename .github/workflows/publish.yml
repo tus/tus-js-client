@@ -14,11 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
-          node-version: ${{ matrix.node || 24 }}
+          # Match the exact tooling release validated by CI.
+          node-version: '26.12.1'
+          check-latest: true
       - name: Install dependencies
         run: npm ci
       - name: Build
