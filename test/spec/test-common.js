@@ -250,6 +250,56 @@ describe('tus', () => {
         expect(head.method).toBe('HEAD')
       })
 
+      it('should terminate a running upload so it cannot be restarted', async () => {
+        const testStack = new TestHttpStack()
+        const file = getBlob('hello world')
+        const upload = new Upload(file, {
+          httpStack: testStack,
+          endpoint: 'http://tus.io/uploads',
+          onError() {},
+        })
+        upload.start()
+
+        let req = await testStack.nextRequest()
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: 'http://tus.io/uploads/blargh',
+          },
+        })
+
+        req = await testStack.nextRequest()
+        expect(req.method).toBe('PATCH')
+
+        const aborting = upload.abort(true)
+        expect(upload.state).toBe('terminated')
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            'Upload-Offset': '0',
+          },
+        })
+
+        req = await testStack.nextRequest()
+        expect(req.url).toBe('http://tus.io/uploads/blargh')
+        expect(req.method).toBe('DELETE')
+        req.respondWith({
+          status: 204,
+        })
+        await aborting
+
+        expect(upload.state).toBe('terminated')
+        expect(upload.url).toBe('http://tus.io/uploads/blargh')
+
+        upload.start()
+        upload.resumeFromPreviousUpload(previousUpload)
+        expect(upload.state).toBe('terminated')
+        expect(upload.url).toBe('http://tus.io/uploads/blargh')
+
+        const result = await Promise.race([testStack.nextRequest(), wait(50)])
+        expect(result).toBe('timed out')
+      })
+
       it('should keep state read-only', () => {
         const upload = new Upload(getBlob('hello world'), {
           endpoint: 'http://tus.io/uploads',
@@ -270,6 +320,8 @@ describe('tus', () => {
         })
 
         await upload.abort()
+        expect(upload.state).toBe('idle')
+        await upload.abort(true)
         expect(upload.state).toBe('idle')
 
         upload.start()
