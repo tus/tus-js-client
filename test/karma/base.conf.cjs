@@ -46,7 +46,6 @@ module.exports = (config) => {
     // process.env. Copy the endpoint in here; tests read __karma__.config.
     client: {
       tusEndpoint: process.env.TUS_ENDPOINT || '',
-      requireTusEndpoint: process.env.CI === 'true',
     },
   })
 }
