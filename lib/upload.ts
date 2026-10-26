@@ -66,9 +66,9 @@ export const defaultOptions = {
  * - `paused` — `abort()` stopped a running upload; `start()` resumes it
  * - `success` — the upload finished; further `start()` calls are ignored
  * - `error` — the upload failed after retries; `start()` tries again
- * - `terminated` — `abort(true)` deleted the upload; it cannot be restarted
+ * - `stopped` — `abort(true)` deleted the upload; it cannot be restarted
  */
-export type UploadState = 'idle' | 'running' | 'paused' | 'success' | 'error' | 'terminated'
+export type UploadState = 'idle' | 'running' | 'paused' | 'success' | 'error' | 'stopped'
 
 /**
  * Fields shared by every phase except `success`. Mutating `url`, `offset`, `size`,
@@ -118,7 +118,7 @@ type ConcatenatingState = SessionBase & {
 }
 type PausedState = SessionBase & { status: 'paused' }
 type ErrorState = SessionBase & { status: 'error' }
-type TerminatedState = SessionBase & { status: 'terminated' }
+type StoppedState = SessionBase & { status: 'stopped' }
 type SuccessState = {
   status: 'success'
   url: string
@@ -136,7 +136,7 @@ type InternalState =
   | ConcatenatingState
   | PausedState
   | ErrorState
-  | TerminatedState
+  | StoppedState
   | SuccessState
 
 type InternalStatus = InternalState['status']
@@ -156,15 +156,15 @@ type Stale = typeof Stale
 
 const allowedTransitions: Record<InternalStatus, readonly InternalStatus[]> = {
   idle: ['preparing', 'error', 'idle'],
-  preparing: ['uploading', 'parallel', 'paused', 'error', 'retrying', 'terminated'],
-  uploading: ['awaiting', 'retrying', 'paused', 'error', 'terminated'],
-  awaiting: ['uploading', 'success', 'retrying', 'paused', 'error', 'terminated'],
-  parallel: ['concatenating', 'paused', 'error', 'retrying', 'terminated'],
-  concatenating: ['success', 'retrying', 'paused', 'error', 'terminated'],
-  retrying: ['preparing', 'paused', 'terminated'],
-  paused: ['preparing', 'error', 'paused', 'terminated'],
-  error: ['preparing', 'error', 'terminated'],
-  terminated: [],
+  preparing: ['uploading', 'parallel', 'paused', 'error', 'retrying', 'stopped'],
+  uploading: ['awaiting', 'retrying', 'paused', 'error', 'stopped'],
+  awaiting: ['uploading', 'success', 'retrying', 'paused', 'error', 'stopped'],
+  parallel: ['concatenating', 'paused', 'error', 'retrying', 'stopped'],
+  concatenating: ['success', 'retrying', 'paused', 'error', 'stopped'],
+  retrying: ['preparing', 'paused', 'stopped'],
+  paused: ['preparing', 'error', 'paused', 'stopped'],
+  error: ['preparing', 'error', 'stopped'],
+  stopped: [],
   success: [],
 }
 
@@ -205,7 +205,7 @@ export class BaseUpload {
       case 'paused':
       case 'success':
       case 'error':
-      case 'terminated':
+      case 'stopped':
         return this._state.status
       default:
         return 'running'
@@ -230,7 +230,7 @@ export class BaseUpload {
   }
 
   resumeFromPreviousUpload(previousUpload: PreviousUpload): void {
-    // A running, finished, or terminated upload already has a URL. Overwriting it
+    // A running, finished, or stopped upload already has a URL. Overwriting it
     // would make the in-flight attempt disagree with the state callers can observe.
     const current = this._state
     if (!isStartable(current)) return
@@ -711,7 +711,7 @@ export class BaseUpload {
     // Leave a running phase before any await. abort() of an upload that is not running
     // keeps its state: idle stays idle, success stays success, and error stays
     // error so a later start() can retry. The in-flight request is still cancelled.
-    // abort(true) ends the attempt in `terminated` instead: the server upload is
+    // abort(true) ends the attempt in `stopped` instead: the server upload is
     // deleted, so there is nothing to resume, and a stream may already have been read.
     const current = this._state
     const request = requestOf(current)
@@ -719,7 +719,7 @@ export class BaseUpload {
     const timeout = current.status === 'retrying' ? current.timeout : undefined
 
     if (shouldTerminate && isTerminable(current)) {
-      this._commit(current, toTerminated(current))
+      this._commit(current, toStopped(current))
     } else if (isActive(current)) {
       this._commit(current, toPaused(current))
     }
@@ -733,7 +733,7 @@ export class BaseUpload {
     }
 
     // Stop any current running request. The file source stays open: start() resumes
-    // a paused upload from it. A terminated upload does not resume; close a consumed
+    // a paused upload from it. A stopped upload does not resume; close a consumed
     // stream yourself.
     if (request != null) {
       await request.abort()
@@ -1413,8 +1413,8 @@ function toPaused(state: SessionState): PausedState {
   return { ...copyFields(state), status: 'paused' }
 }
 
-function toTerminated(state: SessionState): TerminatedState {
-  return { ...copyFields(state), status: 'terminated' }
+function toStopped(state: SessionState): StoppedState {
+  return { ...copyFields(state), status: 'stopped' }
 }
 
 function toUploading(state: SessionState): UploadingState {

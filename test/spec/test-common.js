@@ -250,7 +250,7 @@ describe('tus', () => {
         expect(head.method).toBe('HEAD')
       })
 
-      it('should terminate a running upload so it cannot be restarted', async () => {
+      it('should stop a running upload when abort(true) deletes it', async () => {
         const testStack = new TestHttpStack()
         const file = getBlob('hello world')
         const upload = new Upload(file, {
@@ -272,7 +272,7 @@ describe('tus', () => {
         expect(req.method).toBe('PATCH')
 
         const aborting = upload.abort(true)
-        expect(upload.state).toBe('terminated')
+        expect(upload.state).toBe('stopped')
         req.respondWith({
           status: 204,
           responseHeaders: {
@@ -288,12 +288,12 @@ describe('tus', () => {
         })
         await aborting
 
-        expect(upload.state).toBe('terminated')
+        expect(upload.state).toBe('stopped')
         expect(upload.url).toBe('http://tus.io/uploads/blargh')
 
         upload.start()
         upload.resumeFromPreviousUpload(previousUpload)
-        expect(upload.state).toBe('terminated')
+        expect(upload.state).toBe('stopped')
         expect(upload.url).toBe('http://tus.io/uploads/blargh')
 
         const result = await Promise.race([testStack.nextRequest(), wait(50)])
