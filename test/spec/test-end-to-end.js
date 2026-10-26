@@ -1,4 +1,5 @@
 import { Upload } from 'tus-js-client'
+import { getTusEndpoint } from './helpers/tusEndpoint.js'
 import {
   createStreamingSource,
   getLargeBlob,
@@ -16,13 +17,16 @@ const FILE_SIZE = 50 * 1024 * 1024
 
 describe('tus', () => {
   describe('end-to-end', () => {
+    const endpoint = getTusEndpoint()
+    console.log('tus endpoint:', endpoint)
+
     it(
       'should upload to a real tus server',
       () => {
         const file = getLargeBlob(FILE_SIZE)
         return new Promise((resolve, reject) => {
           const options = {
-            endpoint: 'https://tusd.tusdemo.net/files/',
+            endpoint,
             metadata: {
               nonlatin: 'słońce',
               number: 100,
@@ -30,7 +34,7 @@ describe('tus', () => {
               filetype: 'text/plain',
             },
             onSuccess() {
-              expect(upload.url).toMatch(/^https:\/\/tusd\.tusdemo\.net\/files\//)
+              expect(upload.url.startsWith(endpoint)).toBe(true)
               console.log('Upload URL:', upload.url)
 
               resolve(upload)
@@ -59,7 +63,7 @@ describe('tus', () => {
         const file = getLargeBlob(FILE_SIZE)
         return new Promise((resolve, reject) => {
           const options = {
-            endpoint: 'https://tusd.tusdemo.net/files/',
+            endpoint,
             metadata: {
               nonlatin: 'słońce',
               number: 100,
@@ -67,7 +71,7 @@ describe('tus', () => {
               filetype: 'text/plain',
             },
             onSuccess() {
-              expect(upload.url).toMatch(/^https:\/\/tusd\.tusdemo\.net\/files\//)
+              expect(upload.url.startsWith(endpoint)).toBe(true)
               console.log('Upload URL:', upload.url)
 
               resolve(upload)
@@ -95,7 +99,7 @@ describe('tus', () => {
 
         return new Promise((resolve, reject) => {
           const options = {
-            endpoint: 'https://tusd.tusdemo.net/files/',
+            endpoint,
             chunkSize: 20 * 1024 * 1024, // 20 MiB chunks
             metadata: {
               nonlatin: 'słońce',
@@ -105,7 +109,7 @@ describe('tus', () => {
             },
             uploadLengthDeferred: true, // Required for streaming sources
             onSuccess() {
-              expect(upload.url).toMatch(/^https:\/\/tusd\.tusdemo\.net\/files\//)
+              expect(upload.url.startsWith(endpoint)).toBe(true)
               console.log('Upload URL (streamed):', upload.url)
 
               resolve(upload)

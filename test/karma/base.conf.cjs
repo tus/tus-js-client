@@ -41,5 +41,11 @@ module.exports = (config) => {
     // Concurrency level
     // how many browser instances should be started simultaneously
     concurrency: Number.POSITIVE_INFINITY,
+
+    // The browser bundle is built before Karma starts, so it cannot read
+    // process.env. Copy the endpoint in here; tests read __karma__.config.
+    client: {
+      tusEndpoint: process.env.TUS_ENDPOINT || '',
+    },
   })
 }

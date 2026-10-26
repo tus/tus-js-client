@@ -54,7 +54,12 @@ jobs:
           "$CHROME_BIN" --version
       - name: Build
         run: npm run build
+      - name: Start tusd
+        id: tusd
+        uses: ./.github/actions/setup-tusd
       - name: Test
+        env:
+          TUS_ENDPOINT: ${{ steps.tusd.outputs.endpoint }}
         run: npm run test-${{ matrix.suite }}
   lint:
     name: Linter

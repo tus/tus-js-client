@@ -1,5 +1,6 @@
 import stream from 'node:stream'
 import { Upload } from 'tus-js-client'
+import { getTusEndpoint } from './helpers/tusEndpoint.js'
 import {
   getLargeBlob,
   validateUploadContent,
@@ -53,6 +54,9 @@ function createNodeStreamingSource(sizeInBytes, streamChunkSize = 1024 * 1024) {
 
 describe('tus', () => {
   describe('end-to-end Node.js', () => {
+    const endpoint = getTusEndpoint()
+    console.log('tus endpoint:', endpoint)
+
     it(
       'should upload a 50 MiB file from Node.js ReadableStream to a real tus server',
       () => {
@@ -64,7 +68,7 @@ describe('tus', () => {
 
         return new Promise((resolve, reject) => {
           const options = {
-            endpoint: 'https://tusd.tusdemo.net/files/',
+            endpoint,
             chunkSize: 20 * 1024 * 1024, // 20 MiB chunks
             uploadSize: FILE_SIZE, // Must specify size for Node.js streams
             metadata: {
@@ -74,7 +78,7 @@ describe('tus', () => {
               filetype: 'text/plain',
             },
             onSuccess() {
-              expect(upload.url).toMatch(/^https:\/\/tusd\.tusdemo\.net\/files\//)
+              expect(upload.url.startsWith(endpoint)).toBe(true)
               console.log('Upload URL (Node.js stream):', upload.url)
 
               resolve(upload)

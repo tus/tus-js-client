@@ -1,0 +1,38 @@
+name: Set up tusd
+description: Start a tusd server and output its upload creation URL
+
+inputs:
+  version:
+    description: tusproject/tusd image tag. latest is the newest stable release.
+    required: false
+    default: latest
+  port:
+    description: Host port mapped to container port 8080
+    required: false
+    default: '8080'
+  flags:
+    description: >-
+      Extra tusd arguments, appended after --hooks-dir /srv/tusd-hooks.
+      Whitespace-separated. Use flag=value when a value contains spaces.
+    required: false
+    default: ''
+
+outputs:
+  endpoint:
+    description: Upload creation URL, with a trailing slash
+    value: ${{ steps.start.outputs.endpoint }}
+  container:
+    description: Docker container name
+    value: ${{ steps.start.outputs.container }}
+
+runs:
+  using: composite
+  steps:
+    - name: Start tusd
+      id: start
+      shell: bash
+      env:
+        TUSD_VERSION: ${{ inputs.version }}
+        TUSD_PORT: ${{ inputs.port }}
+        TUSD_FLAGS: ${{ inputs.flags }}
+      run: bash "$GITHUB_ACTION_PATH/start.sh"

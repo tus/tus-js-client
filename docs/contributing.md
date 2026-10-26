@@ -31,6 +31,15 @@ Tests are implemented using Jasmine and can be found in the `test/` directory. T
 - To run the tests inside **Puppeteer** (an automated browser) use the command `yarn run test-puppeteer`.
 - To run the tests in your browser open `test/SpecRunner.html` in a browser and you should see a visual representation of the test results. No web server is required, you can open `SpecRunner.html` using the `file:///` protocol.
 
+End-to-end tests upload a real file to a tus server. They use `https://tusd.tusdemo.net/files/` unless `TUS_ENDPOINT` is set to another creation URL. A missing trailing slash is added. CI starts a local tusd and sets that variable.
+
+```bash
+docker run --rm -p 127.0.0.1:8080:8080 tusproject/tusd:latest
+TUS_ENDPOINT=http://127.0.0.1:8080/files/ yarn run test-node
+```
+
+Puppeteer reads the same variable. For a manual browser run, open `test/SpecRunner.html?endpoint=http://127.0.0.1:8080/files/`.
+
 Also note that you have to rebuild the library before you run the tests. So either you automatically let `yarn run watch` listen for file changes and automatically rebuild the needed artifacts, or you run `yarn run build` on your own before you execute the tests.
 
 ## Releasing
