@@ -1,4 +1,4 @@
-import { readable as isNodeReadableStream } from 'is-stream'
+import isStream from 'is-stream'
 import type {
   HttpProgressHandler,
   HttpRequest,
@@ -66,7 +66,7 @@ class XHRRequest implements HttpRequest {
   }
 
   send(body?: SliceType): Promise<HttpResponse> {
-    if (isNodeReadableStream(body)) {
+    if (isStream.readable(body)) {
       throw new Error(
         'Using a Node.js readable stream as HTTP request body is not supported using the XMLHttpRequest HTTP stack.',
       )

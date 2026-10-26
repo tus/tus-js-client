@@ -1,4 +1,4 @@
-import { readable as isNodeReadableStream } from 'is-stream'
+import isStream from 'is-stream'
 import type {
   HttpProgressHandler,
   HttpRequest,
@@ -49,7 +49,7 @@ class FetchRequest implements HttpRequest {
   }
 
   async send(body?: SliceType): Promise<FetchResponse> {
-    if (isNodeReadableStream(body)) {
+    if (isStream.readable(body)) {
       throw new Error(
         'Using a Node.js readable stream as HTTP request body is not supported using the Fetch API HTTP stack.',
       )
