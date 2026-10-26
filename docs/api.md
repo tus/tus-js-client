@@ -464,17 +464,17 @@ The `file` argument used in the constructor.
 
 ## tus.Upload#url
 
-The URL used to upload the file. This property will be set once an upload has been created, which happens at last when the `onSuccess` callback is invoked. To resume an upload from a specific URL use the `uploadUrl` option instead.
+The URL used to upload the file. This property is read-only. It is set once an upload has been created, which happens at last when the `onSuccess` callback is invoked. To resume an upload from a specific URL use the `uploadUrl` option or `resumeFromPreviousUpload()` instead.
 
 ### tus.Upload#state
 
-A read-only status string. It describes where the upload is, and does not include the URL, the offset, or other upload data. Those stay on their own properties.
+A read-only status string. It describes where the upload is and does not include the URL or other upload data. The URL remains available as `upload.url`.
 
 | State | Meaning |
 | --- | --- |
 | `idle` | The upload has been created and `start` has not been called. `abort()` before `start()` leaves the upload here. |
 | `running` | `start` has begun this attempt. Automatic retries stay in `running`, so another `start()` during the wait is ignored. |
-| `paused` | `abort()` stopped a running upload. The file stays open. `start()` resumes. |
+| `paused` | `abort()` stopped a running upload. An opened file stays open so `start()` can resume. |
 | `success` | The upload finished. Further `start()` calls are ignored. |
 | `error` | The upload failed after retries were exhausted, or `start()` was called with invalid options. `start()` tries again. |
 
