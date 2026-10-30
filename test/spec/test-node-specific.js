@@ -106,6 +106,60 @@ describe('tus', () => {
         await expectHelloWorldUpload(input, options)
       })
 
+      it('should finish a deferred upload whose size is a multiple of chunkSize', async () => {
+        const input = new stream.PassThrough()
+        input.end('hello WORLD!!!')
+
+        const testStack = new TestHttpStack()
+        const options = {
+          httpStack: testStack,
+          endpoint: '/uploads',
+          chunkSize: 7,
+          uploadLengthDeferred: true,
+          onSuccess: waitableFunction('onSuccess'),
+        }
+
+        const upload = new Upload(input, options)
+        upload.start()
+
+        let req = await testStack.nextRequest()
+        expect(req.method).toBe('POST')
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: '/uploads/blargh',
+          },
+        })
+
+        for (const offset of [0, 7]) {
+          req = await testStack.nextRequest()
+          expect(req.method).toBe('PATCH')
+          expect(req.requestHeaders['Upload-Offset']).toBe(String(offset))
+          expect(req.requestHeaders['Upload-Length']).toBe(undefined)
+          expect(req.bodySize).toBe(7)
+          req.respondWith({
+            status: 204,
+            responseHeaders: {
+              'Upload-Offset': String(offset + 7),
+            },
+          })
+        }
+
+        req = await testStack.nextRequest()
+        expect(req.method).toBe('PATCH')
+        expect(req.requestHeaders['Upload-Offset']).toBe('14')
+        expect(req.requestHeaders['Upload-Length']).toBe('14')
+        expect(req.bodySize).toBe(0)
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            'Upload-Offset': '14',
+          },
+        })
+
+        await options.onSuccess.toBeCalled()
+      })
+
       it('should throw an error if the source provides less data than uploadSize', async () => {
         const input = new stream.PassThrough()
         input.end('hello world')
@@ -500,6 +554,23 @@ describe('tus', () => {
       ret = await source.slice(20, 100)
       expect(ret.done).toBe(true)
       expect(ret.value.toString()).toBe('UVWXYZ')
+    })
+
+    it('should finish when the stream size is a multiple of the slice size', async () => {
+      const input = new stream.PassThrough()
+      input.end('ABCDEFGHIJKLMN')
+      const source = new NodeStreamFileSource(input)
+
+      let ret = await source.slice(0, 7)
+      expect(ret.value.toString()).toBe('ABCDEFG')
+
+      ret = await source.slice(7, 14)
+      expect(ret.value.toString()).toBe('HIJKLMN')
+
+      // The stream has no data left, so this read only sees the end event.
+      ret = await source.slice(14, 21)
+      expect(ret.done).toBe(true)
+      expect(ret.size).toBe(0)
     })
 
     it('should pass through errors', async () => {
