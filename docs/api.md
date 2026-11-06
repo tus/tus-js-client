@@ -489,6 +489,8 @@ upload.abort(true).then(function () {
 })
 ```
 
+If the termination fails and the `onError` callback is set, the error is passed to `onError` and the returned `Promise` is resolved instead of rejected.
+
 ## tus.Upload.terminate(url, [options])
 
 Terminate an upload based on the [termination extension](https://tus.io/protocols/resumable-upload.html#termination).
