@@ -267,6 +267,75 @@ describe('tus', () => {
       expect(err.originalResponse).toBeDefined()
     })
 
+    it('should wrap error thrown in onChunkComplete callback', async () => {
+      const testStack = new TestHttpStack()
+      const file = getBlob('hello world')
+      const options = {
+        httpStack: testStack,
+        endpoint: 'http://tus.io/uploads',
+        retryDelays: [10, 10, 10],
+        onChunkComplete() {
+          throw new Error('something went wrong in callback')
+        },
+        onError: waitableFunction('onError'),
+      }
+
+      const upload = new Upload(file, options)
+      upload.start()
+
+      let req = await testStack.nextRequest()
+      expect(req.method).toBe('POST')
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: 'http://tus.io/uploads/blargh',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.method).toBe('PATCH')
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': '11',
+        },
+      })
+
+      const err = await options.onError.toBeCalled()
+      expect(err.message).toContain("error thrown in 'onChunkComplete' callback")
+      expect(err.message).toContain('something went wrong in callback')
+
+      // Verify no retry happened even though retryDelays is set
+      const nextReq = await Promise.race([testStack.nextRequest(), wait(200)])
+      expect(nextReq).toBe('timed out')
+    })
+
+    it('should wrap errors thrown in onBeforeRequest callback', async () => {
+      const testStack = new TestHttpStack()
+      const file = getBlob('hello world')
+      const options = {
+        httpStack: testStack,
+        endpoint: 'http://tus.io/uploads',
+        retryDelays: [10, 10, 10],
+        onBeforeRequest() {
+          throw new Error('something went wrong in onBeforeRequest')
+        },
+        onError: waitableFunction('onError'),
+      }
+
+      const upload = new Upload(file, options)
+      upload.start()
+
+      const err = await options.onError.toBeCalled()
+      expect(err.message).toContain("error thrown in 'onBeforeRequest' callback")
+      expect(err.message).toContain('something went wrong in onBeforeRequest')
+
+      // no retry for callback errors
+      const nextReq = await Promise.race([testStack.nextRequest(), wait(200)])
+      expect(nextReq).toBe('timed out')
+    })
+
     it('should invoke the request and response callbacks', async () => {
       const testStack = new TestHttpStack()
       const file = getBlob('hello world')

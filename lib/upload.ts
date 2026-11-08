@@ -494,7 +494,12 @@ export class BaseUpload {
     if (this._aborted) return
 
     if (typeof this.options.onError === 'function') {
-      this.options.onError(err)
+      try {
+        this.options.onError(err)
+      } catch (callbackErr) {
+        const causeMsg = callbackErr instanceof Error ? callbackErr.message : String(callbackErr)
+        throw new Error(`tus: error thrown in 'onError' callback: ${causeMsg}`)
+      }
     } else {
       throw err
     }
@@ -558,7 +563,12 @@ export class BaseUpload {
    */
   private _emitProgress(bytesSent: number, bytesTotal: number | null): void {
     if (typeof this.options.onProgress === 'function') {
-      this.options.onProgress(bytesSent, bytesTotal)
+      try {
+        this.options.onProgress(bytesSent, bytesTotal)
+      } catch (err) {
+        const causeMsg = err instanceof Error ? err.message : String(err)
+        throw new Error(`tus: error thrown in 'onProgress' callback: ${causeMsg}`)
+      }
     }
   }
 
@@ -577,7 +587,12 @@ export class BaseUpload {
     bytesTotal: number | null,
   ): void {
     if (typeof this.options.onChunkComplete === 'function') {
-      this.options.onChunkComplete(chunkSize, bytesAccepted, bytesTotal)
+      try {
+        this.options.onChunkComplete(chunkSize, bytesAccepted, bytesTotal)
+      } catch (err) {
+        const causeMsg = err instanceof Error ? err.message : String(err)
+        throw new Error(`tus: error thrown in 'onChunkComplete' callback: ${causeMsg}`)
+      }
     }
   }
 
@@ -1056,13 +1071,23 @@ async function sendRequest(
   options: UploadOptions,
 ): Promise<HttpResponse> {
   if (typeof options.onBeforeRequest === 'function') {
-    await options.onBeforeRequest(req)
+    try {
+      await options.onBeforeRequest(req)
+    } catch (err) {
+      const causeMsg = err instanceof Error ? err.message : String(err)
+      throw new Error(`tus: error thrown in 'onBeforeRequest' callback: ${causeMsg}`)
+    }
   }
 
   const res = await req.send(body)
 
   if (typeof options.onAfterResponse === 'function') {
-    await options.onAfterResponse(req, res)
+    try {
+      await options.onAfterResponse(req, res)
+    } catch (err) {
+      const causeMsg = err instanceof Error ? err.message : String(err)
+      throw new Error(`tus: error thrown in 'onAfterResponse' callback: ${causeMsg}`)
+    }
   }
 
   return res
@@ -1107,17 +1132,26 @@ function shouldRetry(
   // - the error is server error (i.e. not a status 4xx except a 409 or 423) or
   // a onShouldRetry is specified and returns true
   // - the browser does not indicate that we are offline
+  const isCallbackError =
+    err.message.includes('tus: error thrown in') && err.message.includes('callback')
   const isNetworkError = 'originalRequest' in err && err.originalRequest != null
   if (
     options.retryDelays == null ||
     retryAttempt >= options.retryDelays.length ||
-    !isNetworkError
+    !isNetworkError ||
+    // do not retry if callback function throws Error
+    isCallbackError
   ) {
     return false
   }
 
   if (options && typeof options.onShouldRetry === 'function') {
-    return options.onShouldRetry(err, retryAttempt, options)
+    try {
+      return options.onShouldRetry(err, retryAttempt, options)
+    } catch (callbackErr) {
+      const causeMsg = callbackErr instanceof Error ? callbackErr.message : String(callbackErr)
+      throw new Error(`tus: error thrown in 'onShouldRetry' callback: ${causeMsg}`)
+    }
   }
 
   return defaultOnShouldRetry(err)
