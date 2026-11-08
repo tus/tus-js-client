@@ -253,7 +253,9 @@ export class BaseUpload {
         throw new Error('tus: cannot convert `uploadSize` option into a number')
       }
     } else {
-      this._size = this._source.size
+      // A stream has no size, but a deferred upload keeps the length it already
+      // declared to the server when it is retried.
+      this._size = this._source.size ?? this._size
       if (this._size == null) {
         throw new Error(
           "tus: cannot automatically derive upload's size from input. Specify it manually using the `uploadSize` option or use the `uploadLengthDeferred` option",
@@ -747,6 +749,12 @@ export class BaseUpload {
       throw new DetailedError('tus: invalid or missing length value', undefined, req, res)
     }
 
+    // The server may have stored the length of a deferred upload even though
+    // the PATCH that declared it failed.
+    if (this._size == null && !Number.isNaN(length)) {
+      this._size = length
+    }
+
     if (typeof this.options.onUploadUrlAvailable === 'function') {
       await this.options.onUploadUrlAvailable()
     }
@@ -868,7 +876,6 @@ export class BaseUpload {
     if (this._uploadLengthDeferred && done) {
       this._size = this._offset + sizeOfValue
       req.setHeader('Upload-Length', `${this._size}`)
-      this._uploadLengthDeferred = false
     }
 
     // The specified uploadSize might not match the actual amount of data that a source
@@ -914,6 +921,12 @@ export class BaseUpload {
     this._emitChunkComplete(offset - this._offset, offset, this._size)
 
     this._offset = offset
+
+    // The length counts as declared only once the server accepted it, so a
+    // failed request still sends it again on retry.
+    if (req.getHeader('Upload-Length') != null) {
+      this._uploadLengthDeferred = false
+    }
 
     if (offset === this._size) {
       // Yay, finally done :)
