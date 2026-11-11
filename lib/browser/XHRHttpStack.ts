@@ -15,6 +15,11 @@ export class XHRHttpStack implements HttpStack {
   getName() {
     return 'XHRHttpStack'
   }
+
+  supportsProgressEvents(): boolean {
+    // XMLHttpRequest supports progress events via the upload.onprogress event
+    return true
+  }
 }
 
 class XHRRequest implements HttpRequest {
