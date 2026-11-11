@@ -21,14 +21,14 @@ jobs:
             node: 20
           - desc: 'Node.js 22'
             suite: 'node'
-            node: '^22.23.4'
+            node: '^22.23.5'
           - desc: 'Node.js 24'
             suite: 'node'
-            node: '^24.22.1'
+            node: '^24.22.3'
           - desc: 'Node.js 26'
             suite: 'node'
             # Pin the validated tooling release while older majors retain compatibility coverage.
-            node: '26.12.1'
+            node: '26.13.1'
           - desc: 'Deno'
             suite: 'deno'
           - desc: 'Bun'
@@ -41,7 +41,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           # Browser and Deno builds use the same exact Node 26 release as the new lane.
-          node-version: ${{ matrix.node || '26.12.1' }}
+          node-version: ${{ matrix.node || '26.13.1' }}
           check-latest: true
       - name: Install Deno
         if: matrix.suite == 'deno'
@@ -78,7 +78,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           # Match the exact tooling release validated by the Node 26 lane.
-          node-version: '26.12.1'
+          node-version: '26.13.1'
           check-latest: true
       - name: Install dependencies
         run: npm ci
