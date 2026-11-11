@@ -526,6 +526,19 @@ export class BaseUpload {
       }
     }
 
+    // A persistent 5xx on HEAD means we could not query the existing upload.
+    // Fall back to creating a new one instead of failing the whole transfer.
+    if (shouldCreateUploadAfterFailedResume(err, this.options)) {
+      this.url = null
+      this._createUpload().catch((createErr) => {
+        if (!(createErr instanceof Error)) {
+          throw new Error(`tus: value thrown that is not an error: ${createErr}`)
+        }
+        this._retryOrEmitError(createErr)
+      })
+      return
+    }
+
     // If we are not retrying, emit the error to the user.
     this._emitError(err)
   }
@@ -671,8 +684,10 @@ export class BaseUpload {
 
   /**
    * Try to resume an existing upload. First a HEAD request will be sent
-   * to retrieve the offset. If the request fails a new upload will be
-   * created. In the case of a successful response the file will be uploaded.
+   * to retrieve the offset. Client errors (except 423 Locked) cause a new
+   * upload to be created immediately. Server errors (5xx) are retried first;
+   * only after retries are exhausted is a new upload created. In the case of
+   * a successful response the file will be uploaded.
    *
    * @api private
    */
@@ -704,6 +719,18 @@ export class BaseUpload {
         throw new DetailedError('tus: upload is currently locked; retry later', undefined, req, res)
       }
 
+      // Transient server errors must not abort the existing upload. Throw so
+      // the retry logic can repeat the HEAD request. If retries are exhausted,
+      // _retryOrEmitError will fall back to creating a new upload.
+      if (inStatusCategory(status, 500)) {
+        throw new DetailedError(
+          'tus: unexpected response while resuming upload',
+          undefined,
+          req,
+          res,
+        )
+      }
+
       if (inStatusCategory(status, 400)) {
         // Remove stored fingerprint and corresponding endpoint,
         // on client errors since the file can not be found
@@ -723,6 +750,7 @@ export class BaseUpload {
       // Try to create a new upload
       this.url = null
       await this._createUpload()
+      return
     }
 
     const offsetStr = res.getHeader('Upload-Offset')
@@ -1085,6 +1113,19 @@ function isOnline(): boolean {
   }
 
   return online
+}
+
+/**
+ * True when a failed resume attempt was caused by a 5xx HEAD response and we
+ * still have an endpoint that can be used to create a replacement upload.
+ */
+function shouldCreateUploadAfterFailedResume(err: Error, options: UploadOptions): boolean {
+  if (!options.endpoint || !(err instanceof DetailedError) || err.originalRequest == null) {
+    return false
+  }
+
+  const status = err.originalResponse ? err.originalResponse.getStatus() : 0
+  return err.originalRequest.getMethod() === 'HEAD' && inStatusCategory(status, 500)
 }
 
 /**
