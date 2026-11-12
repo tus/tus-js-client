@@ -464,7 +464,28 @@ The `file` argument used in the constructor.
 
 ## tus.Upload#url
 
-The URL used to upload the file. This property will be set once an upload has been created, which happens at last when the `onSuccess` callback is invoked. To resume an upload from a specific URL use the `uploadUrl` option instead.
+The URL used to upload the file. This property is read-only. It is set once an upload has been created, which happens at last when the `onSuccess` callback is invoked. To resume an upload from a specific URL use the `uploadUrl` option or `resumeFromPreviousUpload()` instead.
+
+### tus.Upload#state
+
+A read-only status string. It describes where the upload is and does not include the URL or other upload data. The URL remains available as `upload.url`.
+
+| State | Meaning |
+| --- | --- |
+| `idle` | The upload has been created and `start` has not been called. `abort()` before `start()` leaves the upload here. |
+| `running` | `start` has begun this attempt. Automatic retries stay in `running`, so another `start()` during the wait is ignored. |
+| `paused` | `abort()` stopped a running upload without deleting it. An opened file stays open so `start()` can resume. |
+| `success` | The upload finished. Further `start()` calls are ignored. |
+| `error` | The upload failed after retries were exhausted, or `start()` was called with invalid options. `start()` tries again. |
+| `stopped` | `abort(true)` deleted the upload. `start()` does not restart it. |
+
+```js
+if (upload.state === 'paused') {
+  upload.start()
+}
+```
+
+Calling `start()` while the state is `running`, `success`, or `stopped` does not change the upload. Calling `resumeFromPreviousUpload()` during `running`, `success`, or `stopped` is ignored, so it cannot replace the URL of an attempt that is already underway or has been deleted.
 
 ### tus.Upload#start()
 
@@ -472,18 +493,18 @@ Start or resume the upload using the specified file. If no `file` property is av
 
 ## tus.Upload#abort(shouldTerminate)
 
-Abort the currently running upload request and don't continue. You can resume the upload by calling the `start` method again.
+Abort the currently running upload request and don't continue. You can resume the upload by calling the `start` method again. That leaves the upload `paused`.
 
 Calling this method will not release the provided file because you might want to resume the upload later. If you do not want to resume and have passed a readable stream to tus-js-client, you must close/cancel the stream on your own.
 
-The `shouldTerminate` argument is a `boolean` value that determines whether or not the upload should be terminated according to the [termination extension](https://tus.io/protocols/resumable-upload.html#termination).
+The `shouldTerminate` argument is a `boolean` value that determines whether or not the upload should be terminated according to the [termination extension](https://tus.io/protocols/resumable-upload.html#termination). `abort(true)` moves a running, paused, or failed upload to `stopped`. The server upload is deleted, and bytes may already have been read from a stream, so `start()` will not resume or restart that upload. A successful upload stays `success`; termination then only removes the finished resource. `abort(true)` before `start()`, when no upload URL exists, leaves the upload `idle`.
 
 The function returns a `Promise` object, which is resolved once the operation is complete, for example:
 
 ```js
 var upload = new tus.Upload(...)
 upload.abort(true).then(function () {
-    // Upload has been aborted and terminated
+    // upload.state is now "stopped"
 }).catch(function (err) {
     // An error occurred during the termination
 })
