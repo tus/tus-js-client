@@ -483,7 +483,18 @@ export class BaseUpload {
     }
 
     if (shouldTerminate && this.url != null) {
-      await terminate(this.url, this.options)
+      try {
+        await terminate(this.url, this.options)
+      } catch (err) {
+        // Pass the error to onError if set. Otherwise, it would end up as an
+        // unhandled rejection for callers that don't await the returned Promise.
+        // We cannot use _emitError here because it ignores errors after an abort.
+        if (typeof this.options.onError === 'function') {
+          this.options.onError(err as Error)
+          return
+        }
+        throw err
+      }
       // Remove entry from the URL storage since the upload URL is no longer valid.
       await this._removeFromUrlStorage()
     }
