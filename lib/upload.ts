@@ -46,6 +46,7 @@ export const defaultOptions = {
   parallelUploadBoundaries: undefined,
   storeFingerprintForResuming: true,
   removeFingerprintOnSuccess: false,
+  progressiveUrlSaving: false,
   uploadLengthDeferred: false,
   uploadDataDuringCreation: false,
 
@@ -73,6 +74,10 @@ export class BaseUpload {
 
   // The key that the URL storage returned when saving an URL with a fingerprint,
   private _urlStorageKey?: string
+
+  // Saves to the URL storage run one at a time, so partial uploads that finish creation
+  // concurrently cannot overwrite each other's URLs in a storage that replaces the entry.
+  private _pendingUrlStorageSave: Promise<void> = Promise.resolve()
 
   // The offset used in the current PATCH request
   private _offset = 0
@@ -103,7 +108,7 @@ export class BaseUpload {
 
   // An array of upload URLs which are used for uploading the different
   // parts, if the parallelUploads option is used.
-  private _parallelUploadUrls?: string[]
+  private _parallelUploadUrls?: (string | null)[]
 
   // True if the remote upload resource's length is deferred (either taken from
   // upload options or HEAD response)
@@ -301,8 +306,9 @@ export class BaseUpload {
       uploadUrl: this._parallelUploadUrls?.[index] || null,
     }))
 
-    // Create an empty list for storing the upload URLs
-    this._parallelUploadUrls = new Array(parts.length)
+    // Create the list for storing the upload URLs, prefilled with the URLs from
+    // previous uploads so they are not lost when saving progressively.
+    this._parallelUploadUrls = parts.map((part) => part.uploadUrl)
 
     // Generate a promise for each slice that will be resolve if the respective
     // upload is completed.
@@ -348,9 +354,19 @@ export class BaseUpload {
           // Wait until every partial upload has an upload URL, so we can add
           // them to the URL storage.
           onUploadUrlAvailable: async () => {
+            if (!upload.url) return
+
             // @ts-expect-error We know that _parallelUploadUrls is defined
             this._parallelUploadUrls[index] = upload.url
-            // Test if all uploads have received an URL
+
+            // Save immediately when each URL becomes available, so partial uploads
+            // can be resumed even if the remaining ones are never created.
+            if (this.options.progressiveUrlSaving) {
+              await this._saveUploadInUrlStorage()
+              return
+            }
+
+            // Otherwise wait until all uploads have received an URL.
             // @ts-expect-error We know that _parallelUploadUrls is defined
             if (this._parallelUploadUrls.filter((u) => Boolean(u)).length === parts.length) {
               await this._saveUploadInUrlStorage()
@@ -953,16 +969,26 @@ export class BaseUpload {
    *
    * @api private
    */
-  private async _saveUploadInUrlStorage(): Promise<void> {
+  private _saveUploadInUrlStorage(): Promise<void> {
+    const save = this._pendingUrlStorageSave.then(() => this._writeUploadToUrlStorage())
+    this._pendingUrlStorageSave = save.catch(() => {})
+    return save
+  }
+
+  /**
+   * Write the current upload URL(s) to the URL storage. Called through
+   * `_saveUploadInUrlStorage`, which serialises the writes.
+   *
+   * @api private
+   */
+  private async _writeUploadToUrlStorage(): Promise<void> {
     // We do not store the upload URL
     // - if it was disabled in the option, or
     // - if no fingerprint was calculated for the input (i.e. a stream), or
-    // - if the URL is already stored (i.e. key is set alread).
-    if (
-      !this.options.storeFingerprintForResuming ||
-      !this._fingerprint ||
-      this._urlStorageKey != null
-    ) {
+    // - if the URL is already stored (i.e. key is set already), unless URLs are saved
+    //   progressively, in which case the stored entry is updated with the new URLs.
+    const isAlreadyStored = this._urlStorageKey != null && !this.options.progressiveUrlSaving
+    if (!this.options.storeFingerprintForResuming || !this._fingerprint || isAlreadyStored) {
       return
     }
 
