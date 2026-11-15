@@ -610,9 +610,14 @@ export class BaseUpload {
       req.setHeader('Upload-Metadata', metadata)
     }
 
+    // Data is not sent with the POST request if the upload length is deferred.
+    // In that case, the response has no Upload-Offset and we continue with PATCH.
+    const dataSentDuringCreation =
+      this.options.uploadDataDuringCreation && !this._uploadLengthDeferred
+
     let res: HttpResponse
     try {
-      if (this.options.uploadDataDuringCreation && !this._uploadLengthDeferred) {
+      if (dataSentDuringCreation) {
         this._offset = 0
         res = await this._addChunkToRequest(req)
       } else {
@@ -661,7 +666,7 @@ export class BaseUpload {
 
     await this._saveUploadInUrlStorage()
 
-    if (this.options.uploadDataDuringCreation) {
+    if (dataSentDuringCreation) {
       await this._handleUploadResponse(req, res)
     } else {
       this._offset = 0

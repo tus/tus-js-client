@@ -154,6 +154,58 @@ describe('tus', () => {
         expect(options.onProgress).toHaveBeenCalledWith(11, 11)
       })
 
+      it('should upload with PATCH if uploadDataDuringCreation is enabled', async () => {
+        const reader = makeReader('hello world')
+
+        const testStack = new TestHttpStack()
+        const options = {
+          httpStack: testStack,
+          endpoint: 'http://tus.io/uploads',
+          chunkSize: 100,
+          onSuccess: waitableFunction('onSuccess'),
+          onError: waitableFunction('onError'),
+          uploadLengthDeferred: true,
+          uploadDataDuringCreation: true,
+        }
+
+        const upload = new Upload(reader, options)
+        upload.start()
+
+        // The length is unknown, so no data is sent with the POST request.
+        let req = await testStack.nextRequest()
+        expect(req.url).toBe('http://tus.io/uploads')
+        expect(req.method).toBe('POST')
+        expect(req.requestHeaders['Upload-Length']).toBe(undefined)
+        expect(req.requestHeaders['Upload-Defer-Length']).toBe('1')
+        expect(req.bodySize).toBe(null)
+
+        // Without data, the server does not answer with an Upload-Offset header.
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: 'http://tus.io/uploads/blargh',
+          },
+        })
+
+        req = await testStack.nextRequest()
+        expect(req.url).toBe('http://tus.io/uploads/blargh')
+        expect(req.method).toBe('PATCH')
+        expect(req.requestHeaders['Upload-Offset']).toBe('0')
+        expect(req.requestHeaders['Upload-Length']).toBe('11')
+        expect(req.bodySize).toBe(11)
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            'Upload-Offset': '11',
+          },
+        })
+
+        await options.onSuccess.toBeCalled()
+        expect(options.onError).not.toHaveBeenCalled()
+        expect(upload.url).toBe('http://tus.io/uploads/blargh')
+      })
+
       it('should retry the POST request', async () => {
         const reader = makeReader('hello world', 1)
 
