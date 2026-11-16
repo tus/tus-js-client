@@ -44,6 +44,7 @@ export class PathFileSource implements FileSource {
     // option. First, the path reference is sliced into multiple fs.ReadStreams to fit the
     // number of `parallelUploads`. Each ReadStream has `start` set.
     const offset = this._file.start ?? 0
+    const sliceEnd = Math.min(end, this.size)
 
     const stream: ReadStream & { size?: number } = createReadStream(this._path, {
       start: offset + start,
@@ -52,11 +53,11 @@ export class PathFileSource implements FileSource {
       // However, the Buffer#slice(start, end) and also our Source#slice(start, end)
       // method treat the end range exclusively, so we have to subtract 1.
       // This prevents an off-by-one error when reporting upload progress.
-      end: offset + end - 1,
+      end: offset + sliceEnd - 1,
       autoClose: true,
     })
-    const size = Math.min(end - start, this.size)
-    const done = end >= this.size
+    const size = sliceEnd - start
+    const done = sliceEnd >= this.size
     return Promise.resolve({ value: stream, size, done })
   }
 
