@@ -25,6 +25,320 @@ describe('tus', () => {
       )
     })
 
+    describe('#state', () => {
+      const previousUpload = {
+        size: 11,
+        metadata: {},
+        creationTime: 'Mon Oct 26 2026',
+        urlStorageKey: 'tus::test',
+        uploadUrl: 'http://tus.io/uploads/other',
+      }
+
+      it('should ignore a second start() issued before the first request is sent', async () => {
+        const testStack = new TestHttpStack()
+        const file = getBlob('hello world')
+        const upload = new Upload(file, {
+          httpStack: testStack,
+          endpoint: 'http://tus.io/uploads',
+          onError() {},
+        })
+
+        upload.start()
+        upload.start()
+        expect(upload.state).toBe('running')
+
+        const req = await testStack.nextRequest()
+        expect(req.method).toBe('POST')
+        expect(req.url).toBe('http://tus.io/uploads')
+
+        const result = await Promise.race([testStack.nextRequest(), wait(50)])
+        expect(result).toBe('timed out')
+      })
+
+      it('should stop preparing when abort() arrives before the first request', async () => {
+        const testStack = new TestHttpStack()
+        const file = getBlob('hello world')
+        const upload = new Upload(file, {
+          httpStack: testStack,
+          endpoint: 'http://tus.io/uploads',
+          onError() {},
+        })
+
+        upload.start()
+        const aborting = upload.abort()
+        expect(upload.state).toBe('paused')
+        await aborting
+
+        const result = await Promise.race([testStack.nextRequest(), wait(50)])
+        expect(result).toBe('timed out')
+        expect(upload.state).toBe('paused')
+        expect(upload.url).toBe(null)
+      })
+
+      it('should ignore a second start() without changing the running upload', async () => {
+        const testStack = new TestHttpStack()
+        const file = getBlob('hello world')
+        const options = {
+          httpStack: testStack,
+          endpoint: 'http://tus.io/uploads',
+          onError() {},
+        }
+        const upload = new Upload(file, options)
+
+        expect(upload.state).toBe('idle')
+        upload.start()
+        expect(upload.state).toBe('running')
+
+        const req = await testStack.nextRequest()
+        expect(req.url).toBe('http://tus.io/uploads')
+        expect(req.method).toBe('POST')
+
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: 'http://tus.io/uploads/blargh',
+          },
+        })
+
+        const patch = await testStack.nextRequest()
+        expect(patch.method).toBe('PATCH')
+        expect(upload.url).toBe('http://tus.io/uploads/blargh')
+
+        upload.start()
+        upload.resumeFromPreviousUpload(previousUpload)
+
+        expect(upload.state).toBe('running')
+        expect(upload.url).toBe('http://tus.io/uploads/blargh')
+
+        const result = await Promise.race([testStack.nextRequest(), wait(50)])
+        expect(result).toBe('timed out')
+      })
+
+      it('should ignore start() after success', async () => {
+        const testStack = new TestHttpStack()
+        const file = getBlob('hello world')
+        const options = {
+          httpStack: testStack,
+          endpoint: 'http://tus.io/uploads',
+          onSuccess: waitableFunction('onSuccess'),
+        }
+        const upload = new Upload(file, options)
+        upload.start()
+
+        const req = await testStack.nextRequest()
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: 'http://tus.io/uploads/blargh',
+          },
+        })
+
+        const patch = await testStack.nextRequest()
+        patch.respondWith({
+          status: 204,
+          responseHeaders: {
+            'Upload-Offset': '11',
+          },
+        })
+
+        await options.onSuccess.toBeCalled()
+        expect(upload.state).toBe('success')
+
+        upload.start()
+        upload.resumeFromPreviousUpload(previousUpload)
+
+        expect(upload.state).toBe('success')
+        expect(upload.url).toBe('http://tus.io/uploads/blargh')
+
+        const result = await Promise.race([testStack.nextRequest(), wait(50)])
+        expect(result).toBe('timed out')
+      })
+
+      it('should resume with start() after an error', async () => {
+        const testStack = new TestHttpStack()
+        const file = getBlob('hello world')
+        const options = {
+          httpStack: testStack,
+          endpoint: 'http://tus.io/uploads',
+          retryDelays: null,
+          onError: waitableFunction('onError'),
+        }
+        const upload = new Upload(file, options)
+        upload.start()
+
+        const req = await testStack.nextRequest()
+        req.respondWith({
+          status: 500,
+        })
+
+        await options.onError.toBeCalled()
+        expect(upload.state).toBe('error')
+
+        upload.start()
+        expect(upload.state).toBe('running')
+
+        const retry = await testStack.nextRequest()
+        expect(retry.url).toBe('http://tus.io/uploads')
+        expect(retry.method).toBe('POST')
+      })
+
+      it('should stay running while an automatic retry is waiting', async () => {
+        const testStack = new TestHttpStack()
+        const file = getBlob('hello world')
+        const options = {
+          httpStack: testStack,
+          endpoint: 'http://tus.io/uploads',
+          retryDelays: [20],
+          onError() {},
+        }
+        const upload = new Upload(file, options)
+        upload.start()
+
+        const req = await testStack.nextRequest()
+        req.respondWith({
+          status: 500,
+        })
+
+        await wait(0)
+        expect(upload.state).toBe('running')
+
+        upload.start()
+        expect(upload.state).toBe('running')
+
+        const retry = await testStack.nextRequest()
+        expect(retry.method).toBe('POST')
+        expect(upload.state).toBe('running')
+      })
+
+      it('should pause when abort() stops a running upload and resume on start()', async () => {
+        const testStack = new TestHttpStack()
+        const file = getBlob('hello world')
+        const options = {
+          httpStack: testStack,
+          endpoint: 'http://tus.io/uploads',
+          onError() {},
+        }
+        const upload = new Upload(file, options)
+        upload.start()
+
+        let req = await testStack.nextRequest()
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: 'http://tus.io/uploads/blargh',
+          },
+        })
+
+        req = await testStack.nextRequest()
+        expect(req.method).toBe('PATCH')
+
+        const aborting = upload.abort()
+        expect(upload.state).toBe('paused')
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            'Upload-Offset': '0',
+          },
+        })
+        await aborting
+
+        upload.start()
+        expect(upload.state).toBe('running')
+
+        const head = await testStack.nextRequest()
+        expect(head.url).toBe('http://tus.io/uploads/blargh')
+        expect(head.method).toBe('HEAD')
+      })
+
+      it('should stop a running upload when abort(true) deletes it', async () => {
+        const testStack = new TestHttpStack()
+        const file = getBlob('hello world')
+        const upload = new Upload(file, {
+          httpStack: testStack,
+          endpoint: 'http://tus.io/uploads',
+          onError() {},
+        })
+        upload.start()
+
+        let req = await testStack.nextRequest()
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: 'http://tus.io/uploads/blargh',
+          },
+        })
+
+        req = await testStack.nextRequest()
+        expect(req.method).toBe('PATCH')
+
+        const aborting = upload.abort(true)
+        expect(upload.state).toBe('stopped')
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            'Upload-Offset': '0',
+          },
+        })
+
+        req = await testStack.nextRequest()
+        expect(req.url).toBe('http://tus.io/uploads/blargh')
+        expect(req.method).toBe('DELETE')
+        req.respondWith({
+          status: 204,
+        })
+        await aborting
+
+        expect(upload.state).toBe('stopped')
+        expect(upload.url).toBe('http://tus.io/uploads/blargh')
+
+        upload.start()
+        upload.resumeFromPreviousUpload(previousUpload)
+        expect(upload.state).toBe('stopped')
+        expect(upload.url).toBe('http://tus.io/uploads/blargh')
+
+        const result = await Promise.race([testStack.nextRequest(), wait(50)])
+        expect(result).toBe('timed out')
+      })
+
+      it('should keep state read-only', () => {
+        const upload = new Upload(getBlob('hello world'), {
+          endpoint: 'http://tus.io/uploads',
+        })
+
+        expect(() => {
+          upload.state = 'success'
+        }).toThrow()
+        expect(upload.state).toBe('idle')
+      })
+
+      it('should stay idle when abort() is called before start()', async () => {
+        const testStack = new TestHttpStack()
+        const file = getBlob('hello world')
+        const upload = new Upload(file, {
+          httpStack: testStack,
+          endpoint: 'http://tus.io/uploads',
+        })
+
+        await upload.abort()
+        expect(upload.state).toBe('idle')
+        await upload.abort(true)
+        expect(upload.state).toBe('idle')
+
+        upload.start()
+        expect(upload.state).toBe('running')
+
+        const req = await testStack.nextRequest()
+        expect(req.method).toBe('POST')
+      })
+
+      it('should leave the state on error when start() is rejected', () => {
+        const upload = new Upload(null)
+        expect(upload.state).toBe('idle')
+        expect(upload.start.bind(upload)).toThrowError('tus: no file or stream to upload provided')
+        expect(upload.state).toBe('error')
+      })
+    })
+
     it('should upload a file', async () => {
       const testStack = new TestHttpStack()
       const file = getBlob('hello world')

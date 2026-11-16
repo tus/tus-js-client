@@ -40,3 +40,4 @@ const isSupported = true
 // Any changes should be reflected in both files.
 export { Upload, defaultOptions, isSupported, canStoreURLs, enableDebugLog, DetailedError }
 export type * from '../options.js'
+export type { UploadState } from '../upload.js'
