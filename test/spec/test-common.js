@@ -25,6 +25,20 @@ describe('tus', () => {
       )
     })
 
+    it('should throw an error if a metadata key is empty or contains a space or a comma', () => {
+      for (const option of ['metadata', 'metadataForPartialUploads']) {
+        for (const key of ['', 'file name', 'owner,team']) {
+          const upload = new Upload(getBlob('hello world'), {
+            endpoint: 'https://tus.io/uploads',
+            [option]: { filename: 'hello.txt', [key]: 'value' },
+          })
+          expect(upload.start.bind(upload)).toThrowError(
+            `tus: the metadata key ${JSON.stringify(key)} must not be empty or contain spaces or commas`,
+          )
+        }
+      }
+    })
+
     it('should upload a file', async () => {
       const testStack = new TestHttpStack()
       const file = getBlob('hello world')

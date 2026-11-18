@@ -164,6 +164,20 @@ export class BaseUpload {
       return
     }
 
+    // The Upload-Metadata header separates pairs with commas and a key from its value with a
+    // space, so the tus protocol forbids empty keys and keys with spaces or commas.
+    const invalidMetadataKey =
+      findInvalidMetadataKey(this.options.metadata) ??
+      findInvalidMetadataKey(this.options.metadataForPartialUploads)
+    if (invalidMetadataKey != null) {
+      this._emitError(
+        new Error(
+          `tus: the metadata key ${JSON.stringify(invalidMetadataKey)} must not be empty or contain spaces or commas`,
+        ),
+      )
+      return
+    }
+
     const { retryDelays } = this.options
     if (retryDelays != null && Object.prototype.toString.call(retryDelays) !== '[object Array]') {
       this._emitError(new Error('tus: the `retryDelays` option must either be an array or null'))
@@ -995,6 +1009,16 @@ export class BaseUpload {
   _sendRequest(req: HttpRequest, body?: SliceType): Promise<HttpResponse> {
     return sendRequest(req, body, this.options)
   }
+}
+
+/**
+ * Returns the first key that cannot appear in the Upload-Metadata header: an empty key, or a key
+ * with a space or a comma.
+ *
+ * @api private
+ */
+function findInvalidMetadataKey(metadata: Record<string, string>): string | undefined {
+  return Object.keys(metadata).find((key) => key === '' || /[ ,]/.test(key))
 }
 
 function encodeMetadata(metadata: Record<string, string>): string {
