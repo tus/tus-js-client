@@ -7,10 +7,13 @@ export async function assertUrlStorage(urlStorage) {
   const key1 = await urlStorage.addUpload('fingerprintA', { id: 1 })
   const key2 = await urlStorage.addUpload('fingerprintA', { id: 2 })
   const key3 = await urlStorage.addUpload('fingerprintB', { id: 3 })
+  // A fingerprint that starts with another fingerprint must not match it.
+  const key4 = await urlStorage.addUpload('fingerprintAB', { id: 4 })
 
   expect(/^tus::fingerprintA::/.test(key1)).toBe(true)
   expect(/^tus::fingerprintA::/.test(key2)).toBe(true)
   expect(/^tus::fingerprintB::/.test(key3)).toBe(true)
+  expect(/^tus::fingerprintAB::/.test(key4)).toBe(true)
 
   // Query the just stored uploads individually
   result = await urlStorage.findUploadsByFingerprint('fingerprintA')
@@ -24,6 +27,9 @@ export async function assertUrlStorage(urlStorage) {
   sort(result)
   expect(result).toEqual([{ id: 3, urlStorageKey: key3 }])
 
+  result = await urlStorage.findUploadsByFingerprint('fingerprintAB')
+  expect(result).toEqual([{ id: 4, urlStorageKey: key4 }])
+
   // Check that we can retrieve all stored uploads
   result = await urlStorage.findAllUploads()
   sort(result)
@@ -31,11 +37,13 @@ export async function assertUrlStorage(urlStorage) {
     { id: 1, urlStorageKey: key1 },
     { id: 2, urlStorageKey: key2 },
     { id: 3, urlStorageKey: key3 },
+    { id: 4, urlStorageKey: key4 },
   ])
 
   // Check that it can remove an upload and will not return it back
   await urlStorage.removeUpload(key2)
   await urlStorage.removeUpload(key3)
+  await urlStorage.removeUpload(key4)
 
   result = await urlStorage.findUploadsByFingerprint('fingerprintA')
   expect(result).toEqual([{ id: 1, urlStorageKey: key1 }])
