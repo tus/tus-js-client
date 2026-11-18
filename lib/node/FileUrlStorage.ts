@@ -16,7 +16,9 @@ export class FileUrlStorage implements UrlStorage {
   }
 
   async findUploadsByFingerprint(fingerprint: string): Promise<PreviousUpload[]> {
-    return await this._getItems(`tus::${fingerprint}`)
+    // The separator after the fingerprint keeps the uploads of a longer fingerprint, which starts
+    // with this one, out of the result.
+    return await this._getItems(`tus::${fingerprint}::`)
   }
 
   async removeUpload(urlStorageKey: string): Promise<void> {
