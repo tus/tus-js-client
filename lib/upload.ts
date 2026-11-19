@@ -1157,17 +1157,23 @@ function getRetryDelay(err: Error | DetailedError, scheduledDelay: number): numb
   return Math.max(scheduledDelay, Math.min(retryAfter, MAX_RETRY_AFTER_DELAY))
 }
 
+// IMF-fixdate, the HTTP date format servers must send (RFC 9110, section 5.6.7). Obsolete formats
+// are ignored because they cannot be parsed reliably: asctime carries no time zone.
+const IMF_FIXDATE = /^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$/
+
 /**
  * Parses a Retry-After header value, which is either a number of seconds or an HTTP date,
- * into milliseconds from now. Returns null for a missing or invalid value.
+ * into milliseconds from now. Returns null for a missing or unsupported value.
  */
-function parseRetryAfter(value: string | undefined): number | null {
+function parseRetryAfter(value: string | null | undefined): number | null {
   if (value == null) return null
 
   const trimmed = value.trim()
   if (/^\d+$/.test(trimmed)) {
     return Number(trimmed) * 1000
   }
+
+  if (!IMF_FIXDATE.test(trimmed)) return null
 
   const date = Date.parse(trimmed)
   if (Number.isNaN(date)) return null
