@@ -1184,6 +1184,8 @@ function splitHttpDate(value: string): string[] | null {
 /**
  * Parses an HTTP date into a timestamp. Returns null if the value is not a valid HTTP date.
  */
+// Weekday names, leap seconds and the day-precise 50-year cutoff for RFC 850 dates are not
+// checked: such values are rare in Retry-After, and MAX_RETRY_AFTER_DELAY bounds a misreading.
 function parseHttpDate(value: string): number | null {
   const parts = splitHttpDate(value)
   if (parts == null) return null
