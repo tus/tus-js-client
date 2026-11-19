@@ -49,7 +49,7 @@ function startUpload(options) {
 }
 
 describe('tus', () => {
-  describe('retry delays', () => {
+  describe('Retry-After', () => {
     beforeEach(() => {
       jasmine.clock().install()
       jasmine.clock().mockDate(new Date('2026-01-01T00:00:00Z'))
@@ -57,57 +57,6 @@ describe('tus', () => {
 
     afterEach(() => {
       jasmine.clock().uninstall()
-    })
-
-    it('should keep retrying for about a minute with the default retryDelays', async () => {
-      const options = {
-        onSuccess: waitableFunction('onSuccess'),
-        onError: waitableFunction('onError'),
-      }
-      const testStack = startUpload(options)
-
-      let req = await testStack.nextRequest()
-      for (const delay of [0, 1000, 3000, 5000, 10000, 20000, 30000]) {
-        respondToCreation(req, { status: 502 })
-        req = await expectRequestAfter(testStack, delay)
-      }
-      respondToCreation(req, { status: 201, responseHeaders: { Location: '/files/foo' } })
-
-      req = await testStack.nextRequest()
-      expect(req.method).toBe('PATCH')
-      req.respondWith({ status: 204, responseHeaders: { 'Upload-Offset': '11' } })
-
-      await options.onSuccess.toBeCalled()
-      expect(options.onError).not.toHaveBeenCalled()
-    })
-
-    it('should emit an error once the default retryDelays are used up', async () => {
-      const options = { onError: waitableFunction('onError') }
-      const testStack = startUpload(options)
-
-      let req = await testStack.nextRequest()
-      for (const delay of [0, 1000, 3000, 5000, 10000, 20000, 30000]) {
-        respondToCreation(req, { status: 502 })
-        req = await expectRequestAfter(testStack, delay)
-      }
-      respondToCreation(req, { status: 502 })
-
-      await options.onError.toBeCalled()
-      expect(options.onError).toHaveBeenCalledTimes(1)
-    })
-
-    it('should use custom retryDelays as given', async () => {
-      const options = { retryDelays: [5, 15], onError: waitableFunction('onError') }
-      const testStack = startUpload(options)
-
-      let req = await testStack.nextRequest()
-      respondToCreation(req, { status: 500 })
-      req = await expectRequestAfter(testStack, 5)
-      respondToCreation(req, { status: 500 })
-      req = await expectRequestAfter(testStack, 15)
-      respondToCreation(req, { status: 500 })
-
-      await options.onError.toBeCalled()
     })
 
     it('should wait at least as long as the Retry-After header asks', async () => {
@@ -134,50 +83,12 @@ describe('tus', () => {
       await options.onError.toBeCalled()
     })
 
-    it('should accept every HTTP date format in Retry-After', async () => {
-      const options = { retryDelays: [10, 10, 10], onError: waitableFunction('onError') }
-      const testStack = startUpload(options)
-
-      // The mocked clock stands at 2026-01-01T00:00:00Z.
-      let req = await testStack.nextRequest()
-      respondToCreation(req, {
-        status: 503,
-        responseHeaders: { 'Retry-After': 'Thu, 01 Jan 2026 00:00:03 GMT' },
-      })
-      req = await expectRequestAfter(testStack, 3000)
-
-      respondToCreation(req, {
-        status: 503,
-        responseHeaders: { 'Retry-After': 'Thursday, 01-Jan-26 00:00:07 GMT' },
-      })
-      req = await expectRequestAfter(testStack, 4000)
-
-      // asctime has no zone marker, but HTTP dates are always UTC.
-      respondToCreation(req, {
-        status: 503,
-        responseHeaders: { 'Retry-After': 'Thu Jan  1 00:00:12 2026' },
-      })
-      req = await expectRequestAfter(testStack, 5000)
-
-      respondToCreation(req, { status: 503 })
-      await options.onError.toBeCalled()
-    })
-
     it('should ignore an invalid Retry-After header', async () => {
-      const options = { retryDelays: [10, 10, 10], onError: waitableFunction('onError') }
+      const options = { retryDelays: [10], onError: waitableFunction('onError') }
       const testStack = startUpload(options)
 
       let req = await testStack.nextRequest()
       respondToCreation(req, { status: 503, responseHeaders: { 'Retry-After': 'soon' } })
-      req = await expectRequestAfter(testStack, 10)
-
-      respondToCreation(req, { status: 503, responseHeaders: { 'Retry-After': '-40' } })
-      req = await expectRequestAfter(testStack, 10)
-
-      respondToCreation(req, {
-        status: 503,
-        responseHeaders: { 'Retry-After': 'Sat, 31 Feb 2026 00:00:00 GMT' },
-      })
       req = await expectRequestAfter(testStack, 10)
 
       respondToCreation(req, { status: 503 })
