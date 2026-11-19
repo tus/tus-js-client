@@ -1157,13 +1157,59 @@ function getRetryDelay(err: Error | DetailedError, scheduledDelay: number): numb
   return Math.max(scheduledDelay, Math.min(retryAfter, MAX_RETRY_AFTER_DELAY))
 }
 
-// IMF-fixdate, the HTTP date format servers must send (RFC 9110, section 5.6.7). Obsolete formats
-// are ignored because they cannot be parsed reliably: asctime carries no time zone.
-const IMF_FIXDATE = /^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$/
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+// The three HTTP date formats recipients must accept (RFC 9110, section 5.6.7), all in UTC.
+// Date.parse() is not used because it reads asctime in local time and accepts malformed input.
+const IMF_FIXDATE = /^[A-Z][a-z]{2}, (\d{2}) ([A-Z][a-z]{2}) (\d{4}) (\d{2}):(\d{2}):(\d{2}) GMT$/
+const RFC_850_DATE = /^[A-Z][a-z]+, (\d{2})-([A-Z][a-z]{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2}) GMT$/
+const ASCTIME_DATE = /^[A-Z][a-z]{2} ([A-Z][a-z]{2}) ([ \d]\d) (\d{2}):(\d{2}):(\d{2}) (\d{4})$/
+
+/**
+ * Splits an HTTP date into day, month, year, hours, minutes and seconds.
+ */
+function splitHttpDate(value: string): string[] | null {
+  const imf = IMF_FIXDATE.exec(value) ?? RFC_850_DATE.exec(value)
+  if (imf) return imf.slice(1)
+
+  const asctime = ASCTIME_DATE.exec(value)
+  if (asctime) {
+    const [, month, day, hours, minutes, seconds, year] = asctime
+    return [day.trim(), month, year, hours, minutes, seconds]
+  }
+
+  return null
+}
+
+/**
+ * Parses an HTTP date into a timestamp. Returns null if the value is not a valid HTTP date.
+ */
+function parseHttpDate(value: string): number | null {
+  const parts = splitHttpDate(value)
+  if (parts == null) return null
+
+  const [day, hours, minutes, seconds] = [parts[0], parts[3], parts[4], parts[5]].map(Number)
+  const month = MONTHS.indexOf(parts[1])
+  let year = Number(parts[2])
+  if (parts[2].length === 2) {
+    // A two-digit year that appears to be more than 50 years in the future is in the past.
+    const currentYear = new Date().getUTCFullYear()
+    year += Math.floor(currentYear / 100) * 100
+    if (year > currentYear + 50) year -= 100
+  }
+
+  if (month === -1 || hours > 23 || minutes > 59 || seconds > 60) return null
+
+  const timestamp = Date.UTC(year, month, day, hours, minutes, seconds)
+  // Date.UTC() rolls over impossible days such as February 31, so check the day survived.
+  if (new Date(timestamp).getUTCDate() !== day) return null
+
+  return timestamp
+}
 
 /**
  * Parses a Retry-After header value, which is either a number of seconds or an HTTP date,
- * into milliseconds from now. Returns null for a missing or unsupported value.
+ * into milliseconds from now. Returns null for a missing or invalid value.
  */
 function parseRetryAfter(value: string | null | undefined): number | null {
   if (value == null) return null
@@ -1173,11 +1219,12 @@ function parseRetryAfter(value: string | null | undefined): number | null {
     return Number(trimmed) * 1000
   }
 
-  if (!IMF_FIXDATE.test(trimmed)) return null
+  const date = parseHttpDate(trimmed)
+  if (date == null) return null
 
-  const date = Date.parse(trimmed)
-  if (Number.isNaN(date)) return null
-
+  // This trusts the local clock instead of correcting for skew with the response's Date header,
+  // which browsers usually do not expose for cross-origin requests anyway. A skewed clock only
+  // shortens or lengthens this one wait, which stays within the scheduled delay and the cap.
   return Math.max(0, date - Date.now())
 }
 

@@ -5,9 +5,13 @@ import { getBlob, TestHttpStack, waitableFunction } from './helpers/utils.js'
 // mocked clock stands still.
 const realSetTimeout = globalThis.setTimeout
 
-async function settle() {
-  for (let i = 0; i < 5; i++) {
-    await new Promise((resolve) => realSetTimeout(resolve, 0))
+function settle() {
+  return new Promise((resolve) => realSetTimeout(resolve, 0))
+}
+
+async function waitForPendingRequest(testStack) {
+  for (let i = 0; i < 20 && testStack._pendingRequests.length === 0; i++) {
+    await settle()
   }
 }
 
@@ -18,10 +22,11 @@ async function expectRequestAfter(testStack, delay) {
   if (delay > 0) {
     jasmine.clock().tick(delay - 1)
     await settle()
+    await settle()
     expect(testStack._pendingRequests.length).withContext(`request before ${delay} ms`).toBe(0)
   }
   jasmine.clock().tick(delay > 0 ? 1 : 0)
-  await settle()
+  await waitForPendingRequest(testStack)
   expect(testStack._pendingRequests.length).withContext(`request after ${delay} ms`).toBe(1)
   return testStack.nextRequest()
 }
@@ -129,7 +134,36 @@ describe('tus', () => {
       await options.onError.toBeCalled()
     })
 
-    it('should ignore Retry-After values that are not seconds or an IMF-fixdate', async () => {
+    it('should accept every HTTP date format in Retry-After', async () => {
+      const options = { retryDelays: [10, 10, 10], onError: waitableFunction('onError') }
+      const testStack = startUpload(options)
+
+      // The mocked clock stands at 2026-01-01T00:00:00Z.
+      let req = await testStack.nextRequest()
+      respondToCreation(req, {
+        status: 503,
+        responseHeaders: { 'Retry-After': 'Thu, 01 Jan 2026 00:00:03 GMT' },
+      })
+      req = await expectRequestAfter(testStack, 3000)
+
+      respondToCreation(req, {
+        status: 503,
+        responseHeaders: { 'Retry-After': 'Thursday, 01-Jan-26 00:00:07 GMT' },
+      })
+      req = await expectRequestAfter(testStack, 4000)
+
+      // asctime has no zone marker, but HTTP dates are always UTC.
+      respondToCreation(req, {
+        status: 503,
+        responseHeaders: { 'Retry-After': 'Thu Jan  1 00:00:12 2026' },
+      })
+      req = await expectRequestAfter(testStack, 5000)
+
+      respondToCreation(req, { status: 503 })
+      await options.onError.toBeCalled()
+    })
+
+    it('should ignore an invalid Retry-After header', async () => {
       const options = { retryDelays: [10, 10, 10], onError: waitableFunction('onError') }
       const testStack = startUpload(options)
 
@@ -140,10 +174,9 @@ describe('tus', () => {
       respondToCreation(req, { status: 503, responseHeaders: { 'Retry-After': '-40' } })
       req = await expectRequestAfter(testStack, 10)
 
-      // asctime has no time zone, so it would be read in the client's local time.
       respondToCreation(req, {
         status: 503,
-        responseHeaders: { 'Retry-After': 'Thu Jan  1 00:00:30 2026' },
+        responseHeaders: { 'Retry-After': 'Sat, 31 Feb 2026 00:00:00 GMT' },
       })
       req = await expectRequestAfter(testStack, 10)
 
