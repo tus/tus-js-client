@@ -202,6 +202,8 @@ _Default value:_ `[0, 1000, 3000, 5000]`
 
 An array or null, indicating how many milliseconds should pass before the next attempt to uploading will be started after the transfer has been interrupted. The array's length indicates the maximum number of attempts. If the final attempt did not finish successfully, an error will be emitted using the `onError` callback. For more details about the system of retries and delays, read the [FAQ entry about automated Retries](/docs/faq.md#can-tus-js-client-automatically-retry-errored-requests).
 
+If a response that is retried carries a `Retry-After` header with a number of seconds or an HTTP date, the client waits at least as long as the header asks before the next attempt. The requested delay is capped at 60 seconds; a longer delay from `retryDelays` itself still applies. This does not add attempts or make other statuses retryable, and it also applies to the `DELETE` request sent by `abort(true)` and `tus.Upload.terminate`. In browsers, a cross-origin server must expose `Retry-After` through `Access-Control-Expose-Headers` for the client to see it, either by name or, for requests without credentials, with `*`.
+
 Following example will trigger up to three retries, each after 1s, 3s and 5s respectively:
 
 ```js
