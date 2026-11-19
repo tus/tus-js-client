@@ -41,7 +41,9 @@ export const defaultOptions = {
   onShouldRetry: defaultOnShouldRetry,
 
   chunkSize: Number.POSITIVE_INFINITY,
-  retryDelays: [0, 1000, 3000, 5000],
+  // Covers a server that is unavailable for about a minute, such as one restarting behind a
+  // load balancer, while keeping the first retries quick for short network interruptions.
+  retryDelays: [0, 1000, 3000, 5000, 10000, 20000, 30000],
   parallelUploads: 1,
   parallelUploadBoundaries: undefined,
   storeFingerprintForResuming: true,
@@ -515,7 +517,7 @@ export class BaseUpload {
       }
 
       if (shouldRetry(err, this._retryAttempt, this.options)) {
-        const delay = this.options.retryDelays[this._retryAttempt++]
+        const delay = getRetryDelay(err, this.options.retryDelays[this._retryAttempt++])
 
         this._offsetBeforeRetry = this._offset
 
@@ -1133,6 +1135,46 @@ function defaultOnShouldRetry(err: DetailedError): boolean {
   return (!inStatusCategory(status, 400) || status === 409 || status === 423) && isOnline()
 }
 
+// Upper bound for a delay requested through the Retry-After header, so a misconfigured server
+// cannot stall an upload for hours without the application noticing.
+const MAX_RETRY_AFTER_DELAY = 60_000
+
+/**
+ * Returns how many milliseconds to wait before the next retry: the scheduled delay from
+ * `retryDelays`, extended if the server asked for a longer pause using the Retry-After header.
+ * The header is only consulted for errors that are retried anyway.
+ */
+function getRetryDelay(err: Error | DetailedError, scheduledDelay: number): number {
+  if (!(err instanceof DetailedError) || err.originalResponse == null) {
+    return scheduledDelay
+  }
+
+  const retryAfter = parseRetryAfter(err.originalResponse.getHeader('Retry-After'))
+  if (retryAfter == null) {
+    return scheduledDelay
+  }
+
+  return Math.max(scheduledDelay, Math.min(retryAfter, MAX_RETRY_AFTER_DELAY))
+}
+
+/**
+ * Parses a Retry-After header value, which is either a number of seconds or an HTTP date,
+ * into milliseconds from now. Returns null for a missing or invalid value.
+ */
+function parseRetryAfter(value: string | undefined): number | null {
+  if (value == null) return null
+
+  const trimmed = value.trim()
+  if (/^\d+$/.test(trimmed)) {
+    return Number(trimmed) * 1000
+  }
+
+  const date = Date.parse(trimmed)
+  if (Number.isNaN(date)) return null
+
+  return Math.max(0, date - Date.now())
+}
+
 /**
  * Resolve a relative link given the origin as source. For example,
  * if a HTTP request to http://example.com/files/ returns a Location
@@ -1219,7 +1261,7 @@ export async function terminate(url: string, options: UploadOptions): Promise<vo
     // Instead of keeping track of the retry attempts, we remove the first element from the delays
     // array. If the array is empty, all retry attempts are used up and we will bubble up the error.
     // We recursively call the terminate function will removing elements from the retryDelays array.
-    const delay = options.retryDelays[0]
+    const delay = getRetryDelay(detailedErr, options.retryDelays[0])
     const remainingDelays = options.retryDelays.slice(1)
     const newOptions = {
       ...options,

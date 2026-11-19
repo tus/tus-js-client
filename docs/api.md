@@ -198,9 +198,13 @@ A boolean indicating whether the `POST` method should be used instead of `PATCH`
 
 #### retryDelays
 
-_Default value:_ `[0, 1000, 3000, 5000]`
+_Default value:_ `[0, 1000, 3000, 5000, 10000, 20000, 30000]`
 
 An array or null, indicating how many milliseconds should pass before the next attempt to uploading will be started after the transfer has been interrupted. The array's length indicates the maximum number of attempts. If the final attempt did not finish successfully, an error will be emitted using the `onError` callback. For more details about the system of retries and delays, read the [FAQ entry about automated Retries](/docs/faq.md#can-tus-js-client-automatically-retry-errored-requests).
+
+The default retries for a bit more than a minute, so an upload survives a server that is briefly unavailable, for example while it restarts behind a load balancer. A request that keeps failing is reported through `onError` once those attempts are used up.
+
+If a response that is retried carries a `Retry-After` header, the client waits at least as long as the header asks, up to 60 seconds, before the next attempt. It does not add attempts and does not make other statuses retryable. In browsers, a cross-origin server must list `Retry-After` in `Access-Control-Expose-Headers` for the client to see it.
 
 Following example will trigger up to three retries, each after 1s, 3s and 5s respectively:
 
