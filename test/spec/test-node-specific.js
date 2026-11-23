@@ -160,6 +160,40 @@ describe('tus', () => {
         await expectHelloWorldUpload(file2, options)
       })
 
+      it('should accept fs.ReadStream with deferred length', async () => {
+        const path = temp.path()
+        fs.writeFileSync(path, 'hello world')
+        const file = fs.createReadStream(path)
+
+        try {
+          await expectHelloWorldUpload(file, {
+            endpoint: '/uploads',
+            chunkSize: 7,
+            uploadLengthDeferred: true,
+          })
+        } finally {
+          file.destroy()
+          fs.unlinkSync(path)
+        }
+      })
+
+      it('should preserve fs.ReadStream bounds with deferred length', async () => {
+        const path = temp.path()
+        fs.writeFileSync(path, 'XXXhello worldXXX')
+        const file = fs.createReadStream(path, { start: 3, end: 13 })
+
+        try {
+          await expectHelloWorldUpload(file, {
+            endpoint: '/uploads',
+            chunkSize: 7,
+            uploadLengthDeferred: true,
+          })
+        } finally {
+          file.destroy()
+          fs.unlinkSync(path)
+        }
+      })
+
       it('should support parallelUploads', async () => {
         // Create a temporary file
         const path = temp.path()
