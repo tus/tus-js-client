@@ -19,12 +19,32 @@ const defaultOptions = {
 
 class Upload extends BaseUpload {
   constructor(file: UploadInput, options: Partial<UploadOptions> = {}) {
-    const allOpts = { ...defaultOptions, ...options }
+    const allOpts = {
+      ...defaultOptions,
+      ...options,
+      // Deep merge stallDetection options if provided
+      ...(options.stallDetection && {
+        stallDetection: {
+          ...defaultOptions.stallDetection,
+          ...options.stallDetection,
+        },
+      }),
+    }
     super(file, allOpts)
   }
 
   static terminate(url: string, options: Partial<UploadOptions> = {}) {
-    const allOpts = { ...defaultOptions, ...options }
+    const allOpts = {
+      ...defaultOptions,
+      ...options,
+      // Deep merge stallDetection options if provided
+      ...(options.stallDetection && {
+        stallDetection: {
+          ...defaultOptions.stallDetection,
+          ...options.stallDetection,
+        },
+      }),
+    }
     return terminate(url, allOpts)
   }
 }

@@ -16,6 +16,7 @@ import {
   type UploadInput,
   type UploadOptions,
 } from './options.js'
+import { StallDetector } from './StallDetector.js'
 import { uuid } from './uuid.js'
 
 export const defaultOptions = {
@@ -54,6 +55,12 @@ export const defaultOptions = {
   httpStack: undefined,
 
   protocol: PROTOCOL_TUS_V1 as UploadOptions['protocol'],
+
+  stallDetection: {
+    enabled: false,
+    stallTimeout: 30000,
+    checkInterval: 5000,
+  },
 }
 
 export class BaseUpload {
@@ -96,6 +103,9 @@ export class BaseUpload {
 
   // The offset of the remote upload before the latest attempt was started.
   private _offsetBeforeRetry = 0
+
+  // The reason for the last stall detection, if any
+  private _stallReason?: string
 
   // An array of BaseUpload instances which are used for uploading the different
   // parts, if the parallelUploads option is used.
@@ -343,6 +353,7 @@ export class BaseUpload {
             if (totalSize == null) {
               throw new Error('tus: Expected totalSize to be set')
             }
+
             this._emitProgress(totalProgress, totalSize)
           },
           // Wait until every partial upload has an upload URL, so we can add
@@ -810,12 +821,15 @@ export class BaseUpload {
         throw new Error(`tus: value thrown that is not an error: ${err}`)
       }
 
-      throw new DetailedError(
-        `tus: failed to upload chunk at offset ${this._offset}`,
-        err,
-        req,
-        undefined,
-      )
+      // Include stall reason in error message if available
+      const errorMessage = this._stallReason
+        ? `tus: failed to upload chunk at offset ${this._offset} (stalled: ${this._stallReason})`
+        : `tus: failed to upload chunk at offset ${this._offset}`
+
+      // Clear the stall reason after using it
+      this._stallReason = undefined
+
+      throw new DetailedError(errorMessage, err, req, undefined)
     }
 
     if (!inStatusCategory(res.getStatus(), 200)) {
@@ -823,6 +837,33 @@ export class BaseUpload {
     }
 
     await this._handleUploadResponse(req, res)
+  }
+
+  /**
+   * Create a stall detector if stall detection is enabled and supported.
+   *
+   * @api private
+   */
+  private _createStallDetector(): StallDetector | undefined {
+    if (this.options.stallDetection?.enabled) {
+      // Only enable stall detection if the HTTP stack supports progress events
+      if (this.options.httpStack.supportsProgressEvents()) {
+        return new StallDetector(this.options.stallDetection, (reason: string) => {
+          // Handle stall by aborting the current request
+          // The abort will cause the request to fail, which will be caught
+          // in _performUpload and wrapped in a DetailedError for proper retry handling
+          if (this._req) {
+            this._stallReason = reason
+            this._req.abort()
+          }
+          // Don't call _retryOrEmitError here - let the natural error flow handle it
+        })
+      }
+      log(
+        'tus: stall detection is enabled but the HTTP stack does not support progress events, it will be disabled for this upload',
+      )
+    }
+    return undefined
   }
 
   /**
@@ -835,7 +876,15 @@ export class BaseUpload {
     const start = this._offset
     let end = this._offset + this.options.chunkSize
 
+    // Create stall detector for this request if stall detection is enabled and supported
+    // but don't start it yet - we'll start it after onBeforeRequest completes
+    const stallDetector = this._createStallDetector()
+
     req.setProgressHandler((bytesSent) => {
+      // Update per-request stall detector if active
+      if (stallDetector) {
+        stallDetector.updateProgress(start + bytesSent)
+      }
       this._emitProgress(start + bytesSent, this._size)
     })
 
@@ -884,7 +933,7 @@ export class BaseUpload {
     }
 
     if (value == null) {
-      return await this._sendRequest(req)
+      return await this._sendRequest(req, undefined, stallDetector)
     }
 
     if (
@@ -893,8 +942,9 @@ export class BaseUpload {
     ) {
       req.setHeader('Upload-Complete', done ? '?1' : '?0')
     }
+
     this._emitProgress(this._offset, this._size)
-    return await this._sendRequest(req, value)
+    return await this._sendRequest(req, value, stallDetector)
   }
 
   /**
@@ -992,8 +1042,12 @@ export class BaseUpload {
    *
    * @api private
    */
-  _sendRequest(req: HttpRequest, body?: SliceType): Promise<HttpResponse> {
-    return sendRequest(req, body, this.options)
+  _sendRequest(
+    req: HttpRequest,
+    body?: SliceType,
+    stallDetector?: StallDetector,
+  ): Promise<HttpResponse> {
+    return sendRequest(req, body, this.options, stallDetector)
   }
 }
 
@@ -1054,12 +1108,24 @@ async function sendRequest(
   req: HttpRequest,
   body: SliceType | undefined,
   options: UploadOptions,
+  stallDetector?: StallDetector,
 ): Promise<HttpResponse> {
   if (typeof options.onBeforeRequest === 'function') {
     await options.onBeforeRequest(req)
   }
 
-  const res = await req.send(body)
+  if (stallDetector) {
+    stallDetector.start()
+  }
+
+  let res: HttpResponse
+  try {
+    res = await req.send(body)
+  } finally {
+    if (stallDetector) {
+      stallDetector.stop()
+    }
+  }
 
   if (typeof options.onAfterResponse === 'function') {
     await options.onAfterResponse(req, res)
