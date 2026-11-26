@@ -279,6 +279,15 @@ export class BaseUpload {
   private async _startParallelUpload(): Promise<void> {
     const totalSize = this._size
     let totalProgress = 0
+
+    // Abort partial uploads from a previous attempt, so a retry of the parallel upload
+    // does not leave their requests running alongside the new ones.
+    if (this._parallelUploads != null) {
+      for (const upload of this._parallelUploads) {
+        await upload.abort()
+      }
+    }
+
     this._parallelUploads = []
 
     const partCount =
