@@ -281,21 +281,22 @@ export class BaseUpload {
     let totalProgress = 0
     this._parallelUploads = []
 
-    const partCount =
-      this._parallelUploadUrls != null
-        ? this._parallelUploadUrls.length
-        : this.options.parallelUploads
-
     if (this._size == null) {
       throw new Error('tus: Expected _size to be set')
     }
 
+    const requestedPartCount =
+      this._parallelUploadUrls != null
+        ? this._parallelUploadUrls.length
+        : this.options.parallelUploads
+
     // The input file will be split into multiple slices which are uploaded in separate
     // requests. Here we get the start and end position for the slices.
     const partsBoundaries =
-      this.options.parallelUploadBoundaries ?? splitSizeIntoParts(this._size, partCount)
+      this.options.parallelUploadBoundaries ?? splitSizeIntoParts(this._size, requestedPartCount)
 
-    // Attach URLs from previous uploads, if available.
+    // Attach URLs from previous uploads, if available. Entries beyond the actual
+    // part count are ignored.
     const parts = partsBoundaries.map((part, index) => ({
       ...part,
       uploadUrl: this._parallelUploadUrls?.[index] || null,
@@ -1155,17 +1156,21 @@ type Part = { start: number; end: number }
  * @api private
  */
 function splitSizeIntoParts(totalSize: number, partCount: number): Part[] {
-  const partSize = Math.floor(totalSize / partCount)
+  // A file smaller than `partCount` bytes would otherwise produce empty parts, which
+  // `PathFileSource` cannot read (`fs.createReadStream` rejects `end: -1`). Treat
+  // `partCount` as an upper bound so every part carries at least one byte.
+  const effectivePartCount = totalSize > 0 ? Math.min(partCount, totalSize) : 1
+  const partSize = Math.floor(totalSize / effectivePartCount)
   const parts: Part[] = []
 
-  for (let i = 0; i < partCount; i++) {
+  for (let i = 0; i < effectivePartCount; i++) {
     parts.push({
       start: partSize * i,
       end: partSize * (i + 1),
     })
   }
 
-  parts[partCount - 1].end = totalSize
+  parts[effectivePartCount - 1].end = totalSize
 
   return parts
 }
