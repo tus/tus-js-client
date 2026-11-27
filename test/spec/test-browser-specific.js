@@ -7,6 +7,31 @@ describe('tus', () => {
     localStorage.clear()
   })
 
+  describe('Retry-After in XHR responses', () => {
+    beforeEach(() => jasmine.Ajax.install())
+    afterEach(() => jasmine.Ajax.uninstall())
+
+    async function sendRequest(responseHeaders) {
+      const request = defaultOptions.httpStack.createRequest('POST', 'https://tus.io/files/')
+      const sending = request.send()
+      const xhr = jasmine.Ajax.requests.mostRecent()
+      const readHeader = spyOn(xhr, 'getResponseHeader').and.callThrough()
+      xhr.respondWith({ status: 503, responseHeaders })
+      return { response: await sending, readHeader }
+    }
+
+    it('reads a Retry-After header visible to XHR', async () => {
+      const { response } = await sendRequest({ 'retry-after': '2' })
+      expect(response.getHeader('Retry-After')).toBe('2')
+    })
+
+    it('skips the native header lookup when Retry-After is hidden from XHR', async () => {
+      const { response, readHeader } = await sendRequest({ 'Retry-After-Other': '2' })
+      expect(response.getHeader('Retry-After')).toBeUndefined()
+      expect(readHeader).not.toHaveBeenCalledWith('Retry-After')
+    })
+  })
+
   describe('#Upload', () => {
     it('should resume an upload from a stored url', async () => {
       localStorage.setItem(
