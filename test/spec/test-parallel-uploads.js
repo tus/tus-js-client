@@ -353,6 +353,288 @@ describe('tus', () => {
       expect(err.originalRequest).toBe(req)
     })
 
+    it('should save partial upload URLs progressively when `progressiveUrlSaving` is enabled', async () => {
+      const testStack = new TestHttpStack()
+      const savedUrls = []
+      const testUrlStorage = {
+        addUpload: (fingerprint, upload) => {
+          expect(fingerprint).toBe('fingerprinted')
+          savedUrls.push([...upload.parallelUploadUrls])
+          return Promise.resolve('tus::fingerprinted::1337')
+        },
+        removeUpload: () => Promise.resolve(),
+      }
+
+      const file = getBlob('hello world')
+      const options = {
+        httpStack: testStack,
+        urlStorage: testUrlStorage,
+        storeFingerprintForResuming: true,
+        progressiveUrlSaving: true,
+        parallelUploads: 2,
+        endpoint: 'https://tus.io/uploads',
+        onSuccess: waitableFunction(),
+        fingerprint: () => Promise.resolve('fingerprinted'),
+      }
+
+      const upload = new Upload(file, options)
+      upload.start()
+
+      const firstPost = await testStack.nextRequest()
+      expect(firstPost.method).toBe('POST')
+      expect(firstPost.requestHeaders['Upload-Length']).toBe('5')
+
+      const secondPost = await testStack.nextRequest()
+      expect(secondPost.method).toBe('POST')
+      expect(secondPost.requestHeaders['Upload-Length']).toBe('6')
+
+      firstPost.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: 'https://tus.io/uploads/upload1',
+        },
+      })
+
+      let req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads/upload1')
+      expect(req.method).toBe('PATCH')
+
+      // The first URL is persisted before the second partial upload has been created.
+      expect(savedUrls).toEqual([['https://tus.io/uploads/upload1', null]])
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': '5',
+        },
+      })
+
+      secondPost.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: 'https://tus.io/uploads/upload2',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads/upload2')
+      expect(req.method).toBe('PATCH')
+
+      expect(savedUrls).toEqual([
+        ['https://tus.io/uploads/upload1', null],
+        ['https://tus.io/uploads/upload1', 'https://tus.io/uploads/upload2'],
+      ])
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': '6',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads')
+      expect(req.method).toBe('POST')
+      expect(req.requestHeaders['Upload-Concat']).toBe(
+        'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2',
+      )
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: 'https://tus.io/uploads/final',
+        },
+      })
+
+      await options.onSuccess.toBeCalled()
+      expect(upload.url).toBe('https://tus.io/uploads/final')
+    })
+
+    it('should not lose progressively saved URLs when storage writes settle out of order', async () => {
+      const testStack = new TestHttpStack()
+      // Mimics a storage that replaces the stored entry with whatever write
+      // completes last, like a database row updated by concurrent requests.
+      let stored = null
+      let releaseFirstSave
+      const firstSaveStarted = new Promise((resolve) => {
+        releaseFirstSave = resolve
+      })
+      const saves = []
+      const testUrlStorage = {
+        addUpload: (_fingerprint, upload) => {
+          const snapshot = [...upload.parallelUploadUrls]
+          const settle = saves.length === 0 ? firstSaveStarted : Promise.resolve()
+          saves.push(snapshot)
+          return settle.then(() => {
+            stored = snapshot
+            return 'tus::fingerprinted::1337'
+          })
+        },
+        removeUpload: () => Promise.resolve(),
+      }
+
+      const file = getBlob('hello world')
+      const options = {
+        httpStack: testStack,
+        urlStorage: testUrlStorage,
+        storeFingerprintForResuming: true,
+        progressiveUrlSaving: true,
+        parallelUploads: 2,
+        endpoint: 'https://tus.io/uploads',
+        onSuccess: waitableFunction(),
+        fingerprint: () => Promise.resolve('fingerprinted'),
+      }
+
+      const upload = new Upload(file, options)
+      upload.start()
+
+      const firstPost = await testStack.nextRequest()
+      const secondPost = await testStack.nextRequest()
+
+      // The first URL's save is still pending when the second URL arrives.
+      firstPost.respondWith({
+        status: 201,
+        responseHeaders: { Location: 'https://tus.io/uploads/upload1' },
+      })
+      await wait(10)
+      secondPost.respondWith({
+        status: 201,
+        responseHeaders: { Location: 'https://tus.io/uploads/upload2' },
+      })
+      await wait(10)
+
+      releaseFirstSave()
+      await wait(10)
+
+      expect(stored).toEqual(['https://tus.io/uploads/upload1', 'https://tus.io/uploads/upload2'])
+
+      for (let i = 0; i < 2; i++) {
+        const req = await testStack.nextRequest()
+        expect(req.method).toBe('PATCH')
+        req.respondWith({
+          status: 204,
+          responseHeaders: { 'Upload-Offset': req.url.endsWith('upload1') ? '5' : '6' },
+        })
+      }
+
+      const finalPost = await testStack.nextRequest()
+      expect(finalPost.requestHeaders['Upload-Concat']).toBe(
+        'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2',
+      )
+      finalPost.respondWith({
+        status: 201,
+        responseHeaders: { Location: 'https://tus.io/uploads/final' },
+      })
+
+      await options.onSuccess.toBeCalled()
+      expect(upload.url).toBe('https://tus.io/uploads/final')
+    })
+
+    it('should resume the partial uploads when only some URLs were saved progressively', async () => {
+      const testStack = new TestHttpStack()
+      const savedUrls = []
+      const testUrlStorage = {
+        addUpload: (_fingerprint, upload) => {
+          savedUrls.push([...upload.parallelUploadUrls])
+          return Promise.resolve('tus::fingerprinted::1337')
+        },
+        removeUpload: () => Promise.resolve(),
+      }
+
+      const file = getBlob('hello world')
+      const options = {
+        httpStack: testStack,
+        urlStorage: testUrlStorage,
+        storeFingerprintForResuming: true,
+        progressiveUrlSaving: true,
+        parallelUploads: 1,
+        endpoint: 'https://tus.io/uploads',
+        onSuccess: waitableFunction(),
+        fingerprint: () => Promise.resolve('fingerprinted'),
+      }
+
+      const upload = new Upload(file, options)
+
+      // The second partial upload was never created in the previous attempt.
+      upload.resumeFromPreviousUpload({
+        urlStorageKey: 'tus::fingerprinted::1337',
+        parallelUploadUrls: ['https://tus.io/uploads/upload1', null],
+      })
+
+      upload.start()
+
+      const headReq = await testStack.nextRequest()
+      expect(headReq.url).toBe('https://tus.io/uploads/upload1')
+      expect(headReq.method).toBe('HEAD')
+
+      let req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads')
+      expect(req.method).toBe('POST')
+      expect(req.requestHeaders['Upload-Length']).toBe('6')
+      expect(req.requestHeaders['Upload-Concat']).toBe('partial')
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: 'https://tus.io/uploads/upload2',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads/upload2')
+      expect(req.method).toBe('PATCH')
+
+      // The previously known URL must not be lost while the resumed part is still
+      // waiting for its HEAD response.
+      expect(savedUrls).toEqual([
+        ['https://tus.io/uploads/upload1', 'https://tus.io/uploads/upload2'],
+      ])
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': '6',
+        },
+      })
+
+      headReq.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Length': '5',
+          'Upload-Offset': '2',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads/upload1')
+      expect(req.method).toBe('PATCH')
+      expect(req.bodySize).toBe(3)
+
+      req.respondWith({
+        status: 204,
+        responseHeaders: {
+          'Upload-Offset': '5',
+        },
+      })
+
+      req = await testStack.nextRequest()
+      expect(req.url).toBe('https://tus.io/uploads')
+      expect(req.method).toBe('POST')
+      expect(req.requestHeaders['Upload-Concat']).toBe(
+        'final;https://tus.io/uploads/upload1 https://tus.io/uploads/upload2',
+      )
+
+      req.respondWith({
+        status: 201,
+        responseHeaders: {
+          Location: 'https://tus.io/uploads/final',
+        },
+      })
+
+      await options.onSuccess.toBeCalled()
+      expect(upload.url).toBe('https://tus.io/uploads/final')
+    })
+
     it('should resume the partial uploads', async () => {
       const testStack = new TestHttpStack()
       const file = getBlob('hello world')
