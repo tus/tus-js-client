@@ -119,6 +119,11 @@ describe('tus', () => {
       await expectRetryAfter('Wednesday, 01-Jan-76 00:00:00 GMT', 60000)
     })
 
+    it('should reject an RFC 850 date on March 1 beyond the 50-year cutoff from leap day', async () => {
+      jasmine.clock().mockDate(new Date('2024-02-29T12:00:00Z'))
+      await expectRetryAfter('Thursday, 01-Mar-74 00:00:00 GMT', 10)
+    })
+
     it('should accept an HTTP date during a leap second', async () => {
       jasmine.clock().mockDate(new Date('2016-12-31T23:59:55Z'))
       await expectRetryAfter('Sat, 31 Dec 2016 23:59:60 GMT', 5000)
@@ -126,6 +131,10 @@ describe('tus', () => {
 
     it('should cap arbitrarily large delay-seconds', async () => {
       await expectRetryAfter('9'.repeat(400), 60000)
+    })
+
+    it('should allow HTTP whitespace around delay-seconds', async () => {
+      await expectRetryAfter(' \t2\t ', 2000)
     })
 
     it('should ignore a past Retry-After date', async () => {
@@ -136,6 +145,7 @@ describe('tus', () => {
       'soon',
       '-40',
       '1.5',
+      '\u00a060',
       '2099-01-01',
       'Tue, 31 Feb 2099 00:00:00 GMT',
       'Fri, 01 Jan 2026 00:00:05 GMT',

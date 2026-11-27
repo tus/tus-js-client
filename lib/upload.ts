@@ -1211,7 +1211,10 @@ function parseHttpDate(value: string, now: number): number | null {
     // RFC 850 uses the latest matching timestamp that is at most 50 years in the future.
     const cutoff = new Date(now)
     const cutoffYear = cutoff.getUTCFullYear() + 50
+    const cutoffMonth = cutoff.getUTCMonth()
     cutoff.setUTCFullYear(cutoffYear)
+    // A leap-day clock moves to February 28 when the cutoff year has no leap day.
+    if (cutoff.getUTCMonth() !== cutoffMonth) cutoff.setUTCDate(0)
     year += Math.floor(cutoffYear / 100) * 100
     if (date.setUTCFullYear(year, month, day) + leapSecond > cutoff.getTime()) year -= 100
   }
@@ -1231,7 +1234,7 @@ function parseHttpDate(value: string, now: number): number | null {
 function parseRetryAfter(value: string | null | undefined): number | null {
   if (value == null) return null
 
-  const trimmed = value.trim()
+  const trimmed = value.replace(/^[\t ]+|[\t ]+$/g, '')
   if (/^\d+$/.test(trimmed)) {
     return Number(trimmed) * 1000
   }
