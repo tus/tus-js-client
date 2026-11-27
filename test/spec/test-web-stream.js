@@ -385,6 +385,81 @@ describe('tus', () => {
         await options.onSuccess.toBeCalled()
       })
 
+      it('should retry the final PATCH request with Upload-Length header', async () => {
+        const reader = makeReader('hello world')
+
+        const testStack = new TestHttpStack()
+        const options = {
+          httpStack: testStack,
+          endpoint: 'http://tus.io/files/',
+          chunkSize: 6,
+          retryDelays: [10, 10, 10],
+          onSuccess: waitableFunction('onSuccess'),
+          uploadLengthDeferred: true,
+        }
+
+        const upload = new Upload(reader, options)
+        upload.start()
+
+        let req = await testStack.nextRequest()
+        expect(req.url).toBe('http://tus.io/files/')
+        expect(req.method).toBe('POST')
+        expect(req.requestHeaders['Upload-Defer-Length']).toBe('1')
+
+        req.respondWith({
+          status: 201,
+          responseHeaders: {
+            Location: '/files/foo',
+          },
+        })
+
+        req = await testStack.nextRequest()
+        expect(req.url).toBe('http://tus.io/files/foo')
+        expect(req.method).toBe('PATCH')
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            'Upload-Offset': '6',
+          },
+        })
+
+        req = await testStack.nextRequest()
+        expect(req.url).toBe('http://tus.io/files/foo')
+        expect(req.method).toBe('PATCH')
+        expect(req.requestHeaders['Upload-Length']).toBe('11')
+
+        req.respondWith({
+          status: 500,
+        })
+
+        req = await testStack.nextRequest()
+        expect(req.url).toBe('http://tus.io/files/foo')
+        expect(req.method).toBe('HEAD')
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            'Upload-Offset': '6',
+            'Upload-Defer-Length': '1',
+          },
+        })
+
+        req = await testStack.nextRequest()
+        expect(req.url).toBe('http://tus.io/files/foo')
+        expect(req.method).toBe('PATCH')
+        expect(req.requestHeaders['Upload-Length']).toBe('11')
+
+        req.respondWith({
+          status: 204,
+          responseHeaders: {
+            'Upload-Offset': '11',
+          },
+        })
+
+        await options.onSuccess.toBeCalled()
+      })
+
       it('should throw an error if the source provides less data than uploadSize', async () => {
         const reader = makeReader('hello world')
 
