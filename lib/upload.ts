@@ -1155,14 +1155,77 @@ function getRetryDelay(err: Error | DetailedError, scheduledDelay: number): numb
   return Math.max(scheduledDelay, Math.min(retryAfter, MAX_RETRY_AFTER_DELAY))
 }
 
-/**
- * Parses a Retry-After header value, which is either a number of seconds or an HTTP date,
- * into milliseconds from now. Returns null for a missing or unparsable value.
- *
- * Dates go through Date.parse(), which ECMAScript guarantees for IMF-fixdate, the format
- * servers must send. Obsolete or malformed dates may be misread, but MAX_RETRY_AFTER_DELAY
- * bounds the resulting wait.
- */
+const HTTP_MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+]
+const HTTP_WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const IMF_FIXDATE = /^([A-Z][a-z]{2}), (\d{2}) ([A-Z][a-z]{2}) (\d{4}) (\d{2}):(\d{2}):(\d{2}) GMT$/
+const RFC_850_DATE =
+  /^([A-Z][a-z]{5,8}), (\d{2})-([A-Z][a-z]{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2}) GMT$/
+const ASCTIME_DATE = /^([A-Z][a-z]{2}) ([A-Z][a-z]{2}) ([ \d]\d) (\d{2}):(\d{2}):(\d{2}) (\d{4})$/
+
+// Keep the components in the same order for all three formats (RFC 9110, section 5.6.7).
+function splitHttpDate(value: string): string[] | null {
+  const match = IMF_FIXDATE.exec(value) ?? RFC_850_DATE.exec(value)
+  if (match) return match.slice(1)
+
+  const asctime = ASCTIME_DATE.exec(value)
+  if (asctime == null) return null
+  const [, weekday, month, day, hours, minutes, seconds, year] = asctime
+  return [weekday, day, month, year, hours, minutes, seconds]
+}
+
+function parseHttpDate(value: string, now: number): number | null {
+  const parts = splitHttpDate(value)
+  if (parts == null) return null
+
+  const [weekday, dayText, monthText, yearText, hoursText, minutesText, secondsText] = parts
+  const day = Number(dayText)
+  const month = HTTP_MONTHS.indexOf(monthText)
+  let year = Number(yearText)
+  const hours = Number(hoursText)
+  const minutes = Number(minutesText)
+  const seconds = Number(secondsText)
+  if (month === -1 || hours > 23 || minutes > 59 || seconds > 60) return null
+  if (seconds === 60 && (hours !== 23 || minutes !== 59)) return null
+
+  // All HTTP dates are UTC, including asctime, which has no explicit time zone.
+  // JavaScript has no leap seconds, so map :60 to the start of the following minute.
+  const date = new Date(0)
+  date.setUTCHours(hours, minutes, Math.min(seconds, 59))
+  const leapSecond = seconds === 60 ? 1000 : 0
+
+  const hasTwoDigitYear = yearText.length === 2
+  if (hasTwoDigitYear) {
+    // RFC 850 uses the latest matching timestamp that is at most 50 years in the future.
+    const cutoff = new Date(now)
+    const cutoffYear = cutoff.getUTCFullYear() + 50
+    cutoff.setUTCFullYear(cutoffYear)
+    year += Math.floor(cutoffYear / 100) * 100
+    if (date.setUTCFullYear(year, month, day) + leapSecond > cutoff.getTime()) year -= 100
+  }
+
+  const timestamp = date.setUTCFullYear(year, month, day)
+  // Date setters roll over impossible days such as February 31.
+  if (date.getUTCDate() !== day) return null
+
+  const fullWeekday = HTTP_WEEKDAYS[date.getUTCDay()]
+  const expectedWeekday = hasTwoDigitYear ? fullWeekday : fullWeekday.slice(0, 3)
+  return weekday === expectedWeekday ? timestamp + leapSecond : null
+}
+
+// Converts delay-seconds or an HTTP date to milliseconds from the current clock.
 function parseRetryAfter(value: string | null | undefined): number | null {
   if (value == null) return null
 
@@ -1171,10 +1234,11 @@ function parseRetryAfter(value: string | null | undefined): number | null {
     return Number(trimmed) * 1000
   }
 
-  const date = Date.parse(trimmed)
-  if (Number.isNaN(date)) return null
+  const now = Date.now()
+  const date = parseHttpDate(trimmed, now)
+  if (date == null) return null
 
-  return Math.max(0, date - Date.now())
+  return Math.max(0, date - now)
 }
 
 /**

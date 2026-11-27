@@ -27,7 +27,9 @@ async function expectRequestAfter(testStack, delay) {
   }
   jasmine.clock().tick(delay > 0 ? 1 : 0)
   await waitForPendingRequest(testStack)
-  expect(testStack._pendingRequests.length).withContext(`request after ${delay} ms`).toBe(1)
+  if (testStack._pendingRequests.length !== 1) {
+    throw new Error(`Expected one retry request after ${delay} ms`)
+  }
   return testStack.nextRequest()
 }
 
@@ -83,17 +85,65 @@ describe('tus', () => {
       await options.onError.toBeCalled()
     })
 
-    it('should ignore an invalid Retry-After header', async () => {
+    async function expectRetryAfter(header, delay) {
       const options = { retryDelays: [10], onError: waitableFunction('onError') }
       const testStack = startUpload(options)
 
       let req = await testStack.nextRequest()
-      respondToCreation(req, { status: 503, responseHeaders: { 'Retry-After': 'soon' } })
-      req = await expectRequestAfter(testStack, 10)
+      respondToCreation(req, { status: 503, responseHeaders: { 'Retry-After': header } })
+      req = await expectRequestAfter(testStack, delay)
 
       respondToCreation(req, { status: 503 })
       await options.onError.toBeCalled()
+    }
+
+    it('should read an asctime Retry-After date as UTC', async () => {
+      await expectRetryAfter('Thu Jan  1 00:00:05 2026', 5000)
     })
+
+    it('should read an RFC 850 Retry-After date as UTC', async () => {
+      await expectRetryAfter('Thursday, 01-Jan-26 00:00:05 GMT', 5000)
+    })
+
+    it('should read an RFC 850 date in the next century when it is within 50 years', async () => {
+      jasmine.clock().mockDate(new Date('2099-12-31T23:59:57Z'))
+      await expectRetryAfter('Friday, 01-Jan-00 00:00:02 GMT', 5000)
+    })
+
+    it('should read an RFC 850 date over 50 years ahead as a past date', async () => {
+      await expectRetryAfter('Friday, 02-Jan-76 00:00:00 GMT', 10)
+    })
+
+    it('should cap an RFC 850 date exactly 50 years ahead', async () => {
+      await expectRetryAfter('Wednesday, 01-Jan-76 00:00:00 GMT', 60000)
+    })
+
+    it('should accept an HTTP date during a leap second', async () => {
+      jasmine.clock().mockDate(new Date('2016-12-31T23:59:55Z'))
+      await expectRetryAfter('Sat, 31 Dec 2016 23:59:60 GMT', 5000)
+    })
+
+    it('should cap arbitrarily large delay-seconds', async () => {
+      await expectRetryAfter('9'.repeat(400), 60000)
+    })
+
+    it('should ignore a past Retry-After date', async () => {
+      await expectRetryAfter('Wed, 31 Dec 2025 23:59:59 GMT', 10)
+    })
+
+    for (const header of [
+      'soon',
+      '-40',
+      '1.5',
+      '2099-01-01',
+      'Sun, 31 Feb 2099 00:00:00 GMT',
+      'Fri, 01 Jan 2026 00:00:05 GMT',
+      'Thu, 01 Jan 2026 00:00:60 GMT',
+    ]) {
+      it(`should ignore an invalid Retry-After header (${header})`, async () => {
+        await expectRetryAfter(header, 10)
+      })
+    }
 
     it('should not retry a non-retryable status even if it carries Retry-After', async () => {
       const options = { onError: waitableFunction('onError') }

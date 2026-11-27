@@ -67,6 +67,8 @@ jobs:
       - name: Test
         env:
           TUS_ENDPOINT: ${{ steps.tusd.outputs.endpoint }}
+          # asctime HTTP dates must be parsed as UTC, regardless of the local time zone.
+          TZ: America/Los_Angeles
         run: npm run test-${{ matrix.suite }}
   lint:
     name: Linter
