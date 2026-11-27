@@ -112,6 +112,13 @@ class XHRResponse implements HttpResponse {
   }
 
   getHeader(header: string): string | undefined {
+    // Browsers can log a CORS warning if we ask for an unexposed header. Retry-After is optional.
+    if (
+      header.toLowerCase() === 'retry-after' &&
+      !/^retry-after:/im.test(this._xhr.getAllResponseHeaders() ?? '')
+    ) {
+      return undefined
+    }
     return this._xhr.getResponseHeader(header) || undefined
   }
 
