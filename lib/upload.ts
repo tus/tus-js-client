@@ -1198,10 +1198,10 @@ function parseHttpDate(value: string, now: number): number | null {
   const minutes = Number(minutesText)
   const seconds = Number(secondsText)
   if (month === -1 || hours > 23 || minutes > 59 || seconds > 60) return null
-  if (seconds === 60 && (hours !== 23 || minutes !== 59)) return null
 
   // All HTTP dates are UTC, including asctime, which has no explicit time zone.
-  // JavaScript has no leap seconds, so map :60 to the start of the following minute.
+  // JavaScript has no leap seconds. A leap second is the last second of a UTC month.
+  // Map :60 to the next instant and check that it reaches the following month.
   const date = new Date(0)
   date.setUTCHours(hours, minutes, Math.min(seconds, 59))
   const leapSecond = seconds === 60 ? 1000 : 0
@@ -1219,10 +1219,12 @@ function parseHttpDate(value: string, now: number): number | null {
   const timestamp = date.setUTCFullYear(year, month, day)
   // Date setters roll over impossible days such as February 31.
   if (date.getUTCDate() !== day) return null
+  const retryTimestamp = timestamp + leapSecond
+  if (leapSecond !== 0 && new Date(retryTimestamp).getUTCMonth() === month) return null
 
   const fullWeekday = HTTP_WEEKDAYS[date.getUTCDay()]
   const expectedWeekday = hasTwoDigitYear ? fullWeekday : fullWeekday.slice(0, 3)
-  return weekday === expectedWeekday ? timestamp + leapSecond : null
+  return weekday === expectedWeekday ? retryTimestamp : null
 }
 
 // Converts delay-seconds or an HTTP date to milliseconds from the current clock.

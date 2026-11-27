@@ -111,7 +111,8 @@ describe('tus', () => {
     })
 
     it('should read an RFC 850 date over 50 years ahead as a past date', async () => {
-      await expectRetryAfter('Friday, 02-Jan-76 00:00:00 GMT', 10)
+      // The weekday matches 2076. Using that year would extend the scheduled delay.
+      await expectRetryAfter('Thursday, 02-Jan-76 00:00:00 GMT', 10)
     })
 
     it('should cap an RFC 850 date exactly 50 years ahead', async () => {
@@ -136,9 +137,10 @@ describe('tus', () => {
       '-40',
       '1.5',
       '2099-01-01',
-      'Sun, 31 Feb 2099 00:00:00 GMT',
+      'Tue, 31 Feb 2099 00:00:00 GMT',
       'Fri, 01 Jan 2026 00:00:05 GMT',
       'Thu, 01 Jan 2026 00:00:60 GMT',
+      'Thu, 01 Jan 2026 23:59:60 GMT',
     ]) {
       it(`should ignore an invalid Retry-After header (${header})`, async () => {
         await expectRetryAfter(header, 10)
