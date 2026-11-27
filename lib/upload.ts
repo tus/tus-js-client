@@ -1234,7 +1234,12 @@ function parseHttpDate(value: string, now: number): number | null {
 function parseRetryAfter(value: string | null | undefined): number | null {
   if (value == null) return null
 
-  const trimmed = value.replace(/^[\t ]+|[\t ]+$/g, '')
+  // HTTP optional whitespace consists of spaces and tabs. Scan each end once.
+  let start = 0
+  let end = value.length
+  while (value[start] === ' ' || value[start] === '\t') start++
+  while (end > start && (value[end - 1] === ' ' || value[end - 1] === '\t')) end--
+  const trimmed = value.slice(start, end)
   if (/^\d+$/.test(trimmed)) {
     return Number(trimmed) * 1000
   }
